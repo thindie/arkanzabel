@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Used by QSTileService / future notifications; app_name comes from :app -->
+    <string name="app_tile_name">VPN</string>
+    <string name="app_tile_first_use">Add a server in the app first.</string>
+</resources>
