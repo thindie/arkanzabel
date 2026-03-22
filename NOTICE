@@ -1,0 +1,13 @@
+Arkanzabel
+Copyright (c) the Arkanzabel contributors.
+
+This product is planned to incorporate third-party components from the v2rayNG
+project ecosystem (including GPLv3-licensed code and native libraries such as
+the Xray gomobile binding and optionally hev-socks5-tunnel). Exact versions and
+obligations are described in docs/COMPLIANCE.md.
+
+Upstream reference (verify current license files in the repository you vendor):
+  https://github.com/2dust/v2rayNG
+  https://github.com/2dust/AndroidLibXrayLite
+
+See docs/COMPLIANCE.md before distributing binaries.
