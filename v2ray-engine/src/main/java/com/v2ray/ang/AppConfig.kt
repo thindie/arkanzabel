@@ -9,11 +9,17 @@ object AppConfig {
     @Volatile
     var hostApplicationId: String = "com.thindie.rknzbl"
 
+    @Volatile
+    var hostVersionName: String = "0"
+
     val ANG_PACKAGE: String get() = hostApplicationId
     val TAG: String get() = hostApplicationId
 
-    fun initHostApplicationId(applicationId: String) {
+    val httpUserAgent: String get() = "$hostApplicationId/$hostVersionName"
+
+    fun initHostApplicationId(applicationId: String, versionName: String = "0") {
         hostApplicationId = applicationId
+        hostVersionName = versionName
     }
 
     /** Directory names used in the app's file system. */

@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.application
 
 import android.app.Application
+import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.engine.Router
 import com.v2ray.ang.AppConfig
 import kotlinx.coroutines.channels.BufferOverflow
@@ -10,7 +11,7 @@ class Application: Application() {
 
   override fun onCreate() {
     super.onCreate()
-    AppConfig.initHostApplicationId(packageName)
+    AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
   }
 
   private var router: Router? = null
