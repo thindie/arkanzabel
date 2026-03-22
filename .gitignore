@@ -16,7 +16,3 @@
 local.properties
 # Ephemeral agent/plan drafts
 /docs/tmp
-# Internal migration/architecture plans (local only, not versioned)
-/docs/arkanzabel-atomic-commits-map.md
-/docs/arkanzabel-migration-plan.md
-/docs/v2rayng-architecture-plan.md
