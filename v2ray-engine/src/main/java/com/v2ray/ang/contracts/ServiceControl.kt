@@ -2,17 +2,14 @@ package com.v2ray.ang.contracts
 
 import android.app.Service
 
-/**
- * Narrow seam for the running VPN/proxy [Service]
- */
+/** v2rayNG parity: control surface used by [com.v2ray.ang.handler.V2RayServiceManager] and VPN/proxy services. */
 interface ServiceControl {
-    val service: Service
-    fun start()
-    fun stop()
+  fun getService(): Service
 
-    /**
-     * Platform [android.net.VpnService.protect]: keep traffic on this socket fd off the VPN tunnel.
-     * @return whether the call succeeded on this API level.
-     */
-    fun protectSocket(fd: Int): Boolean
+  fun startService()
+
+  fun stopService()
+
+  /** Maps to [android.net.VpnService.protect]. */
+  fun vpnProtect(socket: Int): Boolean
 }
