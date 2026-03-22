@@ -31,7 +31,7 @@ object AppConfig {
     /** Legacy configuration keys. */
     const val ANG_CONFIG = "ang_config"
 
-    /** Preferences mapped to MMKV storage. */
+    /** Keys for [com.v2ray.ang.handler.KeyValueStorage] (MMKV). */
     const val PREF_SNIFFING_ENABLED = "pref_sniffing_enabled"
     const val PREF_ROUTE_ONLY_ENABLED = "pref_route_only_enabled"
     const val PREF_PER_APP_PROXY = "pref_per_app_proxy"
