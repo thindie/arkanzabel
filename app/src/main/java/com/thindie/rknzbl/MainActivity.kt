@@ -1,7 +1,11 @@
 package com.thindie.rknzbl
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Route
@@ -34,17 +39,25 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+  private val notificationPermissionLauncher =
+    registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+        PackageManager.PERMISSION_GRANTED
+      ) {
+        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+      }
+    }
     enableEdgeToEdge()
-    val application = (application as Application)
-    val router = application.requireRouter()
+    val app = application as Application
+    val router = app.requireRouter()
     awaitFinish()
     setContent {
-      remember(application, router) {
-        val flow = HomeFlow(router)
-        flow.start()
-        flow
+      remember(app, router) {
+        HomeFlow(router, app).also { it.start() }
       }
       val themeSwitcher = remember { ThemeSwitcher() }
       CompositionLocalProvider(

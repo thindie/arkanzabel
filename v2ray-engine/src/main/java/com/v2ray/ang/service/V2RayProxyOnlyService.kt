@@ -4,6 +4,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.V2RayServiceManager
@@ -27,6 +29,10 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
      * @return The start mode.
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (V2RayServiceManager.isRunning()) {
+            Log.i(AppConfig.TAG, "Proxy-only core already running; ignoring duplicate onStartCommand")
+            return START_STICKY
+        }
         V2RayServiceManager.startCoreLoop(null)
         return START_STICKY
     }

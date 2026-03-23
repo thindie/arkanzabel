@@ -77,12 +77,8 @@ fun Button(
         shape = RoundedCornerShape(16.dp),
         backgroundColor = backgroundColor,
         shadowElevation = 0f,
-        border = null
-      )
-      .clickable(
+        border = null,
         enabled = enabled && !loading,
-        indication = null,
-        interactionSource = remember { MutableInteractionSource() },
         onClick = onClick
       )
       .fillMaxSize()

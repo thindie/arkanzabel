@@ -1320,6 +1320,7 @@ object V2rayConfigManager {
 
         streamSettings.security = streamSecurity.nullIfBlank()
         if (streamSettings.security == null) return
+        val realityPk = profileItem.publicKey.nullIfBlank()
         val tlsSetting = StreamSettingsBean.TlsSettingsBean(
             allowInsecure = allowInsecure,
             serverName = sni.nullIfBlank(),
@@ -1328,7 +1329,8 @@ object V2rayConfigManager {
             echConfigList = profileItem.echConfigList.nullIfBlank(),
             echForceQuery = profileItem.echForceQuery.nullIfBlank(),
             pinnedPeerCertSha256 = profileItem.pinnedCA256.nullIfBlank(),
-            publicKey = profileItem.publicKey.nullIfBlank(),
+            publicKey = realityPk,
+            realityPublicKeyPassword = realityPk,
             shortId = profileItem.shortId.nullIfBlank(),
             spiderX = profileItem.spiderX.nullIfBlank(),
             mldsa65Verify = profileItem.mldsa65Verify.nullIfBlank(),

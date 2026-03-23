@@ -245,7 +245,8 @@ object SettingsManager {
     KeyValueStorage.decodeSettingsStringAsInt(AppConfig.PREF_VPN_MTU, AppConfig.VPN_MTU)
 
   fun isUsingHevTun(): Boolean {
-    return KeyValueStorage.decodeSettingsBool(AppConfig.PREF_USE_HEV_TUNNEL, true)
+    // Default off: hev requires bundled `libhev-socks5-tunnel.so`; without it use TUN fd → core.
+    return KeyValueStorage.decodeSettingsBool(AppConfig.PREF_USE_HEV_TUNNEL, false)
   }
 
   fun isVpnMode(): Boolean {

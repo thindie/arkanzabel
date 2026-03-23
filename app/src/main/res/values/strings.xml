@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">Arkanzabel</string>
+    <string name="vpn_mvp_hint">Paste one share line (vless://, ss://, hysteria2://, …). Example list: github.com/igareck/vpn-configs-for-russia — copy a single URI locally, do not commit it to git.</string>
+    <string name="vpn_import">Save profile</string>
+    <string name="vpn_start">Start VPN</string>
+    <string name="vpn_stop">Stop VPN</string>
+    <string name="vpn_import_ok">Profile saved</string>
+    <string name="vpn_import_fail">Could not parse URI</string>
+    <string name="vpn_import_save_failed_storage">Could not save profile: storage is not ready. Restart the app.</string>
+    <string name="vpn_import_save_failed_storage_detail">Could not save profile (storage): %1$s</string>
+    <string name="vpn_import_save_failed_json">Could not save profile: failed to serialize. Try another share link.</string>
+    <string name="vpn_import_save_failed_native">Could not save profile: native storage (MMKV) failed. Reinstall the app.</string>
+    <string name="vpn_import_save_failed_other">Could not save profile (%1$s).</string>
+    <string name="vpn_import_save_failed_detail">Could not save profile (%1$s): %2$s</string>
+    <string name="vpn_screen_error_generic">Something went wrong (%1$s).</string>
+    <string name="vpn_screen_error_detail">Something went wrong (%1$s): %2$s</string>
+    <string name="vpn_running">Core running: %1$s</string>
+    <string name="vpn_running_no_remarks">Core running (no server label)</string>
+    <string name="vpn_idle">Core stopped</string>
+    <string name="vpn_need_activity">Need activity context for VPN permission</string>
+    <string name="vpn_permission_denied">VPN permission was not granted (dialog dismissed or denied).</string>
+    <string name="vpn_start_need_profile">Save a profile first: paste a share URI, tap Save profile, then Start VPN.</string>
+    <string name="vpn_core_failure_unspecified">VPN core reported a start failure (no details).</string>
 </resources>

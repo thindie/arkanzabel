@@ -25,8 +25,12 @@ import kotlinx.coroutines.launch
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import java.lang.ref.SoftReference
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 object V2RayServiceManager {
+
+    private const val STOP_LOOP_TIMEOUT_SEC = 15L
 
     private val coreController: CoreController = V2RayNativeManager.newCoreController(CoreCallback())
     private val mMsgReceive = ReceiveMessageHandler()
@@ -91,6 +95,10 @@ object V2RayServiceManager {
      */
     private fun startContextService(context: Context) {
         if (coreController.isRunning) {
+            Log.w(
+                AppConfig.TAG,
+                "startContextService skipped: core still reports running (wait for stop to finish)",
+            )
             return
         }
         val guid = KeyValueStorage.getSelectServer() ?: return
@@ -130,8 +138,14 @@ object V2RayServiceManager {
         val guid = KeyValueStorage.getSelectServer() ?: return false
         val config = KeyValueStorage.decodeServerConfig(guid) ?: return false
         val result = V2rayConfigManager.getV2rayConfig(service, guid)
-        if (!result.status)
+        if (!result.status) {
+            MessageUtil.sendMsg2UI(
+                service,
+                AppConfig.MSG_STATE_START_FAILURE,
+                service.getString(R.string.vpn_core_config_build_failed),
+            )
             return false
+        }
 
         try {
             val mFilter = IntentFilter(AppConfig.BROADCAST_ACTION_SERVICE)
@@ -141,6 +155,11 @@ object V2RayServiceManager {
             ContextCompat.registerReceiver(service, mMsgReceive, mFilter, Utils.receiverFlags())
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to register broadcast receiver", e)
+            MessageUtil.sendMsg2UI(
+                service,
+                AppConfig.MSG_STATE_START_FAILURE,
+                service.getString(R.string.vpn_core_receiver_register_failed),
+            )
             return false
         }
 
@@ -155,11 +174,21 @@ object V2RayServiceManager {
             coreController.startLoop(result.content, tunFd)
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to start Core loop", e)
+            NotificationManager.cancelNotification()
+            val detail = e.message?.trim()
+            val payload =
+                if (!detail.isNullOrEmpty()) detail
+                else service.getString(R.string.vpn_core_start_failed_generic)
+            MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, payload)
             return false
         }
 
-        if (coreController.isRunning == false) {
-            MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, "")
+        if (!coreController.isRunning) {
+            MessageUtil.sendMsg2UI(
+                service,
+                AppConfig.MSG_STATE_START_FAILURE,
+                service.getString(R.string.vpn_core_not_running_after_start),
+            )
             NotificationManager.cancelNotification()
             return false
         }
@@ -171,6 +200,11 @@ object V2RayServiceManager {
 
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to startup service", e)
+            val detail = e.message?.trim()
+            val payload =
+                if (!detail.isNullOrEmpty()) detail
+                else service.getString(R.string.vpn_core_notification_failed)
+            MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, payload)
             return false
         }
         return true
@@ -185,14 +219,28 @@ object V2RayServiceManager {
         val service = getService() ?: return false
 
         if (coreController.isRunning) {
+            val done = CountDownLatch(1)
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     coreController.stopLoop()
                 } catch (e: Exception) {
                     Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", e)
+                } finally {
+                    done.countDown()
                 }
             }
+            try {
+                val finished = done.await(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
+                if (!finished) {
+                    Log.e(AppConfig.TAG, "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s")
+                }
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+                Log.e(AppConfig.TAG, "Interrupted while waiting for V2Ray stopLoop", e)
+            }
         }
+
+        currentConfig = null
 
         MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_STOP_SUCCESS, "")
         NotificationManager.cancelNotification()

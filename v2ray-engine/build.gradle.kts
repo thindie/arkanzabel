@@ -12,6 +12,13 @@ android {
     consumerProguardFiles("consumer-rules.pro")
   }
 
+  sourceSets {
+    getByName("main") {
+      // Same layout as typical v2rayNG drops: ABI folders + AAR/JAR alongside.
+      jniLibs.srcDir("libs")
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = false
@@ -25,6 +32,12 @@ android {
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
   }
+
+  packaging {
+    jniLibs {
+      useLegacyPackaging = true
+    }
+  }
 }
 
 kotlin {
@@ -32,6 +45,8 @@ kotlin {
 }
 
 dependencies {
+  // Drop `libv2ray` AAR (and optional JARs) into `v2ray-engine/libs/` — see `libs/README.md`.
+  implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)

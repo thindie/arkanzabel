@@ -12,6 +12,39 @@ import java.net.URI
 
 object VlessFmt : FmtBase() {
 
+    private val realityPublicKeyFromRawRegexes =
+      listOf(
+        Regex("""(?i)(?:^|[?&])pbk=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])publicKey=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])public_key=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])public-key=([^&#]+)"""),
+      )
+
+    /**
+     * Some exporters or [URI] parsing edge cases drop query pairs; scrape pbk from the raw share line.
+     */
+    private fun mergeRealityPublicKeyFromRawLine(config: ProfileItem, rawLine: String) {
+      if (!config.publicKey.isNullOrBlank()) return
+      val chunks = buildList {
+        rawLine.substringAfter("?", "").substringBefore("#").trim().let { if (it.isNotEmpty()) add(it) }
+        rawLine.substringAfter("#", "").trim().let {
+          if (it.contains('=')) add(it)
+        }
+      }
+      for (chunk in chunks) {
+        for (pattern in realityPublicKeyFromRawRegexes) {
+          val match = pattern.find(chunk) ?: continue
+          val encoded = match.groupValues[1].trim()
+          if (encoded.isEmpty()) continue
+          val decoded = Utils.decodeURIComponent(encoded)
+          if (decoded.isNotBlank()) {
+            config.publicKey = decoded
+            return
+          }
+        }
+      }
+    }
+
     /**
      * Parses a Vless URI string into a ProfileItem object.
      *
@@ -33,6 +66,7 @@ object VlessFmt : FmtBase() {
         config.method = queryParam["encryption"] ?: "none"
 
         getItemFormQuery(config, queryParam, allowInsecure)
+        mergeRealityPublicKeyFromRawLine(config, str)
 
         return config
     }
@@ -57,6 +91,9 @@ object VlessFmt : FmtBase() {
      * @return the converted OutboundBean object, or null if conversion fails
      */
     fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+        if (profileItem.security == AppConfig.REALITY && profileItem.publicKey.isNullOrBlank()) {
+            return null
+        }
         val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.VLESS)
 
         outboundBean?.settings?.vnext?.first()?.let { vnext ->

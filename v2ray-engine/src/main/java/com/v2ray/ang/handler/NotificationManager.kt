@@ -31,7 +31,7 @@ object NotificationManager {
   private val speedHandler = Handler(Looper.getMainLooper())
   private var speedTickRunnable: Runnable? = null
   private var lastQueryTime = 0L
-  private var mBuilder: NotificationCompat.Builder? = null
+  private var notificationCompatBuilder: NotificationCompat.Builder? = null
   private var mNotificationManager: SysNotificationManager? = null
 
   fun startSpeedNotification(currentConfig: ProfileItem?) {
@@ -96,16 +96,32 @@ object NotificationManager {
       PendingIntent.getActivity(service, NOTIFICATION_PENDING_INTENT_CONTENT, startMainIntent, flags)
 
     val stopV2RayIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
-    stopV2RayIntent.`package` = AppConfig.ANG_PACKAGE
-    stopV2RayIntent.putExtra("key", AppConfig.MSG_STATE_STOP)
+      .apply {
+        `package` = AppConfig.ANG_PACKAGE
+        putExtra("key", AppConfig.MSG_STATE_STOP)
+      }
+
     val stopV2RayPendingIntent =
-      PendingIntent.getBroadcast(service, NOTIFICATION_PENDING_INTENT_STOP_V2RAY, stopV2RayIntent, flags)
+      PendingIntent.getBroadcast(
+        service,
+        NOTIFICATION_PENDING_INTENT_STOP_V2RAY,
+        stopV2RayIntent,
+        flags
+      )
 
     val restartV2RayIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
-    restartV2RayIntent.`package` = AppConfig.ANG_PACKAGE
-    restartV2RayIntent.putExtra("key", AppConfig.MSG_STATE_RESTART)
+      .apply {
+        `package` = AppConfig.ANG_PACKAGE
+        putExtra("key", AppConfig.MSG_STATE_RESTART)
+      }
+
     val restartV2RayPendingIntent =
-      PendingIntent.getBroadcast(service, NOTIFICATION_PENDING_INTENT_RESTART_V2RAY, restartV2RayIntent, flags)
+      PendingIntent.getBroadcast(
+        service,
+        NOTIFICATION_PENDING_INTENT_RESTART_V2RAY,
+        restartV2RayIntent,
+        flags
+      )
 
     val channelId =
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -114,7 +130,7 @@ object NotificationManager {
         ""
       }
 
-    mBuilder =
+    notificationCompatBuilder =
       NotificationCompat.Builder(service, channelId)
         .setSmallIcon(R.drawable.ic_stat_name)
         .setContentTitle(currentConfig?.remarks)
@@ -134,7 +150,7 @@ object NotificationManager {
           restartV2RayPendingIntent,
         )
 
-    service.startForeground(NOTIFICATION_ID, mBuilder?.build())
+    service.startForeground(NOTIFICATION_ID, notificationCompatBuilder?.build())
   }
 
   fun cancelNotification() {
@@ -143,7 +159,7 @@ object NotificationManager {
 
     speedTickRunnable?.let { speedHandler.removeCallbacks(it) }
     speedTickRunnable = null
-    mBuilder = null
+    notificationCompatBuilder = null
     mNotificationManager = null
   }
 
@@ -171,17 +187,17 @@ object NotificationManager {
   }
 
   private fun updateNotification(contentText: String?, proxyTraffic: Long, directTraffic: Long) {
-    if (mBuilder != null) {
+    if (notificationCompatBuilder != null) {
       if (proxyTraffic < NOTIFICATION_ICON_THRESHOLD && directTraffic < NOTIFICATION_ICON_THRESHOLD) {
-        mBuilder?.setSmallIcon(R.drawable.ic_stat_name)
+        notificationCompatBuilder?.setSmallIcon(R.drawable.ic_stat_name)
       } else if (proxyTraffic > directTraffic) {
-        mBuilder?.setSmallIcon(R.drawable.ic_stat_proxy)
+        notificationCompatBuilder?.setSmallIcon(R.drawable.ic_stat_proxy)
       } else {
-        mBuilder?.setSmallIcon(R.drawable.ic_stat_direct)
+        notificationCompatBuilder?.setSmallIcon(R.drawable.ic_stat_direct)
       }
-      mBuilder?.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
-      mBuilder?.setContentText(contentText)
-      getNotificationManager()?.notify(NOTIFICATION_ID, mBuilder?.build())
+      notificationCompatBuilder?.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+      notificationCompatBuilder?.setContentText(contentText)
+      getNotificationManager()?.notify(NOTIFICATION_ID, notificationCompatBuilder?.build())
     }
   }
 

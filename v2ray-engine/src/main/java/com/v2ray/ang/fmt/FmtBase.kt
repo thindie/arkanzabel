@@ -10,6 +10,19 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 open class FmtBase {
+
+  private fun firstQueryValueIgnoreCase(
+    queryParam: Map<String, String>,
+    vararg names: String,
+  ): String? {
+    for (name in names) {
+      val v =
+        queryParam.entries.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value?.trim()
+      if (!v.isNullOrEmpty()) return v
+    }
+    return null
+  }
+
   /**
    * Converts a ProfileItem object to a URI string.
    *
@@ -42,8 +55,20 @@ open class FmtBase {
    * @return a map of query parameters
    */
   fun getQueryParam(uri: URI): Map<String, String> {
-    return uri.rawQuery.split("&")
-      .associate { it.split("=").let { (k, v) -> k to Utils.decodeURIComponent(v) } }
+    val raw = uri.rawQuery ?: return emptyMap()
+    return raw.split("&")
+      .mapNotNull { segment ->
+        if (segment.isEmpty()) return@mapNotNull null
+        val eq = segment.indexOf('=')
+        if (eq < 0) {
+          segment to ""
+        } else {
+          val k = segment.substring(0, eq)
+          val v = segment.substring(eq + 1)
+          k to Utils.decodeURIComponent(v)
+        }
+      }
+      .toMap()
   }
 
   /**
@@ -72,10 +97,10 @@ open class FmtBase {
     config.xhttpMode = queryParam["mode"]
     config.xhttpExtra = queryParam["extra"]
 
-    config.security = queryParam["security"]
-    if (config.security != AppConfig.TLS && config.security != AppConfig.REALITY) {
-      config.security = null
-    }
+    config.security =
+      queryParam["security"]?.trim()?.lowercase().takeIf {
+        it == AppConfig.TLS || it == AppConfig.REALITY
+      }
     // Support multiple possible query keys for allowInsecure like the C# implementation
     val allowInsecureKeys = arrayOf("insecure", "allowInsecure", "allow_insecure")
     config.insecure = when {
@@ -88,7 +113,14 @@ open class FmtBase {
     config.alpn = queryParam["alpn"]
     config.echConfigList = queryParam["ech"]
     config.pinnedCA256 = queryParam["pcs"]
-    config.publicKey = queryParam["pbk"]
+    config.publicKey =
+      firstQueryValueIgnoreCase(
+        queryParam,
+        "pbk",
+        "publicKey",
+        "public_key",
+        "public-key",
+      )
     config.shortId = queryParam["sid"]
     config.spiderX = queryParam["spx"]
     config.mldsa65Verify = queryParam["pqv"]

@@ -269,6 +269,9 @@ data class V2rayConfig(
                 // REALITY settings
                 val show: Boolean = false,
                 var publicKey: String? = null,
+                /** Xray REALITY client: same as [publicKey]; unmarshals to `password` in Go (alias for pbk). */
+                @SerializedName("password")
+                var realityPublicKeyPassword: String? = null,
                 var shortId: String? = null,
                 var spiderX: String? = null,
                 var mldsa65Verify: String? = null

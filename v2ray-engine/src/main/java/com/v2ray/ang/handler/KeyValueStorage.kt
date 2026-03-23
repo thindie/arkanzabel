@@ -1,6 +1,7 @@
 package com.v2ray.ang.handler
 
 import android.content.Context
+import com.google.gson.JsonIOException
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
@@ -16,6 +17,9 @@ import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
 
 object KeyValueStorage {
+
+  /** [IllegalStateException.message] when Gson failed to serialize a [ProfileItem]. */
+  const val ERROR_MESSAGE_PROFILE_JSON_FAILED = "ARKNZBL_PROFILE_JSON_FAILED"
 
   fun initialize(context: Context) {
     MMKV.initialize(context)
@@ -73,8 +77,20 @@ object KeyValueStorage {
   }
 
   fun encodeServerConfig(guid: String, config: ProfileItem): String {
-    val key = guid.ifBlank { Utils.getUuid() }
-    profileFullStorage.encode(key, JsonUtil.toJson(config))
+    val key = when {
+      guid.isNotBlank() -> guid
+      else -> {
+        val u = Utils.getUuid()
+        if (u.isNotBlank()) u else "p${System.nanoTime()}"
+      }
+    }
+    val json =
+      try {
+        JsonUtil.toJson(config)
+      } catch (e: JsonIOException) {
+        throw IllegalStateException(ERROR_MESSAGE_PROFILE_JSON_FAILED, e)
+      }
+    profileFullStorage.encode(key, json)
     val serverList = decodeServerList().toMutableList()
     if (!serverList.contains(key)) {
       serverList.add(0, key)
