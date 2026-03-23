@@ -1,0 +1,117 @@
+package com.v2ray.ang.fmt
+
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.extension.idnHost
+import com.v2ray.ang.handler.KeyValueStorage
+import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.util.Utils
+import java.net.URI
+
+object VlessFmt : FmtBase() {
+
+    private val realityPublicKeyFromRawRegexes =
+      listOf(
+        Regex("""(?i)(?:^|[?&])pbk=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])publicKey=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])public_key=([^&#]+)"""),
+        Regex("""(?i)(?:^|[?&])public-key=([^&#]+)"""),
+      )
+
+    /**
+     * Some exporters or [URI] parsing edge cases drop query pairs; scrape pbk from the raw share line.
+     */
+    private fun mergeRealityPublicKeyFromRawLine(config: ProfileItem, rawLine: String) {
+      if (!config.publicKey.isNullOrBlank()) return
+      val chunks = buildList {
+        rawLine.substringAfter("?", "").substringBefore("#").trim().let { if (it.isNotEmpty()) add(it) }
+        rawLine.substringAfter("#", "").trim().let {
+          if (it.contains('=')) add(it)
+        }
+      }
+      for (chunk in chunks) {
+        for (pattern in realityPublicKeyFromRawRegexes) {
+          val match = pattern.find(chunk) ?: continue
+          val encoded = match.groupValues[1].trim()
+          if (encoded.isEmpty()) continue
+          val decoded = Utils.decodeURIComponent(encoded)
+          if (decoded.isNotBlank()) {
+            config.publicKey = decoded
+            return
+          }
+        }
+      }
+    }
+
+    /**
+     * Parses a Vless URI string into a ProfileItem object.
+     *
+     * @param str the Vless URI string to parse
+     * @return the parsed ProfileItem object, or null if parsing fails
+     */
+    fun parse(str: String): ProfileItem? {
+        var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
+        val config = ProfileItem.create(EConfigType.VLESS)
+
+        val uri = URI(Utils.fixIllegalUrl(str))
+        if (uri.rawQuery.isNullOrEmpty()) return null
+        val queryParam = getQueryParam(uri)
+
+        config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
+        config.server = uri.idnHost
+        config.serverPort = uri.port.toString()
+        config.password = uri.userInfo
+        config.method = queryParam["encryption"] ?: "none"
+
+        getItemFormQuery(config, queryParam, allowInsecure)
+        mergeRealityPublicKeyFromRawLine(config, str)
+
+        return config
+    }
+
+    /**
+     * Converts a ProfileItem object to a URI string.
+     *
+     * @param config the ProfileItem object to convert
+     * @return the converted URI string
+     */
+    fun toUri(config: ProfileItem): String {
+        val dicQuery = getQueryDic(config)
+        dicQuery["encryption"] = config.method ?: "none"
+
+        return toUri(config, config.password, dicQuery)
+    }
+
+    /**
+     * Converts a ProfileItem object to an OutboundBean object.
+     *
+     * @param profileItem the ProfileItem object to convert
+     * @return the converted OutboundBean object, or null if conversion fails
+     */
+    fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+        if (profileItem.security == AppConfig.REALITY && profileItem.publicKey.isNullOrBlank()) {
+            return null
+        }
+        val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.VLESS)
+
+        outboundBean?.settings?.vnext?.first()?.let { vnext ->
+            vnext.address = getServerAddress(profileItem)
+            vnext.port = profileItem.serverPort.orEmpty().toInt()
+            vnext.users[0].id = profileItem.password.orEmpty()
+            vnext.users[0].encryption = profileItem.method
+            vnext.users[0].flow = profileItem.flow
+        }
+
+        val sni = outboundBean?.streamSettings?.let {
+            V2rayConfigManager.populateTransportSettings(it, profileItem)
+        }
+
+        outboundBean?.streamSettings?.let {
+            V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+        }
+
+        return outboundBean
+    }
+}

@@ -1,0 +1,3 @@
+# Large Xray rule databases — download via AndroidLibXrayLite/gen_assets.sh (see v2ray-engine/libs/README.md)
+geoip.dat
+geosite.dat

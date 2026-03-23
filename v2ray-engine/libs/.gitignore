@@ -1,0 +1,4 @@
+# Directory is tracked; binaries are produced locally or by CI (see README.md).
+*
+!.gitignore
+!README.md

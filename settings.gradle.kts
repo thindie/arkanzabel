@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Arkanzabel"
 include(":app")
+include(":v2ray-engine")
  

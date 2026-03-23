@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">VPN</string>
+    <string name="app_tile_name">VPN</string>
+    <string name="app_tile_first_use">Add a server in the app first.</string>
+    <string name="notification_action_stop_v2ray">Stop</string>
+    <string name="title_service_restart">Service restart</string>
+    <string name="toast_services_start">Start Services</string>
+    <string name="toast_services_stop">Stop Services</string>
+    <string name="toast_warning_pref_proxysharing_short">Allow connections from the LAN. Make sure you are in a trusted network</string>
+    <string name="connection_test_available">Success: Connection took %dms</string>
+    <string name="connection_test_error">Fail to detect internet connection: %s</string>
+    <string name="connection_test_error_status_code">Error code: #%d</string>
+    <string name="vpn_core_config_build_failed">Could not build VPN configuration for the selected profile.</string>
+    <string name="vpn_core_receiver_register_failed">Could not register VPN service receiver.</string>
+    <string name="vpn_core_start_failed_generic">VPN core failed to start.</string>
+    <string name="vpn_core_not_running_after_start">VPN core exited immediately after start.</string>
+    <string name="vpn_core_notification_failed">VPN core started but notifications failed.</string>
+</resources>

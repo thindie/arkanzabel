@@ -8,8 +8,11 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
-/build
+# Build outputs (root and all Gradle modules)
+**/build/
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+# Ephemeral agent/plan drafts
+/docs/tmp

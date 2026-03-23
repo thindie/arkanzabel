@@ -32,10 +32,18 @@ android {
   }
   buildFeatures {
     compose = true
+    buildConfig = true
+  }
+
+  packaging {
+    jniLibs {
+      useLegacyPackaging = true
+    }
   }
 }
 
 dependencies {
+  implementation(project(":v2ray-engine"))
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.activity.compose)
