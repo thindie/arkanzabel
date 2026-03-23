@@ -1,7 +1,7 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean.FinalMaskBean
 import com.v2ray.ang.enums.Protocol
@@ -21,9 +21,9 @@ object Hysteria2 : ProtocolParser() {
    * @param str the Hysteria2 URI string to parse
    * @return the parsed ProfileItem object, or null if parsing fails
    */
-  fun parse(str: String): ProfileItem? {
+  fun parse(str: String): ConnectionProfile? {
     var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ProfileItem.create(Protocol.Hysteria2)
+    val config = ConnectionProfile.create(Protocol.Hysteria2)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
@@ -57,7 +57,7 @@ object Hysteria2 : ProtocolParser() {
    * @param config the ProfileItem object to convert
    * @return the converted URI string
    */
-  fun toUri(config: ProfileItem): String {
+  fun toUri(config: ConnectionProfile): String {
     val dicQuery = HashMap<String, String>()
 
     config.security.let { if (it != null) dicQuery["security"] = it }
@@ -85,35 +85,35 @@ object Hysteria2 : ProtocolParser() {
   /**
    * Converts a ProfileItem object to an OutboundBean object.
    *
-   * @param profileItem the ProfileItem object to convert
+   * @param connectionProfile the ProfileItem object to convert
    * @return the converted OutboundBean object, or null if conversion fails
    */
-  fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
     val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Hysteria2) ?: return null
-    profileItem.network = NetworkType.HYSTERIA.type
-    profileItem.alpn = "h3"
+    connectionProfile.network = NetworkType.HYSTERIA.type
+    connectionProfile.alpn = "h3"
 
     outboundBean.settings?.let { server ->
-      server.address = getServerAddress(profileItem)
-      server.port = profileItem.serverPort.orEmpty().toInt()
+      server.address = getServerAddress(connectionProfile)
+      server.port = connectionProfile.serverPort.orEmpty().toInt()
       server.version = 2
     }
 
     val sni = outboundBean.streamSettings?.let {
-      V2rayConfigManager.populateTransportSettings(it, profileItem)
+      V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
     outboundBean.streamSettings?.let {
-      V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+      V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
-    if (profileItem.obfsPassword.isNotNullEmpty()) {
+    if (connectionProfile.obfsPassword.isNotNullEmpty()) {
       outboundBean.streamSettings?.finalmask = FinalMaskBean(
         udp = listOf(
           FinalMaskBean.MaskBean(
             type = "salamander",
             settings = FinalMaskBean.MaskBean.MaskSettingsBean(
-              password = profileItem.obfsPassword
+              password = connectionProfile.obfsPassword
             )
           )
         )

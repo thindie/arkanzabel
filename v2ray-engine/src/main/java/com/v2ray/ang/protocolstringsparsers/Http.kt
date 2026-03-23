@@ -1,6 +1,6 @@
 package com.v2ray.ang.protocolstringsparsers
 
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
@@ -10,19 +10,19 @@ object Http : ProtocolParser() {
   /**
    * Converts a ProfileItem object to an OutboundBean object.
    *
-   * @param profileItem the ProfileItem object to convert
+   * @param connectionProfile the СonnectionProfile object to convert
    * @return the converted OutboundBean object, or null if conversion fails
    */
-  fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
     val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Http)
 
     outboundBean?.settings?.servers?.first()?.let { server ->
-      server.address = getServerAddress(profileItem)
-      server.port = profileItem.serverPort.orEmpty().toInt()
-      if (profileItem.username.isNotNullEmpty()) {
+      server.address = getServerAddress(connectionProfile)
+      server.port = connectionProfile.serverPort.orEmpty().toInt()
+      if (connectionProfile.username.isNotNullEmpty()) {
         val socksUsersBean = OutboundBean.OutSettingsBean.ServersBean.SocksUsersBean()
-        socksUsersBean.user = profileItem.username.orEmpty()
-        socksUsersBean.pass = profileItem.password.orEmpty()
+        socksUsersBean.user = connectionProfile.username.orEmpty()
+        socksUsersBean.pass = connectionProfile.password.orEmpty()
         server.users = listOf(socksUsersBean)
       }
     }

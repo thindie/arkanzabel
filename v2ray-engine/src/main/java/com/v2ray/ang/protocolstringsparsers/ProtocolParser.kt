@@ -1,7 +1,7 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.handler.KeyValueStorage
@@ -31,7 +31,7 @@ open class ProtocolParser {
    * @param dicQuery the query parameters to include in the URI
    * @return the converted URI string
    */
-  fun toUri(config: ProfileItem, userInfo: String?, dicQuery: HashMap<String, String>?): String {
+  fun toUri(config: ConnectionProfile, userInfo: String?, dicQuery: HashMap<String, String>?): String {
     val query = if (dicQuery != null)
       "?" + dicQuery.toList().joinToString(
         separator = "&",
@@ -79,9 +79,9 @@ open class ProtocolParser {
    * @param allowInsecure whether to allow insecure connections
    */
   fun getItemFormQuery(
-      config: ProfileItem,
-      queryParam: Map<String, String>,
-      allowInsecure: Boolean,
+    config: ConnectionProfile,
+    queryParam: Map<String, String>,
+    allowInsecure: Boolean,
   ) {
     config.network = queryParam["type"] ?: NetworkType.TCP.type
     config.headerType = queryParam["headerType"]
@@ -133,7 +133,7 @@ open class ProtocolParser {
    * @param config the ProfileItem object to create query parameters from
    * @return a map of query parameters
    */
-  fun getQueryDic(config: ProfileItem): HashMap<String, String> {
+  fun getQueryDic(config: ConnectionProfile): HashMap<String, String> {
     val dicQuery = HashMap<String, String>()
     dicQuery["security"] = config.security?.ifEmpty { "none" }.orEmpty()
     config.sni?.nullIfBlank()?.let { dicQuery["sni"] = it }
@@ -197,12 +197,12 @@ open class ProtocolParser {
     return dicQuery
   }
 
-  fun getServerAddress(profileItem: ProfileItem): String {
-    if (Utils.isPureIpAddress(profileItem.server.orEmpty())) {
-      return profileItem.server.orEmpty()
+  fun getServerAddress(connectionProfile: ConnectionProfile): String {
+    if (Utils.isPureIpAddress(connectionProfile.server.orEmpty())) {
+      return connectionProfile.server.orEmpty()
     }
 
-    val domain = HttpUtil.toIdnDomain(profileItem.server.orEmpty())
+    val domain = HttpUtil.toIdnDomain(connectionProfile.server.orEmpty())
     if (KeyValueStorage.decodeSettingsString(
         AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
         "1"

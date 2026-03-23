@@ -3,7 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import android.text.TextUtils
 import android.util.Log
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.VmessQRCode
 import com.v2ray.ang.enums.Protocol
@@ -17,13 +17,13 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 object Vmess : ProtocolParser() {
-  fun parse(str: String): ProfileItem? {
+  fun parse(str: String): ConnectionProfile? {
     if (str.indexOf('?') > 0 && str.indexOf('&') > 0) {
       return parseVmessStd(str)
     }
 
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ProfileItem.create(Protocol.Vmess)
+    val config = ConnectionProfile.create(Protocol.Vmess)
 
     var result = str.replace(Protocol.Vmess.protocolScheme, "")
     result = Utils.decode(result)
@@ -83,7 +83,7 @@ object Vmess : ProtocolParser() {
     return config
   }
 
-  fun toUri(config: ProfileItem): String {
+  fun toUri(config: ConnectionProfile): String {
     val vmessQRCode = VmessQRCode()
 
     vmessQRCode.v = "2"
@@ -127,9 +127,9 @@ object Vmess : ProtocolParser() {
     return Utils.encode(json)
   }
 
-  fun parseVmessStd(str: String): ProfileItem? {
+  fun parseVmessStd(str: String): ConnectionProfile? {
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ProfileItem.create(Protocol.Vmess)
+    val config = ConnectionProfile.create(Protocol.Vmess)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
@@ -146,22 +146,22 @@ object Vmess : ProtocolParser() {
     return config
   }
 
-  fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
     val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Vmess)
 
     outboundBean?.settings?.vnext?.first()?.let { vnext ->
-      vnext.address = getServerAddress(profileItem)
-      vnext.port = profileItem.serverPort.orEmpty().toInt()
-      vnext.users[0].id = profileItem.password.orEmpty()
-      vnext.users[0].security = profileItem.method
+      vnext.address = getServerAddress(connectionProfile)
+      vnext.port = connectionProfile.serverPort.orEmpty().toInt()
+      vnext.users[0].id = connectionProfile.password.orEmpty()
+      vnext.users[0].security = connectionProfile.method
     }
 
     val sni = outboundBean?.streamSettings?.let {
-      V2rayConfigManager.populateTransportSettings(it, profileItem)
+      V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
     outboundBean?.streamSettings?.let {
-      V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+      V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
     return outboundBean

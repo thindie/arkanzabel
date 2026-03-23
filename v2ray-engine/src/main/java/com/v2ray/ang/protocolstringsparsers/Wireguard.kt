@@ -2,7 +2,7 @@ package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.WIREGUARD_LOCAL_ADDRESS_V4
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
@@ -19,8 +19,8 @@ object Wireguard : ProtocolParser() {
    * @param str the URI string to parse
    * @return the parsed ProfileItem object, or null if parsing fails
    */
-  fun parse(str: String): ProfileItem? {
-    val config = ProfileItem.create(Protocol.WireGuard)
+  fun parse(str: String): ConnectionProfile? {
+    val config = ConnectionProfile.create(Protocol.WireGuard)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
@@ -40,8 +40,8 @@ object Wireguard : ProtocolParser() {
     return config
   }
 
-  fun parseWireguardConfFile(str: String): ProfileItem? {
-    val config = ProfileItem.create(Protocol.WireGuard)
+  fun parseWireguardConfFile(str: String): ConnectionProfile? {
+    val config = ConnectionProfile.create(Protocol.WireGuard)
 
     val interfaceParams: MutableMap<String, String> = mutableMapOf()
     val peerParams: MutableMap<String, String> = mutableMapOf()
@@ -94,27 +94,27 @@ object Wireguard : ProtocolParser() {
     return config
   }
 
-  fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
     val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.WireGuard)
 
     outboundBean?.settings?.let { wireguard ->
-      wireguard.secretKey = profileItem.secretKey
-      wireguard.address = (profileItem.localAddress ?: WIREGUARD_LOCAL_ADDRESS_V4).split(",")
+      wireguard.secretKey = connectionProfile.secretKey
+      wireguard.address = (connectionProfile.localAddress ?: WIREGUARD_LOCAL_ADDRESS_V4).split(",")
       wireguard.peers?.firstOrNull()?.let { peer ->
-        peer.publicKey = profileItem.publicKey.orEmpty()
-        peer.preSharedKey = profileItem.preSharedKey?.nullIfBlank()
-        peer.endpoint = Utils.getIpv6Address(profileItem.server) + ":${profileItem.serverPort}"
+        peer.publicKey = connectionProfile.publicKey.orEmpty()
+        peer.preSharedKey = connectionProfile.preSharedKey?.nullIfBlank()
+        peer.endpoint = Utils.getIpv6Address(connectionProfile.server) + ":${connectionProfile.serverPort}"
       }
-      wireguard.mtu = profileItem.mtu
+      wireguard.mtu = connectionProfile.mtu
       wireguard.reserved =
-        profileItem.reserved?.takeIf { it.isNotBlank() }?.split(",")?.filter { it.isNotBlank() }
+        connectionProfile.reserved?.takeIf { it.isNotBlank() }?.split(",")?.filter { it.isNotBlank() }
           ?.map { it.trim().toInt() }
     }
 
     return outboundBean
   }
 
-  fun toUri(config: ProfileItem): String {
+  fun toUri(config: ConnectionProfile): String {
     val dicQuery = HashMap<String, String>()
 
     dicQuery["publickey"] = config.publicKey.orEmpty()

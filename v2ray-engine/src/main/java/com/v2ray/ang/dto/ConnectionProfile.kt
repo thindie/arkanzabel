@@ -8,7 +8,7 @@ import com.v2ray.ang.AppConfig.TAG_PROXY
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.Utils
 
-data class ProfileItem(
+data class ConnectionProfile(
     val configVersion: Int = 4,
     val protocol: Protocol,
     var subscriptionId: String = "",
@@ -70,8 +70,8 @@ data class ProfileItem(
 
     ) {
     companion object {
-        fun create(configType: Protocol): ProfileItem {
-            return ProfileItem(protocol = configType)
+        fun create(configType: Protocol): ConnectionProfile {
+            return ConnectionProfile(protocol = configType)
         }
     }
 
@@ -88,7 +88,7 @@ data class ProfileItem(
 
     override fun equals(other: Any?): Boolean {
         if (other == null) return false
-        val obj = other as ProfileItem
+        val obj = other as ConnectionProfile
 
         return (this.server == obj.server
                 && this.serverPort == obj.serverPort

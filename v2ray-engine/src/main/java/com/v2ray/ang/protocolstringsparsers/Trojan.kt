@@ -3,7 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.handler.KeyValueStorage
@@ -18,9 +18,9 @@ object Trojan : ProtocolParser() {
      * @param str the Trojan URI string to parse
      * @return the parsed ProfileItem object, or null if parsing fails
      */
-    fun parse(str: String): ProfileItem? {
+    fun parse(str: String): ConnectionProfile? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ProfileItem.create(Protocol.Trojan)
+        val config = ConnectionProfile.create(Protocol.Trojan)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
@@ -48,7 +48,7 @@ object Trojan : ProtocolParser() {
      * @param config the ProfileItem object to convert
      * @return the converted URI string
      */
-    fun toUri(config: ProfileItem): String {
+    fun toUri(config: ConnectionProfile): String {
         val dicQuery = getQueryDic(config)
 
         return toUri(config, config.password, dicQuery)
@@ -57,25 +57,25 @@ object Trojan : ProtocolParser() {
     /**
      * Converts a ProfileItem object to an OutboundBean object.
      *
-     * @param profileItem the ProfileItem object to convert
+     * @param connectionProfile the ProfileItem object to convert
      * @return the converted OutboundBean object, or null if conversion fails
      */
-    fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+    fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
         val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
 
         outboundBean?.settings?.servers?.first()?.let { server ->
-            server.address = getServerAddress(profileItem)
-            server.port = profileItem.serverPort.orEmpty().toInt()
-            server.password = profileItem.password
-            server.flow = profileItem.flow
+            server.address = getServerAddress(connectionProfile)
+            server.port = connectionProfile.serverPort.orEmpty().toInt()
+            server.password = connectionProfile.password
+            server.flow = connectionProfile.flow
         }
 
         val sni = outboundBean?.streamSettings?.let {
-            V2rayConfigManager.populateTransportSettings(it, profileItem)
+            V2rayConfigManager.populateTransportSettings(it, connectionProfile)
         }
 
         outboundBean?.streamSettings?.let {
-            V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+            V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
         }
 
         return outboundBean

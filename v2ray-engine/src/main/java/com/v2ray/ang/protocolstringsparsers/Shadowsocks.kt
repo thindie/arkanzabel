@@ -2,7 +2,7 @@ package com.v2ray.ang.protocolstringsparsers
 
 import android.util.Log
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
@@ -18,7 +18,7 @@ object Shadowsocks : ProtocolParser() {
    * @param str the Shadowsocks URI string to parse
    * @return the parsed ProfileItem object, or null if parsing fails
    */
-  fun parse(str: String): ProfileItem? {
+  fun parse(str: String): ConnectionProfile? {
     return parseSip002(str) ?: parseLegacy(str)
   }
 
@@ -28,8 +28,8 @@ object Shadowsocks : ProtocolParser() {
    * @param str the SIP002 Shadowsocks URI string to parse
    * @return the parsed ProfileItem object, or null if parsing fails
    */
-  fun parseSip002(str: String): ProfileItem? {
-    val config = ProfileItem.create(Protocol.ShadowSocks)
+  fun parseSip002(str: String): ConnectionProfile? {
+    val config = ConnectionProfile.create(Protocol.ShadowSocks)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.idnHost.isEmpty()) return null
@@ -76,8 +76,8 @@ object Shadowsocks : ProtocolParser() {
    * @param str the legacy Shadowsocks URI string to parse
    * @return the parsed ProfileItem object, or null if parsing fails
    */
-  fun parseLegacy(str: String): ProfileItem? {
-    val config = ProfileItem.create(Protocol.ShadowSocks)
+  fun parseLegacy(str: String): ConnectionProfile? {
+    val config = ConnectionProfile.create(Protocol.ShadowSocks)
     var result = str.replace(Protocol.ShadowSocks.protocolScheme, "")
     val indexSplit = result.indexOf("#")
     if (indexSplit > 0) {
@@ -113,28 +113,28 @@ object Shadowsocks : ProtocolParser() {
     return config
   }
 
-  fun toUri(config: ProfileItem): String {
+  fun toUri(config: ConnectionProfile): String {
     val pw = "${config.method}:${config.password}"
 
     return toUri(config, Utils.encode(pw, true), null)
   }
 
-  fun toOutbound(profileItem: ProfileItem): OutboundBean? {
+  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
     val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.ShadowSocks)
 
     outboundBean?.settings?.servers?.first()?.let { server ->
-      server.address = getServerAddress(profileItem)
-      server.port = profileItem.serverPort.orEmpty().toInt()
-      server.password = profileItem.password
-      server.method = profileItem.method
+      server.address = getServerAddress(connectionProfile)
+      server.port = connectionProfile.serverPort.orEmpty().toInt()
+      server.password = connectionProfile.password
+      server.method = connectionProfile.method
     }
 
     val sni = outboundBean?.streamSettings?.let {
-      V2rayConfigManager.populateTransportSettings(it, profileItem)
+      V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
     outboundBean?.streamSettings?.let {
-      V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+      V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
     return outboundBean

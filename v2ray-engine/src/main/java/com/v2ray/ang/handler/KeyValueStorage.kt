@@ -7,7 +7,7 @@ import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
 import com.v2ray.ang.dto.AssetUrlCache
 import com.v2ray.ang.dto.AssetUrlItem
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.ServerAffiliationInfo
 import com.v2ray.ang.dto.SubscriptionCache
@@ -18,7 +18,7 @@ import com.v2ray.ang.util.Utils
 
 object KeyValueStorage {
 
-  /** [IllegalStateException.message] when Gson failed to serialize a [ProfileItem]. */
+  /** [IllegalStateException.message] when Gson failed to serialize a [ConnectionProfile]. */
   const val ERROR_MESSAGE_PROFILE_JSON_FAILED = "ARKNZBL_PROFILE_JSON_FAILED"
 
   fun initialize(context: Context) {
@@ -69,14 +69,14 @@ object KeyValueStorage {
     }
   }
 
-  fun decodeServerConfig(guid: String): ProfileItem? {
+  fun decodeServerConfig(guid: String): ConnectionProfile? {
     if (guid.isBlank()) return null
     val json = profileFullStorage.decodeString(guid)
     if (json.isNullOrBlank()) return null
-    return JsonUtil.fromJson(json, ProfileItem::class.java)
+    return JsonUtil.fromJson(json, ConnectionProfile::class.java)
   }
 
-  fun encodeServerConfig(guid: String, config: ProfileItem): String {
+  fun encodeServerConfig(guid: String, config: ConnectionProfile): String {
     val key = when {
       guid.isNotBlank() -> guid
       else -> {

@@ -1,7 +1,7 @@
 package com.v2ray.ang.handler
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.protocolstringsparsers.Custom
 import com.v2ray.ang.protocolstringsparsers.Hysteria2
 import com.v2ray.ang.protocolstringsparsers.Shadowsocks
@@ -12,10 +12,10 @@ import com.v2ray.ang.protocolstringsparsers.Vmess
 import com.v2ray.ang.protocolstringsparsers.Wireguard
 import java.net.URISyntaxException
 
-/** Resolves a single share line (subscription row, clipboard) to [ProfileItem]. */
+/** Resolves a single share line (subscription row, clipboard) to [ConnectionProfile]. */
 object ProfileUriParser {
 
-  fun parse(raw: String): ProfileItem? {
+  fun parse(raw: String): ConnectionProfile? {
     val t = raw.trim()
     if (t.isEmpty() || t.startsWith("#")) return null
     return try {

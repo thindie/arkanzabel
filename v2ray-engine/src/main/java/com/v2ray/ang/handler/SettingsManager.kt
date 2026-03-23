@@ -10,7 +10,7 @@ import com.v2ray.ang.AppConfig.GEOIP_PRIVATE
 import com.v2ray.ang.AppConfig.GEOSITE_PRIVATE
 import com.v2ray.ang.AppConfig.TAG_DIRECT
 import com.v2ray.ang.AppConfig.VPN
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.enums.Protocol
@@ -135,7 +135,7 @@ object SettingsManager {
     KeyValueStorage.encodeSubsList(subsList.toList())
   }
 
-  fun getServerViaRemarks(remarks: String?): ProfileItem? {
+  fun getServerViaRemarks(remarks: String?): ConnectionProfile? {
     if (remarks.isNullOrEmpty()) return null
     for (guid in KeyValueStorage.decodeServerList()) {
       val profile = KeyValueStorage.decodeServerConfig(guid)

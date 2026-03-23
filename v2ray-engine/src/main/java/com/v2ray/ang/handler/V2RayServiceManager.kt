@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import com.v2ray.ang.AppConfig
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.enums.Protocol
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.service.V2RayProxyOnlyService
 import com.v2ray.ang.service.V2RayVpnService
@@ -34,7 +34,7 @@ object V2RayServiceManager {
 
     private val coreController: CoreController = V2RayNativeManager.newCoreController(CoreCallback())
     private val mMsgReceive = ReceiveMessageHandler()
-    private var currentConfig: ProfileItem? = null
+    private var currentConfig: ConnectionProfile? = null
 
     var serviceControl: SoftReference<ServiceControl>? = null
         set(value) {

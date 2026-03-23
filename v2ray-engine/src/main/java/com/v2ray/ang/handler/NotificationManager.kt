@@ -15,7 +15,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.extension.toSpeedString
 import kotlin.math.min
 
@@ -34,13 +34,13 @@ object NotificationManager {
   private var notificationCompatBuilder: NotificationCompat.Builder? = null
   private var mNotificationManager: SysNotificationManager? = null
 
-  fun startSpeedNotification(currentConfig: ProfileItem?) {
+  fun startSpeedNotification(connectionProfile: ConnectionProfile?) {
     if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED) != true) return
     if (speedTickRunnable != null || !V2RayServiceManager.isRunning()) return
 
     lastQueryTime = System.currentTimeMillis()
     var lastZeroSpeed = false
-    val outboundTags = currentConfig?.getAllOutboundTags()?.apply { remove(AppConfig.TAG_DIRECT) }
+    val outboundTags = connectionProfile?.getAllOutboundTags()?.apply { remove(AppConfig.TAG_DIRECT) }
 
     val tick =
       object : Runnable {
@@ -86,7 +86,7 @@ object NotificationManager {
     speedHandler.post(tick)
   }
 
-  fun showNotification(currentConfig: ProfileItem?) {
+  fun showNotification(connectionProfile: ConnectionProfile?) {
     val service = getService() ?: return
     val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -133,7 +133,7 @@ object NotificationManager {
     notificationCompatBuilder =
       NotificationCompat.Builder(service, channelId)
         .setSmallIcon(R.drawable.ic_stat_name)
-        .setContentTitle(currentConfig?.remarks)
+        .setContentTitle(connectionProfile?.remarks)
         .setPriority(NotificationCompat.PRIORITY_MIN)
         .setOngoing(true)
         .setShowWhen(false)
@@ -163,10 +163,10 @@ object NotificationManager {
     mNotificationManager = null
   }
 
-  fun stopSpeedNotification(currentConfig: ProfileItem?) {
+  fun stopSpeedNotification(connectionProfile: ConnectionProfile?) {
     speedTickRunnable?.let { speedHandler.removeCallbacks(it) }
     speedTickRunnable = null
-    updateNotification(currentConfig?.remarks, 0, 0)
+    updateNotification(connectionProfile?.remarks, 0, 0)
   }
 
   @RequiresApi(Build.VERSION_CODES.O)

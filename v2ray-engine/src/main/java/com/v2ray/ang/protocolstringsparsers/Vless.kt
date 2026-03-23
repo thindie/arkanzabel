@@ -2,7 +2,7 @@ package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.Protocol
-import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.handler.KeyValueStorage
@@ -23,7 +23,7 @@ object Vless : ProtocolParser() {
     /**
      * Some exporters or [URI] parsing edge cases drop query pairs; scrape pbk from the raw share line.
      */
-    private fun mergeRealityPublicKeyFromRawLine(config: ProfileItem, rawLine: String) {
+    private fun mergeRealityPublicKeyFromRawLine(config: ConnectionProfile, rawLine: String) {
       if (!config.publicKey.isNullOrBlank()) return
       val chunks = buildList {
         rawLine.substringAfter("?", "").substringBefore("#").trim().let { if (it.isNotEmpty()) add(it) }
@@ -51,9 +51,9 @@ object Vless : ProtocolParser() {
      * @param str the Vless URI string to parse
      * @return the parsed ProfileItem object, or null if parsing fails
      */
-    fun parse(str: String): ProfileItem? {
+    fun parse(str: String): ConnectionProfile? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ProfileItem.create(Protocol.Vless)
+        val config = ConnectionProfile.create(Protocol.Vless)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         if (uri.rawQuery.isNullOrEmpty()) return null
@@ -77,7 +77,7 @@ object Vless : ProtocolParser() {
      * @param config the ProfileItem object to convert
      * @return the converted URI string
      */
-    fun toUri(config: ProfileItem): String {
+    fun toUri(config: ConnectionProfile): String {
         val dicQuery = getQueryDic(config)
         dicQuery["encryption"] = config.method ?: "none"
 
@@ -87,29 +87,29 @@ object Vless : ProtocolParser() {
     /**
      * Converts a ProfileItem object to an OutboundBean object.
      *
-     * @param profileItem the ProfileItem object to convert
+     * @param connectionProfile the ProfileItem object to convert
      * @return the converted OutboundBean object, or null if conversion fails
      */
-    fun toOutbound(profileItem: ProfileItem): OutboundBean? {
-        if (profileItem.security == AppConfig.REALITY && profileItem.publicKey.isNullOrBlank()) {
+    fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
+        if (connectionProfile.security == AppConfig.REALITY && connectionProfile.publicKey.isNullOrBlank()) {
             return null
         }
         val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Vless)
 
         outboundBean?.settings?.vnext?.first()?.let { vnext ->
-            vnext.address = getServerAddress(profileItem)
-            vnext.port = profileItem.serverPort.orEmpty().toInt()
-            vnext.users[0].id = profileItem.password.orEmpty()
-            vnext.users[0].encryption = profileItem.method
-            vnext.users[0].flow = profileItem.flow
+            vnext.address = getServerAddress(connectionProfile)
+            vnext.port = connectionProfile.serverPort.orEmpty().toInt()
+            vnext.users[0].id = connectionProfile.password.orEmpty()
+            vnext.users[0].encryption = connectionProfile.method
+            vnext.users[0].flow = connectionProfile.flow
         }
 
         val sni = outboundBean?.streamSettings?.let {
-            V2rayConfigManager.populateTransportSettings(it, profileItem)
+            V2rayConfigManager.populateTransportSettings(it, connectionProfile)
         }
 
         outboundBean?.streamSettings?.let {
-            V2rayConfigManager.populateTlsSettings(it, profileItem, sni)
+            V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
         }
 
         return outboundBean
