@@ -33,6 +33,7 @@ object V2rayConfigManager {
   private var initConfigCacheWithTun: String? = null
   private val routingConfigStep by lazy { RoutingConfigStep() }
   private val dnsConfigStep by lazy { DnsConfigStep(::getUserRule2Domain) }
+  private val outboundConfigStep by lazy { OutboundConfigStep(::convertProfile2Outbound) }
   private val configAssembler by lazy {
     ConfigAssembler(
       applyInbounds = ::getInbounds,
@@ -223,11 +224,11 @@ object V2rayConfigManager {
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     v2rayConfig.remarks = config.remarks
 
-    configAssembler.applyStandardSteps(v2rayConfig, config)
-    if (v2rayConfig.getProxyOutbound() == null) return result
+    val assembled = configAssembler.applyStandardSteps(v2rayConfig, config) ?: return result
+    if (assembled.getProxyOutbound() == null) return result
     return result.copy(
       status = true,
-      content = JsonUtil.toJsonPretty(v2rayConfig) ?: "",
+      content = JsonUtil.toJsonPretty(assembled) ?: "",
       guid = guid,
     )
   }
@@ -511,18 +512,7 @@ object V2rayConfigManager {
    * @return true if outbound configuration was successful, null if there was an error
    */
   private fun getOutbounds(v2rayConfig: V2rayConfig, config: ConnectionProfile): Boolean? {
-    val outbound = convertProfile2Outbound(config) ?: return null
-    val ret = updateOutboundWithGlobalSettings(outbound)
-    if (!ret) return null
-
-    if (v2rayConfig.outbounds.isNotEmpty()) {
-      v2rayConfig.outbounds[0] = outbound
-    } else {
-      v2rayConfig.outbounds.add(outbound)
-    }
-
-    updateOutboundFragment(v2rayConfig)
-    return true
+    return outboundConfigStep.applyOutbounds(v2rayConfig, config)
   }
 
   /**
@@ -535,50 +525,7 @@ object V2rayConfigManager {
    * @return true if additional outbounds were configured successfully, false otherwise
    */
   private fun getMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): Boolean {
-    //fragment proxy
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false) == true) {
-      return false
-    }
-
-    if (subscriptionId.isEmpty()) {
-      return false
-    }
-    try {
-      val subItem = KeyValueStorage.decodeSubscription(subscriptionId) ?: return false
-
-      //current proxy
-      val outbound = v2rayConfig.outbounds[0]
-
-      //Previous proxy
-      val prevNode = SettingsManager.getServerViaRemarks(subItem.prevProfile)
-      if (prevNode != null) {
-        val prevOutbound = convertProfile2Outbound(prevNode)
-        if (prevOutbound != null) {
-          updateOutboundWithGlobalSettings(prevOutbound)
-          prevOutbound.tag = AppConfig.TAG_PROXY + "2"
-          v2rayConfig.outbounds.add(prevOutbound)
-          outbound.ensureSockopt().dialerProxy = prevOutbound.tag
-        }
-      }
-
-      //Next proxy
-      val nextNode = SettingsManager.getServerViaRemarks(subItem.nextProfile)
-      if (nextNode != null) {
-        val nextOutbound = convertProfile2Outbound(nextNode)
-        if (nextOutbound != null) {
-          updateOutboundWithGlobalSettings(nextOutbound)
-          nextOutbound.tag = AppConfig.TAG_PROXY
-          v2rayConfig.outbounds.add(0, nextOutbound)
-          outbound.tag = AppConfig.TAG_PROXY + "1"
-          nextOutbound.ensureSockopt().dialerProxy = outbound.tag
-        }
-      }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure more outbounds", e)
-      return false
-    }
-
-    return true
+    return outboundConfigStep.applyMoreOutbounds(v2rayConfig, subscriptionId)
   }
 
   /**
@@ -590,83 +537,7 @@ object V2rayConfigManager {
    * @return true if the update was successful, false otherwise
    */
   private fun updateOutboundWithGlobalSettings(outbound: OutboundBean): Boolean {
-    try {
-      var muxEnabled = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false)
-      val protocol = outbound.protocol
-      if (protocol.equals(Protocol.ShadowSocks.name, true)
-        || protocol.equals(Protocol.Socks.name, true)
-        || protocol.equals(Protocol.Http.name, true)
-        || protocol.equals(Protocol.Trojan.name, true)
-        || protocol.equals(Protocol.WireGuard.name, true)
-        || protocol.equals(Protocol.Hysteria2.name, true)
-      ) {
-        muxEnabled = false
-      } else if (outbound.streamSettings?.network == NetworkType.XHTTP.type) {
-        muxEnabled = false
-      }
-
-      if (muxEnabled == true) {
-        outbound.mux?.enabled = true
-        outbound.mux?.concurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty()
-            .toInt()
-        outbound.mux?.xudpConcurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "16").orEmpty()
-            .toInt()
-        outbound.mux?.xudpProxyUDP443 =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
-        if (protocol.equals(
-            Protocol.Vless.name,
-            true
-          ) && outbound.settings?.vnext?.first()?.users?.first()?.flow?.isNotEmpty() == true
-        ) {
-          outbound.mux?.concurrency = -1
-        }
-      } else {
-        outbound.mux?.enabled = false
-        outbound.mux?.concurrency = -1
-      }
-
-      if (protocol.equals(Protocol.WireGuard.name, true)) {
-        var localTunAddr = if (outbound.settings?.address == null) {
-          listOf(AppConfig.WIREGUARD_LOCAL_ADDRESS_V4)
-        } else {
-          outbound.settings?.address as List<*>
-        }
-        if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) != true) {
-          localTunAddr = listOf(localTunAddr.first())
-        }
-        outbound.settings?.address = localTunAddr
-      }
-
-      if (outbound.streamSettings?.network == AppConfig.DEFAULT_NETWORK
-        && outbound.streamSettings?.tcpSettings?.header?.type == AppConfig.HEADER_TYPE_HTTP
-      ) {
-        val path = outbound.streamSettings?.tcpSettings?.header?.request?.path
-        val host = outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host
-
-        val requestString: String by lazy {
-          """{"version":"1.1","method":"GET","headers":{"User-Agent":["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"],"Accept-Encoding":["gzip, deflate"],"Connection":["keep-alive"],"Pragma":"no-cache"}}"""
-        }
-        outbound.streamSettings?.tcpSettings?.header?.request = JsonUtil.fromJson(
-          requestString,
-          StreamSettingsBean.TcpSettingsBean.HeaderBean.RequestBean::class.java
-        )
-        outbound.streamSettings?.tcpSettings?.header?.request?.path =
-          if (path.isNullOrEmpty()) {
-            listOf("/")
-          } else {
-            path
-          }
-        outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host = host
-      }
-
-
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to update outbound with global settings", e)
-      return false
-    }
-    return true
+    return outboundConfigStep.applyGlobalOutboundSettings(outbound)
   }
 
   /**
@@ -782,69 +653,7 @@ object V2rayConfigManager {
    * @return true if fragment configuration was successful, false otherwise
    */
   private fun updateOutboundFragment(v2rayConfig: V2rayConfig): Boolean {
-    try {
-      if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false) == false) {
-        return true
-      }
-      if (v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.TLS
-        && v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.REALITY
-      ) {
-        return true
-      }
-
-      val fragmentOutbound =
-        OutboundBean(
-          protocol = AppConfig.PROTOCOL_FREEDOM,
-          tag = AppConfig.TAG_FRAGMENT,
-          mux = null
-        )
-
-      var packets =
-        KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_PACKETS) ?: "tlshello"
-      if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.REALITY
-        && packets == "tlshello"
-      ) {
-        packets = "1-3"
-      } else if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.TLS
-        && packets != "tlshello"
-      ) {
-        packets = "tlshello"
-      }
-
-      fragmentOutbound.settings = OutSettingsBean(
-        fragment = OutSettingsBean.FragmentBean(
-          packets = packets,
-          length = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH)
-            ?: "50-100",
-          interval = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL)
-            ?: "10-20"
-        ),
-        noises = listOf(
-          OutSettingsBean.NoiseBean(
-            type = "rand",
-            packet = "10-20",
-            delay = "10-16",
-          )
-        ),
-      )
-      fragmentOutbound.streamSettings = StreamSettingsBean(
-        sockopt = StreamSettingsBean.SockoptBean(
-          TcpNoDelay = true,
-          mark = 255
-        )
-      )
-      v2rayConfig.outbounds.add(fragmentOutbound)
-
-      //proxy chain
-      v2rayConfig.outbounds[0].streamSettings?.sockopt =
-        StreamSettingsBean.SockoptBean(
-          dialerProxy = AppConfig.TAG_FRAGMENT
-        )
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to update outbound fragment", e)
-      return false
-    }
-    return true
+    return outboundConfigStep.applyOutboundFragment(v2rayConfig)
   }
 
   /**
