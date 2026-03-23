@@ -6,8 +6,7 @@ import android.util.Log
 import com.google.gson.JsonArray
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConfigResult
-import com.v2ray.ang.dto.ProfileItem
-import com.v2ray.ang.dto.RulesetItem
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
@@ -32,6 +31,20 @@ import com.v2ray.ang.util.Utils
 object V2rayConfigManager {
   private var initConfigCache: String? = null
   private var initConfigCacheWithTun: String? = null
+  private val routingConfigStep by lazy { RoutingConfigStep() }
+  private val dnsConfigStep by lazy { DnsConfigStep(::getUserRule2Domain) }
+  private val configAssembler by lazy {
+    ConfigAssembler(
+      applyInbounds = ::getInbounds,
+      applyOutbounds = ::getOutbounds,
+      applyMoreOutbounds = ::getMoreOutbounds,
+      applyRouting = ::getRouting,
+      applyFakeDns = ::getFakeDns,
+      applyDns = ::getDns,
+      applyCustomLocalDns = ::getCustomLocalDns,
+      applyResolveOutboundDomainsToHosts = ::resolveOutboundDomainsToHosts,
+    )
+  }
 
   //region get config function
 
@@ -145,7 +158,7 @@ object V2rayConfigManager {
   private fun getV2rayGroupConfig(
     context: Context,
     guid: String,
-    config: ProfileItem,
+    config: ConnectionProfile,
   ): ConfigResult {
     val result = ConfigResult(false)
 
@@ -193,7 +206,7 @@ object V2rayConfigManager {
   private fun getV2rayNormalConfig(
     context: Context,
     guid: String,
-    config: ProfileItem,
+    config: ConnectionProfile,
   ): ConfigResult {
     val result = ConfigResult(false)
 
@@ -210,33 +223,8 @@ object V2rayConfigManager {
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     v2rayConfig.remarks = config.remarks
 
-    getInbounds(v2rayConfig)
-
-    getOutbounds(v2rayConfig, config) ?: return result
-    getMoreOutbounds(v2rayConfig, config.subscriptionId)
-
-    getRouting(v2rayConfig)
-
-    getFakeDns(v2rayConfig)
-
-    getDns(v2rayConfig)
-
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED)) {
-      getCustomLocalDns(v2rayConfig)
-    }
-    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
-      v2rayConfig.stats = null
-      v2rayConfig.policy = null
-    }
-
-    //Resolve and add to DNS Hosts
-    if (KeyValueStorage.decodeSettingsString(
-        AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-        "1"
-      ) == "1"
-    ) {
-      resolveOutboundDomainsToHosts(v2rayConfig)
-    }
+    configAssembler.applyStandardSteps(v2rayConfig, config)
+    if (v2rayConfig.getProxyOutbound() == null) return result
     return result.copy(
       status = true,
       content = JsonUtil.toJsonPretty(v2rayConfig) ?: "",
@@ -246,8 +234,8 @@ object V2rayConfigManager {
 
   private fun getV2rayMultipleConfig(
     context: Context,
-    config: ProfileItem,
-    configList: List<ProfileItem>,
+    config: ConnectionProfile,
+    configList: List<ConnectionProfile>,
   ): V2rayConfig? {
     val validConfigs = configList.asSequence().filter { it.server.isNotNullEmpty() }
       .filter { !Utils.isPureIpAddress(it.server!!) || Utils.isValidUrl(it.server!!) }
@@ -320,7 +308,7 @@ object V2rayConfigManager {
   private fun getV2rayNormalConfig4Speedtest(
     context: Context,
     guid: String,
-    config: ProfileItem,
+    config: ConnectionProfile,
   ): ConfigResult {
     val result = ConfigResult(false)
 
@@ -456,11 +444,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified
    */
   private fun getFakeDns(v2rayConfig: V2rayConfig) {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) == true
-      && KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED) == true
-    ) {
-      v2rayConfig.fakedns = listOf(V2rayConfig.FakednsBean())
-    }
+    dnsConfigStep.applyFakeDns(v2rayConfig)
   }
 
   /**
@@ -472,42 +456,7 @@ object V2rayConfigManager {
    * @return true if routing configuration was successful, false otherwise
    */
   private fun getRouting(v2rayConfig: V2rayConfig): Boolean {
-    try {
-
-      v2rayConfig.routing.domainStrategy =
-        KeyValueStorage.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
-          ?: "AsIs"
-
-      val rulesetItems = KeyValueStorage.decodeRoutingRulesets()
-      rulesetItems?.forEach { key ->
-        getRoutingUserRule(key, v2rayConfig)
-      }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure routing", e)
-      return false
-    }
-    return true
-  }
-
-  /**
-   * Adds a specific ruleset item to the routing configuration.
-   *
-   * @param item The ruleset item to add
-   * @param v2rayConfig The V2ray configuration object to be modified
-   */
-  private fun getRoutingUserRule(item: RulesetItem?, v2rayConfig: V2rayConfig) {
-    try {
-      if (item == null || !item.enabled) {
-        return
-      }
-
-      val rule = JsonUtil.fromJson(JsonUtil.toJson(item), RulesBean::class.java) ?: return
-
-      v2rayConfig.routing.rules.add(rule)
-
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to apply routing user rule", e)
-    }
+    return routingConfigStep.applyRouting(v2rayConfig)
   }
 
   /**
@@ -519,22 +468,7 @@ object V2rayConfigManager {
    * @return ArrayList of domain rules matching the tag
    */
   private fun getUserRule2Domain(tag: String): ArrayList<String> {
-    val domain = ArrayList<String>()
-
-    val rulesetItems = KeyValueStorage.decodeRoutingRulesets()
-    rulesetItems?.forEach { key ->
-      if (key.enabled && key.outboundTag == tag && !key.domain.isNullOrEmpty()) {
-        key.domain?.forEach {
-          if (it != AppConfig.GEOSITE_PRIVATE
-            && (it.startsWith("geosite:") || it.startsWith("domain:"))
-          ) {
-            domain.add(it)
-          }
-        }
-      }
-    }
-
-    return domain
+    return routingConfigStep.getUserRule2Domain(tag)
   }
 
   /**
@@ -546,59 +480,7 @@ object V2rayConfigManager {
    * @return true if custom local DNS configuration was successful, false otherwise
    */
   private fun getCustomLocalDns(v2rayConfig: V2rayConfig): Boolean {
-    try {
-      if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED) == true) {
-        val geositeCn = arrayListOf(AppConfig.GEOSITE_CN)
-        val proxyDomain = getUserRule2Domain(AppConfig.TAG_PROXY)
-        val directDomain = getUserRule2Domain(AppConfig.TAG_DIRECT)
-        // fakedns with all domains to make it always top priority
-        v2rayConfig.dns?.servers?.add(
-          0,
-          V2rayConfig.DnsBean.ServersBean(
-            address = "fakedns",
-            domains = geositeCn.plus(proxyDomain).plus(directDomain)
-          )
-        )
-      }
-
-      if (SettingsManager.isVpnMode()) {
-        if (SettingsManager.isUsingHevTun()) {
-          //hev-socks5-tunnel dns routing
-          v2rayConfig.routing.rules.add(
-            0, RulesBean(
-              inboundTag = arrayListOf("socks"),
-              outboundTag = "dns-out",
-              port = "53",
-            )
-          )
-        } else {
-          v2rayConfig.routing.rules.add(
-            0, RulesBean(
-              inboundTag = arrayListOf("tun"),
-              outboundTag = "dns-out",
-              port = "53",
-            )
-          )
-        }
-      }
-
-      // DNS outbound
-      if (v2rayConfig.outbounds.none { e -> e.protocol == "dns" && e.tag == "dns-out" }) {
-        v2rayConfig.outbounds.add(
-          OutboundBean(
-            protocol = "dns",
-            tag = "dns-out",
-            settings = null,
-            streamSettings = null,
-            mux = null
-          )
-        )
-      }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure custom local DNS", e)
-      return false
-    }
-    return true
+    return dnsConfigStep.applyCustomLocalDns(v2rayConfig)
   }
 
   /**
@@ -610,102 +492,7 @@ object V2rayConfigManager {
    * @return true if DNS configuration was successful, false otherwise
    */
   private fun getDns(v2rayConfig: V2rayConfig): Boolean {
-    try {
-      val hosts = mutableMapOf<String, Any>()
-      val servers = ArrayList<Any>()
-
-      //remote Dns
-      val remoteDns = SettingsManager.getRemoteDnsServers()
-      val proxyDomain = getUserRule2Domain(AppConfig.TAG_PROXY)
-      remoteDns.forEach {
-        servers.add(it)
-      }
-      if (proxyDomain.isNotEmpty()) {
-        servers.add(
-          V2rayConfig.DnsBean.ServersBean(
-            address = remoteDns.first(),
-            domains = proxyDomain,
-          )
-        )
-      }
-
-      // domestic DNS
-      val domesticDns = SettingsManager.getDomesticDnsServers()
-      val directDomain = getUserRule2Domain(AppConfig.TAG_DIRECT)
-      val isCnRoutingMode = directDomain.contains(AppConfig.GEOSITE_CN)
-      val geoipCn = arrayListOf(AppConfig.GEOIP_CN)
-      if (directDomain.isNotEmpty()) {
-        servers.add(
-          V2rayConfig.DnsBean.ServersBean(
-            address = domesticDns.first(),
-            domains = directDomain,
-            expectIPs = if (isCnRoutingMode) geoipCn else null,
-            skipFallback = true,
-            tag = AppConfig.TAG_DOMESTIC_DNS
-          )
-        )
-      }
-
-      //block dns
-      val blkDomain = getUserRule2Domain(AppConfig.TAG_BLOCKED)
-      if (blkDomain.isNotEmpty()) {
-        hosts.putAll(blkDomain.map { it to AppConfig.LOOPBACK })
-      }
-
-      // hardcode googleapi rule to fix play store problems
-      hosts[AppConfig.GOOGLEAPIS_CN_DOMAIN] = AppConfig.GOOGLEAPIS_COM_DOMAIN
-
-      // hardcode popular Android Private DNS rule to fix localhost DNS problem
-      hosts[AppConfig.DNS_ALIDNS_DOMAIN] = AppConfig.DNS_ALIDNS_ADDRESSES
-      hosts[AppConfig.DNS_CLOUDFLARE_ONE_DOMAIN] = AppConfig.DNS_CLOUDFLARE_ONE_ADDRESSES
-      hosts[AppConfig.DNS_CLOUDFLARE_DNS_COM_DOMAIN] = AppConfig.DNS_CLOUDFLARE_DNS_COM_ADDRESSES
-      hosts[AppConfig.DNS_CLOUDFLARE_DNS_DOMAIN] = AppConfig.DNS_CLOUDFLARE_DNS_ADDRESSES
-      hosts[AppConfig.DNS_DNSPOD_DOMAIN] = AppConfig.DNS_DNSPOD_ADDRESSES
-      hosts[AppConfig.DNS_GOOGLE_DOMAIN] = AppConfig.DNS_GOOGLE_ADDRESSES
-      hosts[AppConfig.DNS_QUAD9_DOMAIN] = AppConfig.DNS_QUAD9_ADDRESSES
-      hosts[AppConfig.DNS_YANDEX_DOMAIN] = AppConfig.DNS_YANDEX_ADDRESSES
-
-      //User DNS hosts
-      try {
-        val userHosts = KeyValueStorage.decodeSettingsString(AppConfig.PREF_DNS_HOSTS)
-        if (userHosts.isNotNullEmpty()) {
-          val userHostsMap = userHosts?.split(",")
-            ?.filter { it.isNotEmpty() }
-            ?.filter { it.contains(":") }
-            ?.associate { it.split(":").let { (k, v) -> k to v } }
-          if (userHostsMap != null) hosts.putAll(userHostsMap)
-        }
-      } catch (e: Exception) {
-        Log.e(AppConfig.TAG, "Failed to configure user DNS hosts", e)
-      }
-
-      // DNS dns
-      v2rayConfig.dns = V2rayConfig.DnsBean(
-        servers = servers,
-        hosts = hosts,
-        tag = AppConfig.TAG_DNS
-      )
-
-      // DNS routing
-      v2rayConfig.routing.rules.add(
-        RulesBean(
-          outboundTag = AppConfig.TAG_DIRECT,
-          inboundTag = arrayListOf(AppConfig.TAG_DOMESTIC_DNS),
-          domain = null
-        )
-      )
-      v2rayConfig.routing.rules.add(
-        RulesBean(
-          outboundTag = AppConfig.TAG_PROXY,
-          inboundTag = arrayListOf(AppConfig.TAG_DNS),
-          domain = null
-        )
-      )
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure DNS", e)
-      return false
-    }
-    return true
+    return dnsConfigStep.applyDns(v2rayConfig)
   }
 
 
@@ -723,7 +510,7 @@ object V2rayConfigManager {
    * @param config The profile item containing connection details
    * @return true if outbound configuration was successful, null if there was an error
    */
-  private fun getOutbounds(v2rayConfig: V2rayConfig, config: ProfileItem): Boolean? {
+  private fun getOutbounds(v2rayConfig: V2rayConfig, config: ConnectionProfile): Boolean? {
     val outbound = convertProfile2Outbound(config) ?: return null
     val ret = updateOutboundWithGlobalSettings(outbound)
     if (!ret) return null
@@ -888,7 +675,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified with balancing settings
    * @param config The profile item containing policy group settings
    */
-  private fun getBalance(v2rayConfig: V2rayConfig, config: ProfileItem) {
+  private fun getBalance(v2rayConfig: V2rayConfig, config: ConnectionProfile) {
     try {
       v2rayConfig.routing.rules.forEach { rule ->
         if (rule.outboundTag == "proxy") {
@@ -1109,20 +896,20 @@ object V2rayConfigManager {
    *
    * Creates appropriate outbound settings based on the protocol type.
    *
-   * @param profileItem The profile item to convert
+   * @param connectionProfile The profile item to convert
    * @return OutboundBean configuration for the profile, or null if not supported
    */
-  private fun convertProfile2Outbound(profileItem: ProfileItem): OutboundBean? {
-    return when (profileItem.protocol) {
-      Protocol.Vmess -> Vmess.toOutbound(profileItem)
+  private fun convertProfile2Outbound(connectionProfile: ConnectionProfile): OutboundBean? {
+    return when (connectionProfile.protocol) {
+      Protocol.Vmess -> Vmess.toOutbound(connectionProfile)
       Protocol.Custom -> null
-      Protocol.ShadowSocks -> Shadowsocks.toOutbound(profileItem)
-      Protocol.Socks -> Socks.toOutbound(profileItem)
-      Protocol.Vless -> Vless.toOutbound(profileItem)
-      Protocol.Trojan -> Trojan.toOutbound(profileItem)
-      Protocol.WireGuard -> Wireguard.toOutbound(profileItem)
-      Protocol.Hysteria2 -> Hysteria2.toOutbound(profileItem)
-      Protocol.Http -> Http.toOutbound(profileItem)
+      Protocol.ShadowSocks -> Shadowsocks.toOutbound(connectionProfile)
+      Protocol.Socks -> Socks.toOutbound(connectionProfile)
+      Protocol.Vless -> Vless.toOutbound(connectionProfile)
+      Protocol.Trojan -> Trojan.toOutbound(connectionProfile)
+      Protocol.WireGuard -> Wireguard.toOutbound(connectionProfile)
+      Protocol.Hysteria2 -> Hysteria2.toOutbound(connectionProfile)
+      Protocol.Http -> Http.toOutbound(connectionProfile)
       Protocol.PolicyGroup -> null
       else -> null
     }
@@ -1197,25 +984,25 @@ object V2rayConfigManager {
    * Sets up protocol-specific transport options based on the profile settings.
    *
    * @param streamSettings The stream settings to configure
-   * @param profileItem The profile containing transport configuration
+   * @param connectionProfile The profile containing transport configuration
    * @return The Server Name Indication (SNI) value to use, or null if not applicable
    */
   fun populateTransportSettings(
     streamSettings: StreamSettingsBean,
-    profileItem: ProfileItem,
+    connectionProfile: ConnectionProfile,
   ): String? {
-    val transport = profileItem.network.orEmpty()
-    val headerType = profileItem.headerType
-    val host = profileItem.host
-    val path = profileItem.path
-    val seed = profileItem.seed
+    val transport = connectionProfile.network.orEmpty()
+    val headerType = connectionProfile.headerType
+    val host = connectionProfile.host
+    val path = connectionProfile.path
+    val seed = connectionProfile.seed
 //        val quicSecurity = profileItem.quicSecurity
 //        val key = profileItem.quicKey
-    val mode = profileItem.mode
-    val serviceName = profileItem.serviceName
-    val authority = profileItem.authority
-    val xhttpMode = profileItem.xhttpMode
-    val xhttpExtra = profileItem.xhttpExtra
+    val mode = connectionProfile.mode
+    val serviceName = connectionProfile.serviceName
+    val authority = connectionProfile.authority
+    val xhttpMode = connectionProfile.xhttpMode
+    val xhttpExtra = connectionProfile.xhttpExtra
 
     var sni: String? = null
     streamSettings.network = transport.ifEmpty { NetworkType.TCP.type }
@@ -1338,15 +1125,15 @@ object V2rayConfigManager {
       NetworkType.HYSTERIA.type -> {
         val hysteriaSetting = StreamSettingsBean.HysteriaSettingsBean(
           version = 2,
-          auth = profileItem.password.orEmpty(),
-          up = profileItem.bandwidthUp?.ifEmpty { "0" }.orEmpty(),
-          down = profileItem.bandwidthDown?.ifEmpty { "0" }.orEmpty(),
+          auth = connectionProfile.password.orEmpty(),
+          up = connectionProfile.bandwidthUp?.ifEmpty { "0" }.orEmpty(),
+          down = connectionProfile.bandwidthDown?.ifEmpty { "0" }.orEmpty(),
           udphop = null
         )
-        if (profileItem.portHopping.isNotNullEmpty()) {
+        if (connectionProfile.portHopping.isNotNullEmpty()) {
           hysteriaSetting.udphop = StreamSettingsBean.HysteriaSettingsBean.HysteriaUdpHopBean(
-            port = profileItem.portHopping,
-            interval = profileItem.portHoppingInterval
+            port = connectionProfile.portHopping,
+            interval = connectionProfile.portHoppingInterval
               ?.trim()
               ?.toIntOrNull()
               ?.takeIf { it >= 5 }
@@ -1365,43 +1152,43 @@ object V2rayConfigManager {
    * Sets up security-related parameters like certificates, fingerprints, and SNI.
    *
    * @param streamSettings The stream settings to configure
-   * @param profileItem The profile containing security configuration
+   * @param connectionProfile The profile containing security configuration
    * @param sniExt An external SNI value to use if the profile doesn't specify one
    */
   fun populateTlsSettings(
     streamSettings: StreamSettingsBean,
-    profileItem: ProfileItem,
+    connectionProfile: ConnectionProfile,
     sniExt: String?,
   ) {
-    val streamSecurity = profileItem.security.orEmpty()
-    val allowInsecure = profileItem.insecure == true
-    val sni = if (profileItem.sni.isNullOrEmpty()) {
+    val streamSecurity = connectionProfile.security.orEmpty()
+    val allowInsecure = connectionProfile.insecure == true
+    val sni = if (connectionProfile.sni.isNullOrEmpty()) {
       when {
         sniExt.isNotNullEmpty() && Utils.isDomainName(sniExt) -> sniExt
-        profileItem.server.isNotNullEmpty() && Utils.isDomainName(profileItem.server) -> profileItem.server
+        connectionProfile.server.isNotNullEmpty() && Utils.isDomainName(connectionProfile.server) -> connectionProfile.server
         else -> sniExt
       }
     } else {
-      profileItem.sni
+      connectionProfile.sni
     }
 
     streamSettings.security = streamSecurity.nullIfBlank()
     if (streamSettings.security == null) return
-    val realityPk = profileItem.publicKey.nullIfBlank()
+    val realityPk = connectionProfile.publicKey.nullIfBlank()
     val tlsSetting = StreamSettingsBean.TlsSettingsBean(
       allowInsecure = allowInsecure,
       serverName = sni.nullIfBlank(),
-      fingerprint = profileItem.fingerPrint.nullIfBlank(),
-      alpn = profileItem.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+      fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
+      alpn = connectionProfile.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
         .takeIf { !it.isNullOrEmpty() },
-      echConfigList = profileItem.echConfigList.nullIfBlank(),
-      echForceQuery = profileItem.echForceQuery.nullIfBlank(),
-      pinnedPeerCertSha256 = profileItem.pinnedCA256.nullIfBlank(),
+      echConfigList = connectionProfile.echConfigList.nullIfBlank(),
+      echForceQuery = connectionProfile.echForceQuery.nullIfBlank(),
+      pinnedPeerCertSha256 = connectionProfile.pinnedCA256.nullIfBlank(),
       publicKey = realityPk,
       realityPublicKeyPassword = realityPk,
-      shortId = profileItem.shortId.nullIfBlank(),
-      spiderX = profileItem.spiderX.nullIfBlank(),
-      mldsa65Verify = profileItem.mldsa65Verify.nullIfBlank(),
+      shortId = connectionProfile.shortId.nullIfBlank(),
+      spiderX = connectionProfile.spiderX.nullIfBlank(),
+      mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
     )
     if (streamSettings.security == AppConfig.TLS) {
       streamSettings.tlsSettings = tlsSetting
