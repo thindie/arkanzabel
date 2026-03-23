@@ -1,17 +1,17 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.handler.V2rayConfigManager
 import com.v2ray.ang.util.Utils
 import java.net.URI
 
-object ShadowsocksFmt : FmtBase() {
+object Shadowsocks : ProtocolParser() {
   /**
    * Parses a Shadowsocks URI string into a ProfileItem object.
    *
@@ -29,7 +29,7 @@ object ShadowsocksFmt : FmtBase() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parseSip002(str: String): ProfileItem? {
-    val config = ProfileItem.create(EConfigType.SHADOWSOCKS)
+    val config = ProfileItem.create(Protocol.ShadowSocks)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.idnHost.isEmpty()) return null
@@ -77,8 +77,8 @@ object ShadowsocksFmt : FmtBase() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parseLegacy(str: String): ProfileItem? {
-    val config = ProfileItem.create(EConfigType.SHADOWSOCKS)
-    var result = str.replace(EConfigType.SHADOWSOCKS.protocolScheme, "")
+    val config = ProfileItem.create(Protocol.ShadowSocks)
+    var result = str.replace(Protocol.ShadowSocks.protocolScheme, "")
     val indexSplit = result.indexOf("#")
     if (indexSplit > 0) {
       try {
@@ -113,26 +113,14 @@ object ShadowsocksFmt : FmtBase() {
     return config
   }
 
-  /**
-   * Converts a ProfileItem object to a URI string.
-   *
-   * @param config the ProfileItem object to convert
-   * @return the converted URI string
-   */
   fun toUri(config: ProfileItem): String {
     val pw = "${config.method}:${config.password}"
 
     return toUri(config, Utils.encode(pw, true), null)
   }
 
-  /**
-   * Converts a ProfileItem object to an OutboundBean object.
-   *
-   * @param profileItem the ProfileItem object to convert
-   * @return the converted OutboundBean object, or null if conversion fails
-   */
   fun toOutbound(profileItem: ProfileItem): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.SHADOWSOCKS)
+    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.ShadowSocks)
 
     outboundBean?.settings?.servers?.first()?.let { server ->
       server.address = getServerAddress(profileItem)

@@ -5,12 +5,12 @@ import com.v2ray.ang.AppConfig.PORT_SOCKS
 import com.v2ray.ang.AppConfig.TAG_BLOCKED
 import com.v2ray.ang.AppConfig.TAG_DIRECT
 import com.v2ray.ang.AppConfig.TAG_PROXY
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.Utils
 
 data class ProfileItem(
     val configVersion: Int = 4,
-    val configType: EConfigType,
+    val protocol: Protocol,
     var subscriptionId: String = "",
     var addedTime: Long = System.currentTimeMillis(),
 
@@ -70,8 +70,8 @@ data class ProfileItem(
 
     ) {
     companion object {
-        fun create(configType: EConfigType): ProfileItem {
-            return ProfileItem(configType = configType)
+        fun create(configType: Protocol): ProfileItem {
+            return ProfileItem(protocol = configType)
         }
     }
 
@@ -80,7 +80,7 @@ data class ProfileItem(
     }
 
     fun getServerAddressAndPort(): String {
-        if (server.isNullOrEmpty() && configType == EConfigType.CUSTOM) {
+        if (server.isNullOrEmpty() && protocol == Protocol.Custom) {
             return "$LOOPBACK:$PORT_SOCKS"
         }
         return Utils.getIpv6Address(server) + ":" + serverPort

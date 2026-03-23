@@ -13,7 +13,7 @@ import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.Language
 import com.v2ray.ang.enums.RoutingType
 import com.v2ray.ang.enums.VpnInterfaceAddressConfig
@@ -105,7 +105,7 @@ object SettingsManager {
 
     val guid = KeyValueStorage.getSelectServer() ?: return false
     val config = KeyValueStorage.decodeServerConfig(guid) ?: return false
-    if (config.configType == EConfigType.CUSTOM) {
+    if (config.protocol == Protocol.Custom) {
       val raw = KeyValueStorage.decodeServerRaw(guid) ?: return false
       val v2rayConfig = JsonUtil.fromJson(raw, V2rayConfig::class.java)
       val exist = v2rayConfig?.routing?.rules?.filter { it.outboundTag == TAG_DIRECT }?.any {
@@ -287,7 +287,7 @@ object SettingsManager {
     }
     for (guid in KeyValueStorage.decodeServerList()) {
       val profile = KeyValueStorage.decodeServerConfig(guid) ?: continue
-      if (profile.configType != EConfigType.HYSTERIA2) continue
+      if (profile.protocol != Protocol.Hysteria2) continue
       if (profile.pinSHA256.isNullOrEmpty() || !profile.pinnedCA256.isNullOrEmpty()) continue
       profile.pinnedCA256 = profile.pinSHA256
       profile.pinSHA256 = null

@@ -1,10 +1,10 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.WIREGUARD_LOCAL_ADDRESS_V4
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.extension.removeWhiteSpace
@@ -12,7 +12,7 @@ import com.v2ray.ang.handler.V2rayConfigManager
 import com.v2ray.ang.util.Utils
 import java.net.URI
 
-object WireguardFmt : FmtBase() {
+object Wireguard : ProtocolParser() {
   /**
    * Parses a URI string into a ProfileItem object.
    *
@@ -20,7 +20,7 @@ object WireguardFmt : FmtBase() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parse(str: String): ProfileItem? {
-    val config = ProfileItem.create(EConfigType.WIREGUARD)
+    val config = ProfileItem.create(Protocol.WireGuard)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
@@ -40,14 +40,8 @@ object WireguardFmt : FmtBase() {
     return config
   }
 
-  /**
-   * Parses a Wireguard configuration file string into a ProfileItem object.
-   *
-   * @param str the Wireguard configuration file string to parse
-   * @return the parsed ProfileItem object, or null if parsing fails
-   */
   fun parseWireguardConfFile(str: String): ProfileItem? {
-    val config = ProfileItem.create(EConfigType.WIREGUARD)
+    val config = ProfileItem.create(Protocol.WireGuard)
 
     val interfaceParams: MutableMap<String, String> = mutableMapOf()
     val peerParams: MutableMap<String, String> = mutableMapOf()
@@ -100,14 +94,8 @@ object WireguardFmt : FmtBase() {
     return config
   }
 
-  /**
-   * Converts a ProfileItem object to an OutboundBean object.
-   *
-   * @param profileItem the ProfileItem object to convert
-   * @return the converted OutboundBean object, or null if conversion fails
-   */
   fun toOutbound(profileItem: ProfileItem): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.WIREGUARD)
+    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.WireGuard)
 
     outboundBean?.settings?.let { wireguard ->
       wireguard.secretKey = profileItem.secretKey
@@ -126,12 +114,6 @@ object WireguardFmt : FmtBase() {
     return outboundBean
   }
 
-  /**
-   * Converts a ProfileItem object to a URI string.
-   *
-   * @param config the ProfileItem object to convert
-   * @return the converted URI string
-   */
   fun toUri(config: ProfileItem): String {
     val dicQuery = HashMap<String, String>()
 

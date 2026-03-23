@@ -40,11 +40,19 @@ class RealPingWorkerService(
         runningCount.incrementAndGet()
         try {
           val result = startRealPing(guid)
-          MessageUtil.sendMsg2UI(context, AppConfig.MSG_MEASURE_CONFIG_SUCCESS, Pair(guid, result))
+          MessageUtil.sendMsg2UI(
+            ctx = context,
+            what = AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
+            content = guid to result
+          )
         } finally {
           val count = totalCount.decrementAndGet()
           val left = runningCount.decrementAndGet()
-          MessageUtil.sendMsg2UI(context, AppConfig.MSG_MEASURE_CONFIG_NOTIFY, "$left / $count")
+          MessageUtil.sendMsg2UI(
+            ctx = context,
+            what = AppConfig.MSG_MEASURE_CONFIG_NOTIFY,
+            content = "$left / $count"
+          )
         }
       }
     }

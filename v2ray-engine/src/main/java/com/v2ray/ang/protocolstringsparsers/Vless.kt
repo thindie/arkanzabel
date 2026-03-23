@@ -1,7 +1,7 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.extension.idnHost
@@ -10,7 +10,7 @@ import com.v2ray.ang.handler.V2rayConfigManager
 import com.v2ray.ang.util.Utils
 import java.net.URI
 
-object VlessFmt : FmtBase() {
+object Vless : ProtocolParser() {
 
     private val realityPublicKeyFromRawRegexes =
       listOf(
@@ -53,7 +53,7 @@ object VlessFmt : FmtBase() {
      */
     fun parse(str: String): ProfileItem? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ProfileItem.create(EConfigType.VLESS)
+        val config = ProfileItem.create(Protocol.Vless)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         if (uri.rawQuery.isNullOrEmpty()) return null
@@ -94,7 +94,7 @@ object VlessFmt : FmtBase() {
         if (profileItem.security == AppConfig.REALITY && profileItem.publicKey.isNullOrBlank()) {
             return null
         }
-        val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.VLESS)
+        val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Vless)
 
         outboundBean?.settings?.vnext?.first()?.let { vnext ->
             vnext.address = getServerAddress(profileItem)

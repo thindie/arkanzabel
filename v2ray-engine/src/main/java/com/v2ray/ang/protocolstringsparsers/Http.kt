@@ -1,12 +1,12 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.handler.V2rayConfigManager
 
-object HttpFmt : FmtBase() {
+object Http : ProtocolParser() {
   /**
    * Converts a ProfileItem object to an OutboundBean object.
    *
@@ -14,7 +14,7 @@ object HttpFmt : FmtBase() {
    * @return the converted OutboundBean object, or null if conversion fails
    */
   fun toOutbound(profileItem: ProfileItem): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.HTTP)
+    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Http)
 
     outboundBean?.settings?.servers?.first()?.let { server ->
       server.address = getServerAddress(profileItem)

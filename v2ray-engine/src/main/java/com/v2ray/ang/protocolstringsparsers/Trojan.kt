@@ -1,7 +1,7 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
@@ -11,7 +11,7 @@ import com.v2ray.ang.handler.V2rayConfigManager
 import com.v2ray.ang.util.Utils
 import java.net.URI
 
-object TrojanFmt : FmtBase() {
+object Trojan : ProtocolParser() {
     /**
      * Parses a Trojan URI string into a ProfileItem object.
      *
@@ -20,7 +20,7 @@ object TrojanFmt : FmtBase() {
      */
     fun parse(str: String): ProfileItem? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ProfileItem.create(EConfigType.TROJAN)
+        val config = ProfileItem.create(Protocol.Trojan)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
@@ -61,7 +61,7 @@ object TrojanFmt : FmtBase() {
      * @return the converted OutboundBean object, or null if conversion fails
      */
     fun toOutbound(profileItem: ProfileItem): OutboundBean? {
-        val outboundBean = V2rayConfigManager.createInitOutbound(EConfigType.TROJAN)
+        val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
 
         outboundBean?.settings?.servers?.first()?.let { server ->
             server.address = getServerAddress(profileItem)

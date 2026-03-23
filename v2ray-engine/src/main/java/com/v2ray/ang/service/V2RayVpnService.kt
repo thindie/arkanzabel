@@ -83,11 +83,6 @@ class V2RayVpnService : VpnService(), ServiceControl {
         stopAllService()
     }
 
-//    override fun onLowMemory() {
-//        stopV2Ray()
-//        super.onLowMemory()
-//    }
-
     override fun onDestroy() {
         super.onDestroy()
         NotificationManager.cancelNotification()

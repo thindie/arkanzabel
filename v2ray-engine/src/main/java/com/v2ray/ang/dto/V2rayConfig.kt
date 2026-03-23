@@ -2,7 +2,7 @@ package com.v2ray.ang.dto
 
 import com.google.gson.annotations.SerializedName
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 
 data class V2rayConfig(
     var remarks: String? = null,
@@ -330,20 +330,20 @@ data class V2rayConfig(
         )
 
         fun getServerAddress(): String? {
-            if (protocol.equals(EConfigType.VMESS.name, true)
-                || protocol.equals(EConfigType.VLESS.name, true)
+            if (protocol.equals(Protocol.Vmess.name, true)
+                || protocol.equals(Protocol.Vless.name, true)
             ) {
                 return settings?.vnext?.first()?.address
-            } else if (protocol.equals(EConfigType.SHADOWSOCKS.name, true)
-                || protocol.equals(EConfigType.SOCKS.name, true)
-                || protocol.equals(EConfigType.HTTP.name, true)
-                || protocol.equals(EConfigType.TROJAN.name, true)
+            } else if (protocol.equals(Protocol.ShadowSocks.name, true)
+                || protocol.equals(Protocol.Socks.name, true)
+                || protocol.equals(Protocol.Http.name, true)
+                || protocol.equals(Protocol.Trojan.name, true)
             ) {
                 return settings?.servers?.first()?.address
-            } else if (protocol.equals(EConfigType.WIREGUARD.name, true)) {
+            } else if (protocol.equals(Protocol.WireGuard.name, true)) {
                 return settings?.peers?.first()?.endpoint?.substringBeforeLast(":")
-            } else if (protocol.equals(EConfigType.HYSTERIA2.name, true)
-                || protocol.equals(EConfigType.HYSTERIA.name, true)
+            } else if (protocol.equals(Protocol.Hysteria2.name, true)
+                || protocol.equals(Protocol.Hysteria.name, true)
             ) {
                 return settings?.address as String?
             }
@@ -351,20 +351,20 @@ data class V2rayConfig(
         }
 
         fun getServerPort(): Int? {
-            if (protocol.equals(EConfigType.VMESS.name, true)
-                || protocol.equals(EConfigType.VLESS.name, true)
+            if (protocol.equals(Protocol.Vmess.name, true)
+                || protocol.equals(Protocol.Vless.name, true)
             ) {
                 return settings?.vnext?.first()?.port
-            } else if (protocol.equals(EConfigType.SHADOWSOCKS.name, true)
-                || protocol.equals(EConfigType.SOCKS.name, true)
-                || protocol.equals(EConfigType.HTTP.name, true)
-                || protocol.equals(EConfigType.TROJAN.name, true)
+            } else if (protocol.equals(Protocol.ShadowSocks.name, true)
+                || protocol.equals(Protocol.Socks.name, true)
+                || protocol.equals(Protocol.Http.name, true)
+                || protocol.equals(Protocol.Trojan.name, true)
             ) {
                 return settings?.servers?.first()?.port
-            } else if (protocol.equals(EConfigType.WIREGUARD.name, true)) {
+            } else if (protocol.equals(Protocol.WireGuard.name, true)) {
                 return settings?.peers?.first()?.endpoint?.substringAfterLast(":")?.toInt()
-            } else if (protocol.equals(EConfigType.HYSTERIA2.name, true)
-                || protocol.equals(EConfigType.HYSTERIA.name, true)
+            } else if (protocol.equals(Protocol.Hysteria2.name, true)
+                || protocol.equals(Protocol.Hysteria.name, true)
             ) {
                 return settings?.port
             }
@@ -501,7 +501,7 @@ data class V2rayConfig(
 
     fun getProxyOutbound(): OutboundBean? {
         outbounds.forEach { outbound ->
-            EConfigType.entries.forEach {
+            Protocol.entries.forEach {
                 if (outbound.protocol.equals(it.name, true)) {
                     return outbound
                 }
@@ -512,7 +512,7 @@ data class V2rayConfig(
 
     fun getAllProxyOutbound(): List<OutboundBean> {
         return outbounds.filter { outbound ->
-            EConfigType.entries.any { it.name.equals(outbound.protocol, ignoreCase = true) }
+            Protocol.entries.any { it.name.equals(outbound.protocol, ignoreCase = true) }
         }
     }
 }

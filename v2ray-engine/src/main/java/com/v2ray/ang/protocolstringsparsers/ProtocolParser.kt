@@ -1,4 +1,4 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ProfileItem
@@ -9,7 +9,7 @@ import com.v2ray.ang.util.HttpUtil
 import com.v2ray.ang.util.Utils
 import java.net.URI
 
-open class FmtBase {
+open class ProtocolParser {
 
   private fun firstQueryValueIgnoreCase(
     queryParam: Map<String, String>,
@@ -184,12 +184,6 @@ open class FmtBase {
         config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
         config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
       }
-
-//            NetworkType.QUIC -> {
-//                dicQuery["headerType"] = config.headerType?.ifEmpty { "none" }.orEmpty()
-//                config.quicSecurity?.nullIfBlank()?.let { dicQuery["quicSecurity"] = it }
-//                config.quicKey?.nullIfBlank()?.let { dicQuery["key"] = it }
-//            }
 
       NetworkType.GRPC -> {
         config.mode?.nullIfBlank()?.let { dicQuery["mode"] = it }

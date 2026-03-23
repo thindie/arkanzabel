@@ -1,11 +1,11 @@
-package com.v2ray.ang.fmt
+package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.JsonUtil
 
-object CustomFmt : FmtBase() {
+object Custom : ProtocolParser() {
   /**
    * Parses a JSON string into a ProfileItem object.
    *
@@ -13,7 +13,7 @@ object CustomFmt : FmtBase() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parse(str: String): ProfileItem? {
-    val config = ProfileItem.create(EConfigType.CUSTOM)
+    val config = ProfileItem.create(Protocol.Custom)
 
     val fullConfig = JsonUtil.fromJson(str, V2rayConfig::class.java)
     val outbound = fullConfig?.getProxyOutbound()

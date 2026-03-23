@@ -12,7 +12,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.v2ray.ang.AppConfig
 import com.thindie.rknzbl.v2rayengine.R
-import com.v2ray.ang.enums.EConfigType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.service.V2RayProxyOnlyService
@@ -81,6 +81,7 @@ object V2RayServiceManager {
      * @return True if the service is running, false otherwise.
      */
     fun isRunning() = coreController.isRunning
+    private val isRunningInternal get() = coreController.isRunning
 
     /**
      * Gets the name of the currently running server.
@@ -94,7 +95,7 @@ object V2RayServiceManager {
      * @param context The context from which the service is started.
      */
     private fun startContextService(context: Context) {
-        if (coreController.isRunning) {
+        if (isRunningInternal) {
             Log.w(
                 AppConfig.TAG,
                 "startContextService skipped: core still reports running (wait for stop to finish)",
@@ -103,13 +104,12 @@ object V2RayServiceManager {
         }
         val guid = KeyValueStorage.getSelectServer() ?: return
         val config = KeyValueStorage.decodeServerConfig(guid) ?: return
-        if (config.configType != EConfigType.CUSTOM
-            && config.configType != EConfigType.POLICYGROUP
+        if (config.protocol != Protocol.Custom
+            && config.protocol != Protocol.PolicyGroup
             && !Utils.isValidUrl(config.server)
             && !Utils.isPureIpAddress(config.server.orEmpty())
         ) return
-//        val result = V2rayConfigUtil.getV2rayConfig(context, guid)
-//        if (!result.status) return
+
 
         if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PROXY_SHARING)) {
             Log.i(AppConfig.TAG, context.getString(R.string.toast_warning_pref_proxysharing_short))
@@ -130,7 +130,7 @@ object V2RayServiceManager {
      * Starts the V2Ray core service.
      */
     fun startCoreLoop(vpnInterface: ParcelFileDescriptor?): Boolean {
-        if (coreController.isRunning) {
+        if (isRunningInternal) {
             return false
         }
 
@@ -183,7 +183,7 @@ object V2RayServiceManager {
             return false
         }
 
-        if (!coreController.isRunning) {
+        if (!isRunningInternal) {
             MessageUtil.sendMsg2UI(
                 service,
                 AppConfig.MSG_STATE_START_FAILURE,
@@ -218,7 +218,7 @@ object V2RayServiceManager {
     fun stopCoreLoop(): Boolean {
         val service = getService() ?: return false
 
-        if (coreController.isRunning) {
+        if (isRunningInternal) {
             val done = CountDownLatch(1)
             CoroutineScope(Dispatchers.IO).launch {
                 try {
@@ -270,7 +270,7 @@ object V2RayServiceManager {
      * Also fetches remote IP information if the delay test was successful.
      */
     private fun measureV2rayDelay() {
-        if (coreController.isRunning == false) {
+        if (!isRunningInternal) {
             return
         }
 
@@ -323,26 +323,22 @@ object V2RayServiceManager {
      * Handles startup, shutdown, socket protection, and status emission.
      */
     private class CoreCallback : CoreCallbackHandler {
-        /**
-         * Called when V2Ray core starts up.
-         * @return 0 for success, any other value for failure.
-         */
         override fun startup(): Long {
-            return 0
+            return SUCCESS
         }
 
         /**
          * Called when V2Ray core shuts down.
-         * @return 0 for success, any other value for failure.
+         * @SUCCESS for success, any other value for failure.
          */
         override fun shutdown(): Long {
             val serviceControl = serviceControl?.get() ?: return -1
             return try {
                 serviceControl.stopService()
-                0
+                SUCCESS
             } catch (e: Exception) {
                 Log.e(AppConfig.TAG, "Failed to stop service in callback", e)
-                -1
+                FAILURE
             }
         }
 
@@ -353,7 +349,7 @@ object V2RayServiceManager {
          * @return Always returns 0.
          */
         override fun onEmitStatus(l: Long, s: String?): Long {
-            return 0
+           return SUCCESS
         }
     }
 
@@ -372,7 +368,7 @@ object V2RayServiceManager {
             val serviceControl = serviceControl?.get() ?: return
             when (intent?.getIntExtra("key", 0)) {
                 AppConfig.MSG_REGISTER_CLIENT -> {
-                    if (coreController.isRunning) {
+                    if (isRunningInternal) {
                         MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_RUNNING, "")
                     } else {
                         MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_NOT_RUNNING, "")
@@ -421,3 +417,6 @@ object V2RayServiceManager {
         }
     }
 }
+
+private const val SUCCESS = 0L
+private const val FAILURE = -1L

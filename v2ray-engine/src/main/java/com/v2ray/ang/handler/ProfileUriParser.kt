@@ -2,14 +2,14 @@ package com.v2ray.ang.handler
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ProfileItem
-import com.v2ray.ang.fmt.CustomFmt
-import com.v2ray.ang.fmt.Hysteria2Fmt
-import com.v2ray.ang.fmt.ShadowsocksFmt
-import com.v2ray.ang.fmt.SocksFmt
-import com.v2ray.ang.fmt.TrojanFmt
-import com.v2ray.ang.fmt.VlessFmt
-import com.v2ray.ang.fmt.VmessFmt
-import com.v2ray.ang.fmt.WireguardFmt
+import com.v2ray.ang.protocolstringsparsers.Custom
+import com.v2ray.ang.protocolstringsparsers.Hysteria2
+import com.v2ray.ang.protocolstringsparsers.Shadowsocks
+import com.v2ray.ang.protocolstringsparsers.Socks
+import com.v2ray.ang.protocolstringsparsers.Trojan
+import com.v2ray.ang.protocolstringsparsers.Vless
+import com.v2ray.ang.protocolstringsparsers.Vmess
+import com.v2ray.ang.protocolstringsparsers.Wireguard
 import java.net.URISyntaxException
 
 /** Resolves a single share line (subscription row, clipboard) to [ProfileItem]. */
@@ -20,16 +20,16 @@ object ProfileUriParser {
     if (t.isEmpty() || t.startsWith("#")) return null
     return try {
       when {
-        t.startsWith("{") -> CustomFmt.parse(t)
-        t.startsWith(AppConfig.VLESS, ignoreCase = true) -> VlessFmt.parse(t)
+        t.startsWith("{") -> Custom.parse(t)
+        t.startsWith(AppConfig.VLESS, ignoreCase = true) -> Vless.parse(t)
         t.startsWith(AppConfig.VMESS, ignoreCase = true) ->
-          VmessFmt.parseVmessStd(t) ?: VmessFmt.parse(t)
-        t.startsWith(AppConfig.SHADOWSOCKS, ignoreCase = true) -> ShadowsocksFmt.parse(t)
-        t.startsWith(AppConfig.TROJAN, ignoreCase = true) -> TrojanFmt.parse(t)
+          Vmess.parseVmessStd(t) ?: Vmess.parse(t)
+        t.startsWith(AppConfig.SHADOWSOCKS, ignoreCase = true) -> Shadowsocks.parse(t)
+        t.startsWith(AppConfig.TROJAN, ignoreCase = true) -> Trojan.parse(t)
         t.startsWith(AppConfig.HYSTERIA2, ignoreCase = true) ||
-          t.startsWith(AppConfig.HY2, ignoreCase = true) -> Hysteria2Fmt.parse(t)
-        t.startsWith(AppConfig.SOCKS, ignoreCase = true) -> SocksFmt.parse(t)
-        t.startsWith(AppConfig.WIREGUARD, ignoreCase = true) -> WireguardFmt.parse(t)
+          t.startsWith(AppConfig.HY2, ignoreCase = true) -> Hysteria2.parse(t)
+        t.startsWith(AppConfig.SOCKS, ignoreCase = true) -> Socks.parse(t)
+        t.startsWith(AppConfig.WIREGUARD, ignoreCase = true) -> Wireguard.parse(t)
         else -> null
       }
     } catch (_: URISyntaxException) {
