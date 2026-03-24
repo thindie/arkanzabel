@@ -33,22 +33,26 @@ internal class ConfigAssembler(
           it
         }
       }
-      ?.then {
-        if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
-          it.stats = null
-          it.policy = null
-        }
-        it
-      }
-      ?.then {
-        if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
-          applyResolveOutboundDomainsToHosts(it)
-        }
-        it
-      }
+      ?.then { it.applySpeedPolicyToggles() }
+      ?.then { it.applyOptionalDomainResolve() }
   }
 
   private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
 
   private inline fun V2rayConfig.maybeThen(step: (V2rayConfig) -> V2rayConfig?): V2rayConfig? = step(this)
+
+  private fun V2rayConfig.applySpeedPolicyToggles(): V2rayConfig {
+    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
+      stats = null
+      policy = null
+    }
+    return this
+  }
+
+  private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
+    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+      applyResolveOutboundDomainsToHosts(this)
+    }
+    return this
+  }
 }

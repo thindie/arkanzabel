@@ -278,23 +278,8 @@ object V2rayConfigManager {
           it
         }
       }
-      ?.then {
-        if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
-          it.stats = null
-          it.policy = null
-        }
-        it
-      }
-      ?.then {
-        if (KeyValueStorage.decodeSettingsString(
-            AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-            "1"
-          ) == "1"
-        ) {
-          resolveOutboundDomainsToHosts(it)
-        }
-        it
-      }
+      ?.then { it.applySpeedPolicyToggles() }
+      ?.then { it.applyOptionalDomainResolve() }
   }
 
   /**
@@ -320,26 +305,15 @@ object V2rayConfigManager {
       }
     }
 
-    val v2rayConfig = initV2rayConfig(context) ?: return result
+    val initialConfig = initV2rayConfig(context) ?: return result
+    val speedtestConfig = initialConfig
+      .maybeThen { getOutbounds(it, config) }
+      ?.then { getMoreOutbounds(it, config.subscriptionId) }
+      ?.then { it.invalidateForSpeedtest() } ?: return result
 
-    getOutbounds(v2rayConfig, config) ?: return result
-    getMoreOutbounds(v2rayConfig, config.subscriptionId)
-
-    v2rayConfig.log.loglevel =
-      KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
-    v2rayConfig.inbounds.clear()
-    v2rayConfig.routing.rules.clear()
-    v2rayConfig.dns = null
-    v2rayConfig.fakedns = null
-    v2rayConfig.stats = null
-    v2rayConfig.policy = null
-
-    v2rayConfig.outbounds.forEach { key ->
-      key.mux = null
-    }
     return result.copy(
       status = true,
-      content = JsonUtil.toJsonPretty(v2rayConfig) ?: "",
+      content = JsonUtil.toJsonPretty(speedtestConfig) ?: "",
       guid = guid
     )
   }
@@ -624,6 +598,33 @@ object V2rayConfigManager {
    */
   private fun resolveOutboundDomainsToHosts(v2rayConfig: V2rayConfig): V2rayConfig {
     return domainResolveStep.resolveOutboundDomainsToHosts(v2rayConfig)
+  }
+
+  private fun V2rayConfig.invalidateForSpeedtest(): V2rayConfig {
+    log.loglevel = KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
+    inbounds.clear()
+    routing.rules.clear()
+    dns = null
+    fakedns = null
+    stats = null
+    policy = null
+    outbounds.forEach { outbound -> outbound.mux = null }
+    return this
+  }
+
+  private fun V2rayConfig.applySpeedPolicyToggles(): V2rayConfig {
+    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
+      stats = null
+      policy = null
+    }
+    return this
+  }
+
+  private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
+    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+      resolveOutboundDomainsToHosts(this)
+    }
+    return this
   }
 
   private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
