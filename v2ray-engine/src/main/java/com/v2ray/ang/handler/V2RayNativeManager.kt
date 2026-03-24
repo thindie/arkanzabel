@@ -33,10 +33,10 @@ object V2RayNativeManager {
                 val deviceId = Utils.getDeviceIdForXUDPBaseKey()
                 Libv2ray.initCoreEnv(assetPath, deviceId)
                 Log.i(AppConfig.TAG, "V2Ray core environment initialized successfully")
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to initialize V2Ray core environment", e)
+            } catch (runtime: RuntimeException) {
+                Log.e(AppConfig.TAG, "Failed to initialize V2Ray core environment", runtime)
                 initialized.set(false)
-                throw e
+                throw runtime
             }
         } else {
             Log.d(AppConfig.TAG, "V2Ray core environment already initialized, skipping")
@@ -52,8 +52,8 @@ object V2RayNativeManager {
     fun getLibVersion(): String {
         return try {
             Libv2ray.checkVersionX()
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to check V2Ray version", e)
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to check V2Ray version", runtime)
             "Unknown"
         }
     }
@@ -68,8 +68,8 @@ object V2RayNativeManager {
     fun measureOutboundDelay(config: String, testUrl: String): Long {
         return try {
             Libv2ray.measureOutboundDelay(config, testUrl)
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to measure outbound delay", e)
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to measure outbound delay", runtime)
             -1L
         }
     }
@@ -83,9 +83,9 @@ object V2RayNativeManager {
     fun newCoreController(handler: CoreCallbackHandler): CoreController {
         return try {
             Libv2ray.newCoreController(handler)
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to create core controller", e)
-            throw e
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to create core controller", runtime)
+            throw runtime
         }
     }
 }

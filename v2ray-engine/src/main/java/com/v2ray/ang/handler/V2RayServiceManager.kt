@@ -153,8 +153,8 @@ object V2RayServiceManager {
             mFilter.addAction(Intent.ACTION_SCREEN_OFF)
             mFilter.addAction(Intent.ACTION_USER_PRESENT)
             ContextCompat.registerReceiver(service, mMsgReceive, mFilter, Utils.receiverFlags())
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to register broadcast receiver", e)
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to register broadcast receiver", runtime)
             MessageUtil.sendMsg2UI(
                 service,
                 AppConfig.MSG_STATE_START_FAILURE,
@@ -172,10 +172,10 @@ object V2RayServiceManager {
         try {
             NotificationManager.showNotification(currentConfig)
             coreController.startLoop(result.content, tunFd)
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to start Core loop", e)
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to start Core loop", runtime)
             NotificationManager.cancelNotification()
-            val detail = e.message?.trim()
+            val detail = runtime.message?.trim()
             val payload =
                 if (!detail.isNullOrEmpty()) detail
                 else service.getString(R.string.vpn_core_start_failed_generic)
@@ -198,9 +198,9 @@ object V2RayServiceManager {
             //NotificationManager.showNotification(currentConfig)
             NotificationManager.startSpeedNotification(currentConfig)
 
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to startup service", e)
-            val detail = e.message?.trim()
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to startup service", runtime)
+            val detail = runtime.message?.trim()
             val payload =
                 if (!detail.isNullOrEmpty()) detail
                 else service.getString(R.string.vpn_core_notification_failed)
@@ -223,8 +223,8 @@ object V2RayServiceManager {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     coreController.stopLoop()
-                } catch (e: Exception) {
-                    Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", e)
+                } catch (runtime: RuntimeException) {
+                    Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", runtime)
                 } finally {
                     done.countDown()
                 }
@@ -247,8 +247,8 @@ object V2RayServiceManager {
 
         try {
             service.unregisterReceiver(mMsgReceive)
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to unregister broadcast receiver", e)
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to unregister broadcast receiver", runtime)
         }
 
         return true
@@ -281,16 +281,16 @@ object V2RayServiceManager {
 
             try {
                 time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to measure delay with primary URL", e)
-                errorStr = e.message?.substringAfter("\":") ?: "empty message"
+            } catch (runtime: RuntimeException) {
+                Log.e(AppConfig.TAG, "Failed to measure delay with primary URL", runtime)
+                errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
             }
             if (time == -1L) {
                 try {
                     time = coreController.measureDelay(SettingsManager.getDelayTestUrl(true))
-                } catch (e: Exception) {
-                    Log.e(AppConfig.TAG, "Failed to measure delay with alternative URL", e)
-                    errorStr = e.message?.substringAfter("\":") ?: "empty message"
+                } catch (runtime: RuntimeException) {
+                    Log.e(AppConfig.TAG, "Failed to measure delay with alternative URL", runtime)
+                    errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
                 }
             }
 
@@ -336,8 +336,8 @@ object V2RayServiceManager {
             return try {
                 serviceControl.stopService()
                 SUCCESS
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to stop service in callback", e)
+            } catch (runtime: RuntimeException) {
+                Log.e(AppConfig.TAG, "Failed to stop service in callback", runtime)
                 FAILURE
             }
         }

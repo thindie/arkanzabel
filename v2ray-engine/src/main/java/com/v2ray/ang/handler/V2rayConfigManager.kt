@@ -12,12 +12,16 @@ import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
 import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.error.AppError
+import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CancellationException
+import java.util.regex.PatternSyntaxException
 
 object V2rayConfigManager {
   private var initConfigCache: String? = null
@@ -59,8 +63,13 @@ object V2rayConfigManager {
           getV2rayNormalConfig(context, guid, config)
         }
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config", e)
+    } catch (cancel: CancellationException) {
+      throw cancel
+    } catch (appError: AppError) {
+      Log.e(AppConfig.TAG, "Failed to get V2ray config: ${appError.message}", appError)
+      return ConfigResult(false)
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to get V2ray config", runtime)
       return ConfigResult(false)
     }
   }
@@ -85,8 +94,13 @@ object V2rayConfigManager {
           getV2rayNormalConfig4Speedtest(context, guid, config)
         }
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config for speedtest", e)
+    } catch (cancel: CancellationException) {
+      throw cancel
+    } catch (appError: AppError) {
+      Log.e(AppConfig.TAG, "Failed to get V2ray config for speedtest: ${appError.message}", appError)
+      return ConfigResult(false)
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to get V2ray config for speedtest", runtime)
       return ConfigResult(false)
     }
   }
@@ -174,7 +188,7 @@ object V2rayConfigManager {
         } else {
           try {
             Regex(filter).containsMatchIn(profile.remarks)
-          } catch (e: Exception) {
+          } catch (invalidRegex: PatternSyntaxException) {
             profile.remarks.contains(filter)
           }
         }
@@ -217,7 +231,7 @@ object V2rayConfigManager {
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     v2rayConfig.remarks = config.remarks
 
-    val assembled = configAssembler.applyStandardSteps(v2rayConfig, config) ?: return result
+    val assembled = configAssembler.applyStandardSteps(v2rayConfig, config)
     if (assembled.getProxyOutbound() == null) return result
     return result.copy(
       status = true,
@@ -247,7 +261,7 @@ object V2rayConfigManager {
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     initialConfig.remarks = config.remarks
 
-    val configWithInbounds = getInbounds(initialConfig) ?: return null
+    val configWithInbounds = getInbounds(initialConfig)
 
     configWithInbounds.outbounds.removeAt(0)
     val outboundsList = mutableListOf<OutboundBean>()
@@ -264,22 +278,22 @@ object V2rayConfigManager {
     configWithInbounds.outbounds = ArrayList(outboundsList)
 
     return configWithInbounds
-      .maybeThen { getRouting(it) }
-      ?.then { getFakeDns(it) }
-      ?.maybeThen { getDns(it) }
-      ?.then {
+      .then { getRouting(it) }
+      .then { getFakeDns(it) }
+      .then { getDns(it) }
+      .then {
         getBalance(it, config)
         it
       }
-      ?.maybeThen {
+      .then {
         if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED)) {
           getCustomLocalDns(it)
         } else {
           it
         }
       }
-      ?.then { it.applySpeedPolicyToggles() }
-      ?.then { it.applyOptionalDomainResolve() }
+      .then { it.applySpeedPolicyToggles() }
+      .then { it.applyOptionalDomainResolve() }
   }
 
   /**
@@ -307,9 +321,9 @@ object V2rayConfigManager {
 
     val initialConfig = initV2rayConfig(context) ?: return result
     val speedtestConfig = initialConfig
-      .maybeThen { getOutbounds(it, config) }
-      ?.then { getMoreOutbounds(it, config.subscriptionId) }
-      ?.then { it.invalidateForSpeedtest() } ?: return result
+      .then { getOutbounds(it, config) }
+      .then { getMoreOutbounds(it, config.subscriptionId) }
+      .then { it.invalidateForSpeedtest() }
 
     return result.copy(
       status = true,
@@ -366,7 +380,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified
    * @return Updated config, or null if inbound configuration fails.
    */
-  private fun getInbounds(v2rayConfig: V2rayConfig): V2rayConfig? {
+  private fun getInbounds(v2rayConfig: V2rayConfig): V2rayConfig {
     return inboundConfigStep.applyInbounds(v2rayConfig)
   }
 
@@ -389,7 +403,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified
    * @return Updated config, or null if routing configuration fails.
    */
-  private fun getRouting(v2rayConfig: V2rayConfig): V2rayConfig? {
+  private fun getRouting(v2rayConfig: V2rayConfig): V2rayConfig {
     return routingConfigStep.applyRouting(v2rayConfig)
   }
 
@@ -413,7 +427,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified
    * @return Updated config, or null if local DNS configuration fails.
    */
-  private fun getCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig? {
+  private fun getCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig {
     return dnsConfigStep.applyCustomLocalDns(v2rayConfig)
   }
 
@@ -425,7 +439,7 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified
    * @return Updated config, or null if DNS configuration fails.
    */
-  private fun getDns(v2rayConfig: V2rayConfig): V2rayConfig? {
+  private fun getDns(v2rayConfig: V2rayConfig): V2rayConfig {
     return dnsConfigStep.applyDns(v2rayConfig)
   }
 
@@ -444,7 +458,7 @@ object V2rayConfigManager {
    * @param connectionProfile The connection profile containing connection details
    * @return Updated config, or null if outbound configuration fails.
    */
-  private fun getOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig? {
+  private fun getOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig {
     return outboundConfigStep.applyOutbounds(v2rayConfig, connectionProfile)
   }
 
@@ -572,8 +586,13 @@ object V2rayConfigManager {
           )
         )
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure balance", e)
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure balance", runtime)
+      throw RoutingConfigError(
+        message = "Failed to configure balance for policy group",
+        source = "V2rayConfigManager.getBalance",
+        cause = runtime
+      )
     }
   }
 
@@ -629,7 +648,6 @@ object V2rayConfigManager {
 
   private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
 
-  private inline fun V2rayConfig.maybeThen(step: (V2rayConfig) -> V2rayConfig?): V2rayConfig? = step(this)
 
   /**
    * Creates an initial outbound configuration for a specific protocol type.

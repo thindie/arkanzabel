@@ -3,6 +3,7 @@ package com.v2ray.ang.handler
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
+import com.v2ray.ang.error.IncomingConfigError
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
@@ -10,7 +11,7 @@ import com.v2ray.ang.util.Utils
 internal class InboundConfigStep(
   private val needTun: () -> Boolean,
 ) {
-  fun applyInbounds(v2rayConfig: V2rayConfig): V2rayConfig? {
+  fun applyInbounds(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       val socksPort = SettingsManager.getSocksPort()
       val inbound1 = v2rayConfig.inbounds[0]
@@ -36,7 +37,10 @@ internal class InboundConfigStep(
       if (!Utils.isXray()) {
         val inbound2 =
           JsonUtil.fromJson(JsonUtil.toJson(inbound1), V2rayConfig.InboundBean::class.java)
-            ?: return null
+            ?: throw IncomingConfigError(
+              message = "Inbound mapping failed: cloned inbound is null",
+              source = "InboundConfigStep.applyInbounds"
+            )
         inbound2.tag = Protocol.Http.name.lowercase()
         inbound2.port = SettingsManager.getHttpPort()
         inbound2.protocol = Protocol.Http.name.lowercase()
@@ -48,9 +52,13 @@ internal class InboundConfigStep(
         inboundTun?.settings?.mtu = SettingsManager.getVpnMtu()
         inboundTun?.sniffing = inbound1.sniffing
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure inbounds", e)
-      return null
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure inbounds", runtime)
+      throw IncomingConfigError(
+        message = "Failed to configure inbounds",
+        source = "InboundConfigStep.applyInbounds",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }

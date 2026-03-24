@@ -7,6 +7,7 @@ import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
+import com.v2ray.ang.error.OutboundConfigError
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.JsonUtil
@@ -15,10 +16,18 @@ internal class OutboundConfigStep(
   private val convertProfile2Outbound: (ConnectionProfile) -> OutboundBean?,
 ) {
 
-  fun applyOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig? {
-    val outbound = convertProfile2Outbound(connectionProfile) ?: return null
+  fun applyOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig {
+    val outbound = convertProfile2Outbound(connectionProfile) ?: throw OutboundConfigError(
+      message = "Outbound mapping failed for protocol ${connectionProfile.protocol}",
+      source = "OutboundConfigStep.applyOutbounds"
+    )
     val ret = applyGlobalOutboundSettings(outbound)
-    if (!ret) return null
+    if (!ret) {
+      throw OutboundConfigError(
+        message = "Failed to apply global outbound settings",
+        source = "OutboundConfigStep.applyGlobalOutboundSettings"
+      )
+    }
 
     if (v2rayConfig.outbounds.isNotEmpty()) {
       v2rayConfig.outbounds[0] = outbound
@@ -60,9 +69,13 @@ internal class OutboundConfigStep(
           nextOutbound.ensureSockopt().dialerProxy = outbound.tag
         }
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure more outbounds", e)
-      return v2rayConfig
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure more outbounds", runtime)
+      throw OutboundConfigError(
+        message = "Failed to configure more outbounds",
+        source = "OutboundConfigStep.applyMoreOutbounds",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }
@@ -129,14 +142,14 @@ internal class OutboundConfigStep(
         outbound.streamSettings?.tcpSettings?.header?.request?.path = if (path.isNullOrEmpty()) listOf("/") else path
         outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host = host
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to update outbound with global settings", e)
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to update outbound with global settings", runtime)
       return false
     }
     return true
   }
 
-  fun applyOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig? {
+  fun applyOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
         return v2rayConfig
@@ -185,9 +198,13 @@ internal class OutboundConfigStep(
       v2rayConfig.outbounds[0].streamSettings?.sockopt = StreamSettingsBean.SockoptBean(
         dialerProxy = AppConfig.TAG_FRAGMENT
       )
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to update outbound fragment", e)
-      return null
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to update outbound fragment", runtime)
+      throw OutboundConfigError(
+        message = "Failed to update outbound fragment",
+        source = "OutboundConfigStep.applyOutboundFragment",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }

@@ -5,11 +5,12 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.util.JsonUtil
 
 internal class RoutingConfigStep {
 
-  fun applyRouting(v2rayConfig: V2rayConfig): V2rayConfig? {
+  fun applyRouting(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       v2rayConfig.routing.domainStrategy =
         KeyValueStorage.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
@@ -19,9 +20,13 @@ internal class RoutingConfigStep {
       rulesetItems?.forEach { key ->
         applyRoutingUserRule(key, v2rayConfig)
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure routing", e)
-      return null
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure routing", runtime)
+      throw RoutingConfigError(
+        message = "Failed to configure routing",
+        source = "RoutingConfigStep.applyRouting",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }
@@ -53,8 +58,13 @@ internal class RoutingConfigStep {
 
       val rule = JsonUtil.fromJson(JsonUtil.toJson(item), RulesBean::class.java) ?: return
       v2rayConfig.routing.rules.add(rule)
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to apply routing user rule", e)
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to apply routing user rule", runtime)
+      throw RoutingConfigError(
+        message = "Failed to apply routing user rule",
+        source = "RoutingConfigStep.applyRoutingUserRule",
+        cause = runtime
+      )
     }
   }
 }

@@ -5,6 +5,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.error.DnsConfigError
 import com.v2ray.ang.extension.isNotNullEmpty
 
 internal class DnsConfigStep(
@@ -18,7 +19,7 @@ internal class DnsConfigStep(
     return v2rayConfig
   }
 
-  fun applyCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig? {
+  fun applyCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)) {
         val geositeCn = arrayListOf(AppConfig.GEOSITE_CN)
@@ -64,14 +65,18 @@ internal class DnsConfigStep(
           )
         )
       }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure custom local DNS", e)
-      return null
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure custom local DNS", runtime)
+      throw DnsConfigError(
+        message = "Failed to configure custom local DNS",
+        source = "DnsConfigStep.applyCustomLocalDns",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }
 
-  fun applyDns(v2rayConfig: V2rayConfig): V2rayConfig? {
+  fun applyDns(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       val hosts = mutableMapOf<String, Any>()
       val servers = ArrayList<Any>()
@@ -130,8 +135,13 @@ internal class DnsConfigStep(
             ?.associate { it.split(":").let { (k, v) -> k to v } }
           if (userHostsMap != null) hosts.putAll(userHostsMap)
         }
-      } catch (e: Exception) {
-        Log.e(AppConfig.TAG, "Failed to configure user DNS hosts", e)
+      } catch (runtime: RuntimeException) {
+        Log.e(AppConfig.TAG, "Failed to configure user DNS hosts", runtime)
+        throw DnsConfigError(
+          message = "Failed to parse user DNS hosts",
+          source = "DnsConfigStep.applyDns.userHosts",
+          cause = runtime
+        )
       }
 
       v2rayConfig.dns = V2rayConfig.DnsBean(
@@ -154,9 +164,13 @@ internal class DnsConfigStep(
           domain = null
         )
       )
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure DNS", e)
-      return null
+    } catch (runtime: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to configure DNS", runtime)
+      throw DnsConfigError(
+        message = "Failed to configure DNS",
+        source = "DnsConfigStep.applyDns",
+        cause = runtime
+      )
     }
     return v2rayConfig
   }
