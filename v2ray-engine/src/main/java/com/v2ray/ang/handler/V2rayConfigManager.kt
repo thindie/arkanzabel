@@ -16,24 +16,17 @@ import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
-import com.v2ray.ang.protocolstringsparsers.Http
-import com.v2ray.ang.protocolstringsparsers.Hysteria2
-import com.v2ray.ang.protocolstringsparsers.Shadowsocks
-import com.v2ray.ang.protocolstringsparsers.Socks
-import com.v2ray.ang.protocolstringsparsers.Trojan
-import com.v2ray.ang.protocolstringsparsers.Vless
-import com.v2ray.ang.protocolstringsparsers.Vmess
-import com.v2ray.ang.protocolstringsparsers.Wireguard
-import com.v2ray.ang.util.HttpUtil
 import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
 
 object V2rayConfigManager {
   private var initConfigCache: String? = null
   private var initConfigCacheWithTun: String? = null
+  private val inboundConfigStep by lazy { InboundConfigStep(::needTun) }
   private val routingConfigStep by lazy { RoutingConfigStep() }
   private val dnsConfigStep by lazy { DnsConfigStep(::getUserRule2Domain) }
-  private val outboundConfigStep by lazy { OutboundConfigStep(::convertProfile2Outbound) }
+  private val outboundConfigStep by lazy { OutboundConfigStep(ConnectionProfileToOutboundMapper::map) }
+  private val domainResolveStep by lazy { DomainResolveStep() }
   private val configAssembler by lazy {
     ConfigAssembler(
       applyInbounds = ::getInbounds,
@@ -249,53 +242,59 @@ object V2rayConfigManager {
       return null
     }
 
-    val v2rayConfig = initV2rayConfig(context) ?: return null
-    v2rayConfig.log.loglevel =
+    val initialConfig = initV2rayConfig(context) ?: return null
+    initialConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
-    v2rayConfig.remarks = config.remarks
+    initialConfig.remarks = config.remarks
 
-    getInbounds(v2rayConfig)
+    val configWithInbounds = getInbounds(initialConfig) ?: return null
 
-    v2rayConfig.outbounds.removeAt(0)
+    configWithInbounds.outbounds.removeAt(0)
     val outboundsList = mutableListOf<OutboundBean>()
     var index = 0
-    for (config in validConfigs) {
+    for (connectionProfile in validConfigs) {
       index++
-      val outbound = convertProfile2Outbound(config) ?: continue
+      val outbound = ConnectionProfileToOutboundMapper.map(connectionProfile) ?: continue
       val ret = updateOutboundWithGlobalSettings(outbound)
       if (!ret) continue
       outbound.tag = "proxy-$index"
       outboundsList.add(outbound)
     }
-    outboundsList.addAll(v2rayConfig.outbounds)
-    v2rayConfig.outbounds = ArrayList(outboundsList)
+    outboundsList.addAll(configWithInbounds.outbounds)
+    configWithInbounds.outbounds = ArrayList(outboundsList)
 
-    getRouting(v2rayConfig)
-
-    getFakeDns(v2rayConfig)
-
-    getDns(v2rayConfig)
-
-    getBalance(v2rayConfig, config)
-
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED)) {
-      getCustomLocalDns(v2rayConfig)
-    }
-    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
-      v2rayConfig.stats = null
-      v2rayConfig.policy = null
-    }
-
-    //Resolve and add to DNS Hosts
-    if (KeyValueStorage.decodeSettingsString(
-        AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-        "1"
-      ) == "1"
-    ) {
-      resolveOutboundDomainsToHosts(v2rayConfig)
-    }
-
-    return v2rayConfig
+    return configWithInbounds
+      .maybeThen { getRouting(it) }
+      ?.then { getFakeDns(it) }
+      ?.maybeThen { getDns(it) }
+      ?.then {
+        getBalance(it, config)
+        it
+      }
+      ?.maybeThen {
+        if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED)) {
+          getCustomLocalDns(it)
+        } else {
+          it
+        }
+      }
+      ?.then {
+        if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
+          it.stats = null
+          it.policy = null
+        }
+        it
+      }
+      ?.then {
+        if (KeyValueStorage.decodeSettingsString(
+            AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
+            "1"
+          ) == "1"
+        ) {
+          resolveOutboundDomainsToHosts(it)
+        }
+        it
+      }
   }
 
   /**
@@ -391,50 +390,10 @@ object V2rayConfigManager {
    * This function sets up the listening ports, sniffing options, and other inbound-related configurations.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @return true if inbound configuration was successful, false otherwise
+   * @return Updated config, or null if inbound configuration fails.
    */
-  private fun getInbounds(v2rayConfig: V2rayConfig): Boolean {
-    try {
-      val socksPort = SettingsManager.getSocksPort()
-      val inbound1 = v2rayConfig.inbounds[0]
-
-      if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PROXY_SHARING) != true) {
-        inbound1.listen = AppConfig.LOOPBACK
-      }
-      inbound1.port = socksPort
-      val fakedns = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED) == true
-      val sniffAllTlsAndHttp =
-        KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SNIFFING_ENABLED, true) != false
-      inbound1.sniffing?.enabled = fakedns || sniffAllTlsAndHttp
-      inbound1.sniffing?.routeOnly =
-        KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ROUTE_ONLY_ENABLED, false)
-      if (!sniffAllTlsAndHttp) {
-        inbound1.sniffing?.destOverride?.clear()
-      }
-      if (fakedns) {
-        inbound1.sniffing?.destOverride?.add("fakedns")
-      }
-
-      if (!Utils.isXray()) {
-        val inbound2 =
-          JsonUtil.fromJson(JsonUtil.toJson(inbound1), V2rayConfig.InboundBean::class.java)
-            ?: return false
-        inbound2.tag = Protocol.Http.name.lowercase()
-        inbound2.port = SettingsManager.getHttpPort()
-        inbound2.protocol = Protocol.Http.name.lowercase()
-        v2rayConfig.inbounds.add(inbound2)
-      }
-
-      if (needTun()) {
-        val inboundTun = v2rayConfig.inbounds.firstOrNull { e -> e.tag == "tun" }
-        inboundTun?.settings?.mtu = SettingsManager.getVpnMtu()
-        inboundTun?.sniffing = inbound1.sniffing
-      }
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to configure inbounds", e)
-      return false
-    }
-    return true
+  private fun getInbounds(v2rayConfig: V2rayConfig): V2rayConfig? {
+    return inboundConfigStep.applyInbounds(v2rayConfig)
   }
 
   /**
@@ -444,8 +403,8 @@ object V2rayConfigManager {
    *
    * @param v2rayConfig The V2ray configuration object to be modified
    */
-  private fun getFakeDns(v2rayConfig: V2rayConfig) {
-    dnsConfigStep.applyFakeDns(v2rayConfig)
+  private fun getFakeDns(v2rayConfig: V2rayConfig): V2rayConfig {
+    return dnsConfigStep.applyFakeDns(v2rayConfig)
   }
 
   /**
@@ -454,9 +413,9 @@ object V2rayConfigManager {
    * Sets up the domain strategy and adds routing rules from saved rulesets.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @return true if routing configuration was successful, false otherwise
+   * @return Updated config, or null if routing configuration fails.
    */
-  private fun getRouting(v2rayConfig: V2rayConfig): Boolean {
+  private fun getRouting(v2rayConfig: V2rayConfig): V2rayConfig? {
     return routingConfigStep.applyRouting(v2rayConfig)
   }
 
@@ -478,9 +437,9 @@ object V2rayConfigManager {
    * Sets up DNS inbound, outbound, and routing rules for local DNS resolution.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @return true if custom local DNS configuration was successful, false otherwise
+   * @return Updated config, or null if local DNS configuration fails.
    */
-  private fun getCustomLocalDns(v2rayConfig: V2rayConfig): Boolean {
+  private fun getCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig? {
     return dnsConfigStep.applyCustomLocalDns(v2rayConfig)
   }
 
@@ -490,9 +449,9 @@ object V2rayConfigManager {
    * Sets up DNS servers, hosts, and routing rules for DNS resolution.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @return true if DNS configuration was successful, false otherwise
+   * @return Updated config, or null if DNS configuration fails.
    */
-  private fun getDns(v2rayConfig: V2rayConfig): Boolean {
+  private fun getDns(v2rayConfig: V2rayConfig): V2rayConfig? {
     return dnsConfigStep.applyDns(v2rayConfig)
   }
 
@@ -508,11 +467,11 @@ object V2rayConfigManager {
    * Converts the profile to an outbound configuration and applies global settings.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @param config The profile item containing connection details
-   * @return true if outbound configuration was successful, null if there was an error
+   * @param connectionProfile The connection profile containing connection details
+   * @return Updated config, or null if outbound configuration fails.
    */
-  private fun getOutbounds(v2rayConfig: V2rayConfig, config: ConnectionProfile): Boolean? {
-    return outboundConfigStep.applyOutbounds(v2rayConfig, config)
+  private fun getOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig? {
+    return outboundConfigStep.applyOutbounds(v2rayConfig, connectionProfile)
   }
 
   /**
@@ -522,9 +481,9 @@ object V2rayConfigManager {
    *
    * @param v2rayConfig The V2ray configuration object to be modified
    * @param subscriptionId The subscription ID to look up related proxies
-   * @return true if additional outbounds were configured successfully, false otherwise
+   * @return Updated config. If additional outbounds cannot be applied, returns original config.
    */
-  private fun getMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): Boolean {
+  private fun getMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): V2rayConfig {
     return outboundConfigStep.applyMoreOutbounds(v2rayConfig, subscriptionId)
   }
 
@@ -650,9 +609,9 @@ object V2rayConfigManager {
    * Configures packet fragmentation for TLS and REALITY protocols if enabled.
    *
    * @param v2rayConfig The V2ray configuration object to be modified
-   * @return true if fragment configuration was successful, false otherwise
+   * @return Updated config, or null if fragment configuration fails.
    */
-  private fun updateOutboundFragment(v2rayConfig: V2rayConfig): Boolean {
+  private fun updateOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig? {
     return outboundConfigStep.applyOutboundFragment(v2rayConfig)
   }
 
@@ -663,66 +622,13 @@ object V2rayConfigManager {
    *
    * @param v2rayConfig The V2ray configuration object to be modified
    */
-  private fun resolveOutboundDomainsToHosts(v2rayConfig: V2rayConfig) {
-    val proxyOutboundList = v2rayConfig.getAllProxyOutbound()
-    val dns = v2rayConfig.dns ?: return
-    val newHosts = dns.hosts?.toMutableMap() ?: mutableMapOf()
-    val preferIpv6 = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) == true
-
-    for (item in proxyOutboundList) {
-      val domain = item.getServerAddress()
-      if (domain.isNullOrEmpty()) continue
-
-      if (newHosts.containsKey(domain)) {
-        item.ensureSockopt().domainStrategy = "UseIP"
-        item.ensureSockopt().happyEyeballs = StreamSettingsBean.HappyEyeballsBean(
-          prioritizeIPv6 = preferIpv6,
-          interleave = 2
-        )
-        continue
-      }
-
-      val resolvedIps = HttpUtil.resolveHostToIP(domain, preferIpv6)
-      if (resolvedIps.isNullOrEmpty()) continue
-
-      item.ensureSockopt().domainStrategy = "UseIP"
-      item.ensureSockopt().happyEyeballs = StreamSettingsBean.HappyEyeballsBean(
-        prioritizeIPv6 = preferIpv6,
-        interleave = 2
-      )
-      newHosts[domain] = if (resolvedIps.size == 1) {
-        resolvedIps[0]
-      } else {
-        resolvedIps
-      }
-    }
-
-    dns.hosts = newHosts
+  private fun resolveOutboundDomainsToHosts(v2rayConfig: V2rayConfig): V2rayConfig {
+    return domainResolveStep.resolveOutboundDomainsToHosts(v2rayConfig)
   }
 
-  /**
-   * Converts a profile item to an outbound configuration.
-   *
-   * Creates appropriate outbound settings based on the protocol type.
-   *
-   * @param connectionProfile The profile item to convert
-   * @return OutboundBean configuration for the profile, or null if not supported
-   */
-  private fun convertProfile2Outbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    return when (connectionProfile.protocol) {
-      Protocol.Vmess -> Vmess.toOutbound(connectionProfile)
-      Protocol.Custom -> null
-      Protocol.ShadowSocks -> Shadowsocks.toOutbound(connectionProfile)
-      Protocol.Socks -> Socks.toOutbound(connectionProfile)
-      Protocol.Vless -> Vless.toOutbound(connectionProfile)
-      Protocol.Trojan -> Trojan.toOutbound(connectionProfile)
-      Protocol.WireGuard -> Wireguard.toOutbound(connectionProfile)
-      Protocol.Hysteria2 -> Hysteria2.toOutbound(connectionProfile)
-      Protocol.Http -> Http.toOutbound(connectionProfile)
-      Protocol.PolicyGroup -> null
-      else -> null
-    }
-  }
+  private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
+
+  private inline fun V2rayConfig.maybeThen(step: (V2rayConfig) -> V2rayConfig?): V2rayConfig? = step(this)
 
   /**
    * Creates an initial outbound configuration for a specific protocol type.

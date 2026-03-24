@@ -9,7 +9,7 @@ import com.v2ray.ang.util.JsonUtil
 
 internal class RoutingConfigStep {
 
-  fun applyRouting(v2rayConfig: V2rayConfig): Boolean {
+  fun applyRouting(v2rayConfig: V2rayConfig): V2rayConfig? {
     try {
       v2rayConfig.routing.domainStrategy =
         KeyValueStorage.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
@@ -21,9 +21,9 @@ internal class RoutingConfigStep {
       }
     } catch (e: Exception) {
       Log.e(AppConfig.TAG, "Failed to configure routing", e)
-      return false
+      return null
     }
-    return true
+    return v2rayConfig
   }
 
   fun getUserRule2Domain(tag: String): ArrayList<String> {

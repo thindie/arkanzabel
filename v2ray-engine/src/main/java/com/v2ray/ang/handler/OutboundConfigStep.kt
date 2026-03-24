@@ -15,8 +15,8 @@ internal class OutboundConfigStep(
   private val convertProfile2Outbound: (ConnectionProfile) -> OutboundBean?,
 ) {
 
-  fun applyOutbounds(v2rayConfig: V2rayConfig, config: ConnectionProfile): Boolean? {
-    val outbound = convertProfile2Outbound(config) ?: return null
+  fun applyOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig? {
+    val outbound = convertProfile2Outbound(connectionProfile) ?: return null
     val ret = applyGlobalOutboundSettings(outbound)
     if (!ret) return null
 
@@ -25,19 +25,17 @@ internal class OutboundConfigStep(
     } else {
       v2rayConfig.outbounds.add(outbound)
     }
-
-    applyOutboundFragment(v2rayConfig)
-    return true
+    return applyOutboundFragment(v2rayConfig)
   }
 
-  fun applyMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): Boolean {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false) == true) {
-      return false
+  fun applyMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): V2rayConfig {
+    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+      return v2rayConfig
     }
-    if (subscriptionId.isEmpty()) return false
+    if (subscriptionId.isEmpty()) return v2rayConfig
 
     try {
-      val subItem = KeyValueStorage.decodeSubscription(subscriptionId) ?: return false
+      val subItem = KeyValueStorage.decodeSubscription(subscriptionId) ?: return v2rayConfig
       val outbound = v2rayConfig.outbounds[0]
 
       val prevNode = SettingsManager.getServerViaRemarks(subItem.prevProfile)
@@ -64,9 +62,9 @@ internal class OutboundConfigStep(
       }
     } catch (e: Exception) {
       Log.e(AppConfig.TAG, "Failed to configure more outbounds", e)
-      return false
+      return v2rayConfig
     }
-    return true
+    return v2rayConfig
   }
 
   fun applyGlobalOutboundSettings(outbound: OutboundBean): Boolean {
@@ -85,7 +83,7 @@ internal class OutboundConfigStep(
         muxEnabled = false
       }
 
-      if (muxEnabled == true) {
+      if (muxEnabled) {
         outbound.mux?.enabled = true
         outbound.mux?.concurrency =
           KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
@@ -138,15 +136,15 @@ internal class OutboundConfigStep(
     return true
   }
 
-  fun applyOutboundFragment(v2rayConfig: V2rayConfig): Boolean {
+  fun applyOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig? {
     try {
-      if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false) == false) {
-        return true
+      if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+        return v2rayConfig
       }
       if (v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.TLS
         && v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.REALITY
       ) {
-        return true
+        return v2rayConfig
       }
 
       val fragmentOutbound = OutboundBean(
@@ -189,8 +187,8 @@ internal class OutboundConfigStep(
       )
     } catch (e: Exception) {
       Log.e(AppConfig.TAG, "Failed to update outbound fragment", e)
-      return false
+      return null
     }
-    return true
+    return v2rayConfig
   }
 }

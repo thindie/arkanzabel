@@ -10,14 +10,15 @@ import com.v2ray.ang.extension.isNotNullEmpty
 internal class DnsConfigStep(
   private val getUserRule2Domain: (String) -> ArrayList<String>,
 ) {
-  fun applyFakeDns(v2rayConfig: V2rayConfig) {
+  fun applyFakeDns(v2rayConfig: V2rayConfig): V2rayConfig {
     if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) && KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)
     ) {
       v2rayConfig.fakedns = listOf(V2rayConfig.FakednsBean())
     }
+    return v2rayConfig
   }
 
-  fun applyCustomLocalDns(v2rayConfig: V2rayConfig): Boolean {
+  fun applyCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig? {
     try {
       if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)) {
         val geositeCn = arrayListOf(AppConfig.GEOSITE_CN)
@@ -65,12 +66,12 @@ internal class DnsConfigStep(
       }
     } catch (e: Exception) {
       Log.e(AppConfig.TAG, "Failed to configure custom local DNS", e)
-      return false
+      return null
     }
-    return true
+    return v2rayConfig
   }
 
-  fun applyDns(v2rayConfig: V2rayConfig): Boolean {
+  fun applyDns(v2rayConfig: V2rayConfig): V2rayConfig? {
     try {
       val hosts = mutableMapOf<String, Any>()
       val servers = ArrayList<Any>()
@@ -155,8 +156,8 @@ internal class DnsConfigStep(
       )
     } catch (e: Exception) {
       Log.e(AppConfig.TAG, "Failed to configure DNS", e)
-      return false
+      return null
     }
-    return true
+    return v2rayConfig
   }
 }
