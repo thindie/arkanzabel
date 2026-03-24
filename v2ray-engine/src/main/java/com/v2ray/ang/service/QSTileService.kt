@@ -11,7 +11,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 

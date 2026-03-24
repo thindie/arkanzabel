@@ -8,7 +8,7 @@ import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.extension.removeWhiteSpace
-import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.util.Utils
 import java.net.URI
 

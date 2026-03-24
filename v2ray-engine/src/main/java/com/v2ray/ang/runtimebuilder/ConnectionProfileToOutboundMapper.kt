@@ -1,4 +1,4 @@
-package com.v2ray.ang.handler
+package com.v2ray.ang.runtimebuilder
 
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
@@ -14,7 +14,7 @@ import com.v2ray.ang.protocolstringsparsers.Wireguard
 
 /**
  * Maps a stored [ConnectionProfile] to Xray [OutboundBean] via protocol-specific parsers.
- * Keeps [V2rayConfigManager] free of direct parser dependencies for this path.
+ * Keeps [com.v2ray.ang.runtime.V2rayConfigManager] free of direct parser dependencies for this path.
  */
 object ConnectionProfileToOutboundMapper {
 

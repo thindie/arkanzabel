@@ -4,7 +4,7 @@ import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
-import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.runtime.V2rayConfigManager
 
 object Http : ProtocolParser() {
   /**

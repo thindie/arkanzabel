@@ -5,8 +5,8 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.Tun2SocksControl
-import com.v2ray.ang.handler.KeyValueStorage
-import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.SettingsManager
 import java.io.File
 
 /**

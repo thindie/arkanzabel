@@ -2,9 +2,9 @@ package com.v2ray.ang.service
 
 import android.content.Context
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.SettingsManager
-import com.v2ray.ang.handler.V2RayNativeManager
-import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.runtime.SettingsManager
+import com.v2ray.ang.runtime.V2RayNativeManager
+import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.util.MessageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName

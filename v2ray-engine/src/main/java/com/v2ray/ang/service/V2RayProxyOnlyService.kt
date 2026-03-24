@@ -7,8 +7,8 @@ import android.os.IBinder
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
-import com.v2ray.ang.handler.SettingsManager
-import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.runtime.SettingsManager
+import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.LocaleContextWrapper
 import java.lang.ref.SoftReference
 

@@ -1,4 +1,4 @@
-package com.v2ray.ang.handler
+package com.v2ray.ang.runtimebuilder
 
 import android.util.Log
 import com.v2ray.ang.AppConfig
@@ -7,6 +7,8 @@ import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
 import com.v2ray.ang.error.DnsConfigError
 import com.v2ray.ang.extension.isNotNullEmpty
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.SettingsManager
 
 internal class DnsConfigStep(
   private val getUserRule2Domain: (String) -> ArrayList<String>,

@@ -12,8 +12,8 @@ import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.WorkState
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.KeyValueStorage
-import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.SettingsManager
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
