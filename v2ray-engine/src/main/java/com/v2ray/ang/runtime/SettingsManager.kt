@@ -64,7 +64,7 @@ object SettingsManager {
   private fun resetRoutingRulesetsCommon(rulesetList: MutableList<RulesetItem>) {
     val rulesetNew = mutableListOf<RulesetItem>()
     KeyValueStorage.decodeRoutingRulesets()?.forEach { key ->
-      if (key.locked == true) {
+      if (key.locked) {
         rulesetNew.add(key)
       }
     }

@@ -38,7 +38,7 @@ internal class InboundConfigStep(
 
       if (!Utils.isXray()) {
         val inbound2 =
-          JsonUtil.fromJson(JsonUtil.toJson(inbound1), V2rayConfig.InboundBean::class.java)
+          JsonUtil.fromJson(JsonUtil.toJson(inbound1), V2rayConfig.Inbound::class.java)
             ?: throw IncomingConfigError(
               message = "Inbound mapping failed: cloned inbound is null",
               source = "InboundConfigStep.applyInbounds"

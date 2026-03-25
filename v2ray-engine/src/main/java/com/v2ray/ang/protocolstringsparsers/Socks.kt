@@ -1,7 +1,7 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.isNotNullEmpty
@@ -43,20 +43,20 @@ object Socks : ProtocolParser() {
   }
 
 
-  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Socks)
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.Socks)
 
-    outboundBean?.settings?.servers?.first()?.let { server ->
+    outbound?.settings?.servers?.first()?.let { server ->
       server.address = getServerAddress(connectionProfile)
       server.port = connectionProfile.serverPort.orEmpty().toInt()
       if (connectionProfile.username.isNotNullEmpty()) {
-        val socksUsersBean = OutboundBean.OutSettingsBean.ServersBean.SocksUsersBean()
-        socksUsersBean.user = connectionProfile.username.orEmpty()
-        socksUsersBean.pass = connectionProfile.password.orEmpty()
-        server.users = listOf(socksUsersBean)
+        val socksUsers = Outbound.OutSettings.Servers.SocksUsers()
+        socksUsers.user = connectionProfile.username.orEmpty()
+        socksUsers.pass = connectionProfile.password.orEmpty()
+        server.users = listOf(socksUsers)
       }
     }
 
-    return outboundBean
+    return outbound
   }
 }

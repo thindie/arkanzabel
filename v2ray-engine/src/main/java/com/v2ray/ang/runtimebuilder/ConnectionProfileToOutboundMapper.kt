@@ -1,7 +1,7 @@
 package com.v2ray.ang.runtimebuilder
 
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.protocolstringsparsers.Http
 import com.v2ray.ang.protocolstringsparsers.Hysteria2
@@ -13,12 +13,12 @@ import com.v2ray.ang.protocolstringsparsers.Vmess
 import com.v2ray.ang.protocolstringsparsers.Wireguard
 
 /**
- * Maps a stored [ConnectionProfile] to Xray [OutboundBean] via protocol-specific parsers.
+ * Maps a stored [ConnectionProfile] to Xray [Outbound] via protocol-specific parsers.
  * Keeps [com.v2ray.ang.runtime.V2rayConfigManager] free of direct parser dependencies for this path.
  */
 object ConnectionProfileToOutboundMapper {
 
-  fun map(connectionProfile: ConnectionProfile): OutboundBean? {
+  fun map(connectionProfile: ConnectionProfile): Outbound? {
     return when (connectionProfile.protocol) {
       Protocol.Vmess -> Vmess.toOutbound(connectionProfile)
       Protocol.Custom -> null

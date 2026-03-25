@@ -4,7 +4,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -55,29 +55,29 @@ object Trojan : ProtocolParser() {
     }
 
     /**
-     * Converts a ProfileItem object to an OutboundBean object.
+     * Converts a ProfileItem object to an Outbound object.
      *
      * @param connectionProfile the ProfileItem object to convert
-     * @return the converted OutboundBean object, or null if conversion fails
+     * @return the converted Outbound object, or null if conversion fails
      */
-    fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-        val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
+    fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+        val outbound = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
 
-        outboundBean?.settings?.servers?.first()?.let { server ->
+        outbound?.settings?.servers?.first()?.let { server ->
             server.address = getServerAddress(connectionProfile)
             server.port = connectionProfile.serverPort.orEmpty().toInt()
             server.password = connectionProfile.password
             server.flow = connectionProfile.flow
         }
 
-        val sni = outboundBean?.streamSettings?.let {
+        val sni = outbound?.streamSettings?.let {
             V2rayConfigManager.populateTransportSettings(it, connectionProfile)
         }
 
-        outboundBean?.streamSettings?.let {
+        outbound?.streamSettings?.let {
             V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
         }
 
-        return outboundBean
+        return outbound
     }
 }

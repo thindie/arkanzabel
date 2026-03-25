@@ -3,7 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.idnHost
@@ -119,24 +119,24 @@ object Shadowsocks : ProtocolParser() {
     return toUri(config, Utils.encode(pw, true), null)
   }
 
-  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.ShadowSocks)
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.ShadowSocks)
 
-    outboundBean?.settings?.servers?.first()?.let { server ->
+    outbound?.settings?.servers?.first()?.let { server ->
       server.address = getServerAddress(connectionProfile)
       server.port = connectionProfile.serverPort.orEmpty().toInt()
       server.password = connectionProfile.password
       server.method = connectionProfile.method
     }
 
-    val sni = outboundBean?.streamSettings?.let {
+    val sni = outbound?.streamSettings?.let {
       V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
-    outboundBean?.streamSettings?.let {
+    outbound?.streamSettings?.let {
       V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
-    return outboundBean
+    return outbound
   }
 }

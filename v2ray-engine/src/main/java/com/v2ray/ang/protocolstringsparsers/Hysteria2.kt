@@ -2,8 +2,8 @@ package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean.FinalMaskBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
+import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings.FinalMask
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.idnHost
@@ -63,7 +63,7 @@ object Hysteria2 : ProtocolParser() {
     config.security.let { if (it != null) dicQuery["security"] = it }
     config.sni?.nullIfBlank()?.let { dicQuery["sni"] = it }
     config.alpn?.nullIfBlank()?.let { dicQuery["alpn"] = it }
-    config.insecure.let { dicQuery["insecure"] = if (it == true) "1" else "0" }
+    dicQuery["insecure"] = if (config.insecure) "1" else "0"
 
     if (config.obfsPassword.isNotNullEmpty()) {
       dicQuery["obfs"] = "salamander"
@@ -83,42 +83,42 @@ object Hysteria2 : ProtocolParser() {
   }
 
   /**
-   * Converts a ProfileItem object to an OutboundBean object.
+   * Converts a ProfileItem object to an Outbound object.
    *
    * @param connectionProfile the ProfileItem object to convert
-   * @return the converted OutboundBean object, or null if conversion fails
+   * @return the converted Outbound object, or null if conversion fails
    */
-  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Hysteria2) ?: return null
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.Hysteria2) ?: return null
     connectionProfile.network = NetworkType.HYSTERIA.type
     connectionProfile.alpn = "h3"
 
-    outboundBean.settings?.let { server ->
+    outbound.settings?.let { server ->
       server.address = getServerAddress(connectionProfile)
       server.port = connectionProfile.serverPort.orEmpty().toInt()
       server.version = 2
     }
 
-    val sni = outboundBean.streamSettings?.let {
+    val sni = outbound.streamSettings?.let {
       V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
-    outboundBean.streamSettings?.let {
+    outbound.streamSettings?.let {
       V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
     if (connectionProfile.obfsPassword.isNotNullEmpty()) {
-      outboundBean.streamSettings?.finalmask = FinalMaskBean(
+      outbound.streamSettings?.finalmask = FinalMask(
         udp = listOf(
-          FinalMaskBean.MaskBean(
+          FinalMask.Mask(
             type = "salamander",
-            settings = FinalMaskBean.MaskBean.MaskSettingsBean(
+            settings = FinalMask.Mask.MaskSettings(
               password = connectionProfile.obfsPassword
             )
           )
         )
       )
     }
-    return outboundBean
+    return outbound
   }
 }

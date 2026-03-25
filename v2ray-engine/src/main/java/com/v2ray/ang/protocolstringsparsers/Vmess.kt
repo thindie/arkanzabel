@@ -4,7 +4,7 @@ import android.text.TextUtils
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.VmessQRCode
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
@@ -117,11 +117,7 @@ object Vmess : ProtocolParser() {
     vmessQRCode.sni = config.sni.orEmpty()
     vmessQRCode.fp = config.fingerPrint.orEmpty()
     vmessQRCode.alpn = config.alpn.orEmpty()
-    vmessQRCode.insecure = when (config.insecure) {
-      true -> "1"
-      false -> "0"
-      else -> ""
-    }
+    vmessQRCode.insecure = if (config.insecure) "1" else "0"
 
     val json = JsonUtil.toJson(vmessQRCode)
     return Utils.encode(json)
@@ -146,24 +142,24 @@ object Vmess : ProtocolParser() {
     return config
   }
 
-  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Vmess)
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.Vmess)
 
-    outboundBean?.settings?.vnext?.first()?.let { vnext ->
+    outbound?.settings?.vnext?.first()?.let { vnext ->
       vnext.address = getServerAddress(connectionProfile)
       vnext.port = connectionProfile.serverPort.orEmpty().toInt()
       vnext.users[0].id = connectionProfile.password.orEmpty()
       vnext.users[0].security = connectionProfile.method
     }
 
-    val sni = outboundBean?.streamSettings?.let {
+    val sni = outbound?.streamSettings?.let {
       V2rayConfigManager.populateTransportSettings(it, connectionProfile)
     }
 
-    outboundBean?.streamSettings?.let {
+    outbound?.streamSettings?.let {
       V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
-    return outboundBean
+    return outbound
   }
 }

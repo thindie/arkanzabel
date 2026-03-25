@@ -41,7 +41,7 @@ data class ConnectionProfile(
     var sni: String? = null,
     var alpn: String? = null,
     var fingerPrint: String? = null,
-    var insecure: Boolean? = null,
+    var insecure: Boolean = false,
     var echConfigList: String? = null,
     var echForceQuery: String? = null,
     var pinnedCA256: String? = null,

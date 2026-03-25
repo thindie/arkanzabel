@@ -3,8 +3,8 @@ package com.v2ray.ang.runtimebuilder
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
+import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
 import com.v2ray.ang.error.DnsConfigError
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -16,7 +16,7 @@ internal class DnsConfigStep(
   fun applyFakeDns(v2rayConfig: V2rayConfig): V2rayConfig {
     if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) && KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)
     ) {
-      v2rayConfig.fakedns = listOf(V2rayConfig.FakednsBean())
+      v2rayConfig.fakedns = listOf(V2rayConfig.Fakedns())
     }
     return v2rayConfig
   }
@@ -29,7 +29,7 @@ internal class DnsConfigStep(
         val directDomain = getUserRule2Domain(AppConfig.TAG_DIRECT)
         v2rayConfig.dns?.servers?.add(
           0,
-          V2rayConfig.DnsBean.ServersBean(
+          V2rayConfig.Dns.Servers(
             address = "fakedns",
             domains = geositeCn.plus(proxyDomain).plus(directDomain)
           )
@@ -39,7 +39,7 @@ internal class DnsConfigStep(
       if (SettingsManager.isVpnMode()) {
         if (SettingsManager.isUsingHevTun()) {
           v2rayConfig.routing.rules.add(
-            0, RulesBean(
+            0, Rules(
               inboundTag = arrayListOf("socks"),
               outboundTag = "dns-out",
               port = "53",
@@ -47,7 +47,7 @@ internal class DnsConfigStep(
           )
         } else {
           v2rayConfig.routing.rules.add(
-            0, RulesBean(
+            0, Rules(
               inboundTag = arrayListOf("tun"),
               outboundTag = "dns-out",
               port = "53",
@@ -58,7 +58,7 @@ internal class DnsConfigStep(
 
       if (v2rayConfig.outbounds.none { e -> e.protocol == "dns" && e.tag == "dns-out" }) {
         v2rayConfig.outbounds.add(
-          OutboundBean(
+          Outbound(
             protocol = "dns",
             tag = "dns-out",
             settings = null,
@@ -90,7 +90,7 @@ internal class DnsConfigStep(
       }
       if (proxyDomain.isNotEmpty()) {
         servers.add(
-          V2rayConfig.DnsBean.ServersBean(
+          V2rayConfig.Dns.Servers(
             address = remoteDns.first(),
             domains = proxyDomain,
           )
@@ -103,7 +103,7 @@ internal class DnsConfigStep(
       val geoipCn = arrayListOf(AppConfig.GEOIP_CN)
       if (directDomain.isNotEmpty()) {
         servers.add(
-          V2rayConfig.DnsBean.ServersBean(
+          V2rayConfig.Dns.Servers(
             address = domesticDns.first(),
             domains = directDomain,
             expectIPs = if (isCnRoutingMode) geoipCn else null,
@@ -146,21 +146,21 @@ internal class DnsConfigStep(
         )
       }
 
-      v2rayConfig.dns = V2rayConfig.DnsBean(
+      v2rayConfig.dns = V2rayConfig.Dns(
         servers = servers,
         hosts = hosts,
         tag = AppConfig.TAG_DNS
       )
 
       v2rayConfig.routing.rules.add(
-        RulesBean(
+        Rules(
           outboundTag = AppConfig.TAG_DIRECT,
           inboundTag = arrayListOf(AppConfig.TAG_DOMESTIC_DNS),
           domain = null
         )
       )
       v2rayConfig.routing.rules.add(
-        RulesBean(
+        Rules(
           outboundTag = AppConfig.TAG_PROXY,
           inboundTag = arrayListOf(AppConfig.TAG_DNS),
           domain = null

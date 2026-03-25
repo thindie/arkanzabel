@@ -1,7 +1,9 @@
 package com.v2ray.ang.runtime
 
 import android.content.Context
+import android.util.Log
 import com.google.gson.JsonIOException
+import com.v2ray.ang.AppConfig
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
@@ -196,7 +198,11 @@ object KeyValueStorage {
     decodeSubsList().forEach { key ->
       val json = subStorage.decodeString(key)
       if (!json.isNullOrBlank()) {
-        val item = JsonUtil.fromJson(json, SubscriptionItem::class.java) ?: SubscriptionItem()
+        val item = JsonUtil.fromJson(json, SubscriptionItem::class.java)
+        if (item == null) {
+          Log.w(AppConfig.TAG, "Skip invalid subscription item: $key")
+          return@forEach
+        }
         subscriptions.add(SubscriptionCache(key, item))
       }
     }
@@ -244,7 +250,11 @@ object KeyValueStorage {
     assetStorage.allKeys()?.forEach { key ->
       val json = assetStorage.decodeString(key)
       if (!json.isNullOrBlank()) {
-        val item = JsonUtil.fromJson(json, AssetUrlItem::class.java) ?: AssetUrlItem()
+        val item = JsonUtil.fromJson(json, AssetUrlItem::class.java)
+        if (item == null) {
+          Log.w(AppConfig.TAG, "Skip invalid asset url item: $key")
+          return@forEach
+        }
         assetUrlItems.add(AssetUrlCache(key, item))
       }
     }

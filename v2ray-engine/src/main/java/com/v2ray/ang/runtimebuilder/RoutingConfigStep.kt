@@ -4,7 +4,7 @@ import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
 import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
@@ -57,7 +57,7 @@ internal class RoutingConfigStep {
         return
       }
 
-      val rule = JsonUtil.fromJson(JsonUtil.toJson(item), RulesBean::class.java) ?: return
+      val rule = JsonUtil.fromJson(JsonUtil.toJson(item), Rules::class.java) ?: return
       v2rayConfig.routing.rules.add(rule)
     } catch (runtime: RuntimeException) {
       Log.e(AppConfig.TAG, "Failed to apply routing user rule", runtime)

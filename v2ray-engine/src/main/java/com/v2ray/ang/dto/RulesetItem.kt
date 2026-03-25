@@ -1,7 +1,7 @@
 package com.v2ray.ang.dto
 
 data class RulesetItem(
-    val remarks: String? =null,
+    val remarks: String,
     val ip: List<String>? = null,
     val domain: List<String>? = null,
     val outboundTag: String,

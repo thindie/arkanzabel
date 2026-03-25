@@ -148,7 +148,7 @@ open class ProtocolParser {
     config.flow?.nullIfBlank()?.let { dicQuery["flow"] = it }
     // Add two keys for compatibility: "insecure" and "allowInsecure"
     if (config.security == AppConfig.TLS) {
-      val insecureFlag = if (config.insecure == true) "1" else "0"
+      val insecureFlag = if (config.insecure) "1" else "0"
       dicQuery["insecure"] = insecureFlag
       dicQuery["allowInsecure"] = insecureFlag
     }

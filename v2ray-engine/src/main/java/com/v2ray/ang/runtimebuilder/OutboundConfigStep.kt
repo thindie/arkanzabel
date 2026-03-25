@@ -4,9 +4,9 @@ import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
+import com.v2ray.ang.dto.V2rayConfig.Outbound.OutSettings
+import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings
 import com.v2ray.ang.error.OutboundConfigError
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
@@ -15,7 +15,7 @@ import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.util.JsonUtil
 
 internal class OutboundConfigStep(
-  private val convertProfile2Outbound: (ConnectionProfile) -> OutboundBean?,
+  private val convertProfile2Outbound: (ConnectionProfile) -> Outbound?,
 ) {
 
   fun applyOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig {
@@ -82,7 +82,7 @@ internal class OutboundConfigStep(
     return v2rayConfig
   }
 
-  fun applyGlobalOutboundSettings(outbound: OutboundBean): Boolean {
+  fun applyGlobalOutboundSettings(outbound: Outbound): Boolean {
     try {
       var muxEnabled = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false)
       val protocol = outbound.protocol
@@ -139,7 +139,7 @@ internal class OutboundConfigStep(
         }
         outbound.streamSettings?.tcpSettings?.header?.request = JsonUtil.fromJson(
           requestString,
-          StreamSettingsBean.TcpSettingsBean.HeaderBean.RequestBean::class.java
+          StreamSettings.TcpSettings.Header.Request::class.java
         )
         outbound.streamSettings?.tcpSettings?.header?.request?.path = if (path.isNullOrEmpty()) listOf("/") else path
         outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host = host
@@ -162,7 +162,7 @@ internal class OutboundConfigStep(
         return v2rayConfig
       }
 
-      val fragmentOutbound = OutboundBean(
+      val fragmentOutbound = Outbound(
         protocol = AppConfig.PROTOCOL_FREEDOM,
         tag = AppConfig.TAG_FRAGMENT,
         mux = null
@@ -175,29 +175,29 @@ internal class OutboundConfigStep(
         packets = "tlshello"
       }
 
-      fragmentOutbound.settings = OutSettingsBean(
-        fragment = OutSettingsBean.FragmentBean(
+      fragmentOutbound.settings = OutSettings(
+        fragment = OutSettings.Fragment(
           packets = packets,
           length = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH) ?: "50-100",
           interval = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL) ?: "10-20"
         ),
         noises = listOf(
-          OutSettingsBean.NoiseBean(
+          OutSettings.Noise(
             type = "rand",
             packet = "10-20",
             delay = "10-16",
           )
         ),
       )
-      fragmentOutbound.streamSettings = StreamSettingsBean(
-        sockopt = StreamSettingsBean.SockoptBean(
+      fragmentOutbound.streamSettings = StreamSettings(
+        sockopt = StreamSettings.Sockopt(
           TcpNoDelay = true,
           mark = 255
         )
       )
       v2rayConfig.outbounds.add(fragmentOutbound)
 
-      v2rayConfig.outbounds[0].streamSettings?.sockopt = StreamSettingsBean.SockoptBean(
+      v2rayConfig.outbounds[0].streamSettings?.sockopt = StreamSettings.Sockopt(
         dialerProxy = AppConfig.TAG_FRAGMENT
       )
     } catch (runtime: RuntimeException) {

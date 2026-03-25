@@ -15,10 +15,10 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2Ray
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
-import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
+import com.v2ray.ang.dto.V2rayConfig.Outbound.OutSettings
+import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings
+import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
 import com.v2ray.ang.error.AssetConfigMissingError
 import com.v2ray.ang.error.ConfigSerializationError
 import com.v2ray.ang.error.ConfigValidationError
@@ -221,7 +221,7 @@ object V2rayConfigManager {
     val configWithInbounds = getInbounds(initialConfig)
 
     configWithInbounds.outbounds.removeAt(0)
-    val outboundsList = mutableListOf<OutboundBean>()
+    val outboundsList = mutableListOf<Outbound>()
     var index = 0
     for (connectionProfile in validConfigs) {
       index++
@@ -435,7 +435,7 @@ object V2rayConfigManager {
    * @param outbound The outbound connection to update
    * @return true if the update was successful, false otherwise
    */
-  private fun updateOutboundWithGlobalSettings(outbound: OutboundBean): Boolean {
+  private fun updateOutboundWithGlobalSettings(outbound: Outbound): Boolean {
     return outboundConfigStep.applyGlobalOutboundSettings(outbound)
   }
 
@@ -459,10 +459,10 @@ object V2rayConfigManager {
         // Least Ping goto else
         "1" -> {
           // Least Load
-          val balancer = V2rayConfig.RoutingBean.BalancerBean(
+          val balancer = V2rayConfig.Routing.Balancer(
             tag = AppConfig.TAG_BALANCER,
             selector = lstSelector,
-            strategy = V2rayConfig.RoutingBean.StrategyObject(
+            strategy = V2rayConfig.Routing.StrategyObject(
               type = "leastLoad"
             )
           )
@@ -481,10 +481,10 @@ object V2rayConfigManager {
 
         "2" -> {
           // Random
-          val balancer = V2rayConfig.RoutingBean.BalancerBean(
+          val balancer = V2rayConfig.Routing.Balancer(
             tag = AppConfig.TAG_BALANCER,
             selector = lstSelector,
-            strategy = V2rayConfig.RoutingBean.StrategyObject(
+            strategy = V2rayConfig.Routing.StrategyObject(
               type = "random"
             )
           )
@@ -493,10 +493,10 @@ object V2rayConfigManager {
 
         "3" -> {
           // Round Robin
-          val balancer = V2rayConfig.RoutingBean.BalancerBean(
+          val balancer = V2rayConfig.Routing.Balancer(
             tag = AppConfig.TAG_BALANCER,
             selector = lstSelector,
-            strategy = V2rayConfig.RoutingBean.StrategyObject(
+            strategy = V2rayConfig.Routing.StrategyObject(
               type = "roundRobin"
             )
           )
@@ -505,10 +505,10 @@ object V2rayConfigManager {
 
         else -> {
           // Default: Least Ping
-          val balancer = V2rayConfig.RoutingBean.BalancerBean(
+          val balancer = V2rayConfig.Routing.Balancer(
             tag = AppConfig.TAG_BALANCER,
             selector = lstSelector,
-            strategy = V2rayConfig.RoutingBean.StrategyObject(
+            strategy = V2rayConfig.Routing.StrategyObject(
               type = "leastPing"
             )
           )
@@ -525,14 +525,14 @@ object V2rayConfigManager {
 
       if (v2rayConfig.routing.domainStrategy == "IPIfNonMatch") {
         v2rayConfig.routing.rules.add(
-          RulesBean(
+          Rules(
             ip = arrayListOf("0.0.0.0/0", "::/0"),
             balancerTag = AppConfig.TAG_BALANCER,
           )
         )
       } else {
         v2rayConfig.routing.rules.add(
-          RulesBean(
+          Rules(
             network = "tcp,udp",
             balancerTag = AppConfig.TAG_BALANCER,
           )
@@ -607,23 +607,23 @@ object V2rayConfigManager {
    * Provides a template configuration for different protocol types.
    *
    * @param configType The type of configuration to create
-   * @return An initial OutboundBean for the specified configuration type, or null for custom types
+   * @return An initial Outbound for the specified configuration type, or null for custom types
    */
-  fun createInitOutbound(configType: Protocol): OutboundBean? {
+  fun createInitOutbound(configType: Protocol): Outbound? {
     return when (configType) {
       Protocol.Vmess,
       Protocol.Vless,
         ->
-        return OutboundBean(
+        return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettingsBean(
+          settings = OutSettings(
             vnext = listOf(
-              OutSettingsBean.VnextBean(
-                users = listOf(OutSettingsBean.VnextBean.UsersBean())
+              OutSettings.Vnext(
+                users = listOf(OutSettings.Vnext.Users())
               )
             )
           ),
-          streamSettings = StreamSettingsBean()
+          streamSettings = StreamSettings()
         )
 
       Protocol.ShadowSocks,
@@ -631,32 +631,32 @@ object V2rayConfigManager {
       Protocol.Http,
       Protocol.Trojan,
         ->
-        return OutboundBean(
+        return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettingsBean(
-            servers = listOf(OutSettingsBean.ServersBean())
+          settings = OutSettings(
+            servers = listOf(OutSettings.Servers())
           ),
-          streamSettings = StreamSettingsBean()
+          streamSettings = StreamSettings()
         )
 
       Protocol.WireGuard ->
-        return OutboundBean(
+        return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettingsBean(
+          settings = OutSettings(
             secretKey = "",
-            peers = listOf(OutSettingsBean.WireGuardBean())
+            peers = listOf(OutSettings.WireGuard())
           )
         )
 
       Protocol.Hysteria,
       Protocol.Hysteria2,
         ->
-        return OutboundBean(
+        return Outbound(
           protocol = Protocol.Hysteria.name.lowercase(),
-          settings = OutSettingsBean(
+          settings = OutSettings(
             servers = null
           ),
-          streamSettings = StreamSettingsBean()
+          streamSettings = StreamSettings()
         )
 
       Protocol.Custom -> null
@@ -674,7 +674,7 @@ object V2rayConfigManager {
    * @return The Server Name Indication (SNI) value to use, or null if not applicable
    */
   fun populateTransportSettings(
-    streamSettings: StreamSettingsBean,
+    streamSettings: StreamSettings,
     connectionProfile: ConnectionProfile,
   ): String? {
     val transport = connectionProfile.network.orEmpty()
@@ -694,11 +694,11 @@ object V2rayConfigManager {
     streamSettings.network = transport.ifEmpty { NetworkType.TCP.type }
     when (streamSettings.network) {
       NetworkType.TCP.type -> {
-        val tcpSetting = StreamSettingsBean.TcpSettingsBean()
+        val tcpSetting = StreamSettings.TcpSettings()
         if (headerType == AppConfig.HEADER_TYPE_HTTP) {
           tcpSetting.header.type = AppConfig.HEADER_TYPE_HTTP
           if (!TextUtils.isEmpty(host) || !TextUtils.isEmpty(path)) {
-            val requestObj = StreamSettingsBean.TcpSettingsBean.HeaderBean.RequestBean()
+            val requestObj = StreamSettings.TcpSettings.Header.Request()
             requestObj.headers.Host =
               host.orEmpty().split(",").map { it.trim() }.filter { it.isNotEmpty() }
             requestObj.path = path.orEmpty().split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -713,18 +713,18 @@ object V2rayConfigManager {
       }
 
       NetworkType.KCP.type -> {
-        streamSettings.kcpSettings = StreamSettingsBean.KcpSettingsBean()
-        val udpMaskList = mutableListOf<StreamSettingsBean.FinalMaskBean.MaskBean>()
+        streamSettings.kcpSettings = StreamSettings.KcpSettings()
+        val udpMaskList = mutableListOf<StreamSettings.FinalMask.Mask>()
         if (!headerType.isNullOrEmpty() && headerType != "none") {
           val kcpHeaderType = when {
             headerType == "wechat-video" -> "header-wechat"
             else -> "header-$headerType"
           }
           udpMaskList.add(
-            StreamSettingsBean.FinalMaskBean.MaskBean(
+            StreamSettings.FinalMask.Mask(
               type = kcpHeaderType,
               settings = if (headerType == "dns" && !host.isNullOrEmpty()) {
-                StreamSettingsBean.FinalMaskBean.MaskBean.MaskSettingsBean(
+                StreamSettings.FinalMask.Mask.MaskSettings(
                   domain = host
                 )
               } else {
@@ -735,27 +735,27 @@ object V2rayConfigManager {
         }
         if (seed.isNullOrEmpty()) {
           udpMaskList.add(
-            StreamSettingsBean.FinalMaskBean.MaskBean(
+            StreamSettings.FinalMask.Mask(
               type = "mkcp-original"
             )
           )
         } else {
           udpMaskList.add(
-            StreamSettingsBean.FinalMaskBean.MaskBean(
+            StreamSettings.FinalMask.Mask(
               type = "mkcp-aes128gcm",
-              settings = StreamSettingsBean.FinalMaskBean.MaskBean.MaskSettingsBean(
+              settings = StreamSettings.FinalMask.Mask.MaskSettings(
                 password = seed
               )
             )
           )
         }
-        streamSettings.finalmask = StreamSettingsBean.FinalMaskBean(
+        streamSettings.finalmask = StreamSettings.FinalMask(
           udp = udpMaskList.toList()
         )
       }
 
       NetworkType.WS.type -> {
-        val wssetting = StreamSettingsBean.WsSettingsBean()
+        val wssetting = StreamSettings.WsSettings()
         wssetting.headers.Host = host.orEmpty()
         sni = host
         wssetting.path = path ?: "/"
@@ -763,7 +763,7 @@ object V2rayConfigManager {
       }
 
       NetworkType.HTTP_UPGRADE.type -> {
-        val httpupgradeSetting = StreamSettingsBean.HttpupgradeSettingsBean()
+        val httpupgradeSetting = StreamSettings.HttpupgradeSettings()
         httpupgradeSetting.host = host.orEmpty()
         sni = host
         httpupgradeSetting.path = path ?: "/"
@@ -771,7 +771,7 @@ object V2rayConfigManager {
       }
 
       NetworkType.XHTTP.type -> {
-        val xhttpSetting = StreamSettingsBean.XhttpSettingsBean()
+        val xhttpSetting = StreamSettings.XhttpSettings()
         xhttpSetting.host = host.orEmpty()
         sni = host
         xhttpSetting.path = path ?: "/"
@@ -782,7 +782,7 @@ object V2rayConfigManager {
 
       NetworkType.H2.type, NetworkType.HTTP.type -> {
         streamSettings.network = NetworkType.H2.type
-        val h2Setting = StreamSettingsBean.HttpSettingsBean()
+        val h2Setting = StreamSettings.HttpSettings()
         h2Setting.host = host.orEmpty().split(",").map { it.trim() }.filter { it.isNotEmpty() }
         sni = h2Setting.host.getOrNull(0)
         h2Setting.path = path ?: "/"
@@ -790,7 +790,7 @@ object V2rayConfigManager {
       }
 
 //                    "quic" -> {
-//                        val quicsetting = QuicSettingBean()
+//                        val quicsetting = QuicSetting()
 //                        quicsetting.security = quicSecurity ?: "none"
 //                        quicsetting.key = key.orEmpty()
 //                        quicsetting.header.type = headerType ?: "none"
@@ -798,7 +798,7 @@ object V2rayConfigManager {
 //                    }
 
       NetworkType.GRPC.type -> {
-        val grpcSetting = StreamSettingsBean.GrpcSettingsBean()
+        val grpcSetting = StreamSettings.GrpcSettings()
         grpcSetting.multiMode = mode == "multi"
         grpcSetting.serviceName = serviceName.orEmpty()
         grpcSetting.authority = authority.orEmpty()
@@ -809,7 +809,7 @@ object V2rayConfigManager {
       }
 
       NetworkType.HYSTERIA.type -> {
-        val hysteriaSetting = StreamSettingsBean.HysteriaSettingsBean(
+        val hysteriaSetting = StreamSettings.HysteriaSettings(
           version = 2,
           auth = connectionProfile.password.orEmpty(),
           up = connectionProfile.bandwidthUp?.ifEmpty { "0" }.orEmpty(),
@@ -817,7 +817,7 @@ object V2rayConfigManager {
           udphop = null
         )
         if (connectionProfile.portHopping.isNotNullEmpty()) {
-          hysteriaSetting.udphop = StreamSettingsBean.HysteriaSettingsBean.HysteriaUdpHopBean(
+          hysteriaSetting.udphop = StreamSettings.HysteriaSettings.HysteriaUdpHop(
             port = connectionProfile.portHopping,
             interval = connectionProfile.portHoppingInterval
               ?.trim()
@@ -842,12 +842,12 @@ object V2rayConfigManager {
    * @param sniExt An external SNI value to use if the profile doesn't specify one
    */
   fun populateTlsSettings(
-    streamSettings: StreamSettingsBean,
+    streamSettings: StreamSettings,
     connectionProfile: ConnectionProfile,
     sniExt: String?,
   ) {
     val streamSecurity = connectionProfile.security.orEmpty()
-    val allowInsecure = connectionProfile.insecure == true
+    val allowInsecure = connectionProfile.insecure
     val sni = if (connectionProfile.sni.isNullOrEmpty()) {
       when {
         sniExt.isNotNullEmpty() && Utils.isDomainName(sniExt) -> sniExt
@@ -861,7 +861,7 @@ object V2rayConfigManager {
     streamSettings.security = streamSecurity.nullIfBlank()
     if (streamSettings.security == null) return
     val realityPk = connectionProfile.publicKey.nullIfBlank()
-    val tlsSetting = StreamSettingsBean.TlsSettingsBean(
+    val tlsSetting = StreamSettings.TlsSettings(
       allowInsecure = allowInsecure,
       serverName = sni.nullIfBlank(),
       fingerprint = connectionProfile.fingerPrint.nullIfBlank(),

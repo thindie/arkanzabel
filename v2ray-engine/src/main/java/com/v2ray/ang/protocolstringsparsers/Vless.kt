@@ -3,7 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -85,18 +85,18 @@ object Vless : ProtocolParser() {
     }
 
     /**
-     * Converts a ProfileItem object to an OutboundBean object.
+     * Converts a ProfileItem object to an Outbound object.
      *
      * @param connectionProfile the ProfileItem object to convert
-     * @return the converted OutboundBean object, or null if conversion fails
+     * @return the converted Outbound object, or null if conversion fails
      */
-    fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
+    fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
         if (connectionProfile.security == AppConfig.REALITY && connectionProfile.publicKey.isNullOrBlank()) {
             return null
         }
-        val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.Vless)
+        val outbound = V2rayConfigManager.createInitOutbound(Protocol.Vless)
 
-        outboundBean?.settings?.vnext?.first()?.let { vnext ->
+        outbound?.settings?.vnext?.first()?.let { vnext ->
             vnext.address = getServerAddress(connectionProfile)
             vnext.port = connectionProfile.serverPort.orEmpty().toInt()
             vnext.users[0].id = connectionProfile.password.orEmpty()
@@ -104,14 +104,14 @@ object Vless : ProtocolParser() {
             vnext.users[0].flow = connectionProfile.flow
         }
 
-        val sni = outboundBean?.streamSettings?.let {
+        val sni = outbound?.streamSettings?.let {
             V2rayConfigManager.populateTransportSettings(it, connectionProfile)
         }
 
-        outboundBean?.streamSettings?.let {
+        outbound?.streamSettings?.let {
             V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
         }
 
-        return outboundBean
+        return outbound
     }
 }

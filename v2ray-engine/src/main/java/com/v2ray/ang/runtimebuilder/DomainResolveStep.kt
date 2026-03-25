@@ -2,7 +2,7 @@ package com.v2ray.ang.runtimebuilder
 
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.HttpUtil
 
@@ -20,7 +20,7 @@ internal class DomainResolveStep {
 
       if (newHosts.containsKey(domain)) {
         item.ensureSockopt().domainStrategy = "UseIP"
-        item.ensureSockopt().happyEyeballs = StreamSettingsBean.HappyEyeballsBean(
+        item.ensureSockopt().happyEyeballs = StreamSettings.HappyEyeballs(
           prioritizeIPv6 = preferIpv6,
           interleave = 2
         )
@@ -31,7 +31,7 @@ internal class DomainResolveStep {
       if (resolvedIps.isNullOrEmpty()) continue
 
       item.ensureSockopt().domainStrategy = "UseIP"
-      item.ensureSockopt().happyEyeballs = StreamSettingsBean.HappyEyeballsBean(
+      item.ensureSockopt().happyEyeballs = StreamSettings.HappyEyeballs(
         prioritizeIPv6 = preferIpv6,
         interleave = 2
       )

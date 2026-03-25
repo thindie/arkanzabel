@@ -3,7 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.WIREGUARD_LOCAL_ADDRESS_V4
 import com.v2ray.ang.dto.ConnectionProfile
-import com.v2ray.ang.dto.V2rayConfig.OutboundBean
+import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.nullIfBlank
@@ -94,10 +94,10 @@ object Wireguard : ProtocolParser() {
     return config
   }
 
-  fun toOutbound(connectionProfile: ConnectionProfile): OutboundBean? {
-    val outboundBean = V2rayConfigManager.createInitOutbound(Protocol.WireGuard)
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.WireGuard)
 
-    outboundBean?.settings?.let { wireguard ->
+    outbound?.settings?.let { wireguard ->
       wireguard.secretKey = connectionProfile.secretKey
       wireguard.address = (connectionProfile.localAddress ?: WIREGUARD_LOCAL_ADDRESS_V4).split(",")
       wireguard.peers?.firstOrNull()?.let { peer ->
@@ -111,7 +111,7 @@ object Wireguard : ProtocolParser() {
           ?.map { it.trim().toInt() }
     }
 
-    return outboundBean
+    return outbound
   }
 
   fun toUri(config: ConnectionProfile): String {
