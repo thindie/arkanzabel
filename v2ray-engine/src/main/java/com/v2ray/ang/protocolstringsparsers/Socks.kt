@@ -11,7 +11,7 @@ import java.net.URI
 
 object Socks : ProtocolParser() {
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.Socks)
+    val config = ConnectionProfile(protocol = Protocol.Socks)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.idnHost.isEmpty()) return null

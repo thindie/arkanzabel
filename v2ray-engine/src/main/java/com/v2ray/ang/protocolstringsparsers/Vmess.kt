@@ -23,7 +23,7 @@ object Vmess : ProtocolParser() {
     }
 
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile.create(Protocol.Vmess)
+    val config = ConnectionProfile(protocol = Protocol.Vmess)
 
     var result = str.replace(Protocol.Vmess.protocolScheme, "")
     result = Utils.decode(result)
@@ -125,7 +125,7 @@ object Vmess : ProtocolParser() {
 
   fun parseVmessStd(str: String): ConnectionProfile? {
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile.create(Protocol.Vmess)
+    val config = ConnectionProfile(protocol = Protocol.Vmess)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null

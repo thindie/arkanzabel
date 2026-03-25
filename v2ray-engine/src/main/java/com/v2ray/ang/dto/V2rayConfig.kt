@@ -177,13 +177,14 @@ data class V2rayConfig(
                     var response: Any? = null
                 ) {
                     data class Request(
-                        var path: List<String> = ArrayList(),
+                        var path: List<String> = emptyList(),
                         var headers: Headers = Headers(),
                         val version: String? = null,
                         val method: String? = null
                     ) {
                         data class Headers(
-                            var Host: List<String>? = ArrayList(),
+                            @SerializedName("Host")
+                            var host: List<String>? = null,
                             @SerializedName("User-Agent")
                             val userAgent: List<String>? = null,
                             @SerializedName("Accept-Encoding")
@@ -212,7 +213,10 @@ data class V2rayConfig(
                 val useBrowserForwarding: Boolean = false,
                 val acceptProxyProtocol: Boolean = false
             ) {
-                data class Headers(var Host: String = "")
+                data class Headers(
+                    @SerializedName("Host")
+                    var host: String = ""
+                )
             }
 
             data class HttpupgradeSettings(
@@ -229,12 +233,13 @@ data class V2rayConfig(
             )
 
             data class HttpSettings(
-                var host: List<String> = ArrayList(),
+                var host: List<String> = emptyList(),
                 var path: String? = null
             )
 
             data class Sockopt(
-                var TcpNoDelay: Boolean = false,
+                @SerializedName("TcpNoDelay")
+                var tcpNoDelay: Boolean = false,
                 var tcpKeepAliveIdle: Int? = null,
                 var tcpFastOpen: Boolean = false,
                 var tproxy: String? = null,

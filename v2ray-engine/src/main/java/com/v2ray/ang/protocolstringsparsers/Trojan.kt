@@ -20,7 +20,7 @@ object Trojan : ProtocolParser() {
      */
     fun parse(str: String): ConnectionProfile? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ConnectionProfile.create(Protocol.Trojan)
+        val config = ConnectionProfile(protocol = Protocol.Trojan)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }

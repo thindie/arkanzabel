@@ -132,7 +132,7 @@ internal class OutboundConfigStep(
         && outbound.streamSettings?.tcpSettings?.header?.type == AppConfig.HEADER_TYPE_HTTP
       ) {
         val path = outbound.streamSettings?.tcpSettings?.header?.request?.path
-        val host = outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host
+        val host = outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host
 
         val requestString: String by lazy {
           """{"version":"1.1","method":"GET","headers":{"User-Agent":["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"],"Accept-Encoding":["gzip, deflate"],"Connection":["keep-alive"],"Pragma":"no-cache"}}"""
@@ -142,7 +142,7 @@ internal class OutboundConfigStep(
           StreamSettings.TcpSettings.Header.Request::class.java
         )
         outbound.streamSettings?.tcpSettings?.header?.request?.path = if (path.isNullOrEmpty()) listOf("/") else path
-        outbound.streamSettings?.tcpSettings?.header?.request?.headers?.Host = host
+        outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host = host
       }
     } catch (runtime: RuntimeException) {
       Log.e(AppConfig.TAG, "Failed to update outbound with global settings", runtime)
@@ -191,7 +191,7 @@ internal class OutboundConfigStep(
       )
       fragmentOutbound.streamSettings = StreamSettings(
         sockopt = StreamSettings.Sockopt(
-          TcpNoDelay = true,
+          tcpNoDelay = true,
           mark = 255
         )
       )

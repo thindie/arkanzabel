@@ -23,7 +23,7 @@ object Hysteria2 : ProtocolParser() {
    */
   fun parse(str: String): ConnectionProfile? {
     var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile.create(Protocol.Hysteria2)
+    val config = ConnectionProfile(protocol = Protocol.Hysteria2)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }

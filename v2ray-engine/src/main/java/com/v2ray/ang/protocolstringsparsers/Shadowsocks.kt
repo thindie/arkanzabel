@@ -29,7 +29,7 @@ object Shadowsocks : ProtocolParser() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parseSip002(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.ShadowSocks)
+    val config = ConnectionProfile(protocol = Protocol.ShadowSocks)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.idnHost.isEmpty()) return null
@@ -77,7 +77,7 @@ object Shadowsocks : ProtocolParser() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parseLegacy(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.ShadowSocks)
+    val config = ConnectionProfile(protocol = Protocol.ShadowSocks)
     var result = str.replace(Protocol.ShadowSocks.protocolScheme, "")
     val indexSplit = result.indexOf("#")
     if (indexSplit > 0) {

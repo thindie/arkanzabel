@@ -20,7 +20,7 @@ object Wireguard : ProtocolParser() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.WireGuard)
+    val config = ConnectionProfile(protocol = Protocol.WireGuard)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
@@ -41,7 +41,7 @@ object Wireguard : ProtocolParser() {
   }
 
   fun parseWireguardConfFile(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.WireGuard)
+    val config = ConnectionProfile(protocol = Protocol.WireGuard)
 
     val interfaceParams: MutableMap<String, String> = mutableMapOf()
     val peerParams: MutableMap<String, String> = mutableMapOf()

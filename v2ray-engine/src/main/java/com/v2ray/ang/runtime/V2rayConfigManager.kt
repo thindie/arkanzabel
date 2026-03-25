@@ -699,11 +699,11 @@ object V2rayConfigManager {
           tcpSetting.header.type = AppConfig.HEADER_TYPE_HTTP
           if (!TextUtils.isEmpty(host) || !TextUtils.isEmpty(path)) {
             val requestObj = StreamSettings.TcpSettings.Header.Request()
-            requestObj.headers.Host =
+            requestObj.headers.host =
               host.orEmpty().split(",").map { it.trim() }.filter { it.isNotEmpty() }
             requestObj.path = path.orEmpty().split(",").map { it.trim() }.filter { it.isNotEmpty() }
             tcpSetting.header.request = requestObj
-            sni = requestObj.headers.Host?.getOrNull(0)
+            sni = requestObj.headers.host?.getOrNull(0)
           }
         } else {
           tcpSetting.header.type = "none"
@@ -756,7 +756,7 @@ object V2rayConfigManager {
 
       NetworkType.WS.type -> {
         val wssetting = StreamSettings.WsSettings()
-        wssetting.headers.Host = host.orEmpty()
+        wssetting.headers.host = host.orEmpty()
         sni = host
         wssetting.path = path ?: "/"
         streamSettings.wsSettings = wssetting

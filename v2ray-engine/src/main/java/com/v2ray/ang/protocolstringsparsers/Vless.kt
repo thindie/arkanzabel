@@ -53,7 +53,7 @@ object Vless : ProtocolParser() {
      */
     fun parse(str: String): ConnectionProfile? {
         var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ConnectionProfile.create(Protocol.Vless)
+        val config = ConnectionProfile(protocol = Protocol.Vless)
 
         val uri = URI(Utils.fixIllegalUrl(str))
         if (uri.rawQuery.isNullOrEmpty()) return null

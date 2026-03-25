@@ -13,15 +13,15 @@ object Custom : ProtocolParser() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile.create(Protocol.Custom)
+    val config = ConnectionProfile(protocol = Protocol.Custom)
 
     val fullConfig = JsonUtil.fromJson(str, V2rayConfig::class.java)
     val outbound = fullConfig?.getProxyOutbound()
 
-    config.remarks = fullConfig?.remarks ?: System.currentTimeMillis().toString()
-    config.server = outbound?.getServerAddress()
-    config.serverPort = outbound?.getServerPort().toString()
-
-    return config
+    return config.copy(
+      remarks = fullConfig?.remarks ?: System.currentTimeMillis().toString(),
+      server = outbound?.getServerAddress(),
+      serverPort = outbound?.getServerPort().toString()
+    )
   }
 }

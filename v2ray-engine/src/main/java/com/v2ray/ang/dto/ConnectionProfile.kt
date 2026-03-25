@@ -69,11 +69,6 @@ data class ConnectionProfile(
     var policyGroupFilter: String? = null,
 
     ) {
-    companion object {
-        fun create(configType: Protocol): ConnectionProfile {
-            return ConnectionProfile(protocol = configType)
-        }
-    }
 
     fun getAllOutboundTags(): List<String> {
         return listOf(TAG_PROXY, TAG_DIRECT, TAG_BLOCKED)
@@ -87,44 +82,105 @@ data class ConnectionProfile(
     }
 
     override fun equals(other: Any?): Boolean {
-        if (other == null) return false
-        val obj = other as ConnectionProfile
+        if (this === other) return true
+        if (other !is ConnectionProfile) return false
 
-        return (this.server == obj.server
-                && this.serverPort == obj.serverPort
-                && this.password == obj.password
-                && this.method == obj.method
-                && this.flow == obj.flow
-                && this.username == obj.username
+        return (this.server == other.server
+                && this.serverPort == other.serverPort
+                && this.password == other.password
+                && this.method == other.method
+                && this.flow == other.flow
+                && this.username == other.username
 
-                && this.network == obj.network
-                && this.headerType == obj.headerType
-                && this.host == obj.host
-                && this.path == obj.path
-                && this.seed == obj.seed
-                && this.quicSecurity == obj.quicSecurity
-                && this.quicKey == obj.quicKey
-                && this.mode == obj.mode
-                && this.serviceName == obj.serviceName
-                && this.authority == obj.authority
-                && this.xhttpMode == obj.xhttpMode
+                && this.network == other.network
+                && this.headerType == other.headerType
+                && this.host == other.host
+                && this.path == other.path
+                && this.seed == other.seed
+                && this.quicSecurity == other.quicSecurity
+                && this.quicKey == other.quicKey
+                && this.mode == other.mode
+                && this.serviceName == other.serviceName
+                && this.authority == other.authority
+                && this.xhttpMode == other.xhttpMode
+                && this.xhttpExtra == other.xhttpExtra
 
-                && this.security == obj.security
-                && this.sni == obj.sni
-                && this.alpn == obj.alpn
-                && this.fingerPrint == obj.fingerPrint
-                && this.publicKey == obj.publicKey
-                && this.shortId == obj.shortId
+                && this.security == other.security
+                && this.sni == other.sni
+                && this.alpn == other.alpn
+                && this.fingerPrint == other.fingerPrint
+                && this.insecure == other.insecure
+                && this.echConfigList == other.echConfigList
+                && this.echForceQuery == other.echForceQuery
+                && this.publicKey == other.publicKey
+                && this.shortId == other.shortId
+                && this.spiderX == other.spiderX
+                && this.mldsa65Verify == other.mldsa65Verify
 
-                && this.secretKey == obj.secretKey
-                && this.localAddress == obj.localAddress
-                && this.reserved == obj.reserved
-                && this.mtu == obj.mtu
+                && this.secretKey == other.secretKey
+                && this.preSharedKey == other.preSharedKey
+                && this.localAddress == other.localAddress
+                && this.reserved == other.reserved
+                && this.mtu == other.mtu
 
-                && this.obfsPassword == obj.obfsPassword
-                && this.portHopping == obj.portHopping
-                && this.portHoppingInterval == obj.portHoppingInterval
-                && this.pinnedCA256 == obj.pinnedCA256
+                && this.obfsPassword == other.obfsPassword
+                && this.portHopping == other.portHopping
+                && this.portHoppingInterval == other.portHoppingInterval
+                && this.pinSHA256 == other.pinSHA256
+                && this.pinnedCA256 == other.pinnedCA256
+                && this.bandwidthDown == other.bandwidthDown
+                && this.bandwidthUp == other.bandwidthUp
+                && this.policyGroupType == other.policyGroupType
+                && this.policyGroupSubscriptionId == other.policyGroupSubscriptionId
+                && this.policyGroupFilter == other.policyGroupFilter
                 )
+    }
+
+    override fun hashCode(): Int {
+        var result = server?.hashCode() ?: 0
+        result = 31 * result + (serverPort?.hashCode() ?: 0)
+        result = 31 * result + (password?.hashCode() ?: 0)
+        result = 31 * result + (method?.hashCode() ?: 0)
+        result = 31 * result + (flow?.hashCode() ?: 0)
+        result = 31 * result + (username?.hashCode() ?: 0)
+        result = 31 * result + (network?.hashCode() ?: 0)
+        result = 31 * result + (headerType?.hashCode() ?: 0)
+        result = 31 * result + (host?.hashCode() ?: 0)
+        result = 31 * result + (path?.hashCode() ?: 0)
+        result = 31 * result + (seed?.hashCode() ?: 0)
+        result = 31 * result + (quicSecurity?.hashCode() ?: 0)
+        result = 31 * result + (quicKey?.hashCode() ?: 0)
+        result = 31 * result + (mode?.hashCode() ?: 0)
+        result = 31 * result + (serviceName?.hashCode() ?: 0)
+        result = 31 * result + (authority?.hashCode() ?: 0)
+        result = 31 * result + (xhttpMode?.hashCode() ?: 0)
+        result = 31 * result + (xhttpExtra?.hashCode() ?: 0)
+        result = 31 * result + (security?.hashCode() ?: 0)
+        result = 31 * result + (sni?.hashCode() ?: 0)
+        result = 31 * result + (alpn?.hashCode() ?: 0)
+        result = 31 * result + (fingerPrint?.hashCode() ?: 0)
+        result = 31 * result + insecure.hashCode()
+        result = 31 * result + (echConfigList?.hashCode() ?: 0)
+        result = 31 * result + (echForceQuery?.hashCode() ?: 0)
+        result = 31 * result + (publicKey?.hashCode() ?: 0)
+        result = 31 * result + (shortId?.hashCode() ?: 0)
+        result = 31 * result + (spiderX?.hashCode() ?: 0)
+        result = 31 * result + (mldsa65Verify?.hashCode() ?: 0)
+        result = 31 * result + (secretKey?.hashCode() ?: 0)
+        result = 31 * result + (preSharedKey?.hashCode() ?: 0)
+        result = 31 * result + (localAddress?.hashCode() ?: 0)
+        result = 31 * result + (reserved?.hashCode() ?: 0)
+        result = 31 * result + (mtu ?: 0)
+        result = 31 * result + (obfsPassword?.hashCode() ?: 0)
+        result = 31 * result + (portHopping?.hashCode() ?: 0)
+        result = 31 * result + (portHoppingInterval?.hashCode() ?: 0)
+        result = 31 * result + (pinSHA256?.hashCode() ?: 0)
+        result = 31 * result + (pinnedCA256?.hashCode() ?: 0)
+        result = 31 * result + (bandwidthDown?.hashCode() ?: 0)
+        result = 31 * result + (bandwidthUp?.hashCode() ?: 0)
+        result = 31 * result + (policyGroupType?.hashCode() ?: 0)
+        result = 31 * result + (policyGroupSubscriptionId?.hashCode() ?: 0)
+        result = 31 * result + (policyGroupFilter?.hashCode() ?: 0)
+        return result
     }
 }
