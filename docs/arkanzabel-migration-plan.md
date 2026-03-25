@@ -3,7 +3,7 @@
 ## Проверка и статус верификации (pipeline)
 
 **Дата прохода (upstream):** 2026-03-22 — сверка деревьев `d:\Android\v2rayNg` и `d:\Android\Arkanzabel`.  
-**Обновление плана:** 2026-03-24 — актуализировано под текущий `:v2ray-engine` (пакеты `runtime` / `runtimebuilder`, контракт `V2Ray`, ошибки, сервисы в исходниках).
+**Обновление плана:** 2026-03-25 — актуализировано под текущий `:v2ray-engine` (пакеты `runtime` / `runtimebuilder`, контракт `V2Ray`, ошибки, сервисы в исходниках) и зафиксирован вектор эволюции: `suspend` + structured concurrency + иммутабельные границы.
 
 ### Подтверждено (v2rayNg)
 
@@ -40,6 +40,7 @@
 | Сборка конфига для ядра: **`V2Ray(guid, json)`**, не `ConfigResult` | `dto/V2Ray.kt`; `V2rayConfigManager.getV2rayConfig` / `getV2rayConfig4Speedtest` → **`V2Ray`**, ошибки **`AppError`** (+ `ErrorPayload`) |
 | Разделение «рантайм» / «сборка JSON» | `com.v2ray.ang.runtime` — MMKV-обёртка, менеджеры, нативный мост, сервисный клей; **`com.v2ray.ang.runtimebuilder`** — `ConfigAssembler`, шаги `*ConfigStep`, `ConnectionProfileToOutboundMapper` |
 | Ошибки на границе сервисов | `V2RayServiceManager` / `V2RayVpnService` ловят **`AppError`**, в UI-broadcast уходит **`userReadable`**; прочие **`RuntimeException`** — fallback по `message` / строке ресурса |
+| Начат переход на `suspend`/иммутабельность | `SpeedtestManager.testConnection` и `SpeedtestManager.getRemoteIPInfo` переведены в `suspend` + `Dispatchers.IO`; `ConnectionProfile.getAllOutboundTags` возвращает `List<String>` (без мутации на стороне `NotificationManager`) |
 
 ### Закрыто ранее (неактуально как блокер)
 
@@ -87,6 +88,15 @@
 - **`AppConfig.ANG_PACKAGE`**: в library **нельзя** использовать `BuildConfig.APPLICATION_ID` библиотеки как id приложения. Уже принятый паттерн в Arkanzabel: **`AppConfig.initHostApplicationId(applicationId, versionName)`** в `Application.onCreate` до любого кода, который шлёт broadcast или строит имя процесса `:bg`. От этого зависят `BROADCAST_ACTION_*` и `WorkManager.setDefaultProcessName("${ANG_PACKAGE}:bg")`.
 - **Переименование пакетов** под `com.thindie…`: возможно, но для hev нужен новый **`PKGNAME`** в ndk-build **или** тонкий shim **`com.v2ray.ang.service.TProxyService`**.
 - **Arkanzabel (отличие от upstream-пакета `handler`):** переносимый «оркестраторский» код лежит в **`com.v2ray.ang.runtime`**; пошаговая сборка JSON — в **`com.v2ray.ang.runtimebuilder`**. Имена намеренно другие, чтобы не путать с v2rayNG `handler`.
+
+## Целевая парадигма постепенной миграции
+
+- **Опора на `ConfigAssembler` как каркас миграции:** текущая декомпозиция на шаги (`Inbound` / `Outbound` / `Routing` / `Dns` / `DomainResolve`) признана целевой для эволюции без большого-bang рефакторинга.
+- **Suspend-first для I/O:** все операции сети/диска в `runtime` и смежных менеджерах постепенно переводить в `suspend` с явным `Dispatcher` (`withContext(Dispatchers.IO)`), чтобы не блокировать поток сервиса/UI.
+- **Structured concurrency вместо ad-hoc scope:** новые фоновые операции запускать в управляемых `CoroutineScope` (service/worker scope, `SupervisorJob`, явная отмена), избегая «висячих» jobs.
+- **Иммутабельные границы:** публичные API и DTO-аксессоры должны по умолчанию возвращать `List`/`Map` и неизменяемые значения; мутация допустима только локально внутри шага сборки и с явной целью.
+- **Error boundary неизменен:** на границе runtime/service сохраняем контракт `AppError` + `userReadable`, без возврата к неструктурированным исключениям для UI-потока.
+- **Совместимость во время перехода:** допускается параллельное существование синхронных и `suspend`-путей, но каждый новый I/O-код пишется сразу как `suspend`.
 
 ## Migrate list
 
@@ -215,6 +225,10 @@
 - **Сделано (частично):** перенесены ключевые куски `handler` → `runtime` / `runtimebuilder`, сервисы, receiver, парсеры протоколов, контракт ошибок и **`V2Ray`**.
 - **Осталось:** `fmt/*` (если ещё не перенесены целиком), прочие util/helper по необходимости; починка импортов и **R** при расширении.
 - Вызвать **`AppConfig.initHostApplicationId`** первым в `Application.onCreate` (уже есть).
+- **Текущий фокус качества (incremental hardening):**
+  - продолжить перевод I/O API в `suspend` в `runtime` (без расширения скоупа фич),
+  - закрепить SC-паттерн для фоновых задач в сервисах/worker-классах,
+  - уменьшать поверхность мутабельности DTO/API на каждом затронутом участке.
 
 ### Phase 3 — Сервисы + манифест
 
