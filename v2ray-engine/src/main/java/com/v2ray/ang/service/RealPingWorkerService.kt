@@ -78,7 +78,7 @@ class RealPingWorkerService(
   private fun close() {
     try {
       dispatcher.close()
-    } catch (_: Throwable) {
+    } catch (_: RuntimeException) {
       // ignore
     }
   }

@@ -23,6 +23,7 @@ import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
@@ -36,6 +37,7 @@ object V2RayServiceManager {
 
     private val coreController: CoreController = V2RayNativeManager.newCoreController(CoreCallback())
     private val mMsgReceive = ReceiveMessageHandler()
+    private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var currentConfig: ConnectionProfile? = null
 
     var serviceControl: SoftReference<ServiceControl>? = null
@@ -232,7 +234,7 @@ object V2RayServiceManager {
 
         if (isRunningInternal) {
             val done = CountDownLatch(1)
-            CoroutineScope(Dispatchers.IO).launch {
+            managerScope.launch {
                 try {
                     coreController.stopLoop()
                 } catch (runtime: RuntimeException) {
@@ -286,7 +288,7 @@ object V2RayServiceManager {
             return
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
+        managerScope.launch {
             val service = getService() ?: return@launch
             var time = -1L
             var errorStr = ""
