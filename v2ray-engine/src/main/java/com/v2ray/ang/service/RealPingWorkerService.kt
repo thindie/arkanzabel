@@ -1,7 +1,9 @@
 package com.v2ray.ang.service
 
 import android.content.Context
+import android.util.Log
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.error.AppError
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayNativeManager
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -82,15 +84,21 @@ class RealPingWorkerService(
   }
 
   private fun startRealPing(guid: String): Long {
-    val retFailure = -1L
-    val configResult = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
-    if (!configResult.status) {
-      return retFailure
+    return try {
+      val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
+      V2RayNativeManager.measureOutboundDelay(
+        built.json,
+        SettingsManager.getDelayTestUrl()
+      )
+    } catch (cancel: CancellationException) {
+      throw cancel
+    } catch (appError: AppError) {
+      Log.w(AppConfig.TAG, "Speedtest config failed for $guid: ${appError.userReadable}", appError)
+      -1L
+    } catch (runtime: RuntimeException) {
+      Log.w(AppConfig.TAG, "Speedtest config failed for $guid", runtime)
+      -1L
     }
-    return V2RayNativeManager.measureOutboundDelay(
-      configResult.content,
-      SettingsManager.getDelayTestUrl()
-    )
   }
 }
 

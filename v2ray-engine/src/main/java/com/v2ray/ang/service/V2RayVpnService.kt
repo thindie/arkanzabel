@@ -19,6 +19,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
+import com.v2ray.ang.error.AppError
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
@@ -28,6 +29,7 @@ import com.v2ray.ang.util.MessageUtil
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.util.LocaleContextWrapper
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CancellationException
 import java.lang.ref.SoftReference
 
 class V2RayVpnService : VpnService(), ServiceControl {
@@ -160,14 +162,24 @@ class V2RayVpnService : VpnService(), ServiceControl {
             stopSelf()
             return false
         }
-        val configResult = V2rayConfigManager.getV2rayConfig(this, guid)
-        if (!configResult.status) {
-            Log.e(AppConfig.TAG, "VPN configuration invalid before TUN; not establishing interface")
+        try {
+            V2rayConfigManager.getV2rayConfig(this, guid)
+        } catch (cancel: CancellationException) {
+            throw cancel
+        } catch (appError: AppError) {
+            Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", appError)
             MessageUtil.sendMsg2UI(
                 this,
                 AppConfig.MSG_STATE_START_FAILURE,
-                getString(R.string.vpn_core_config_build_failed),
+                appError.userReadable,
             )
+            stopSelf()
+            return false
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", runtime)
+            val payload = runtime.message?.trim()?.takeIf { it.isNotEmpty() }
+                ?: getString(R.string.vpn_core_config_build_failed)
+            MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, payload)
             stopSelf()
             return false
         }

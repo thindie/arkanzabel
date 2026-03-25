@@ -12,22 +12,25 @@ import com.v2ray.ang.runtimebuilder.OutboundConfigStep
 import com.v2ray.ang.runtimebuilder.RoutingConfigStep
 import com.google.gson.JsonArray
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ConfigResult
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.dto.V2Ray
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.OutSettingsBean
 import com.v2ray.ang.dto.V2rayConfig.OutboundBean.StreamSettingsBean
 import com.v2ray.ang.dto.V2rayConfig.RoutingBean.RulesBean
-import com.v2ray.ang.error.AppError
+import com.v2ray.ang.error.AssetConfigMissingError
+import com.v2ray.ang.error.ConfigSerializationError
+import com.v2ray.ang.error.ConfigValidationError
+import com.v2ray.ang.error.ProfileNotFoundError
 import com.v2ray.ang.error.RoutingConfigError
+import com.v2ray.ang.error.StoredRawMissingError
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
-import kotlinx.coroutines.CancellationException
 import java.util.regex.PatternSyntaxException
 
 object V2rayConfigManager {
@@ -54,83 +57,41 @@ object V2rayConfigManager {
   //region get config function
 
   /**
-   * Retrieves the V2ray configuration for the given GUID.
+   * Builds core JSON for the given profile [guid].
    *
-   * @param context The context of the caller.
-   * @param guid The unique identifier for the V2ray configuration.
-   * @return A ConfigResult object containing the configuration details or indicating failure.
+   * Throws [com.v2ray.ang.error.AppError] (or other [RuntimeException]) on failure; callers map to UI.
    */
-  fun getV2rayConfig(context: Context, guid: String): ConfigResult {
-    try {
-      val config = KeyValueStorage.decodeServerConfig(guid) ?: return ConfigResult(false)
-      return when (config.protocol) {
-        Protocol.Custom -> getV2rayCustomConfig(context, guid)
-        Protocol.PolicyGroup -> getV2rayGroupConfig(context, guid, config)
-        else -> {
-          getV2rayNormalConfig(context, guid, config)
-        }
-      }
-    } catch (cancel: CancellationException) {
-      throw cancel
-    } catch (appError: AppError) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config: ${appError.message}", appError)
-      return ConfigResult(false)
-    } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config", runtime)
-      return ConfigResult(false)
+  fun getV2rayConfig(context: Context, guid: String): V2Ray {
+    val config = KeyValueStorage.decodeServerConfig(guid) ?: throw ProfileNotFoundError(guid)
+    return when (config.protocol) {
+      Protocol.Custom -> getV2rayCustomConfig(context, guid)
+      Protocol.PolicyGroup -> getV2rayGroupConfig(context, guid, config)
+      else -> getV2rayNormalConfig(context, guid, config)
     }
   }
 
   /**
-   * Retrieves the speedtest V2ray configuration for the given GUID.
-   *
-   * @param context The context of the caller.
-   * @param guid The unique identifier for the V2ray configuration.
-   * @return A ConfigResult object containing the configuration details or indicating failure.
+   * Same as [getV2rayConfig] but tuned for outbound delay measurement.
    */
-  fun getV2rayConfig4Speedtest(context: Context, guid: String): ConfigResult {
-    try {
-      val config = KeyValueStorage.decodeServerConfig(guid) ?: return ConfigResult(false)
-      return when (config.protocol) {
-        Protocol.Custom -> getV2rayCustomConfig(context, guid)
-        Protocol.PolicyGroup -> { // The number of policy groups will not be very large, so no special handling is needed.
-          getV2rayGroupConfig(context, guid, config)
-        }
-
-        else -> {
-          getV2rayNormalConfig4Speedtest(context, guid, config)
-        }
-      }
-    } catch (cancel: CancellationException) {
-      throw cancel
-    } catch (appError: AppError) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config for speedtest: ${appError.message}", appError)
-      return ConfigResult(false)
-    } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to get V2ray config for speedtest", runtime)
-      return ConfigResult(false)
+  fun getV2rayConfig4Speedtest(context: Context, guid: String): V2Ray {
+    val config = KeyValueStorage.decodeServerConfig(guid) ?: throw ProfileNotFoundError(guid)
+    return when (config.protocol) {
+      Protocol.Custom -> getV2rayCustomConfig(context, guid)
+      Protocol.PolicyGroup -> getV2rayGroupConfig(context, guid, config)
+      else -> getV2rayNormalConfig4Speedtest(context, guid, config)
     }
   }
 
-  /**
-   * Retrieves the custom V2ray configuration.
-   *
-   * @param guid The unique identifier for the V2ray configuration.
-   * @param config The profile item containing the configuration details.
-   * @return A ConfigResult object containing the result of the configuration retrieval.
-   */
   private fun getV2rayCustomConfig(
     context: Context,
     guid: String,
-  ): ConfigResult {
-    val raw = KeyValueStorage.decodeServerRaw(guid) ?: return ConfigResult(false)
-    val result = ConfigResult(true, guid, raw)
+  ): V2Ray {
+    val raw = KeyValueStorage.decodeServerRaw(guid) ?: throw StoredRawMissingError(guid)
     if (!needTun()) {
-      return result
+      return V2Ray(guid, raw)
     }
 
-    // check if tun inbound exists
-    val json = JsonUtil.parseString(raw) ?: return result
+    val json = JsonUtil.parseString(raw) ?: return V2Ray(guid, raw)
     val inboundsJson = if (json.has("inbounds") && json.get("inbounds")?.isJsonNull == false) {
       json.getAsJsonArray("inbounds")
     } else {
@@ -143,40 +104,33 @@ object V2rayConfigManager {
         val inb = elem.asJsonObject
         val tag =
           if (inb.has("tag") && inb.get("tag")?.isJsonNull == false) inb.get("tag").asString else ""
-        if (tag == "tun") return result
+        if (tag == "tun") return V2Ray(guid, raw)
       }
     }
 
-    // add tun inbound from template
-    val templateConfig = initV2rayConfig(context) ?: return result
-    val inboundTun = templateConfig.inbounds.firstOrNull { it.tag == "tun" } ?: return result
+    val templateConfig = initV2rayConfig(context)
+    val inboundTun = templateConfig.inbounds.firstOrNull { it.tag == "tun" }
+      ?: throw ConfigValidationError(
+        message = "Template has no tun inbound",
+        userReadable = "VPN template is missing TUN settings",
+        stage = "customTun",
+      )
     inboundTun.settings?.mtu = SettingsManager.getVpnMtu()
 
-    // add to json
     inboundsJson.add(JsonUtil.parseString(JsonUtil.toJson(inboundTun)))
     if (inboundsJson.size() == 1) {
       json.add("inbounds", inboundsJson)
     }
 
-    val updatedRaw = JsonUtil.toJsonPretty(json) ?: return result
-    return ConfigResult(true, guid, updatedRaw)
+    val updatedRaw = JsonUtil.toJsonPretty(json) ?: throw ConfigSerializationError("customWithTun")
+    return V2Ray(guid, updatedRaw)
   }
 
-  /**
-   * Retrieves the group V2ray configuration.
-   *
-   * @param context The context in which the function is called.
-   * @param guid The unique identifier for the V2ray configuration.
-   * @param config The profile item containing the configuration details.
-   * @return A ConfigResult object containing the result of the configuration retrieval.
-   */
   private fun getV2rayGroupConfig(
     context: Context,
     guid: String,
     config: ConnectionProfile,
-  ): ConfigResult {
-    val result = ConfigResult(false)
-
+  ): V2Ray {
     val serverList = KeyValueStorage.decodeServerList()
     val configList = serverList
       .mapNotNull { id -> KeyValueStorage.decodeServerConfig(id) }
@@ -201,57 +155,50 @@ object V2rayConfigManager {
         }
       }
 
-    val v2rayConfig = getV2rayMultipleConfig(context, config, configList) ?: return result
-
-    return result.copy(
-      status = true,
-      content = JsonUtil.toJsonPretty(v2rayConfig) ?: "",
-      guid = guid,
-    )
+    val v2rayConfig = getV2rayMultipleConfig(context, config, configList)
+    return V2Ray(guid, v2RayJson(v2rayConfig, "policyGroup"))
   }
 
-  /**
-   * Retrieves the normal V2ray configuration.
-   *
-   * @param context The context in which the function is called.
-   * @param guid The unique identifier for the V2ray configuration.
-   * @param config The profile item containing the configuration details.
-   * @return A ConfigResult object containing the result of the configuration retrieval.
-   */
   private fun getV2rayNormalConfig(
     context: Context,
     guid: String,
     config: ConnectionProfile,
-  ): ConfigResult {
-    val result = ConfigResult(false)
-
-    val address = config.server ?: return result
-    if (!Utils.isPureIpAddress(address)) {
-      if (!Utils.isValidUrl(address)) {
-        Log.w(AppConfig.TAG, "$address is an invalid ip or domain")
-        return result
-      }
+  ): V2Ray {
+    val address = config.server ?: throw ConfigValidationError(
+      message = "Server address is missing",
+      userReadable = "Server address is missing",
+      extras = mapOf("guid" to guid),
+    )
+    if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
+      throw ConfigValidationError(
+        message = "$address is an invalid ip or domain",
+        userReadable = "Invalid server address",
+        extras = mapOf("address" to address),
+      )
     }
 
-    val v2rayConfig = initV2rayConfig(context) ?: return result
+    val v2rayConfig = initV2rayConfig(context)
     v2rayConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     v2rayConfig.remarks = config.remarks
 
     val assembled = configAssembler.applyStandardSteps(v2rayConfig, config)
-    if (assembled.getProxyOutbound() == null) return result
-    return result.copy(
-      status = true,
-      content = JsonUtil.toJsonPretty(assembled) ?: "",
-      guid = guid,
-    )
+    if (assembled.getProxyOutbound() == null) {
+      throw ConfigValidationError(
+        message = "No proxy outbound after assembly",
+        userReadable = "Could not build proxy settings",
+        stage = "assemble",
+        extras = mapOf("guid" to guid),
+      )
+    }
+    return V2Ray(guid, v2RayJson(assembled, "normal"))
   }
 
   private fun getV2rayMultipleConfig(
     context: Context,
     config: ConnectionProfile,
     configList: List<ConnectionProfile>,
-  ): V2rayConfig? {
+  ): V2rayConfig {
     val validConfigs = configList.asSequence().filter { it.server.isNotNullEmpty() }
       .filter { !Utils.isPureIpAddress(it.server!!) || Utils.isValidUrl(it.server!!) }
       .filter { it.protocol != Protocol.Custom }
@@ -259,11 +206,14 @@ object V2rayConfigManager {
       .toList()
 
     if (validConfigs.isEmpty()) {
-      Log.w(AppConfig.TAG, "All configs are invalid")
-      return null
+      throw ConfigValidationError(
+        message = "All configs are invalid for policy group",
+        userReadable = "No valid servers in this group",
+        stage = "policyGroup",
+      )
     }
 
-    val initialConfig = initV2rayConfig(context) ?: return null
+    val initialConfig = initV2rayConfig(context)
     initialConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
     initialConfig.remarks = config.remarks
@@ -303,70 +253,65 @@ object V2rayConfigManager {
       .then { it.applyOptionalDomainResolve() }
   }
 
-  /**
-   * Retrieves the normal V2ray configuration for speedtest.
-   *
-   * @param context The context in which the function is called.
-   * @param guid The unique identifier for the V2ray configuration.
-   * @param config The profile item containing the configuration details.
-   * @return A ConfigResult object containing the result of the configuration retrieval.
-   */
   private fun getV2rayNormalConfig4Speedtest(
     context: Context,
     guid: String,
     config: ConnectionProfile,
-  ): ConfigResult {
-    val result = ConfigResult(false)
-
-    val address = config.server ?: return result
-    if (!Utils.isPureIpAddress(address)) {
-      if (!Utils.isValidUrl(address)) {
-        Log.w(AppConfig.TAG, "$address is an invalid ip or domain")
-        return result
-      }
+  ): V2Ray {
+    val address = config.server ?: throw ConfigValidationError(
+      message = "Server address is missing",
+      userReadable = "Server address is missing",
+      extras = mapOf("guid" to guid),
+    )
+    if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
+      throw ConfigValidationError(
+        message = "$address is an invalid ip or domain",
+        userReadable = "Invalid server address",
+        extras = mapOf("address" to address),
+      )
     }
 
-    val initialConfig = initV2rayConfig(context) ?: return result
+    val initialConfig = initV2rayConfig(context)
     val speedtestConfig = initialConfig
       .then { getOutbounds(it, config) }
       .then { getMoreOutbounds(it, config.subscriptionId) }
       .then { it.invalidateForSpeedtest() }
 
-    return result.copy(
-      status = true,
-      content = JsonUtil.toJsonPretty(speedtestConfig) ?: "",
-      guid = guid
-    )
+    return V2Ray(guid, v2RayJson(speedtestConfig, "speedtest"))
   }
 
   /**
-   * Initializes V2ray configuration.
-   *
-   * This function loads the V2ray configuration from assets or from a cached value.
-   * It first attempts to use the cached configuration if available, otherwise reads
-   * the configuration from the "v2ray_config.json" asset file.
-   *
-   * @param context Android context used to access application assets
-   * @return V2rayConfig object parsed from the JSON configuration, or null if the configuration is empty
+   * Loads the JSON template from assets (cached). Throws [AssetConfigMissingError] if empty,
+   * [ConfigValidationError] if parsing fails.
    */
-  private fun initV2rayConfig(context: Context): V2rayConfig? {
-    var assets = ""
+  private fun initV2rayConfig(context: Context): V2rayConfig {
+    val assets: String
     if (needTun()) {
-      assets =
-        initConfigCacheWithTun ?: Utils.readTextFromAssets(context, "v2ray_config_with_tun.json")
+      val name = "v2ray_config_with_tun.json"
+      assets = initConfigCacheWithTun ?: Utils.readTextFromAssets(context, name)
       if (TextUtils.isEmpty(assets)) {
-        return null
+        throw AssetConfigMissingError(name)
       }
       initConfigCacheWithTun = assets
     } else {
-      assets = initConfigCache ?: Utils.readTextFromAssets(context, "v2ray_config.json")
+      val name = "v2ray_config.json"
+      assets = initConfigCache ?: Utils.readTextFromAssets(context, name)
       if (TextUtils.isEmpty(assets)) {
-        return null
+        throw AssetConfigMissingError(name)
       }
       initConfigCache = assets
     }
-    val config = JsonUtil.fromJson(assets, V2rayConfig::class.java)
-    return config
+    return JsonUtil.fromJson(assets, V2rayConfig::class.java)
+      ?: throw ConfigValidationError(
+        message = "Failed to parse JSON template",
+        userReadable = "Invalid VPN template",
+        stage = "parseTemplate",
+      )
+  }
+
+  private fun v2RayJson(model: V2rayConfig, stage: String): String {
+    return JsonUtil.toJsonPretty(model)?.takeIf { it.isNotEmpty() }
+      ?: throw ConfigSerializationError(stage)
   }
 
 

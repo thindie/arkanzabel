@@ -15,10 +15,12 @@ import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.contracts.ServiceControl
+import com.v2ray.ang.error.AppError
 import com.v2ray.ang.service.V2RayProxyOnlyService
 import com.v2ray.ang.service.V2RayVpnService
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -137,13 +139,23 @@ object V2RayServiceManager {
         val service = getService() ?: return false
         val guid = KeyValueStorage.getSelectServer() ?: return false
         val config = KeyValueStorage.decodeServerConfig(guid) ?: return false
-        val result = V2rayConfigManager.getV2rayConfig(service, guid)
-        if (!result.status) {
+        val result = try {
+            V2rayConfigManager.getV2rayConfig(service, guid)
+        } catch (cancel: CancellationException) {
+            throw cancel
+        } catch (appError: AppError) {
+            Log.e(AppConfig.TAG, "Failed to get V2ray config: ${appError.message}", appError)
             MessageUtil.sendMsg2UI(
                 service,
                 AppConfig.MSG_STATE_START_FAILURE,
-                service.getString(R.string.vpn_core_config_build_failed),
+                appError.userReadable,
             )
+            return false
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "Failed to get V2ray config", runtime)
+            val payload = runtime.message?.trim()?.takeIf { it.isNotEmpty() }
+                ?: service.getString(R.string.vpn_core_config_build_failed)
+            MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, payload)
             return false
         }
 
@@ -171,7 +183,7 @@ object V2RayServiceManager {
 
         try {
             NotificationManager.showNotification(currentConfig)
-            coreController.startLoop(result.content, tunFd)
+            coreController.startLoop(result.json, tunFd)
         } catch (runtime: RuntimeException) {
             Log.e(AppConfig.TAG, "Failed to start Core loop", runtime)
             NotificationManager.cancelNotification()

@@ -2,7 +2,8 @@
 
 ## Проверка и статус верификации (pipeline)
 
-**Дата прохода:** 2026-03-22 — сверка деревьев `d:\Android\v2rayNg` и `d:\Android\Arkanzabel` без выдуманных путей.
+**Дата прохода (upstream):** 2026-03-22 — сверка деревьев `d:\Android\v2rayNg` и `d:\Android\Arkanzabel`.  
+**Обновление плана:** 2026-03-24 — актуализировано под текущий `:v2ray-engine` (пакеты `runtime` / `runtimebuilder`, контракт `V2Ray`, ошибки, сервисы в исходниках).
 
 ### Подтверждено (v2rayNg)
 
@@ -16,7 +17,7 @@
 | `handler` — ровно **12** `.kt` файлов | glob `handler/*.kt` |
 | `fmt` — **10** файлов (`FmtBase` … `WireguardFmt`) | glob `fmt/*.kt` |
 | `util` — **8** файлов (`MessageUtil`, `Utils`, `JsonUtil`, `HttpUtil`, `ZipUtil`, `AppManagerUtil`, `MyContextWrapper`, `QRCodeDecoder`) | glob `util/*.kt` |
-| `dto` — **17** файлов | `AssetUrlItem`, `AssetUrlCache`, `AppInfo`, `CheckUpdateResult`, `ConfigResult`, `GitHubRelease`, `GroupMapItem`, `IPAPIInfo`, `ProfileItem`, `RulesetItem`, `ServerAffiliationInfo`, `ServersCache`, `SubscriptionCache`, `SubscriptionItem`, `VmessQRCode`, `V2rayConfig`, `WebDavConfig` |
+| `dto` — **17** файлов (upstream) | `AssetUrlItem`, `AssetUrlCache`, `AppInfo`, `CheckUpdateResult`, `ConfigResult`, `GitHubRelease`, `GroupMapItem`, `IPAPIInfo`, `ProfileItem`, `RulesetItem`, `ServerAffiliationInfo`, `ServersCache`, `SubscriptionCache`, `SubscriptionItem`, `VmessQRCode`, `V2rayConfig`, `WebDavConfig` |
 | `contracts` — 4 файла (`ServiceControl`, `Tun2SocksControl`, `MainAdapterListener`, `BaseAdapterListener`) | glob `contracts/*.kt` |
 | `extension` — **`_Ext.kt`** | `extension/_Ext.kt` |
 | Assets в `V2rayNG/app/src/main/assets/` | 9 файлов: `v2ray_config.json`, `v2ray_config_with_tun.json`, `custom_routing_*` (5), `proxy_package_name`, `open_source_licenses.html` |
@@ -35,11 +36,14 @@
 | **WorkManager.initialize** с `:bg` в host `Application` | **отсутствует** в текущем `Application.kt` — нужно добавить до использования `SubscriptionUpdater` / `RemoteWorkManager` (как в `AngApplication`) |
 | Ресурсы engine: `res/xml/network_security_config.xml`, `cache_paths.xml`, `raw/licenses.xml`, строки, `drawable/ic_stat_name`, набор **assets** (как в upstream) | glob `v2ray-engine/src/main` |
 | Манифест library: permissions + `V2RayVpnService`, `V2RayProxyOnlyService`, `V2RayTestService`, `QSTileService`, `BootReceiver`, `InitializationProvider` (remove WM init), `FileProvider` | `v2ray-engine/src/main/AndroidManifest.xml` |
+| **Kotlin под манифест:** `service/*`, `receiver/BootReceiver` | классы присутствуют; модуль **собирается** с перенесёнными сервисами |
+| Сборка конфига для ядра: **`V2Ray(guid, json)`**, не `ConfigResult` | `dto/V2Ray.kt`; `V2rayConfigManager.getV2rayConfig` / `getV2rayConfig4Speedtest` → **`V2Ray`**, ошибки **`AppError`** (+ `ErrorPayload`) |
+| Разделение «рантайм» / «сборка JSON» | `com.v2ray.ang.runtime` — MMKV-обёртка, менеджеры, нативный мост, сервисный клей; **`com.v2ray.ang.runtimebuilder`** — `ConfigAssembler`, шаги `*ConfigStep`, `ConnectionProfileToOutboundMapper` |
+| Ошибки на границе сервисов | `V2RayServiceManager` / `V2RayVpnService` ловят **`AppError`**, в UI-broadcast уходит **`userReadable`**; прочие **`RuntimeException`** — fallback по `message` / строке ресурса |
 
-### Критическое расхождение (блокер сборки)
+### Закрыто ранее (неактуально как блокер)
 
-- В **`v2ray-engine`** объявлены **`<service>` / `<receiver>`** на классы `com.v2ray.ang.service.*` и `com.v2ray.ang.receiver.BootReceiver`, но каталога **`v2ray-engine/.../com/v2ray/ang/service/`** и **`receiver/`** в исходниках **нет** (поиск `class V2RayVpnService` — пусто).  
-- **Вывод:** план корректен по целевой архитектуре, но текущее состояние репозитория — **манифест опережает Phase 3**; до переноса Kotlin-классов сборка модуля будет недействительна. В плане Phase 3 следует трактовать как **«закрыть этот разрыв»**.
+- ~~Манифест без исходников `service/`~~ — **исправлено:** перенесены VPN/proxy/test/tile, `BootReceiver`, вспомогательные классы; оставшиеся задачи Phase 3 — **паритет** (доп. ресиверы, полировка), а не «пустой модуль».
 
 ### Замечания по переносимости
 
@@ -48,8 +52,8 @@
 
 ### Pipeline
 
-1. **feature-plan-reviewer** — сверка плана с файловой системой и манифестами; расхождения внесены в этот раздел.  
-2. **feature-executor** — обновлён только документ `arkanzabel-migration-plan.md`, код проектов не менялся.
+1. **feature-plan-reviewer** — сверка плана с файловой системой и манифестами; расхождения вносить в этот раздел.  
+2. **feature-executor** — по согласованию: код `v2ray-engine` + синхронизация этого документа после крупных изменений контракта.
 
 ---
 
@@ -82,15 +86,17 @@
 - **Gradle `namespace`** библиотеки (`com.thindie.rknzbl.v2rayengine`) **не обязан** совпадать с Kotlin-пакетом исходников.
 - **`AppConfig.ANG_PACKAGE`**: в library **нельзя** использовать `BuildConfig.APPLICATION_ID` библиотеки как id приложения. Уже принятый паттерн в Arkanzabel: **`AppConfig.initHostApplicationId(applicationId, versionName)`** в `Application.onCreate` до любого кода, который шлёт broadcast или строит имя процесса `:bg`. От этого зависят `BROADCAST_ACTION_*` и `WorkManager.setDefaultProcessName("${ANG_PACKAGE}:bg")`.
 - **Переименование пакетов** под `com.thindie…`: возможно, но для hev нужен новый **`PKGNAME`** в ndk-build **или** тонкий shim **`com.v2ray.ang.service.TProxyService`**.
+- **Arkanzabel (отличие от upstream-пакета `handler`):** переносимый «оркестраторский» код лежит в **`com.v2ray.ang.runtime`**; пошаговая сборка JSON — в **`com.v2ray.ang.runtimebuilder`**. Имена намеренно другие, чтобы не путать с v2rayNG `handler`.
 
 ## Migrate list
 
 Источник: `V2rayNG/app/src/main/java/…`
 
-### `com.v2ray.ang.handler` (12 файлов в upstream)
+### `com.v2ray.ang.handler` (upstream, 12 файлов) → в Arkanzabel
 
-- `AngConfigManager`, `MmkvManager`, `NotificationManager`, `SettingsChangeManager`, `SettingsManager`, `SpeedtestManager`, `SubscriptionUpdater` (+ `UpdateTask`), `UpdateCheckerManager`, `V2RayNativeManager`, `V2RayServiceManager`, `V2rayConfigManager`, `WebDavManager`
-- **Arkanzabel (осознанное решение):** upstream-`MmkvManager` **не** возвращаем в код. Единый слой персистентности — **`KeyValueStorage`** (те же MMKV ID / multi-process). При порте из v2rayNG все обращения к `MmkvManager` заменяются на **`KeyValueStorage`**; дублирующий класс `MmkvManager` в репозитории не вводить.
+- **Соответствие:** логика upstream-`handler` распределена между **`com.v2ray.ang.runtime`** (хранилище, настройки, натив, сервисы, `V2rayConfigManager` как фасад) и **`com.v2ray.ang.runtimebuilder`** (явный pipeline: `ConfigAssembler`, `Inbound`/`Outbound`/`Routing`/`Dns`/`DomainResolve` steps, маппинг `ConnectionProfile` → outbound).
+- Upstream-перечень: `AngConfigManager`, `MmkvManager`, `NotificationManager`, … — **частично** перенесён; часть классов ещё не портирована (см. Phase 2/6).
+- **Arkanzabel (осознанное решение):** upstream-`MmkvManager` **не** возвращаем. Единый слой — **`KeyValueStorage`**. Парсеры профилей в **`com.v2ray.ang.protocolstringsparsers`** + **`ProfileUriParser`** в `runtime`.
 
 ### `com.v2ray.ang.service`
 
@@ -104,7 +110,8 @@
 
 ### `com.v2ray.ang.dto`
 
-- Все типы, от которых зависят handlers/config (в upstream есть в т.ч. `AssetUrlItem`, `AssetUrlCache`, `AppInfo`, `CheckUpdateResult`, `ConfigResult`, `GitHubRelease`, `GroupMapItem`, `IPAPIInfo`, `ProfileItem`, `RulesetItem`, `ServerAffiliationInfo`, `ServersCache`, `SubscriptionCache`, `SubscriptionItem`, `VmessQRCode`, `V2rayConfig`, `WebDavConfig` — сверять по факту импортов после копирования).
+- Upstream: типы из списка в таблице выше — сверять по факту импортов при порте.
+- **Arkanzabel:** вместо upstream **`ConfigResult`** для выдачи JSON в ядро используется **`V2Ray(guid, json)`**. Для структурированного контекста ошибок — **`ErrorPayload`** (`stage`, `source`, `extras`). Модель **`ConnectionProfile`** заменяет upstream `ProfileItem` в перенесённых путях (имя осознанное).
 
 ### `com.v2ray.ang.fmt`
 
@@ -116,7 +123,12 @@
 
 ### `com.v2ray.ang.util`
 
-- Минимум: `MessageUtil`, `Utils`, `JsonUtil`; по ссылкам из handlers: `HttpUtil`, `ZipUtil`, `AppManagerUtil`, `MyContextWrapper` / `LocaleContextWrapper` (как назовёте при мерже), `QRCodeDecoder` — в engine только если логика импорта QR остаётся в библиотеке
+- Минимум: `MessageUtil`, `Utils`, `JsonUtil`; по ссылкам из runtime/builder: `HttpUtil`, `ZipUtil`, `AppManagerUtil`, `MyContextWrapper` / `LocaleContextWrapper` (как назовёте при мерже), `QRCodeDecoder` — в engine только если логика импорта QR остаётся в библиотеке
+
+### `com.v2ray.ang.error` (Arkanzabel)
+
+- **`AppError`** (sealed) + подтипы шагов сборки (`IncomingConfigError`, `OutboundConfigError`, …, `ConfigBuildError`) и контрактные сбои (`ProfileNotFoundError`, `ConfigValidationError`, `AssetConfigMissingError`, `ConfigSerializationError`, …).
+- У каждой ошибки: **`userReadable`** (для UI / broadcast) и опционально **`payload: ErrorPayload`** (логи, будущий маппинг из нескольких flow в app).
 
 ### `com.v2ray.ang.extension`
 
@@ -182,10 +194,11 @@
 
 - Старт/стоп VPN или proxy-only через существующие **`V2RayServiceManager.startVService` / `stop`**
 - Текущий профиль / список — **`KeyValueStorage`**
-- Импорт URI — **`AngConfigManager`** (или упрощённый use-case)
+- Импорт URI — **`AngConfigManager`** (или упрощённый use-case; сейчас частично **`ProfileUriParser`** + storage)
 - Состояние: подписка на broadcast через обёртку или перевод на **Flow** в одном месте
+- Ошибки сборки конфига: сейчас уходят в broadcast как **строка** (`AppError.userReadable` или fallback); позже — общий маппинг **`AppError` → UI** для нескольких flow (не только `HomeFlow`)
 
-Внутри фасада остаются `MessageUtil`, `AppConfig`, сервисы без изменения контракта, пока не решите заменить IPC.
+Внутри фасада остаются `MessageUtil`, `AppConfig`, сервисы; контракт движка для JSON — **`V2Ray`** + **`AppError`** на границе `V2rayConfigManager` / сервисов.
 
 ## Phased steps
 
@@ -197,14 +210,16 @@
 
 - Дописать `build.gradle.kts`: AAR, jniLibs, недостающие зависимости, при необходимости desugar/multidex.
 
-### Phase 2 — Kotlin: handlers + fmt + недостающие util
+### Phase 2 — Kotlin: runtime + fmt + недостающие util
 
-- Скопировать из v2rayNg, починить импорты и **R** (ресурсы должны жить в engine или передаваться из app).
-- Вызвать **`AppConfig.initHostApplicationId`** первым в `Application.onCreate`.
+- **Сделано (частично):** перенесены ключевые куски `handler` → `runtime` / `runtimebuilder`, сервисы, receiver, парсеры протоколов, контракт ошибок и **`V2Ray`**.
+- **Осталось:** `fmt/*` (если ещё не перенесены целиком), прочие util/helper по необходимости; починка импортов и **R** при расширении.
+- Вызвать **`AppConfig.initHostApplicationId`** первым в `Application.onCreate` (уже есть).
 
 ### Phase 3 — Сервисы + манифест
 
-- Перенести Kotlin из `service/` и `receiver/` (и недостающие ресурсы), чтобы объявления в `v2ray-engine/src/main/AndroidManifest.xml` соответствовали классам. **Сейчас манифест уже частично скопирован — классов под него нет (блокер).** Проверить **процесс** `:RunSoLibV2RayDaemon`.
+- **Базовый перенос выполнен:** классы в `com.v2ray.ang.service.*` и `BootReceiver` соответствуют манифесту; процесс **`:RunSoLibV2RayDaemon`** — проверять при регрессии.
+- **Дальше:** опциональные receiver’ы (виджет, Tasker), выравнивание ресурсов/строк, полный паритет с upstream-манифестом.
 
 ### Phase 4 — Нативка
 
@@ -231,10 +246,10 @@
 
 ## Dependencies and APIs (ориентир)
 
-- **Xray**: `libv2ray.Libv2ray`, `libv2ray.CoreController`, `libv2ray.CoreCallbackHandler`, `go.Seq` — через `com.v2ray.ang.handler.V2RayNativeManager`
+- **Xray**: `libv2ray.Libv2ray`, `libv2ray.CoreController`, `libv2ray.CoreCallbackHandler`, `go.Seq` — через **`com.v2ray.ang.runtime.V2RayNativeManager`**; старт цикла с JSON из **`V2Ray.json`**
 - **MMKV**: `com.tencent.mmkv.MMKV`
 - **WorkManager**: `androidx.work`, `androidx.work.multiprocess.RemoteWorkManager` для постановки work из UI-процесса в `:bg`
 
 ---
 
-*Документ: миграция техчасти v2rayNG → Arkanzabel (`:v2ray-engine` + Compose). Актуальная сводка проверки — в секции «Проверка и статус верификации (pipeline)».*
+*Документ: миграция техчасти v2rayNG → Arkanzabel (`:v2ray-engine` + Compose). Актуальная сводка — в секции «Проверка и статус верификации (pipeline)»; при расхождении с деревом править таблицу Arkanzabel и фазы.*
