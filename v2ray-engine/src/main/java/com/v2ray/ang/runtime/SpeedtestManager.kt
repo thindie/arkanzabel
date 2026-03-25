@@ -90,12 +90,12 @@ object SpeedtestManager {
    * @param port The port to connect to.
    * @return A pair containing the elapsed time in milliseconds and the result message.
    */
-  fun testConnection(context: Context, port: Int): Pair<Long, String> {
+  suspend fun testConnection(context: Context, port: Int): Pair<Long, String> = withContext(Dispatchers.IO) {
     var result: String
     var elapsed = -1L
 
     val conn = HttpUtil.createProxyConnection(SettingsManager.getDelayTestUrl(), port, 15000, 15000)
-      ?: return elapsed to ""
+      ?: return@withContext elapsed to ""
     try {
       val start = SystemClock.elapsedRealtime()
       val code = conn.responseCode
@@ -119,16 +119,16 @@ object SpeedtestManager {
       conn.disconnect()
     }
 
-    return elapsed to result
+    elapsed to result
   }
 
-  fun getRemoteIPInfo(): String? {
+  suspend fun getRemoteIPInfo(): String? = withContext(Dispatchers.IO) {
     val url = KeyValueStorage.decodeSettingsString(AppConfig.PREF_IP_API_URL)
       ?.ifBlank { null } ?: AppConfig.IP_API_URL
 
     val httpPort = SettingsManager.getHttpPort()
-    val content = HttpUtil.getUrlContent(url, 5000, httpPort) ?: return null
-    val ipInfo = JsonUtil.fromJson(content, IPAPIInfo::class.java) ?: return null
+    val content = HttpUtil.getUrlContent(url, 5000, httpPort) ?: return@withContext null
+    val ipInfo = JsonUtil.fromJson(content, IPAPIInfo::class.java) ?: return@withContext null
 
     val ip = listOf(
       ipInfo.ip,
@@ -144,6 +144,6 @@ object SpeedtestManager {
       ipInfo.location?.countryCode
     ).firstOrNull { !it.isNullOrBlank() }
 
-    return "(${country ?: "unknown"}) ${ip ?: "unknown"}"
+    "(${country ?: "unknown"}) ${ip ?: "unknown"}"
   }
 }

@@ -75,8 +75,8 @@ data class ConnectionProfile(
         }
     }
 
-    fun getAllOutboundTags(): MutableList<String> {
-        return mutableListOf(TAG_PROXY, TAG_DIRECT, TAG_BLOCKED)
+    fun getAllOutboundTags(): List<String> {
+        return listOf(TAG_PROXY, TAG_DIRECT, TAG_BLOCKED)
     }
 
     fun getServerAddressAndPort(): String {

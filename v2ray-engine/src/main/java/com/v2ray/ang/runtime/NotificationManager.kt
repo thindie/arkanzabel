@@ -40,7 +40,7 @@ object NotificationManager {
 
     lastQueryTime = System.currentTimeMillis()
     var lastZeroSpeed = false
-    val outboundTags = connectionProfile?.getAllOutboundTags()?.apply { remove(AppConfig.TAG_DIRECT) }
+    val outboundTags = connectionProfile?.getAllOutboundTags()?.filterNot { it == AppConfig.TAG_DIRECT }
 
     val tick =
       object : Runnable {
