@@ -1,12 +1,13 @@
 package com.thindie.rknzbl.uikit
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,16 +16,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.engine.State
 
 @Composable
 fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
   modifier: Modifier = Modifier,
+  title: String? = null,
+  subtitle: String? = null,
+  primary: Action? = null,
+  secondary: Action? = null,
   content: @Composable ScreenScope<S, C>.() -> Unit,
 ) {
   AnimatedContent(
-    modifier = modifier.background(AppTheme.colors.backgroundPrimary), targetState = this
+    modifier = modifier
+      .background(AppTheme.colors.backgroundPrimary)
+    , targetState = this
   ) { screenScope ->
     if (error.value != null) {
       ErrorMessage()
@@ -34,7 +40,17 @@ fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
           .fillMaxSize()
           .background(AppTheme.colors.backgroundPrimary)
       ) {
-        content(screenScope)
+        Column(
+          modifier = Modifier.systemBarsPadding()
+        ) {
+          TopAppBar(
+            title = title,
+            description = subtitle,
+            primary = primary,
+            secondary = secondary
+          )
+          content(screenScope)
+        }
         if (this@AppScreen.processing.value != null) {
           Box(
             Modifier

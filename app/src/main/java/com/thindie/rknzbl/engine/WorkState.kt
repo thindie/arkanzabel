@@ -3,7 +3,7 @@ package com.thindie.rknzbl.engine
 import androidx.compose.runtime.Immutable
 
 @Immutable
-interface WorkState {
+sealed interface WorkState {
   @Immutable
   data object Idle : WorkState
 

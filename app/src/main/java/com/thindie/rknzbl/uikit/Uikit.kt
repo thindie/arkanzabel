@@ -28,9 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,12 +62,12 @@ fun Button(
 ) {
   val contentColor by animateColorAsState(
     if (enabled) AppTheme.colors.buttonContentPrimary
-    else AppTheme.colors.buttonContentPrimary.copy(alpha = ContentAlpha.disabled)
+    else AppTheme.colors.contentSecondary
   )
 
   val backgroundColor by animateColorAsState(
     if (enabled) AppTheme.colors.accentPrimary
-    else AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.disabled)
+    else AppTheme.colors.backgroundSecondary
   )
   Box(
     modifier = modifier
@@ -303,22 +303,29 @@ fun CircularProgress(modifier: Modifier = Modifier) {
   )
 }
 
+
+@Immutable
+data class Action(
+  val listener: () -> Unit,
+  val icon: Int,
+)
+
 @Composable
 fun TopAppBar(
   title: String? = null,
   description: String? = null,
-  onBack: (() -> Unit)? = null,
-  onClose: (() -> Unit)? = null,
+  primary: Action? = null,
+  secondary: Action? = null,
 ) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    if (onBack != null) {
-      IconButton(onClick = onBack) {
+    if (primary != null) {
+      IconButton(onClick = primary.listener) {
         Icon(
-          painter = painterResource(com.thindie.rknzbl.R.drawable.ic_arrow_back_24),
+          painter = painterResource(primary.icon),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )
@@ -347,10 +354,10 @@ fun TopAppBar(
         color = AppTheme.colors.contentSecondary,
       )
     }
-    if (onClose != null) {
-      IconButton(onClick = onClose) {
+    if (secondary != null) {
+      IconButton(onClick = secondary.listener) {
         Icon(
-          painter = painterResource(com.thindie.rknzbl.R.drawable.ic_close_24),
+          painter = painterResource(secondary.icon),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )
