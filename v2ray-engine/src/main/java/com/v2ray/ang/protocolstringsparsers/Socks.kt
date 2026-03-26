@@ -11,25 +11,26 @@ import java.net.URI
 
 object Socks : ProtocolParser() {
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile(protocol = Protocol.Socks)
-
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.idnHost.isEmpty()) return null
     if (uri.port <= 0) return null
 
-    config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
-    config.server = uri.idnHost
-    config.serverPort = uri.port.toString()
-
-    if (uri.userInfo?.isEmpty() == false) {
-      val result = Utils.decode(uri.userInfo).split(":", limit = 2)
-      if (result.count() == 2) {
-        config.username = result.first()
-        config.password = result.last()
+    val (username, password) =
+      if (uri.userInfo?.isEmpty() == false) {
+        val parts = Utils.decode(uri.userInfo).split(":", limit = 2)
+        if (parts.size == 2) parts[0] to parts[1] else null to null
+      } else {
+        null to null
       }
-    }
 
-    return config
+    return ConnectionProfile(
+      protocol = Protocol.Socks,
+      remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } },
+      server = uri.idnHost,
+      serverPort = uri.port.toString(),
+      username = username,
+      password = password,
+    )
   }
 
   fun toUri(config: ConnectionProfile): String {
@@ -41,7 +42,6 @@ object Socks : ProtocolParser() {
 
     return toUri(config, Utils.encode(pw, true), null)
   }
-
 
   fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
     val outbound = V2rayConfigManager.createInitOutbound(Protocol.Socks)

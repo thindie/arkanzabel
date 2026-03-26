@@ -16,47 +16,37 @@ import java.net.URI
 
 object Hysteria2 : ProtocolParser() {
   /**
-   * Parses a Hysteria2 URI string into a ProfileItem object.
-   *
-   * @param str the Hysteria2 URI string to parse
-   * @return the parsed ProfileItem object, or null if parsing fails
+   * Parses a Hysteria2 URI string into a [ConnectionProfile], or null if parsing fails.
    */
   fun parse(str: String): ConnectionProfile? {
-    var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile(protocol = Protocol.Hysteria2)
-
+    val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
     val uri = URI(Utils.fixIllegalUrl(str))
-    config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
-    config.server = uri.idnHost
-    config.serverPort = uri.port.toString()
-    config.password = uri.userInfo
-    config.security = AppConfig.TLS
-    config.network = NetworkType.HYSTERIA.type
+    var result =
+      ConnectionProfile(
+        protocol = Protocol.Hysteria2,
+        remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).ifBlank { "none" },
+        server = uri.idnHost,
+        serverPort = uri.port.toString(),
+        password = uri.userInfo,
+        security = AppConfig.TLS,
+        network = NetworkType.HYSTERIA.type,
+      )
 
     if (!uri.rawQuery.isNullOrEmpty()) {
       val queryParam = getQueryParam(uri)
-
-      getItemFormQuery(config, queryParam, allowInsecure)
-
-      config.security = queryParam["security"] ?: AppConfig.TLS
-      config.obfsPassword = queryParam["obfs-password"]
-      config.portHopping = queryParam["mport"]
-      if (config.portHopping.isNotNullEmpty()) {
-        config.portHoppingInterval = queryParam["mportHopInt"]
-      }
-      config.pinnedCA256 = queryParam["pinSHA256"]
-
+      result = getItemFormQuery(result, queryParam, allowInsecure)
+      result =
+        result.copy(
+          security = queryParam["security"] ?: AppConfig.TLS,
+          obfsPassword = queryParam["obfs-password"],
+          portHopping = queryParam["mport"],
+          portHoppingInterval = queryParam["mportHopInt"]?.ifBlank { null },
+          pinnedCA256 = queryParam["pinSHA256"],
+        )
     }
-
-    return config
+    return result
   }
 
-  /**
-   * Converts a ProfileItem object to a URI string.
-   *
-   * @param config the ProfileItem object to convert
-   * @return the converted URI string
-   */
   fun toUri(config: ConnectionProfile): String {
     val dicQuery = HashMap<String, String>()
 
@@ -82,42 +72,43 @@ object Hysteria2 : ProtocolParser() {
     return toUri(config, config.password, dicQuery)
   }
 
-  /**
-   * Converts a ProfileItem object to an Outbound object.
-   *
-   * @param connectionProfile the ProfileItem object to convert
-   * @return the converted Outbound object, or null if conversion fails
-   */
   fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
     val outbound = V2rayConfigManager.createInitOutbound(Protocol.Hysteria2) ?: return null
-    connectionProfile.network = NetworkType.HYSTERIA.type
-    connectionProfile.alpn = "h3"
+    val profile =
+      connectionProfile.copy(
+        network = NetworkType.HYSTERIA.type,
+        alpn = "h3",
+      )
 
     outbound.settings?.let { server ->
-      server.address = getServerAddress(connectionProfile)
-      server.port = connectionProfile.serverPort.orEmpty().toInt()
+      server.address = getServerAddress(profile)
+      server.port = profile.serverPort.orEmpty().toInt()
       server.version = 2
     }
 
-    val sni = outbound.streamSettings?.let {
-      V2rayConfigManager.populateTransportSettings(it, connectionProfile)
-    }
+    val sni =
+      outbound.streamSettings?.let {
+        V2rayConfigManager.populateTransportSettings(it, profile)
+      }
 
     outbound.streamSettings?.let {
-      V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
+      V2rayConfigManager.populateTlsSettings(it, profile, sni)
     }
 
-    if (connectionProfile.obfsPassword.isNotNullEmpty()) {
-      outbound.streamSettings?.finalmask = FinalMask(
-        udp = listOf(
-          FinalMask.Mask(
-            type = "salamander",
-            settings = FinalMask.Mask.MaskSettings(
-              password = connectionProfile.obfsPassword
-            )
-          )
+    if (profile.obfsPassword.isNotNullEmpty()) {
+      outbound.streamSettings?.finalmask =
+        FinalMask(
+          udp =
+            listOf(
+              FinalMask.Mask(
+                type = "salamander",
+                settings =
+                  FinalMask.Mask.MaskSettings(
+                    password = profile.obfsPassword,
+                  ),
+              ),
+            ),
         )
-      )
     }
     return outbound
   }

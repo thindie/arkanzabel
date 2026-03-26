@@ -23,7 +23,6 @@ object Vmess : ProtocolParser() {
     }
 
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile(protocol = Protocol.Vmess)
 
     var result = str.replace(Protocol.Vmess.protocolScheme, "")
     result = Utils.decode(result)
@@ -32,7 +31,6 @@ object Vmess : ProtocolParser() {
       return null
     }
     val vmessQRCode = JsonUtil.fromJson(result, VmessQRCode::class.java) ?: return null
-    // Although VmessQRCode fields are non null, looks like Gson may still create null fields
     if (TextUtils.isEmpty(vmessQRCode.add)
       || TextUtils.isEmpty(vmessQRCode.port)
       || TextUtils.isEmpty(vmessQRCode.id)
@@ -42,45 +40,60 @@ object Vmess : ProtocolParser() {
       return null
     }
 
-    config.remarks = vmessQRCode.ps
-    config.server = vmessQRCode.add
-    config.serverPort = vmessQRCode.port
-    config.password = vmessQRCode.id
-    config.method =
-      if (TextUtils.isEmpty(vmessQRCode.scy)) AppConfig.DEFAULT_SECURITY else vmessQRCode.scy
+    val network =
+      vmessQRCode.net.ifBlank { null } ?: NetworkType.TCP.type
 
-    config.network = vmessQRCode.net
-    if (config.network.isNullOrEmpty()) {
-      config.network = NetworkType.TCP.type
-    }
-    config.headerType = vmessQRCode.type
-    config.host = vmessQRCode.host
-    config.path = vmessQRCode.path
+    val headerType = vmessQRCode.type
+    val host = vmessQRCode.host
+    val path = vmessQRCode.path
+    var mode: String? = null
+    var serviceName: String? = null
+    var authority: String? = null
+    var seed: String? = null
 
-    when (NetworkType.fromString(config.network)) {
+    when (NetworkType.fromString(network)) {
       NetworkType.KCP -> {
-        config.seed = vmessQRCode.path
+        seed = vmessQRCode.path
       }
 
       NetworkType.GRPC -> {
-        config.mode = vmessQRCode.type
-        config.serviceName = vmessQRCode.path
-        config.authority = vmessQRCode.host
+        mode = vmessQRCode.type
+        serviceName = vmessQRCode.path
+        authority = vmessQRCode.host
       }
 
       else -> {}
     }
 
-    config.security = vmessQRCode.tls
-    config.sni = vmessQRCode.sni
-    config.fingerPrint = vmessQRCode.fp
-    config.alpn = vmessQRCode.alpn
-    config.insecure = when (vmessQRCode.insecure) {
-      "1" -> true
-      "0" -> false
-      else -> allowInsecure
-    }
-    return config
+    val insecure =
+      when (vmessQRCode.insecure) {
+        "1" -> true
+        "0" -> false
+        else -> allowInsecure
+      }
+
+    return ConnectionProfile(
+      protocol = Protocol.Vmess,
+      remarks = vmessQRCode.ps,
+      server = vmessQRCode.add,
+      serverPort = vmessQRCode.port,
+      password = vmessQRCode.id,
+      method =
+        if (TextUtils.isEmpty(vmessQRCode.scy)) AppConfig.DEFAULT_SECURITY else vmessQRCode.scy,
+      network = network,
+      headerType = headerType,
+      host = host,
+      path = path,
+      seed = seed,
+      mode = mode,
+      serviceName = serviceName,
+      authority = authority,
+      security = vmessQRCode.tls,
+      sni = vmessQRCode.sni,
+      fingerPrint = vmessQRCode.fp,
+      alpn = vmessQRCode.alpn,
+      insecure = insecure,
+    )
   }
 
   fun toUri(config: ConnectionProfile): String {
@@ -125,21 +138,22 @@ object Vmess : ProtocolParser() {
 
   fun parseVmessStd(str: String): ConnectionProfile? {
     val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-    val config = ConnectionProfile(protocol = Protocol.Vmess)
 
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
     val queryParam = getQueryParam(uri)
 
-    config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
-    config.server = uri.idnHost
-    config.serverPort = uri.port.toString()
-    config.password = uri.userInfo
-    config.method = AppConfig.DEFAULT_SECURITY
+    val base =
+      ConnectionProfile(
+        protocol = Protocol.Vmess,
+        remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } },
+        server = uri.idnHost,
+        serverPort = uri.port.toString(),
+        password = uri.userInfo,
+        method = AppConfig.DEFAULT_SECURITY,
+      )
 
-    getItemFormQuery(config, queryParam, allowInsecure)
-
-    return config
+    return getItemFormQuery(base, queryParam, allowInsecure)
   }
 
   fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
@@ -152,9 +166,10 @@ object Vmess : ProtocolParser() {
       vnext.users[0].security = connectionProfile.method
     }
 
-    val sni = outbound?.streamSettings?.let {
-      V2rayConfigManager.populateTransportSettings(it, connectionProfile)
-    }
+    val sni =
+      outbound?.streamSettings?.let {
+        V2rayConfigManager.populateTransportSettings(it, connectionProfile)
+      }
 
     outbound?.streamSettings?.let {
       V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)

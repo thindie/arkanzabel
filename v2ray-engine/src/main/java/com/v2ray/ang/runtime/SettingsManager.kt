@@ -289,9 +289,13 @@ object SettingsManager {
       val profile = KeyValueStorage.decodeServerConfig(guid) ?: continue
       if (profile.protocol != Protocol.Hysteria2) continue
       if (profile.pinSHA256.isNullOrEmpty() || !profile.pinnedCA256.isNullOrEmpty()) continue
-      profile.pinnedCA256 = profile.pinSHA256
-      profile.pinSHA256 = null
-      KeyValueStorage.encodeServerConfig(guid, profile)
+      KeyValueStorage.encodeServerConfig(
+        guid,
+        profile.copy(
+          pinnedCA256 = profile.pinSHA256,
+          pinSHA256 = null,
+        ),
+      )
     }
     KeyValueStorage.encodeSettings(migrationKey, true)
   }

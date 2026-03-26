@@ -1,10 +1,10 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.enums.Protocol
-import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
+import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -12,72 +12,58 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 object Trojan : ProtocolParser() {
-    /**
-     * Parses a Trojan URI string into a ProfileItem object.
-     *
-     * @param str the Trojan URI string to parse
-     * @return the parsed ProfileItem object, or null if parsing fails
-     */
-    fun parse(str: String): ConnectionProfile? {
-        var allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
-        val config = ConnectionProfile(protocol = Protocol.Trojan)
+  fun parse(str: String): ConnectionProfile? {
+    val allowInsecure = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_ALLOW_INSECURE, false)
 
-        val uri = URI(Utils.fixIllegalUrl(str))
-        config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
-        config.server = uri.idnHost
-        config.serverPort = uri.port.toString()
-        config.password = uri.userInfo
+    val uri = URI(Utils.fixIllegalUrl(str))
+    val base =
+      ConnectionProfile(
+        protocol = Protocol.Trojan,
+        remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } },
+        server = uri.idnHost,
+        serverPort = uri.port.toString(),
+        password = uri.userInfo,
+      )
 
-        if (uri.rawQuery.isNullOrEmpty()) {
-            config.network = NetworkType.TCP.type
-            config.security = AppConfig.TLS
-            config.insecure = allowInsecure
-        } else {
-            val queryParam = getQueryParam(uri)
+    return if (uri.rawQuery.isNullOrEmpty()) {
+      base.copy(
+        network = NetworkType.TCP.type,
+        security = AppConfig.TLS,
+        insecure = allowInsecure,
+      )
+    } else {
+      val queryParam = getQueryParam(uri)
+      getItemFormQuery(base, queryParam, allowInsecure).copy(
+        security = queryParam["security"] ?: AppConfig.TLS,
+      )
+    }
+  }
 
-            getItemFormQuery(config, queryParam, allowInsecure)
-            config.security = queryParam["security"] ?: AppConfig.TLS
-        }
+  fun toUri(config: ConnectionProfile): String {
+    val dicQuery = getQueryDic(config)
 
-        return config
+    return toUri(config, config.password, dicQuery)
+  }
+
+  fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
+    val outbound = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
+
+    outbound?.settings?.servers?.first()?.let { server ->
+      server.address = getServerAddress(connectionProfile)
+      server.port = connectionProfile.serverPort.orEmpty().toInt()
+      server.password = connectionProfile.password
+      server.flow = connectionProfile.flow
     }
 
-    /**
-     * Converts a ProfileItem object to a URI string.
-     *
-     * @param config the ProfileItem object to convert
-     * @return the converted URI string
-     */
-    fun toUri(config: ConnectionProfile): String {
-        val dicQuery = getQueryDic(config)
+    val sni =
+      outbound?.streamSettings?.let {
+        V2rayConfigManager.populateTransportSettings(it, connectionProfile)
+      }
 
-        return toUri(config, config.password, dicQuery)
+    outbound?.streamSettings?.let {
+      V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
     }
 
-    /**
-     * Converts a ProfileItem object to an Outbound object.
-     *
-     * @param connectionProfile the ProfileItem object to convert
-     * @return the converted Outbound object, or null if conversion fails
-     */
-    fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
-        val outbound = V2rayConfigManager.createInitOutbound(Protocol.Trojan)
-
-        outbound?.settings?.servers?.first()?.let { server ->
-            server.address = getServerAddress(connectionProfile)
-            server.port = connectionProfile.serverPort.orEmpty().toInt()
-            server.password = connectionProfile.password
-            server.flow = connectionProfile.flow
-        }
-
-        val sni = outbound?.streamSettings?.let {
-            V2rayConfigManager.populateTransportSettings(it, connectionProfile)
-        }
-
-        outbound?.streamSettings?.let {
-            V2rayConfigManager.populateTlsSettings(it, connectionProfile, sni)
-        }
-
-        return outbound
-    }
+    return outbound
+  }
 }

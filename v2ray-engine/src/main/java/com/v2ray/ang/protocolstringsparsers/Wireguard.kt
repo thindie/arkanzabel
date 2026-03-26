@@ -13,36 +13,26 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 object Wireguard : ProtocolParser() {
-  /**
-   * Parses a URI string into a ProfileItem object.
-   *
-   * @param str the URI string to parse
-   * @return the parsed ProfileItem object, or null if parsing fails
-   */
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile(protocol = Protocol.WireGuard)
-
     val uri = URI(Utils.fixIllegalUrl(str))
     if (uri.rawQuery.isNullOrEmpty()) return null
     val queryParam = getQueryParam(uri)
 
-    config.remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } }
-    config.server = uri.idnHost
-    config.serverPort = uri.port.toString()
-
-    config.secretKey = uri.userInfo.orEmpty()
-    config.localAddress = queryParam["address"] ?: WIREGUARD_LOCAL_ADDRESS_V4
-    config.publicKey = queryParam["publickey"].orEmpty()
-    config.preSharedKey = queryParam["presharedkey"]?.nullIfBlank()
-    config.mtu = Utils.parseInt(queryParam["mtu"] ?: AppConfig.WIREGUARD_LOCAL_MTU)
-    config.reserved = queryParam["reserved"] ?: "0,0,0"
-
-    return config
+    return ConnectionProfile(
+      protocol = Protocol.WireGuard,
+      remarks = Utils.decodeURIComponent(uri.fragment.orEmpty()).let { it.ifEmpty { "none" } },
+      server = uri.idnHost,
+      serverPort = uri.port.toString(),
+      secretKey = uri.userInfo.orEmpty(),
+      localAddress = queryParam["address"] ?: WIREGUARD_LOCAL_ADDRESS_V4,
+      publicKey = queryParam["publickey"].orEmpty(),
+      preSharedKey = queryParam["presharedkey"]?.nullIfBlank(),
+      mtu = Utils.parseInt(queryParam["mtu"] ?: AppConfig.WIREGUARD_LOCAL_MTU),
+      reserved = queryParam["reserved"] ?: "0,0,0",
+    )
   }
 
   fun parseWireguardConfFile(str: String): ConnectionProfile? {
-    val config = ConnectionProfile(protocol = Protocol.WireGuard)
-
     val interfaceParams: MutableMap<String, String> = mutableMapOf()
     val peerParams: MutableMap<String, String> = mutableMapOf()
 
@@ -74,24 +64,27 @@ object Wireguard : ProtocolParser() {
       }
     }
 
-    config.secretKey = interfaceParams["privatekey"].orEmpty()
-    config.remarks = System.currentTimeMillis().toString()
-    config.localAddress = interfaceParams["address"] ?: WIREGUARD_LOCAL_ADDRESS_V4
-    config.mtu = Utils.parseInt(interfaceParams["mtu"] ?: AppConfig.WIREGUARD_LOCAL_MTU)
-    config.publicKey = peerParams["publickey"].orEmpty()
-    config.preSharedKey = peerParams["presharedkey"]?.nullIfBlank()
     val endpoint = peerParams["endpoint"].orEmpty()
     val endpointParts = endpoint.split(":", limit = 2)
-    if (endpointParts.size == 2) {
-      config.server = endpointParts[0]
-      config.serverPort = endpointParts[1]
-    } else {
-      config.server = endpoint
-      config.serverPort = ""
-    }
-    config.reserved = peerParams["reserved"] ?: "0,0,0"
+    val (server, serverPort) =
+      if (endpointParts.size == 2) {
+        endpointParts[0] to endpointParts[1]
+      } else {
+        endpoint to ""
+      }
 
-    return config
+    return ConnectionProfile(
+      protocol = Protocol.WireGuard,
+      remarks = System.currentTimeMillis().toString(),
+      secretKey = interfaceParams["privatekey"].orEmpty(),
+      localAddress = interfaceParams["address"] ?: WIREGUARD_LOCAL_ADDRESS_V4,
+      mtu = Utils.parseInt(interfaceParams["mtu"] ?: AppConfig.WIREGUARD_LOCAL_MTU),
+      publicKey = peerParams["publickey"].orEmpty(),
+      preSharedKey = peerParams["presharedkey"]?.nullIfBlank(),
+      server = server,
+      serverPort = serverPort,
+      reserved = peerParams["reserved"] ?: "0,0,0",
+    )
   }
 
   fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {

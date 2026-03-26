@@ -1,5 +1,6 @@
 package com.v2ray.ang.dto
 
+import com.google.errorprone.annotations.Immutable
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.AppConfig.PORT_SOCKS
 import com.v2ray.ang.AppConfig.TAG_BLOCKED
@@ -8,65 +9,66 @@ import com.v2ray.ang.AppConfig.TAG_PROXY
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.util.Utils
 
+@Immutable
 data class ConnectionProfile(
     val configVersion: Int = 4,
     val protocol: Protocol,
-    var subscriptionId: String = "",
-    var addedTime: Long = System.currentTimeMillis(),
+    val subscriptionId: String = "",
+    val addedTime: Long = System.currentTimeMillis(),
 
-    var remarks: String = "",
-    var description: String? = null,
-    var server: String? = null,
-    var serverPort: String? = null,
+    val remarks: String = "",
+    val description: String? = null,
+    val server: String? = null,
+    val serverPort: String? = null,
 
-    var password: String? = null,
-    var method: String? = null,
-    var flow: String? = null,
-    var username: String? = null,
+    val password: String? = null,
+    val method: String? = null,
+    val flow: String? = null,
+    val username: String? = null,
 
-    var network: String? = null,
-    var headerType: String? = null,
-    var host: String? = null,
-    var path: String? = null,
-    var seed: String? = null,
-    var quicSecurity: String? = null,
-    var quicKey: String? = null,
-    var mode: String? = null,
-    var serviceName: String? = null,
-    var authority: String? = null,
-    var xhttpMode: String? = null,
-    var xhttpExtra: String? = null,
+    val network: String? = null,
+    val headerType: String? = null,
+    val host: String? = null,
+    val path: String? = null,
+    val seed: String? = null,
+    val quicSecurity: String? = null,
+    val quicKey: String? = null,
+    val mode: String? = null,
+    val serviceName: String? = null,
+    val authority: String? = null,
+    val xhttpMode: String? = null,
+    val xhttpExtra: String? = null,
 
-    var security: String? = null,
-    var sni: String? = null,
-    var alpn: String? = null,
-    var fingerPrint: String? = null,
-    var insecure: Boolean = false,
-    var echConfigList: String? = null,
-    var echForceQuery: String? = null,
-    var pinnedCA256: String? = null,
+    val security: String? = null,
+    val sni: String? = null,
+    val alpn: String? = null,
+    val fingerPrint: String? = null,
+    val insecure: Boolean = false,
+    val echConfigList: String? = null,
+    val echForceQuery: String? = null,
+    val pinnedCA256: String? = null,
 
-    var publicKey: String? = null,
-    var shortId: String? = null,
-    var spiderX: String? = null,
-    var mldsa65Verify: String? = null,
+    val publicKey: String? = null,
+    val shortId: String? = null,
+    val spiderX: String? = null,
+    val mldsa65Verify: String? = null,
 
-    var secretKey: String? = null,
-    var preSharedKey: String? = null,
-    var localAddress: String? = null,
-    var reserved: String? = null,
-    var mtu: Int? = null,
+    val secretKey: String? = null,
+    val preSharedKey: String? = null,
+    val localAddress: String? = null,
+    val reserved: String? = null,
+    val mtu: Int? = null,
 
-    var obfsPassword: String? = null,
-    var portHopping: String? = null,
-    var portHoppingInterval: String? = null,
-    var pinSHA256: String? = null,
-    var bandwidthDown: String? = null,
-    var bandwidthUp: String? = null,
+    val obfsPassword: String? = null,
+    val portHopping: String? = null,
+    val portHoppingInterval: String? = null,
+    val pinSHA256: String? = null,
+    val bandwidthDown: String? = null,
+    val bandwidthUp: String? = null,
 
-    var policyGroupType: String? = null,
-    var policyGroupSubscriptionId: String? = null,
-    var policyGroupFilter: String? = null,
+    val policyGroupType: String? = null,
+    val policyGroupSubscriptionId: String? = null,
+    val policyGroupFilter: String? = null,
 
     ) {
 

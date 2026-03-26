@@ -72,59 +72,58 @@ open class ProtocolParser {
   }
 
   /**
-   * Populates a ProfileItem object with values from query parameters.
+   * Returns a copy of [config] with transport/TLS fields taken from URI query parameters.
    *
-   * @param config the ProfileItem object to populate
-   * @param queryParam the query parameters to use for populating the ProfileItem
-   * @param allowInsecure whether to allow insecure connections
+   * @param config base profile (e.g. host/port/user already set from the URI)
+   * @param queryParam parsed query map
+   * @param allowInsecure default when query omits insecure flags
    */
   fun getItemFormQuery(
     config: ConnectionProfile,
     queryParam: Map<String, String>,
     allowInsecure: Boolean,
-  ) {
-    config.network = queryParam["type"] ?: NetworkType.TCP.type
-    config.headerType = queryParam["headerType"]
-    config.host = queryParam["host"]
-    config.path = queryParam["path"]
-
-    config.seed = queryParam["seed"]
-    config.quicSecurity = queryParam["quicSecurity"]
-    config.quicKey = queryParam["key"]
-    config.mode = queryParam["mode"]
-    config.serviceName = queryParam["serviceName"]
-    config.authority = queryParam["authority"]
-    config.xhttpMode = queryParam["mode"]
-    config.xhttpExtra = queryParam["extra"]
-
-    config.security =
-      queryParam["security"]?.trim()?.lowercase().takeIf {
-        it == AppConfig.TLS || it == AppConfig.REALITY
-      }
-    // Support multiple possible query keys for allowInsecure like the C# implementation
+  ): ConnectionProfile {
     val allowInsecureKeys = arrayOf("insecure", "allowInsecure", "allow_insecure")
-    config.insecure = when {
+    val insecureResolved = when {
       allowInsecureKeys.any { queryParam[it] == "1" } -> true
       allowInsecureKeys.any { queryParam[it] == "0" } -> false
       else -> allowInsecure
     }
-    config.sni = queryParam["sni"]
-    config.fingerPrint = queryParam["fp"]
-    config.alpn = queryParam["alpn"]
-    config.echConfigList = queryParam["ech"]
-    config.pinnedCA256 = queryParam["pcs"]
-    config.publicKey =
-      firstQueryValueIgnoreCase(
-        queryParam,
-        "pbk",
-        "publicKey",
-        "public_key",
-        "public-key",
-      )
-    config.shortId = queryParam["sid"]
-    config.spiderX = queryParam["spx"]
-    config.mldsa65Verify = queryParam["pqv"]
-    config.flow = queryParam["flow"]
+    return config.copy(
+      network = queryParam["type"] ?: NetworkType.TCP.type,
+      headerType = queryParam["headerType"],
+      host = queryParam["host"],
+      path = queryParam["path"],
+      seed = queryParam["seed"],
+      quicSecurity = queryParam["quicSecurity"],
+      quicKey = queryParam["key"],
+      mode = queryParam["mode"],
+      serviceName = queryParam["serviceName"],
+      authority = queryParam["authority"],
+      xhttpMode = queryParam["mode"],
+      xhttpExtra = queryParam["extra"],
+      security = queryParam["security"]?.trim()?.lowercase().takeIf {
+        it == AppConfig.TLS || it == AppConfig.REALITY
+      },
+      insecure = insecureResolved,
+      sni = queryParam["sni"],
+      fingerPrint = queryParam["fp"],
+      alpn = queryParam["alpn"],
+      echConfigList = queryParam["ech"],
+      pinnedCA256 = queryParam["pcs"],
+      publicKey =
+        firstQueryValueIgnoreCase(
+          queryParam,
+          "pbk",
+          "publicKey",
+          "public_key",
+          "public-key",
+        ),
+      shortId = queryParam["sid"],
+      spiderX = queryParam["spx"],
+      mldsa65Verify = queryParam["pqv"],
+      flow = queryParam["flow"],
+    )
   }
 
   /**

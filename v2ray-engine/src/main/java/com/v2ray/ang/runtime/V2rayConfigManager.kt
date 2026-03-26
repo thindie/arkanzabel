@@ -682,8 +682,6 @@ object V2rayConfigManager {
     val host = connectionProfile.host
     val path = connectionProfile.path
     val seed = connectionProfile.seed
-//        val quicSecurity = profileItem.quicSecurity
-//        val key = profileItem.quicKey
     val mode = connectionProfile.mode
     val serviceName = connectionProfile.serviceName
     val authority = connectionProfile.authority
@@ -788,14 +786,6 @@ object V2rayConfigManager {
         h2Setting.path = path ?: "/"
         streamSettings.httpSettings = h2Setting
       }
-
-//                    "quic" -> {
-//                        val quicsetting = QuicSetting()
-//                        quicsetting.security = quicSecurity ?: "none"
-//                        quicsetting.key = key.orEmpty()
-//                        quicsetting.header.type = headerType ?: "none"
-//                        quicSettings = quicsetting
-//                    }
 
       NetworkType.GRPC.type -> {
         val grpcSetting = StreamSettings.GrpcSettings()
