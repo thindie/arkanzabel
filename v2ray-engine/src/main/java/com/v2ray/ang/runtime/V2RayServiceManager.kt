@@ -67,7 +67,15 @@ object V2RayServiceManager {
      */
     fun startVService(context: Context, guid: String? = null) {
         if (guid != null) {
+            if (isRunningInternal && KeyValueStorage.getSelectServer() == guid) {
+                return
+            }
             KeyValueStorage.setSelectServer(guid)
+        }
+        if (isRunningInternal) {
+            Log.i(AppConfig.TAG, "startVService: core running -> restart for new profile")
+            MessageUtil.sendMsg2Service(context, AppConfig.MSG_STATE_RESTART, "")
+            return
         }
         startContextService(context)
     }
