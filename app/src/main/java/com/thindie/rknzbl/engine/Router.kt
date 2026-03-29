@@ -143,6 +143,7 @@ object RouteFactory {
         }
 
         override fun send(command: C) {
+          println("Received command: $command")
           scope?.launch {
             when (command) {
               ServiceCommand.Dispose -> {
