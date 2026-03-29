@@ -30,7 +30,9 @@ object SettingsManager {
   fun initRoutingRulesets(context: Context) {
     val exist = KeyValueStorage.decodeRoutingRulesets()
     if (exist.isNullOrEmpty()) {
-      val rulesetList = getPresetRoutingRulesets(context) ?: return
+      // Default BLACK (index 1): proxy by default, direct for listed domestic/local — same idea as
+      // v2rayN "Blacklist / V4-Blacklist". WHITE (0) sends most traffic direct unless rule matches.
+      val rulesetList = getPresetRoutingRulesets(context, index = 1) ?: return
       KeyValueStorage.encodeRoutingRulesets(rulesetList)
     }
   }
