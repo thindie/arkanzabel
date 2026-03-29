@@ -4,29 +4,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
-import com.thindie.rknzbl.feature.home.HomeFlow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -104,6 +96,7 @@ object RouteFactory {
   fun <C : Command, S : State> create(
     initialState: S,
     execute: suspend (c: C, s: S) -> S,
+    stateSink: (ScreenScope<S, C>) -> Unit = {},
     errorMapper: (e: Throwable) -> ScreenScopeError = { _ ->
       ScreenScopeError(
         message = "somenthing wrong",
@@ -125,8 +118,9 @@ object RouteFactory {
       @Stable
       var screenScope: ScreenScope<S, C>? = object : ScreenScope<S, C> {
 
-        private var scope: CoroutineScope? =
+        override var scope: CoroutineScope? =
           CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
+          private set
 
         private val _state = MutableStateFlow(initialState)
         override val state: StateFlow<S>
@@ -139,6 +133,14 @@ object RouteFactory {
         private val _error = mutableStateOf<ScreenScopeError?>(null)
         override val error: androidx.compose.runtime.State<ScreenScopeError?>
           get() = _error
+
+        init {
+          stateSink.invoke(this)
+        }
+
+        override fun update(s: S) {
+          _state.update { s }
+        }
 
         override fun send(command: C) {
           scope?.launch {

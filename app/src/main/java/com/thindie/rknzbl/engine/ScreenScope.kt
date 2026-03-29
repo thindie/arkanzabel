@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.engine
 
 import androidx.compose.runtime.Stable
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 
 
@@ -11,4 +12,6 @@ interface ScreenScope<S : State, C : Command> {
   val error: androidx.compose.runtime.State<ScreenScopeError?>
   fun send(command: C)
   fun dispose()
+  val scope: CoroutineScope?
+  fun update(s: S)
 }
