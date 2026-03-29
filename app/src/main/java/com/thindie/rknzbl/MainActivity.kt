@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -35,7 +34,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Route
-import com.thindie.rknzbl.feature.home.HomeFlow
+import com.thindie.rknzbl.feature.intro.IntroFlow
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.ThemeSwitcher
@@ -43,25 +42,26 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-  private val notificationPermissionLauncher =
-    registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+    val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
         PackageManager.PERMISSION_GRANTED
-      ) {
-        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-      }
-    }
+    } else null
+
     enableEdgeToEdge()
     val app = application as Application
     val router = app.requireRouter()
     awaitFinish()
     setContent {
-      remember(app, router) {
-        HomeFlow(router, app).also { it.start() }
+      SideEffect {
+        IntroFlow(
+          router,
+          hasPushPermission = if (hasPermission != null) hasPermission else true,
+          appContext = app
+        )
+          .start()
       }
       val themeSwitcher = remember { ThemeSwitcher() }
       CompositionLocalProvider(
