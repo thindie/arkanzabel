@@ -7,5 +7,5 @@ data class AppInfo(
     val packageName: String,
     val appIcon: Drawable,
     val isSystemApp: Boolean,
-    var isSelected: Int
+    val isSelected: Int
 )
