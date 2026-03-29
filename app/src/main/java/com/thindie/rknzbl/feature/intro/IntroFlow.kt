@@ -33,6 +33,7 @@ import com.thindie.rknzbl.engine.RouteFactory
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.ScreenFlow
 import com.thindie.rknzbl.engine.ScreenScope
+import com.thindie.rknzbl.engine.ScreenScopeError
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
@@ -81,6 +82,12 @@ class IntroFlow(
     initialState = State(),
     execute = ::exec,
     routeContent = { IntroScreenContent(this) },
+    errorMapper = {
+      ScreenScopeError(
+        message = appContext.getString(R.string.error_unexpected),
+        actions = emptyMap(),
+      )
+    },
     initialCommand = RouteFactory.InitialCommand {
       CommandIntro.Start as CommandIntro
     },
@@ -113,41 +120,32 @@ class IntroFlow(
 
   sealed interface CommandIntro : Command {
     data object Start : CommandIntro
+    data object Dismiss : CommandIntro
     data object AcceptSoftRequest : CommandIntro
     data object DeclineSoftRequest : CommandIntro
     data object ConfirmRationale : CommandIntro
-    data object PushRestrictedOnce : CommandIntro
     data object PermissionDenied : CommandIntro
   }
 
   private suspend fun exec(command: CommandIntro, state: State): State {
     return when (command) {
       CommandIntro.Start -> {
-        when (state.current) {
-          Permission.Vpn -> {
-            if (hasVpnPermission()) {
-              state.copy(
-                current = Permission.Push,
-                stage = Stage.SoftRequest,
-              )
-            } else {
-              state.copy(
-                stage = Stage.SoftRequest,
-                hint = null
-              )
-            }
-          }
+        when {
+          !hasVpnPermission() -> state.copy(
+            stage = Stage.SoftRequest,
+            current = Permission.Vpn,
+            hint = null
+          )
 
-          Permission.Push -> {
-            if (hasPushPermission) {
-              startAppFlow()
-              state
-            } else {
-              state.copy(
-                stage = Stage.SoftRequest,
-                hint = null
-              )
-            }
+          !hasPushPermission -> state.copy(
+            stage = Stage.SoftRequest,
+            current = Permission.Push,
+            hint = null
+          )
+
+          else -> {
+            startAppFlow()
+            state
           }
         }
       }
@@ -193,16 +191,33 @@ class IntroFlow(
       }
 
       CommandIntro.PermissionDenied -> {
-        state.copy(
-          stage = Stage.SoftRequest,
-          hint = appContext.getString(R.string.intro_hint_vpn_not_granted)
-        )
+        when (state.current) {
+          Permission.Vpn -> {
+            state.copy(
+              stage = Stage.SoftRequest,
+              hint = appContext.getString(R.string.intro_hint_vpn_not_granted)
+            )
+          }
+
+          Permission.Push -> {
+            state.copy(
+              stage = Stage.RationaleDismissedOnce
+            )
+          }
+        }
       }
 
-      CommandIntro.PushRestrictedOnce -> {
-        state.copy(
-          stage = Stage.RationaleDismissedOnce
-        )
+      CommandIntro.Dismiss -> {
+        when (state.current) {
+          Permission.Vpn -> Unit
+          Permission.Push -> when (state.stage) {
+            Stage.Loading -> Unit
+            Stage.Rationale -> startAppFlow()
+            Stage.SoftRequest -> startAppFlow()
+            Stage.RationaleDismissedOnce -> startAppFlow()
+          }
+        }
+        state
       }
     }
   }
@@ -225,17 +240,14 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
 
     val permissionLauncher = rememberLauncherForActivityResult(
       contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-      if (isGranted) {
-        send(IntroFlow.CommandIntro.ConfirmRationale)
-      } else {
-        val showRationale =
-          activity?.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
-            ?: false
-        if (showRationale) {
-          send(IntroFlow.CommandIntro.AcceptSoftRequest)
+    ) {
+      if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
+          PackageManager.PERMISSION_GRANTED
+        ) {
+          send(IntroFlow.CommandIntro.ConfirmRationale)
         } else {
-          send(IntroFlow.CommandIntro.PushRestrictedOnce)
+          send(IntroFlow.CommandIntro.PermissionDenied)
         }
       }
     }
@@ -243,9 +255,8 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
     val settingsLauncher = rememberLauncherForActivityResult(
       ActivityResultContracts.StartActivityForResult()
     ) {
-      val act = activity
-      if (act != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        if (ContextCompat.checkSelfPermission(act, Manifest.permission.POST_NOTIFICATIONS) ==
+      if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
           PackageManager.PERMISSION_GRANTED
         ) {
           send(IntroFlow.CommandIntro.ConfirmRationale)
@@ -253,7 +264,7 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
       }
     }
 
-    BackHandler { }
+    BackHandler { send(IntroFlow.CommandIntro.Dismiss) }
 
     AppScreen(
       title = stringResource(
@@ -335,17 +346,13 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                         ) !=
                         PackageManager.PERMISSION_GRANTED
                       ) {
-                        val showRationale =
-                          activity.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
-                        if (showRationale) {
-                          permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        } else {
-                          send(IntroFlow.CommandIntro.PushRestrictedOnce)
-                        }
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                       } else {
                         send(IntroFlow.CommandIntro.ConfirmRationale)
                       }
                     }
+                  } else {
+                    send(IntroFlow.CommandIntro.ConfirmRationale)
                   }
                 }
               }
