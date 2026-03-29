@@ -9,7 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -203,6 +203,7 @@ fun SentenceRow(
   enabled: Boolean = true,
   loading: Boolean?,
   onClick: (() -> Unit)? = null,
+  onLongClick: (() -> Unit)? = null,
 ) {
   val colorsPrimary = if (enabled) AppTheme.colors.backgroundPrimary else {
     AppTheme.colors.backgroundPrimary.copy(alpha = ContentAlpha.disabled)
@@ -215,57 +216,71 @@ fun SentenceRow(
   val colorsSecondary = if (enabled) AppTheme.colors.backgroundSecondary else {
     AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.disabled)
   }
+  val interactionModifier = when {
+    !enabled -> Modifier
+    onLongClick != null && onClick != null -> Modifier.combinedClickable(
+      onClick = onClick,
+      onLongClick = onLongClick,
+    )
+
+    onClick != null -> Modifier.clickable(onClick = onClick)
+    onLongClick != null -> Modifier.combinedClickable(
+      onClick = { },
+      onLongClick = onLongClick,
+    )
+
+    else -> Modifier
+  }
   Row(
     modifier = modifier
       .background(color = colorsPrimary, shape = RoundedCornerShape(20.dp))
       .clip(shape = RoundedCornerShape(20.dp))
-      .clickable(
-        enabled = enabled,
-        onClick = if (onClick != null && enabled) {
-          onClick
-        } else {
-          {}
-        },
-      )
+      .then(interactionModifier)
       .padding(horizontal = 16.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    if (loading != null) {
-      Crossfade(targetState = loading) { loading ->
-        if (loading) {
-          CircularProgress(
-            modifier = Modifier
-              .size(24.dp),
-          )
-        } else {
-          if (painter == null) {
-            HSpacer(40.dp)
-          } else {
-            Icon(
-              painter = painter,
-              contentDescription = null,
+    Box(contentAlignment = Alignment.Center) {
+      if (loading != null) {
+        Crossfade(
+          modifier = Modifier.size(40.dp),
+          targetState = loading
+        ) { loading ->
+          if (loading) {
+            CircularProgress(
               modifier = Modifier
-                .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
                 .padding(8.dp)
                 .size(32.dp),
-              tint = tint
             )
+          } else {
+            if (painter == null) {
+              HSpacer(40.dp)
+            } else {
+              Icon(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier
+                  .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+                  .padding(8.dp)
+                  .size(32.dp),
+                tint = tint
+              )
+            }
           }
         }
-      }
-    } else {
-      if (painter == null) {
-        HSpacer(40.dp)
       } else {
-        Icon(
-          painter = painter,
-          contentDescription = null,
-          modifier = Modifier
-            .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-            .padding(8.dp)
-            .size(32.dp),
-          tint = tint
-        )
+        if (painter == null) {
+          HSpacer(40.dp)
+        } else {
+          Icon(
+            painter = painter,
+            contentDescription = null,
+            modifier = Modifier
+              .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+              .padding(8.dp)
+              .size(32.dp),
+            tint = tint
+          )
+        }
       }
     }
     HSpacer(12.dp)
