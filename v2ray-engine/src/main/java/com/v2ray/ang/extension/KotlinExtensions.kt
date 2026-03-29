@@ -12,9 +12,6 @@ import java.io.Serializable
 import java.net.URI
 import java.util.Locale
 
-private const val TRAFFIC_UNIT_STEP_BYTES = 1000L
-private const val TRAFFIC_UNIT_RATIO = 1024.0
-
 fun Long.toSpeedString(): String = toTrafficString() + "/s"
 
 private const val TRAFFIC_UNIT_STEP = 1024.0

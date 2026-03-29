@@ -19,15 +19,18 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
-import com.v2ray.ang.handler.KeyValueStorage
-import com.v2ray.ang.handler.NotificationManager
-import com.v2ray.ang.handler.SettingsManager
-import com.v2ray.ang.handler.V2rayConfigManager
-import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.error.AppError
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.NotificationManager
+import com.v2ray.ang.runtime.SettingsManager
+import com.v2ray.ang.runtime.V2rayConfigManager
+import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.MessageUtil
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.util.LocaleContextWrapper
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CancellationException
+import java.io.IOException
 import java.lang.ref.SoftReference
 
 class V2RayVpnService : VpnService(), ServiceControl {
@@ -83,21 +86,22 @@ class V2RayVpnService : VpnService(), ServiceControl {
         stopAllService()
     }
 
-//    override fun onLowMemory() {
-//        stopV2Ray()
-//        super.onLowMemory()
-//    }
-
     override fun onDestroy() {
         super.onDestroy()
         NotificationManager.cancelNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Second start while VPN is up: re-running setup closes the live TUN, then startCoreLoop
-        // bails out because the core is still marked running — end result: VPN dies. Skip duplicate work.
+        // Second startForegroundService while VPN is up (e.g. new profile): KeyValueStorage already
+        // points at the new server, but re-running setup without stopping core first breaks TUN/core.
+        // Tear down core + TUN in-process, then rebuild — same safe order as a full stop, without stopSelf.
         if (mInterface != null && V2RayServiceManager.isRunning()) {
-            Log.i(AppConfig.TAG, "VPN already running; ignoring duplicate onStartCommand")
+            Log.i(AppConfig.TAG, "VPN already running; switching profile (in-process teardown + setup)")
+            teardownTunnelAndCoreInProcess()
+            if (!setupVpnService()) {
+                return START_STICKY
+            }
+            startService()
             return START_STICKY
         }
         if (V2RayServiceManager.isRunning() && mInterface == null) {
@@ -165,14 +169,24 @@ class V2RayVpnService : VpnService(), ServiceControl {
             stopSelf()
             return false
         }
-        val configResult = V2rayConfigManager.getV2rayConfig(this, guid)
-        if (!configResult.status) {
-            Log.e(AppConfig.TAG, "VPN configuration invalid before TUN; not establishing interface")
+        try {
+            V2rayConfigManager.getV2rayConfig(this, guid)
+        } catch (cancel: CancellationException) {
+            throw cancel
+        } catch (appError: AppError) {
+            Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", appError)
             MessageUtil.sendMsg2UI(
                 this,
                 AppConfig.MSG_STATE_START_FAILURE,
-                getString(R.string.vpn_core_config_build_failed),
+                appError.userReadable,
             )
+            stopSelf()
+            return false
+        } catch (runtime: RuntimeException) {
+            Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", runtime)
+            val payload = runtime.message?.trim()?.takeIf { it.isNotEmpty() }
+                ?: getString(R.string.vpn_core_config_build_failed)
+            MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, payload)
             stopSelf()
             return false
         }
@@ -364,6 +378,25 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
 
         tun2SocksService?.startTun2Socks()
+    }
+
+    private fun teardownTunnelAndCoreInProcess() {
+        isRunning = false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                connectivity.unregisterNetworkCallback(defaultNetworkCallback)
+            } catch (ignored: RuntimeException) {
+            }
+        }
+        tun2SocksService?.stopTun2Socks()
+        tun2SocksService = null
+        V2RayServiceManager.stopCoreLoop()
+        try {
+            mInterface?.close()
+        } catch (e: IOException) {
+            Log.e(AppConfig.TAG, "Failed to close VPN interface during profile switch", e)
+        }
+        mInterface = null
     }
 
     private fun stopAllService(isForced: Boolean = true) {

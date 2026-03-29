@@ -3,8 +3,8 @@ package com.v2ray.ang.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.v2ray.ang.handler.KeyValueStorage
-import com.v2ray.ang.handler.V2RayServiceManager
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.V2RayServiceManager
 
 class BootReceiver : BroadcastReceiver() {
   /**

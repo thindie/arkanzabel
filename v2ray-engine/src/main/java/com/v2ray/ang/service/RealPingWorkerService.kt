@@ -1,10 +1,12 @@
 package com.v2ray.ang.service
 
 import android.content.Context
+import android.util.Log
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.SettingsManager
-import com.v2ray.ang.handler.V2RayNativeManager
-import com.v2ray.ang.handler.V2rayConfigManager
+import com.v2ray.ang.error.AppError
+import com.v2ray.ang.runtime.SettingsManager
+import com.v2ray.ang.runtime.V2RayNativeManager
+import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.util.MessageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -40,11 +42,19 @@ class RealPingWorkerService(
         runningCount.incrementAndGet()
         try {
           val result = startRealPing(guid)
-          MessageUtil.sendMsg2UI(context, AppConfig.MSG_MEASURE_CONFIG_SUCCESS, Pair(guid, result))
+          MessageUtil.sendMsg2UI(
+            ctx = context,
+            what = AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
+            content = guid to result
+          )
         } finally {
           val count = totalCount.decrementAndGet()
           val left = runningCount.decrementAndGet()
-          MessageUtil.sendMsg2UI(context, AppConfig.MSG_MEASURE_CONFIG_NOTIFY, "$left / $count")
+          MessageUtil.sendMsg2UI(
+            ctx = context,
+            what = AppConfig.MSG_MEASURE_CONFIG_NOTIFY,
+            content = "$left / $count"
+          )
         }
       }
     }
@@ -68,21 +78,27 @@ class RealPingWorkerService(
   private fun close() {
     try {
       dispatcher.close()
-    } catch (_: Throwable) {
+    } catch (_: RuntimeException) {
       // ignore
     }
   }
 
   private fun startRealPing(guid: String): Long {
-    val retFailure = -1L
-    val configResult = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
-    if (!configResult.status) {
-      return retFailure
+    return try {
+      val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
+      V2RayNativeManager.measureOutboundDelay(
+        built.json,
+        SettingsManager.getDelayTestUrl()
+      )
+    } catch (cancel: CancellationException) {
+      throw cancel
+    } catch (appError: AppError) {
+      Log.w(AppConfig.TAG, "Speedtest config failed for $guid: ${appError.userReadable}", appError)
+      -1L
+    } catch (runtime: RuntimeException) {
+      Log.w(AppConfig.TAG, "Speedtest config failed for $guid", runtime)
+      -1L
     }
-    return V2RayNativeManager.measureOutboundDelay(
-      configResult.content,
-      SettingsManager.getDelayTestUrl()
-    )
   }
 }
 

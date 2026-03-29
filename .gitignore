@@ -16,3 +16,5 @@
 local.properties
 # Ephemeral agent/plan drafts
 /docs/tmp
+# Kotlin/IDE tooling (e.g. errors-*.log)
+.kotlin/

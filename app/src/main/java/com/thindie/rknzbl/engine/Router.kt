@@ -13,6 +13,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -94,9 +96,10 @@ object RouteFactory {
   fun <C : Command, S : State> create(
     initialState: S,
     execute: suspend (c: C, s: S) -> S,
+    stateSink: (ScreenScope<S, C>) -> Unit = {},
     errorMapper: (e: Throwable) -> ScreenScopeError = { _ ->
       ScreenScopeError(
-        message = "somenthing wrong",
+        message = "Что-то пошло не так. Попробуйте ещё раз.",
         actions = mapOf(),
       )
     },
@@ -115,12 +118,13 @@ object RouteFactory {
       @Stable
       var screenScope: ScreenScope<S, C>? = object : ScreenScope<S, C> {
 
-        private var scope: CoroutineScope? =
+        override var scope: CoroutineScope? =
           CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
+          private set
 
-        private val _state = mutableStateOf(initialState)
-        override val state: androidx.compose.runtime.State<S>
-          get() = _state
+        private val _state = MutableStateFlow(initialState)
+        override val state: StateFlow<S>
+          get() = _state.asStateFlow()
 
         private val _processing = mutableStateOf<C?>(null)
         override val processing: androidx.compose.runtime.State<C?>
@@ -130,7 +134,16 @@ object RouteFactory {
         override val error: androidx.compose.runtime.State<ScreenScopeError?>
           get() = _error
 
+        init {
+          stateSink.invoke(this)
+        }
+
+        override fun update(s: S) {
+          _state.update { s }
+        }
+
         override fun send(command: C) {
+          println("Received command: $command")
           scope?.launch {
             when (command) {
               ServiceCommand.Dispose -> {

@@ -1,9 +1,9 @@
 package com.v2ray.ang.dto
 
 data class AssetUrlItem(
-    var remarks: String = "",
-    var url: String = "",
+    val remarks: String,
+    val url: String,
     val addedTime: Long = System.currentTimeMillis(),
-    var lastUpdated: Long = -1,
-    var locked: Boolean? = false,
+    val lastUpdated: Long = -1,
+    val locked: Boolean = false,
 )

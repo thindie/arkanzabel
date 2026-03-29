@@ -1,13 +1,13 @@
 package com.v2ray.ang.dto
 
 data class RulesetItem(
-    var remarks: String? = "",
-    var ip: List<String>? = null,
-    var domain: List<String>? = null,
-    var outboundTag: String = "",
-    var port: String? = null,
-    var network: String? = null,
-    var protocol: List<String>? = null,
-    var enabled: Boolean = true,
-    var locked: Boolean? = false,
+    val remarks: String,
+    val ip: List<String>? = null,
+    val domain: List<String>? = null,
+    val outboundTag: String,
+    val port: String? = null,
+    val network: String? = null,
+    val protocol: List<String>? = null,
+    val enabled: Boolean = true,
+    val locked: Boolean = false,
 )

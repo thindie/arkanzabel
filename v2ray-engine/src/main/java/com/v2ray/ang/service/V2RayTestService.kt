@@ -7,7 +7,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.MSG_MEASURE_CONFIG
 import com.v2ray.ang.AppConfig.MSG_MEASURE_CONFIG_CANCEL
 import com.v2ray.ang.extension.serializable
-import com.v2ray.ang.handler.V2RayNativeManager
+import com.v2ray.ang.runtime.V2RayNativeManager
 import com.v2ray.ang.util.MessageUtil
 import java.util.Collections
 

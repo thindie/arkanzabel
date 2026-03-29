@@ -12,8 +12,8 @@ import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.WorkState
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.KeyValueStorage
-import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.SettingsManager
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +26,7 @@ class Application : Application() {
       if (intent?.action != AppConfig.BROADCAST_ACTION_ACTIVITY) return
       when (intent.getIntExtra("key", -1)) {
         AppConfig.MSG_STATE_START_FAILURE -> {
-          val fallback = context?.getString(R.string.vpn_core_failure_unspecified)
-            ?: FALLBACK_VPN_FAILURE_MESSAGE
+          val fallback = this@Application.getString(R.string.vpn_core_failure_unspecified)
           val broadcastString = readBroadcastString(intent, "content")
           val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
           vpnRuntimeState.value = WorkState.Error(message = errorMessage)
@@ -87,5 +86,3 @@ class Application : Application() {
       @Suppress("DEPRECATION") intent.getSerializableExtra(key) as? String
     }
 }
-
-private const val FALLBACK_VPN_FAILURE_MESSAGE = "VPN core start failure."

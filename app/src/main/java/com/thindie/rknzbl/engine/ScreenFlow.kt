@@ -8,16 +8,19 @@ abstract class ScreenFlow<R : Route, RESULT>(private val router: Router) {
   private val ids = MutableStateFlow(listOf<Route.Id>())
 
   private var finish: RESULT? = null
+  private val finishActions = mutableListOf<(RESULT) -> Unit>()
 
   fun finish(r: RESULT) {
     if (ids.value.isEmpty()) {
       router.pop()
-      finish = r
     } else {
       router.removeAll(ids.value.toSet())
       router.pop()
-      finish = r
     }
+    finish = r
+    val actions = finishActions.toList()
+    finishActions.clear()
+    actions.forEach { it.invoke(r) }
   }
 
   fun go(route: R) {
@@ -48,7 +51,11 @@ abstract class ScreenFlow<R : Route, RESULT>(private val router: Router) {
   fun onFinishBuilder(action: (RESULT) -> Unit): ScreenFlow<R, RESULT> {
     val result = this.finish
     this.finish = null
-    result?.let { action(it) }
+    if (result != null) {
+      action(result)
+    } else {
+      finishActions += action
+    }
     return this
   }
 }

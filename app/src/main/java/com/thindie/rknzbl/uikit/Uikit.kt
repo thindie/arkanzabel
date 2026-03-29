@@ -9,7 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,9 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.thindie.rknzbl.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.engine.Command
@@ -62,12 +64,12 @@ fun Button(
 ) {
   val contentColor by animateColorAsState(
     if (enabled) AppTheme.colors.buttonContentPrimary
-    else AppTheme.colors.buttonContentPrimary.copy(alpha = ContentAlpha.disabled)
+    else AppTheme.colors.contentSecondary
   )
 
   val backgroundColor by animateColorAsState(
     if (enabled) AppTheme.colors.accentPrimary
-    else AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.disabled)
+    else AppTheme.colors.backgroundSecondary
   )
   Box(
     modifier = modifier
@@ -152,7 +154,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
     ) {
       error.actions[ScreenScopeError.Actions.Common.DismissMain]?.let { cmd ->
         Button(
-          text = "Dismiss",
+          text = stringResource(R.string.btn_close),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
@@ -203,6 +205,7 @@ fun SentenceRow(
   enabled: Boolean = true,
   loading: Boolean?,
   onClick: (() -> Unit)? = null,
+  onLongClick: (() -> Unit)? = null,
 ) {
   val colorsPrimary = if (enabled) AppTheme.colors.backgroundPrimary else {
     AppTheme.colors.backgroundPrimary.copy(alpha = ContentAlpha.disabled)
@@ -215,57 +218,71 @@ fun SentenceRow(
   val colorsSecondary = if (enabled) AppTheme.colors.backgroundSecondary else {
     AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.disabled)
   }
+  val interactionModifier = when {
+    !enabled -> Modifier
+    onLongClick != null && onClick != null -> Modifier.combinedClickable(
+      onClick = onClick,
+      onLongClick = onLongClick,
+    )
+
+    onClick != null -> Modifier.clickable(onClick = onClick)
+    onLongClick != null -> Modifier.combinedClickable(
+      onClick = { },
+      onLongClick = onLongClick,
+    )
+
+    else -> Modifier
+  }
   Row(
     modifier = modifier
       .background(color = colorsPrimary, shape = RoundedCornerShape(20.dp))
       .clip(shape = RoundedCornerShape(20.dp))
-      .clickable(
-        enabled = enabled,
-        onClick = if (onClick != null && enabled) {
-          onClick
-        } else {
-          {}
-        },
-      )
+      .then(interactionModifier)
       .padding(horizontal = 16.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    if (loading != null) {
-      Crossfade(targetState = loading) { loading ->
-        if (loading) {
-          CircularProgress(
-            modifier = Modifier
-              .size(24.dp),
-          )
-        } else {
-          if (painter == null) {
-            HSpacer(40.dp)
-          } else {
-            Icon(
-              painter = painter,
-              contentDescription = null,
+    Box(contentAlignment = Alignment.Center) {
+      if (loading != null) {
+        Crossfade(
+          modifier = Modifier.size(40.dp),
+          targetState = loading
+        ) { loading ->
+          if (loading) {
+            CircularProgress(
               modifier = Modifier
-                .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
                 .padding(8.dp)
                 .size(32.dp),
-              tint = tint
             )
+          } else {
+            if (painter == null) {
+              HSpacer(40.dp)
+            } else {
+              Icon(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier
+                  .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+                  .padding(8.dp)
+                  .size(32.dp),
+                tint = tint
+              )
+            }
           }
         }
-      }
-    } else {
-      if (painter == null) {
-        HSpacer(40.dp)
       } else {
-        Icon(
-          painter = painter,
-          contentDescription = null,
-          modifier = Modifier
-            .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-            .padding(8.dp)
-            .size(32.dp),
-          tint = tint
-        )
+        if (painter == null) {
+          HSpacer(40.dp)
+        } else {
+          Icon(
+            painter = painter,
+            contentDescription = null,
+            modifier = Modifier
+              .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+              .padding(8.dp)
+              .size(32.dp),
+            tint = tint
+          )
+        }
       }
     }
     HSpacer(12.dp)
@@ -303,22 +320,29 @@ fun CircularProgress(modifier: Modifier = Modifier) {
   )
 }
 
+
+@Immutable
+data class Action(
+  val listener: () -> Unit,
+  val icon: Int,
+)
+
 @Composable
 fun TopAppBar(
   title: String? = null,
   description: String? = null,
-  onBack: (() -> Unit)? = null,
-  onClose: (() -> Unit)? = null,
+  primary: Action? = null,
+  secondary: Action? = null,
 ) {
   Row(
     modifier = Modifier.fillMaxWidth(),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    if (onBack != null) {
-      IconButton(onClick = onBack) {
+    if (primary != null) {
+      IconButton(onClick = primary.listener) {
         Icon(
-          painter = painterResource(com.thindie.rknzbl.R.drawable.ic_arrow_back_24),
+          painter = painterResource(primary.icon),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )
@@ -347,10 +371,10 @@ fun TopAppBar(
         color = AppTheme.colors.contentSecondary,
       )
     }
-    if (onClose != null) {
-      IconButton(onClick = onClose) {
+    if (secondary != null) {
+      IconButton(onClick = secondary.listener) {
         Icon(
-          painter = painterResource(com.thindie.rknzbl.R.drawable.ic_close_24),
+          painter = painterResource(secondary.icon),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )

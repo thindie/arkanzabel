@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 /**
  * JSON from different IP / geo HTTP APIs (keys differ by provider).
- * [com.v2ray.ang.handler.SpeedtestManager.getRemoteIPInfo] picks the first non-blank candidate in a fixed order.
+ * [com.v2ray.ang.runtime.SpeedtestManager.getRemoteIPInfo] picks the first non-blank candidate in a fixed order.
  */
 data class IPAPIInfo(
     val ip: String? = null,
