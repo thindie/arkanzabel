@@ -99,7 +99,7 @@ object RouteFactory {
     stateSink: (ScreenScope<S, C>) -> Unit = {},
     errorMapper: (e: Throwable) -> ScreenScopeError = { _ ->
       ScreenScopeError(
-        message = "somenthing wrong",
+        message = "Что-то пошло не так. Попробуйте ещё раз.",
         actions = mapOf(),
       )
     },

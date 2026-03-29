@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.thindie.rknzbl.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.engine.Command
@@ -152,7 +154,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
     ) {
       error.actions[ScreenScopeError.Actions.Common.DismissMain]?.let { cmd ->
         Button(
-          text = "Dismiss",
+          text = stringResource(R.string.btn_close),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
