@@ -54,4 +54,9 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   debugImplementation(libs.androidx.compose.ui.tooling)
+
+  implementation(libs.ktor.client.core)
+  implementation(libs.ktor.client.cio)
+  implementation(libs.ktor.client.auth)
+  implementation(libs.androidx.work.runtime.ktx)
 }
