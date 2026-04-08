@@ -63,9 +63,20 @@
     <string name="source_black_ss_title">Чёрные списки Shadowsocks+All</string>
     <string name="source_black_vless_title">Чёрные списки VLESS</string>
     <string name="source_white_cidr_title">Белые списки / CIDR</string>
+    <string name="source_stored">Сохраненные профили</string>
+    <string name="source_stored_add">Сохранить профиль?</string>
     <string name="source_subtitle_all_configs">Все конфиги</string>
     <string name="source_subtitle_top150_phone">150 лучших для телефона</string>
     <string name="source_subtitle_top150_phone_1">150 лучших для телефона (1)</string>
     <string name="source_subtitle_top150_phone_2">150 лучших для телефона (2)</string>
     <string name="source_subtitle_ru_services">Конфиги VK, YA, CDN, Beeline</string>
+    <string name="source_subtitle_stored">Проверенные</string>
+
+    <string name="webdav_error_unauthorized">Неверный логин или пароль WebDAV.</string>
+    <string name="webdav_error_forbidden">Доступ к этой папке запрещён.</string>
+    <string name="webdav_error_not_found">Путь на сервере не найден (404).</string>
+    <string name="webdav_error_not_found_url">Путь не найден (404):\n%1$s</string>
+    <string name="webdav_error_conflict">Операция отклонена сервером (конфликт).</string>
+    <string name="webdav_error_invalid_response">Сервер вернул неожиданный ответ WebDAV.</string>
+    <string name="webdav_error_upload_open">Не удалось открыть выбранный файл.</string>
 </resources>
