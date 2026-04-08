@@ -166,7 +166,9 @@ object RouteFactory {
                 dispose()
                 disposeCommand.tryEmit(command)
               }
-
+              ServiceCommand.DismissError -> {
+                _error.value = null
+              }
               else -> {
                 if (_error.value == null) {
                   try {

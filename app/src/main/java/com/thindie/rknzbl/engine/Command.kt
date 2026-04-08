@@ -15,6 +15,7 @@ interface State : Serializable
 
 sealed interface ServiceCommand : Command {
   data object Dispose : ServiceCommand
+  data object DismissError : ServiceCommand
   fun interface Prioritized : ServiceCommand {
     fun execute()
   }
