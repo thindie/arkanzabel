@@ -61,81 +61,84 @@ fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
             primary = primary,
             secondary = secondary
           )
-
-          var showEvent by remember { mutableStateOf<ServiceCommand.UiEvent?>(null) }
-          LaunchedEffect(screenScope) {
-            event
-              .collect {
-                showEvent = it
-              }
-          }
-
-          if (showEvent != null) {
-            when (showEvent) {
-              is ServiceCommand.UiEvent.Decision -> {
-                Dialog(
-                  onDismiss = {
-                    showEvent = null
-                  },
-                  content = {
-                    (showEvent as ServiceCommand.UiEvent.Decision).content.invoke()
-                  },
-                  primary = (showEvent as ServiceCommand.UiEvent.Decision).primaryAction.let {
-                    it.copy(
-                      listener = {
-                        it.listener()
-                        showEvent = null
-                      }
-                    )
-                  },
-                  secondary = (showEvent as ServiceCommand.UiEvent.Decision).secondaryAction?.let {
-                    it.copy(
-                      listener = {
-                        it.listener()
-                        showEvent = null
-                      }
-                    )
-                  }
-                )
-              }
-
-              is ServiceCommand.UiEvent.Snack -> {
-                LaunchedEffect(showEvent) {
-                  delay(2000)
-                  showEvent = null
-                }
-                AnimatedVisibility(
-                  modifier = Modifier
-                    .clickable(
-                      onClick = {
-                        (showEvent as ServiceCommand.UiEvent.Snack).action.listener.invoke()
-                      },
-                      indication = null,
-                      interactionSource = null
-                    )
-                    .fillMaxWidth()
-                    .padding(top = 56.dp)
-                    .padding(all = 16.dp)
-                    .background(AppTheme.colors.accentPrimary, shape = RoundedCornerShape(16.dp))
-                    .padding(all = 16.dp),
-                  visible = showEvent is ServiceCommand.UiEvent.Snack
-                ) {
-                  Row(
-                    modifier = Modifier.fillMaxWidth()
-                  ) {
-                    Text(
-                      text = stringResource((showEvent as ServiceCommand.UiEvent.Snack).action.resRef),
-                      style = AppTheme.typography.bodyMedium,
-                      color = AppTheme.colors.onAccentPrimary,
-                    )
-                  }
-                }
-              }
-
-              null -> error("Must not be reached")
-            }
-          }
           content(screenScope)
+        }
+        var showEvent by remember { mutableStateOf<ServiceCommand.UiEvent?>(null) }
+        LaunchedEffect(screenScope) {
+          event
+            .collect {
+              showEvent = it
+            }
+        }
+        if (showEvent != null) {
+          when (showEvent) {
+            is ServiceCommand.UiEvent.Decision -> {
+              Dialog(
+                onDismiss = {
+                  showEvent = null
+                },
+                content = {
+                  (showEvent as ServiceCommand.UiEvent.Decision).content.invoke()
+                },
+                primary = (showEvent as ServiceCommand.UiEvent.Decision).primaryAction.let {
+                  it.copy(
+                    listener = {
+                      it.listener()
+                      showEvent = null
+                    }
+                  )
+                },
+                secondary = (showEvent as ServiceCommand.UiEvent.Decision).secondaryAction?.let {
+                  it.copy(
+                    listener = {
+                      it.listener()
+                      showEvent = null
+                    }
+                  )
+                }
+              )
+            }
+
+            is ServiceCommand.UiEvent.Snack, is ServiceCommand.UiEvent.SnackText -> {
+              LaunchedEffect(showEvent) {
+                delay(2000)
+                showEvent = null
+              }
+              AnimatedVisibility(
+                modifier = Modifier
+                  .align(Alignment.TopCenter)
+                  .clickable(
+                    onClick = {
+                      (showEvent as? ServiceCommand.UiEvent.Snack)?.action?.listener?.invoke()
+                    },
+                    indication = null,
+                    interactionSource = null
+                  )
+                  .fillMaxWidth()
+                  .padding(top = 56.dp)
+                  .padding(all = 16.dp)
+                  .background(AppTheme.colors.accentPrimary, shape = RoundedCornerShape(16.dp))
+                  .padding(all = 16.dp),
+                visible = showEvent is ServiceCommand.UiEvent.Snack || showEvent is ServiceCommand.UiEvent.SnackText
+              ) {
+                Row(
+                  modifier = Modifier.fillMaxWidth()
+                ) {
+                  val ref = (showEvent as? ServiceCommand.UiEvent.Snack)?.action?.resRef
+                  val text = if (ref != null) stringResource(ref) else {
+                    (showEvent as ServiceCommand.UiEvent.SnackText).text
+                  }
+                  Text(
+                    text = text,
+                    style = AppTheme.typography.bodyMedium,
+                    color = AppTheme.colors.onAccentPrimary,
+                  )
+                }
+              }
+            }
+
+            null -> error("Must not be reached")
+          }
         }
         if (this@AppScreen.processing.value != null) {
           Box(

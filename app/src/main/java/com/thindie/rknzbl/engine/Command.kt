@@ -35,6 +35,11 @@ sealed interface ServiceCommand : Command {
     ) : UiEvent
 
     @Immutable
+    data class SnackText(
+      val text: String,
+    ) : UiEvent
+
+    @Immutable
     data class Content(val content: @Composable () -> Unit)
   }
 }

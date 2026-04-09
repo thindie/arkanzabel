@@ -131,14 +131,14 @@ object AppTypography {
     fontSize = 40.sp,
     lineHeight = 36.sp,
     letterSpacing = 1.26.sp,
-    fontWeight = FontWeight.W400,
+    fontWeight = FontWeight.ExtraBold,
   )
 
   val headlineMedium = TextStyle(
     fontSize = 32.sp,
     lineHeight = 28.sp,
     letterSpacing = 1.24.sp,
-    fontWeight = FontWeight.W400,
+    fontWeight = FontWeight.Bold,
   )
 
   val headlineSmall = TextStyle(

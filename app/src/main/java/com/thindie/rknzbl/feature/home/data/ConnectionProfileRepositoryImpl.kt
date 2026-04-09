@@ -57,6 +57,15 @@ class ConnectionProfileRepositoryImpl(
     val currentBody = readInternal(client, url)
     writeInternal(client, url, currentBody + SEPARATOR + profileJson)
   }
+
+  override suspend fun delete(profile: ConnectionProfile) {
+    val profileJson = JsonUtil.toJson(profile)
+    val client = httpClient
+    val currentBody = readInternal(client, url)
+    val filteredBody = currentBody.replace(oldValue = profileJson, "")
+    val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
+    writeInternal(client, url, fallbackBody)
+  }
 }
 
 private fun parseRemote(trimmedBody: String): List<String> {

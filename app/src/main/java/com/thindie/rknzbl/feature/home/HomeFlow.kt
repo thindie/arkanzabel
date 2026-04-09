@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,13 +41,15 @@ import com.thindie.rknzbl.engine.RouteFactory
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.ScreenFlow
 import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ScreenScopeError
+import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.engine.WorkState
 import com.thindie.rknzbl.engine.stateSink
 import com.thindie.rknzbl.engine.sub
 import com.thindie.rknzbl.engine.transition
+import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
+import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
@@ -56,6 +59,7 @@ import com.thindie.rknzbl.uikit.HSpacer
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.ThemeSwitcher
+import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.surface
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -69,12 +73,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 
 class HomeFlow(
   private val router: Router,
   private val appContext: Context,
+  private val repository: ConnectionProfileRepository,
 ) : ScreenFlow<Route, Unit>(router) {
 
   private val sourceChanges = MutableSharedFlow<SelectSourceFlow.Result>(
@@ -83,7 +90,7 @@ class HomeFlow(
   )
 
   override fun start() {
-    router.push(main())
+    router.push(select())
   }
 
   fun startSelectSourceFlow() {
@@ -92,11 +99,37 @@ class HomeFlow(
       .start()
   }
 
+  fun startStoredProfilesFlow() {
+    FavoriteProfilesFlow(
+      router = router,
+      repository = repository,
+      appContext = appContext
+    )
+      .onFinishBuilder { go(main()) }
+      .start()
+  }
+
   fun stateSink(screenScope: ScreenScope<State, HomeCommand>) {
     screenScope.stateSink {
       sub(sourceChanges)
         .transition(
-          action = { _, _, _ -> send(HomeCommand.Refresh) }
+          action = { _, _, source ->
+            when (source) {
+              SelectSourceFlow.Result.FullBlackShadowSocks,
+              SelectSourceFlow.Result.FullBlackVless,
+              SelectSourceFlow.Result.MobileBlackVless,
+              SelectSourceFlow.Result.NotSelected,
+              SelectSourceFlow.Result.WhiteListAll,
+              SelectSourceFlow.Result.WhiteListMobile,
+              SelectSourceFlow.Result.WhiteListMobileV2,
+              SelectSourceFlow.Result.WhiteListRussian,
+                -> send(HomeCommand.Refresh)
+
+              SelectSourceFlow.Result.StoredProfiles -> {
+                startStoredProfilesFlow()
+              }
+            }
+          }
         ) { s, source ->
           val newState =
             s.copy(
@@ -106,30 +139,46 @@ class HomeFlow(
           newState
         }
 
-      sub((appContext as Application).vpnRuntimeState)
-        .transition(
-          { _, _, vpnState ->
-            when (vpnState) {
-              is WorkState.Error -> send(HomeCommand.Dismissed)
-              WorkState.Idle -> Unit
-              WorkState.Running -> send(HomeCommand.TestLatency)
+      screenScope.stateSink {
+        sub(
+          (appContext as Application).vpnRuntimeState.map { state ->
+            when (state) {
+              is WorkState.Error -> state to null
+              WorkState.Idle -> state to null
+              WorkState.Running -> {
+                val port = screenScope.state.value.selected?.serverPort
+                if (port != null) {
+                  state to SpeedtestManager.testConnection(
+                    appContext,
+                    SettingsManager.getHttpPort()
+                  )
+                } else state to null
+              }
+            }
+          }).transition({ _, _, (vpnState, latency) ->
+          when (vpnState) {
+            is WorkState.Error -> send(HomeCommand.Dismissed)
+            WorkState.Idle -> Unit
+            WorkState.Running -> {
+              if (latency != null) {
+                sendEvent(ServiceCommand.UiEvent.SnackText(latency.second))
+              }
             }
           }
-        ) { s, vpnState ->
+        }) { s, (vpnState, _) ->
           s.copy(
             serviceBeingStarted = when (vpnState) {
               is WorkState.Error -> null
               WorkState.Idle -> true
               WorkState.Running -> null
-            }
-              .takeIf { s.serviceBeingStarted != null },
-            established = when (vpnState) {
+            }.takeIf { s.serviceBeingStarted != null }, established = when (vpnState) {
               is WorkState.Error -> false
               WorkState.Idle -> false
               WorkState.Running -> true
             }
           )
         }
+      }
     }
   }
 
@@ -141,20 +190,68 @@ class HomeFlow(
     execute = ::exec,
     stateSink = ::stateSink,
     routeContent = { HomeScreen() },
-    errorMapper = {
-      ScreenScopeError(
-        message = appContext.getString(R.string.error_unexpected),
-        actions = emptyMap(),
-      )
-    },
     initialCommand = RouteFactory.InitialCommand {
       HomeCommand.Start as HomeCommand
     },
   )
 
+  private object HomeSelect : com.thindie.rknzbl.engine.State
+  private sealed interface HomeSelectCommand : Command {
+    data object Home : HomeSelectCommand
+    data object New : HomeSelectCommand
+  }
+
+  fun select() = RouteFactory.create(
+    initialState = HomeSelect,
+    execute = { c: HomeSelectCommand, s: HomeSelect ->
+      when (c) {
+        HomeSelectCommand.Home -> {
+          startStoredProfilesFlow()
+        }
+
+        HomeSelectCommand.New -> {
+          go(main())
+        }
+      }
+      s
+    },
+    routeContent = {
+      AppScreen {
+        Column(modifier = Modifier
+          .fillMaxSize()
+          .padding(16.dp)) {
+          Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+              text = stringResource(R.string.app_name),
+              style = AppTheme.typography.headlineLarge,
+              color = AppTheme.colors.contentPrimary
+            )
+          }
+          VSpacer(24.dp)
+          SentenceRow(
+            modifier = Modifier.fillMaxWidth(),
+            title = "Новые профили",
+            subtitle = "скачать",
+            painter = painterResource(R.drawable.ic_internet_24),
+            onClick = { send(HomeSelectCommand.New) },
+            loading = false,
+          )
+          VSpacer(16.dp)
+          SentenceRow(
+            modifier = Modifier.fillMaxWidth(),
+            title = "Сохраненные профили",
+            subtitle = "возможно, еще работают",
+            painter = painterResource(R.drawable.ic_home_24),
+            onClick = { send(HomeSelectCommand.Home) },
+            loading = false,
+          )
+        }
+      }
+    }
+  )
+
   @Immutable
   data class State(
-    val hint: String? = null,
     val sourceName: String,
     val sourceUrl: String,
     val links: List<ConnectionProfile> = emptyList(),
@@ -170,7 +267,7 @@ class HomeFlow(
     data object Stop : HomeCommand
     data object Choose : HomeCommand
     data class Select(val profile: ConnectionProfile) : HomeCommand
-    data object TestLatency : HomeCommand
+    data class Save(val profile: ConnectionProfile) : HomeCommand
 
     data object Dismissed : HomeCommand
   }
@@ -187,7 +284,10 @@ class HomeFlow(
         withContext(Dispatchers.Default) {
           V2RayServiceManager.startVService(
             context = appContext,
-            guid = KeyValueStorage.encodeServerConfig("", command.profile)
+            guid = KeyValueStorage.encodeServerConfig(
+              guid = UUID.randomUUID().toString(),
+              config = command.profile
+            )
           )
           homeState.copy(selected = command.profile, serviceBeingStarted = true)
         }
@@ -231,18 +331,17 @@ class HomeFlow(
       }
 
       HomeCommand.Dismissed -> {
-        homeState.copy(selected = null, established = false, hint = null)
-      }
-
-      HomeCommand.TestLatency -> {
-        val (_, message) =
-          SpeedtestManager.testConnection(appContext, SettingsManager.getHttpPort())
-
-        homeState.copy(hint = message)
+        homeState.copy(selected = null, established = false)
       }
 
       HomeCommand.Choose -> {
         startSelectSourceFlow()
+        homeState
+      }
+
+      is HomeCommand.Save -> {
+        val guid = KeyValueStorage.getSelectServer()
+        repository.save(requireNotNull(guid))
         homeState
       }
     }
@@ -262,9 +361,8 @@ fun ScreenScope<HomeFlow.State, HomeFlow.HomeCommand>.HomeScreen() {
   }
   val screenState by state.collectAsState()
   AppScreen(
-    subtitle = screenState.hint,
     secondary = Action(
-      icon = R.drawable.ic_shield_extra_24,
+      resRef = R.drawable.ic_theme_24,
       listener = {
         themeSwitcher.set(
           if (isDark) ThemeSwitcher.Choice.Light else ThemeSwitcher.Choice.Dark
@@ -286,6 +384,19 @@ fun ScreenScope<HomeFlow.State, HomeFlow.HomeCommand>.HomeScreen() {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
       ) {
+        stickyHeader {
+          Row(
+            modifier = Modifier
+              .fillMaxWidth()
+              .background(AppTheme.colors.backgroundPrimary)
+          ) {
+            Text(
+              text = "Скачанные профили",
+              style = AppTheme.typography.headlineLarge,
+              color = AppTheme.colors.contentPrimary
+            )
+          }
+        }
         item {
           SentenceRow(
             painter = painterResource(R.drawable.ic_chevron_right_24),
@@ -310,15 +421,32 @@ fun ScreenScope<HomeFlow.State, HomeFlow.HomeCommand>.HomeScreen() {
                   color = if (screenState.selected == item && screenState.established) {
                     AppTheme.colors.accentPrimary
                   } else AppTheme.colors.backgroundSecondary
-                ),
-                shape = RoundedCornerShape(20.dp)
+                ), shape = RoundedCornerShape(20.dp)
               )
               .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_internet_24),
-            title = item.remarks,
+            title = item.remarks + item.serverPort.orEmpty(),
             subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
             loading = false,
             onClick = { send(HomeFlow.HomeCommand.Select(item)) },
+            onLongClick = if (st.selected == item) {
+              {
+                sendEvent(
+                  ServiceCommand.UiEvent.Decision(
+                    content = {
+                      Text(
+                        text = stringResource(R.string.source_stored_add),
+                        style = AppTheme.typography.bodyMedium
+                      )
+                    },
+                    primaryAction = Action(
+                      resRef = R.string.source_select_done,
+                      listener = { send(HomeFlow.HomeCommand.Save(item)) }
+                    )
+                  )
+                )
+              }
+            } else null
           )
         }
       }

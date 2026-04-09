@@ -6,4 +6,6 @@ interface ConnectionProfileRepository {
   suspend fun read(): List<ConnectionProfile>
 
   suspend fun save(guid: String)
+
+  suspend fun delete(profile: ConnectionProfile)
 }
