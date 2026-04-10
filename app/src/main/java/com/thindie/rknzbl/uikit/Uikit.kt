@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -324,7 +325,7 @@ fun CircularProgress(modifier: Modifier = Modifier) {
 @Immutable
 data class Action(
   val listener: () -> Unit,
-  val icon: Int,
+  val resRef: Int,
 )
 
 @Composable
@@ -342,7 +343,7 @@ fun TopAppBar(
     if (primary != null) {
       IconButton(onClick = primary.listener) {
         Icon(
-          painter = painterResource(primary.icon),
+          painter = painterResource(primary.resRef),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )
@@ -374,7 +375,7 @@ fun TopAppBar(
     if (secondary != null) {
       IconButton(onClick = secondary.listener) {
         Icon(
-          painter = painterResource(secondary.icon),
+          painter = painterResource(secondary.resRef),
           contentDescription = null,
           tint = AppTheme.colors.accentPrimary,
         )
@@ -382,3 +383,39 @@ fun TopAppBar(
     } else HSpacer(12.dp)
   }
 }
+
+
+@Composable
+fun Dialog(
+  content: @Composable () -> Unit,
+  onDismiss: () -> Unit,
+  primary: Action,
+  secondary: Action? = null,
+) {
+  AlertDialog(
+    containerColor = AppTheme.colors.backgroundPrimary,
+    onDismissRequest = onDismiss,
+    text = {
+      content()
+    },
+    confirmButton = {
+      Button(
+        text = stringResource(primary.resRef),
+        onClick = {
+          primary.listener.invoke()
+        },
+      )
+    },
+    dismissButton = if (secondary != null) {
+      {
+        Button(
+          text = stringResource(secondary.resRef),
+          onClick = {
+            secondary.listener
+          },
+        )
+      }
+    } else null,
+  )
+}
+

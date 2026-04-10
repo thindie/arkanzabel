@@ -219,6 +219,9 @@ object V2RayServiceManager {
             MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_START_SUCCESS, "")
             //NotificationManager.showNotification(currentConfig)
             NotificationManager.startSpeedNotification(currentConfig)
+            KeyValueStorage.setVpnSessionActive(true)
+            KeyValueStorage.setVpnSessionStartEpochMs(System.currentTimeMillis())
+            KeyValueStorage.setVpnSessionGuid(guid)
 
         } catch (runtime: RuntimeException) {
             Log.e(AppConfig.TAG, "Failed to startup service", runtime)
@@ -263,6 +266,7 @@ object V2RayServiceManager {
         }
 
         currentConfig = null
+        KeyValueStorage.clearVpnSessionRuntime()
 
         MessageUtil.sendMsg2UI(service, AppConfig.MSG_STATE_STOP_SUCCESS, "")
         NotificationManager.cancelNotification()

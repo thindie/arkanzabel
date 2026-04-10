@@ -86,6 +86,11 @@ class SelectSourceFlow(
     data object NotSelected : Result {
       override val sourceUrl: String? = null
     }
+
+    data object StoredProfiles: Result {
+      override val sourceUrl: String?
+        get() = null
+    }
   }
 
   fun main() = RouteFactory.create(
@@ -107,6 +112,7 @@ class SelectSourceFlow(
       Result.FullBlackShadowSocks,
       Result.FullBlackVless,
       Result.MobileBlackVless,
+      Result.StoredProfiles
     ),
 
     val whiteSection: List<Result> = listOf(
@@ -148,7 +154,7 @@ fun ScreenScope<SelectSourceFlow.ScreenState, SelectSourceFlow.ScreenCommand>.Ho
   val context = LocalContext.current
   AppScreen(
     primary = Action(
-      icon = R.drawable.ic_arrow_back_24,
+      resRef = R.drawable.ic_arrow_back_24,
       listener = {
         send(SelectSourceFlow.ScreenCommand.Back)
       }
@@ -255,4 +261,8 @@ internal fun SelectSourceFlow.Result.resolveLabels(context: Context): Pair<Strin
     SelectSourceFlow.Result.WhiteListRussian ->
       context.getString(R.string.source_white_cidr_title) to
         context.getString(R.string.source_subtitle_ru_services)
+
+    SelectSourceFlow.Result.StoredProfiles -> context.getString(
+      R.string.source_stored
+    ) to context.getString(R.string.source_subtitle_stored)
   }

@@ -13,7 +13,9 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -134,6 +136,20 @@ object RouteFactory {
         override val error: androidx.compose.runtime.State<ScreenScopeError?>
           get() = _error
 
+        @Stable
+        private val _event = MutableSharedFlow<ServiceCommand.UiEvent>(
+          replay = 0,
+          extraBufferCapacity = 1,
+          onBufferOverflow = BufferOverflow.DROP_OLDEST
+        )
+
+        override val event: SharedFlow<ServiceCommand.UiEvent>
+          get() = _event.asSharedFlow()
+
+        override fun sendEvent(event: ServiceCommand.UiEvent) {
+          _event.send(event)
+        }
+
         init {
           stateSink.invoke(this)
         }
@@ -150,7 +166,9 @@ object RouteFactory {
                 dispose()
                 disposeCommand.tryEmit(command)
               }
-
+              ServiceCommand.DismissError -> {
+                _error.value = null
+              }
               else -> {
                 if (_error.value == null) {
                   try {

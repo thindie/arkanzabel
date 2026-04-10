@@ -340,4 +340,44 @@ object KeyValueStorage {
     val json = mainStorage.decodeString(KEY_WEBDAV_CONFIG) ?: return null
     return JsonUtil.fromJson(json, WebDavConfig::class.java)
   }
+
+  fun setVpnSessionActive(active: Boolean) {
+    mainStorage.encode(AppConfig.PREF_VPN_SESSION_ACTIVE, active)
+  }
+
+  fun isVpnSessionActive(): Boolean =
+    mainStorage.decodeBool(AppConfig.PREF_VPN_SESSION_ACTIVE, false)
+
+  fun setVpnSessionStartEpochMs(epochMs: Long) {
+    mainStorage.encode(AppConfig.PREF_VPN_SESSION_START_EPOCH_MS, epochMs)
+  }
+
+  fun getVpnSessionStartEpochMs(): Long =
+    mainStorage.decodeLong(AppConfig.PREF_VPN_SESSION_START_EPOCH_MS, 0L)
+
+  fun setVpnSessionGuid(guid: String?) {
+    if (guid.isNullOrBlank()) {
+      mainStorage.remove(AppConfig.PREF_VPN_SESSION_GUID)
+    } else {
+      mainStorage.encode(AppConfig.PREF_VPN_SESSION_GUID, guid)
+    }
+  }
+
+  fun getVpnSessionGuid(): String? {
+    val g = mainStorage.decodeString(AppConfig.PREF_VPN_SESSION_GUID)
+    return g?.takeIf { it.isNotBlank() }
+  }
+
+  fun clearVpnSessionRuntime() {
+    setVpnSessionActive(false)
+    setVpnSessionStartEpochMs(0L)
+    setVpnSessionGuid(null)
+  }
+
+  fun setVpnSessionLastAutoSaveStartMs(epochMs: Long) {
+    mainStorage.encode(AppConfig.PREF_VPN_SESSION_LAST_AUTO_SAVE_START_MS, epochMs)
+  }
+
+  fun getVpnSessionLastAutoSaveStartMs(): Long =
+    mainStorage.decodeLong(AppConfig.PREF_VPN_SESSION_LAST_AUTO_SAVE_START_MS, 0L)
 }

@@ -7,8 +7,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.work.Configuration
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.application.di.ApplicationScope
+import com.thindie.rknzbl.application.work.ActiveProfileAutoSaveWorker
+import com.thindie.rknzbl.application.work.RknzblWorkerFactory
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.WorkState
 import com.v2ray.ang.AppConfig
@@ -17,8 +24,18 @@ import com.v2ray.ang.runtime.SettingsManager
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.concurrent.TimeUnit
 
-class Application : Application() {
+class Application : Application(), Configuration.Provider {
+
+  val applicationScope = ApplicationScope()
+
+  override val workManagerConfiguration: Configuration
+    get() =
+      Configuration.Builder()
+        .setWorkerFactory(RknzblWorkerFactory(applicationScope))
+        .build()
+
   private var router: Router? = null
 
   private val vpnActivityReceiver = object : BroadcastReceiver() {
@@ -65,6 +82,21 @@ class Application : Application() {
       vpnActivityReceiver,
       IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY),
       ContextCompat.RECEIVER_NOT_EXPORTED,
+    )
+    enqueueActiveProfileAutoSaveWork()
+  }
+
+  private fun enqueueActiveProfileAutoSaveWork() {
+    val request =
+      PeriodicWorkRequestBuilder<ActiveProfileAutoSaveWorker>(
+        repeatInterval = 15,
+        repeatIntervalTimeUnit = TimeUnit.MINUTES
+      )
+        .build()
+    WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+      AppConfig.ACTIVE_PROFILE_AUTO_SAVE_WORK_NAME,
+      ExistingPeriodicWorkPolicy.KEEP,
+      request,
     )
   }
 

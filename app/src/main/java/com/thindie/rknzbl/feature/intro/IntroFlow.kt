@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.Route
 import com.thindie.rknzbl.engine.RouteFactory
@@ -63,7 +64,8 @@ class IntroFlow(
 ) : ScreenFlow<Route, IntroFlow.Result>(router) {
 
   fun startAppFlow() {
-    HomeFlow(router = router, appContext = appContext)
+    val repository = (appContext as Application).applicationScope.data.repository
+    HomeFlow(router = router, appContext = appContext, repository = repository)
       .onFinishBuilder { finish(Result.Success) }
       .start()
   }

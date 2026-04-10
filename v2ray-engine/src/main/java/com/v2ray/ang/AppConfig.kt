@@ -59,6 +59,20 @@ object AppConfig {
     const val SUBSCRIPTION_AUTO_UPDATE_INTERVAL = "pref_auto_update_interval"
     const val SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL = "1440" // Default is 24 hours
     const val SUBSCRIPTION_UPDATE_TASK_NAME = "subscription_updater"
+
+    /** Auto-save active VPN session profile to remote after N hours (settings string, default [AUTO_SAVE_ACTIVE_PROFILE_DEFAULT_HOURS]). */
+    const val PREF_AUTO_SAVE_ACTIVE_PROFILE_HOURS = "pref_auto_save_active_profile_hours"
+    const val AUTO_SAVE_ACTIVE_PROFILE_DEFAULT_HOURS = "1"
+    /** "1" / "0" in settings MMKV; default applied in [com.v2ray.ang.runtime.SettingsManager.ensureDefaultSettings]. */
+    const val PREF_AUTO_SAVE_ACTIVE_PROFILE_ENABLED = "pref_auto_save_active_profile_enabled"
+
+    /** Main MMKV: VPN core session (daemon ↔ app process). */
+    const val PREF_VPN_SESSION_ACTIVE = "pref_vpn_session_active"
+    const val PREF_VPN_SESSION_START_EPOCH_MS = "pref_vpn_session_start_epoch_ms"
+    const val PREF_VPN_SESSION_GUID = "pref_vpn_session_guid"
+    const val PREF_VPN_SESSION_LAST_AUTO_SAVE_START_MS = "pref_vpn_session_last_auto_save_start_ms"
+
+    const val ACTIVE_PROFILE_AUTO_SAVE_WORK_NAME = "active_profile_auto_save"
     const val PREF_SPEED_ENABLED = "pref_speed_enabled"
     const val PREF_CONFIRM_REMOVE = "pref_confirm_remove"
     const val PREF_START_SCAN_IMMEDIATE = "pref_start_scan_immediate"
