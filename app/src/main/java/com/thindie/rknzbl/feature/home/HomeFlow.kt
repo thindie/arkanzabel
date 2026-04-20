@@ -49,6 +49,7 @@ import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
+import com.thindie.rknzbl.feature.perapp.PerAppProxyFlow
 import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
@@ -107,6 +108,10 @@ class HomeFlow(
     )
       .onFinishBuilder { go(main()) }
       .start()
+  }
+
+  fun startPerAppProxyFlow() {
+    PerAppProxyFlow(router = router, appContext = appContext).start()
   }
 
   fun stateSink(screenScope: ScreenScope<State, HomeCommand>) {
@@ -199,6 +204,7 @@ class HomeFlow(
   private sealed interface HomeSelectCommand : Command {
     data object Home : HomeSelectCommand
     data object New : HomeSelectCommand
+    data object Settings : HomeSelectCommand
   }
 
   fun select() = RouteFactory.create(
@@ -211,6 +217,10 @@ class HomeFlow(
 
         HomeSelectCommand.New -> {
           go(main())
+        }
+
+        HomeSelectCommand.Settings -> {
+          startPerAppProxyFlow()
         }
       }
       s
@@ -227,6 +237,11 @@ class HomeFlow(
               color = AppTheme.colors.contentPrimary
             )
           }
+          Text(
+            text = "свободу попугаям!",
+            style = AppTheme.typography.labelMedium,
+            color = AppTheme.colors.contentSecondary
+          )
           VSpacer(24.dp)
           SentenceRow(
             modifier = Modifier.fillMaxWidth(),
@@ -243,6 +258,15 @@ class HomeFlow(
             subtitle = "возможно, еще работают",
             painter = painterResource(R.drawable.ic_home_24),
             onClick = { send(HomeSelectCommand.Home) },
+            loading = false,
+          )
+          VSpacer(16.dp)
+          SentenceRow(
+            modifier = Modifier.fillMaxWidth(),
+            title = "Режимы VPN",
+            subtitle = "фильтр приожений",
+            painter = painterResource(R.drawable.ic_settings_24),
+            onClick = { send(HomeSelectCommand.Settings) },
             loading = false,
           )
         }
@@ -270,6 +294,7 @@ class HomeFlow(
     data class Save(val profile: ConnectionProfile) : HomeCommand
 
     data object Dismissed : HomeCommand
+    data object OpenPerAppProxy : HomeCommand
   }
 
   private suspend fun exec(command: HomeCommand, homeState: State): State {
@@ -344,6 +369,11 @@ class HomeFlow(
         repository.save(requireNotNull(guid))
         homeState
       }
+
+      HomeCommand.OpenPerAppProxy -> {
+        startPerAppProxyFlow()
+        homeState
+      }
     }
   }
 }
@@ -407,6 +437,15 @@ fun ScreenScope<HomeFlow.State, HomeFlow.HomeCommand>.HomeScreen() {
             },
             subtitle = st.sourceName,
             onClick = { send(HomeFlow.HomeCommand.Choose) },
+            loading = false
+          )
+        }
+        item {
+          SentenceRow(
+            painter = painterResource(R.drawable.ic_information_24),
+            title = stringResource(R.string.per_app_proxy_row_title),
+            subtitle = stringResource(R.string.per_app_proxy_row_subtitle),
+            onClick = { send(HomeFlow.HomeCommand.OpenPerAppProxy) },
             loading = false
           )
         }

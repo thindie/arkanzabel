@@ -205,6 +205,7 @@ fun SentenceRow(
   subtitle: String?,
   enabled: Boolean = true,
   loading: Boolean?,
+  tintIcon: Boolean = true,
   onClick: (() -> Unit)? = null,
   onLongClick: (() -> Unit)? = null,
 ) {
@@ -215,6 +216,7 @@ fun SentenceRow(
   val tint = if (enabled) AppTheme.colors.accentPrimary else {
     AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.disabled)
   }
+  val iconTint = if (tintIcon) tint else Color.Unspecified
 
   val colorsSecondary = if (enabled) AppTheme.colors.backgroundSecondary else {
     AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.disabled)
@@ -265,7 +267,7 @@ fun SentenceRow(
                   .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
                   .padding(8.dp)
                   .size(32.dp),
-                tint = tint
+                tint = iconTint
               )
             }
           }
@@ -281,7 +283,7 @@ fun SentenceRow(
               .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
               .padding(8.dp)
               .size(32.dp),
-            tint = tint
+            tint = iconTint
           )
         }
       }
