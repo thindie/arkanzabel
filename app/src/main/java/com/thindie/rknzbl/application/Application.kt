@@ -71,6 +71,7 @@ class Application : Application(), Configuration.Provider {
 
   override fun onCreate() {
     super.onCreate()
+    AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
     SettingsManager.ensureDefaultSettings()

@@ -169,7 +169,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
         val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
           .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
         Button(
-          text = action?.title.orEmpty(),
+          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
@@ -183,7 +183,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
         val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
           .first { it is ScreenScopeError.Actions.Common.ButtonMain }
         Button(
-          text = action?.title.orEmpty(),
+          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()

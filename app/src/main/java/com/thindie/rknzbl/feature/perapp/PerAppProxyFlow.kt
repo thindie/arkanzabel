@@ -68,7 +68,6 @@ class PerAppProxyFlow(
     router.push(main())
   }
 
-  @Immutable
   enum class ProxyScopeMode {
     All,
     Selected,
@@ -417,6 +416,7 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
 @Composable
 private fun ScreenScope<PerAppProxyFlow.SearchState, PerAppProxyFlow.PerAppSearchCommand>.PerAppSearchScreen() {
   val screenState by state.collectAsState()
+  val snackText = stringResource(R.string.per_app_proxy_added_snack)
   val focusRequester = remember { FocusRequester() }
   AppScreen(
     modifier = Modifier.imePadding(),
@@ -501,7 +501,11 @@ private fun ScreenScope<PerAppProxyFlow.SearchState, PerAppProxyFlow.PerAppSearc
           loading = false,
           onClick = {
             send(PerAppProxyFlow.PerAppSearchCommand.AddPackage(row.packageName))
-            sendEvent(ServiceCommand.UiEvent.SnackText(text = "Добавлено в список: ${row.appName}"))
+            sendEvent(
+              ServiceCommand.UiEvent.SnackText(
+                snackText + " ${row.appName}"
+              ),
+            )
           },
         )
       }

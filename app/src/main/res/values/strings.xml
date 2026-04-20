@@ -58,6 +58,14 @@
     <string name="home_stop_service">Остановить сервис</string>
     <string name="home_pick_profile_first">Сначала выберите профиль</string>
     <string name="home_starting_vpn">Запуск VPN…</string>
+    <string name="home_select_tagline">свободу попугаям!</string>
+    <string name="home_select_new_profiles_title">Новые профили</string>
+    <string name="home_select_new_profiles_subtitle">скачать</string>
+    <string name="home_select_stored_title">Сохраненные профили</string>
+    <string name="home_select_stored_subtitle">возможно, еще работают</string>
+    <string name="home_select_vpn_modes_title">Режимы VPN</string>
+    <string name="home_select_vpn_modes_subtitle">фильтр приложений</string>
+    <string name="home_downloaded_profiles_header">Скачанные профили</string>
 
     <string name="per_app_proxy_title">Режим VPN</string>
     <string name="per_app_proxy_row_title">Прокси по приложениям</string>
@@ -76,6 +84,10 @@
     <string name="per_app_proxy_open_search_subtitle">добавить в список</string>
     <string name="per_app_proxy_search_screen_title">Поиск приложения</string>
     <string name="per_app_proxy_search_screen_subtitle">пиши транслитом, e.g sber</string>
+    <string name="per_app_proxy_added_snack">Добавлено в список:</string>
+
+    <string name="error_action_ok">Ок</string>
+    <string name="error_action_retry">Попробовать снова</string>
 
     <string name="source_select_done">Готово</string>
     <string name="source_black_ss_title">Чёрные списки Shadowsocks+All</string>
@@ -84,6 +96,7 @@
     <string name="source_stored">Сохраненные профили</string>
     <string name="source_stored_add">Сохранить профиль?</string>
     <string name="source_stored_delete">Удалить профиль?</string>
+    <string name="source_stored_delete_subtitle">профиль пропадет у всех!</string>
     <string name="source_subtitle_all_configs">Все конфиги</string>
     <string name="source_subtitle_top150_phone">150 лучших для телефона</string>
     <string name="source_subtitle_top150_phone_1">150 лучших для телефона (1)</string>

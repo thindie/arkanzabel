@@ -238,15 +238,15 @@ class HomeFlow(
             )
           }
           Text(
-            text = "свободу попугаям!",
+            text = stringResource(R.string.home_select_tagline),
             style = AppTheme.typography.labelMedium,
             color = AppTheme.colors.contentSecondary
           )
           VSpacer(24.dp)
           SentenceRow(
             modifier = Modifier.fillMaxWidth(),
-            title = "Новые профили",
-            subtitle = "скачать",
+            title = stringResource(R.string.home_select_new_profiles_title),
+            subtitle = stringResource(R.string.home_select_new_profiles_subtitle),
             painter = painterResource(R.drawable.ic_internet_24),
             onClick = { send(HomeSelectCommand.New) },
             loading = false,
@@ -254,8 +254,8 @@ class HomeFlow(
           VSpacer(16.dp)
           SentenceRow(
             modifier = Modifier.fillMaxWidth(),
-            title = "Сохраненные профили",
-            subtitle = "возможно, еще работают",
+            title = stringResource(R.string.home_select_stored_title),
+            subtitle = stringResource(R.string.home_select_stored_subtitle),
             painter = painterResource(R.drawable.ic_home_24),
             onClick = { send(HomeSelectCommand.Home) },
             loading = false,
@@ -263,8 +263,8 @@ class HomeFlow(
           VSpacer(16.dp)
           SentenceRow(
             modifier = Modifier.fillMaxWidth(),
-            title = "Режимы VPN",
-            subtitle = "фильтр приожений",
+            title = stringResource(R.string.home_select_vpn_modes_title),
+            subtitle = stringResource(R.string.home_select_vpn_modes_subtitle),
             painter = painterResource(R.drawable.ic_settings_24),
             onClick = { send(HomeSelectCommand.Settings) },
             loading = false,
@@ -421,7 +421,7 @@ fun ScreenScope<HomeFlow.State, HomeFlow.HomeCommand>.HomeScreen() {
               .background(AppTheme.colors.backgroundPrimary)
           ) {
             Text(
-              text = "Скачанные профили",
+              text = stringResource(R.string.home_downloaded_profiles_header),
               style = AppTheme.typography.headlineLarge,
               color = AppTheme.colors.contentPrimary
             )

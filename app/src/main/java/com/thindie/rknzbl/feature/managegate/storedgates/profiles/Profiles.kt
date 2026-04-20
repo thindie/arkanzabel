@@ -219,9 +219,10 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
               .background(AppTheme.colors.backgroundPrimary)
           ) {
             Text(
-              text = "Сохраненные профили",
+              text = stringResource(R.string.source_stored),
               style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary            )
+              color = AppTheme.colors.contentPrimary,
+            )
           }
         }
         items(
@@ -251,7 +252,7 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
                       Aware(
                         painter = painterResource(R.drawable.ic_close_16),
                         title = stringResource(R.string.source_stored_delete),
-                        subtitle = "профиль пропадет у всех!"
+                        subtitle = stringResource(R.string.source_stored_delete_subtitle)
                       )
                     }, primaryAction = Action(
                       resRef = R.string.source_select_done,

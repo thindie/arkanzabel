@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.thindie.rknzbl.application.AppStrings
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -101,7 +102,7 @@ object RouteFactory {
     stateSink: (ScreenScope<S, C>) -> Unit = {},
     errorMapper: (e: Throwable) -> ScreenScopeError = { _ ->
       ScreenScopeError(
-        message = "Что-то пошло не так. Попробуйте ещё раз.",
+        message = AppStrings.errorUnexpected,
         actions = mapOf(),
       )
     },
