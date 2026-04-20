@@ -1,6 +1,8 @@
 package com.thindie.rknzbl.engine
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
+import com.thindie.rknzbl.R
 
 @Immutable
 data class ScreenScopeError(
@@ -8,22 +10,21 @@ data class ScreenScopeError(
   val actions: Map<Actions, Command>,
 ) {
   sealed interface Actions {
-    interface Common : Actions {
-      val title: String?
+    sealed interface Common : Actions {
+      @get:StringRes
+      val titleRes: Int?
 
       data object ButtonMain : Common {
-        override val title: String = "Ок"
+        override val titleRes: Int = R.string.error_action_ok
       }
 
       data object ButtonSecondaryRetry : Common {
-        override val title: String = "Попробовать снова"
+        override val titleRes: Int = R.string.error_action_retry
       }
 
       data object DismissMain : Common {
-        override val title: String?
-          get() = null
+        override val titleRes: Int? = null
       }
     }
   }
 }
-

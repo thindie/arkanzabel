@@ -169,7 +169,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
         val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
           .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
         Button(
-          text = action?.title.orEmpty(),
+          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
@@ -183,7 +183,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
         val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
           .first { it is ScreenScopeError.Actions.Common.ButtonMain }
         Button(
-          text = action?.title.orEmpty(),
+          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
@@ -205,6 +205,7 @@ fun SentenceRow(
   subtitle: String?,
   enabled: Boolean = true,
   loading: Boolean?,
+  tintIcon: Boolean = true,
   onClick: (() -> Unit)? = null,
   onLongClick: (() -> Unit)? = null,
 ) {
@@ -215,6 +216,7 @@ fun SentenceRow(
   val tint = if (enabled) AppTheme.colors.accentPrimary else {
     AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.disabled)
   }
+  val iconTint = if (tintIcon) tint else Color.Unspecified
 
   val colorsSecondary = if (enabled) AppTheme.colors.backgroundSecondary else {
     AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.disabled)
@@ -265,7 +267,7 @@ fun SentenceRow(
                   .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
                   .padding(8.dp)
                   .size(32.dp),
-                tint = tint
+                tint = iconTint
               )
             }
           }
@@ -281,7 +283,7 @@ fun SentenceRow(
               .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
               .padding(8.dp)
               .size(32.dp),
-            tint = tint
+            tint = iconTint
           )
         }
       }
