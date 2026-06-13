@@ -27,8 +27,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -37,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.application.AppStrings
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.RouteFactory
@@ -62,6 +61,8 @@ import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.UUID
@@ -72,6 +73,7 @@ fun FavoriteProfilesFlow.profiles() = RouteFactory.create(
   stateSink = ::stateSink,
   routeContent = { RouteScreen() },
   errorMapper = ::errorMapper,
+  id = "profiles",
   initialCommand = RouteFactory.InitialCommand {
     ScreenCommand.RequestStoredProfiles
   })
@@ -80,6 +82,9 @@ fun FavoriteProfilesFlow.profiles() = RouteFactory.create(
 data class ScreenState(
   val profiles: List<ConnectionProfile> = emptyList(),
   val selected: ConnectionProfile? = null,
+  val selectedTestConnectionMessage: String? = null,
+  val selectedProfiles: Set<ConnectionProfile> = emptySet(),
+  val selectionMode: Boolean = false,
   val established: Boolean = false,
   val serviceBeingStarted: Boolean? = null,
 ) : com.thindie.rknzbl.engine.State
@@ -89,15 +94,23 @@ sealed interface ScreenCommand : Command {
   data object RequestStoredProfiles : ScreenCommand
 
   data object StopService : ScreenCommand
-  data object ServiceError : ScreenCommand
-  data class Select(val profile: ConnectionProfile) : ScreenCommand
+
+  // Selection mode commands
+  data class EnterMultiDeletionMode(val profile: ConnectionProfile) : ScreenCommand
+  data class TogglePendingDelete(val profile: ConnectionProfile) : ScreenCommand
+  data object ExitMultiDeletionMode : ScreenCommand
+
+  data class Activate(val profile: ConnectionProfile) : ScreenCommand
   data class Delete(val profile: ConnectionProfile) : ScreenCommand
+  data object BatchDelete : ScreenCommand
 }
 
 private fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
   screenScope.stateSink {
     sub(
-      (appContext as Application).vpnRuntimeState.map { state ->
+      (appContext as Application)
+        .vpnRuntimeState
+        .map { state ->
         when (state) {
           is WorkState.Error -> state to null
           WorkState.Idle -> state to null
@@ -108,27 +121,34 @@ private fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState,
             } else state to null
           }
         }
-      }).transition({ _, _, (vpnState, latency) ->
+      }
+    )
+      .transition(
+        { _, _, (vpnState, speedTestMessage) ->
       when (vpnState) {
-        is WorkState.Error -> send(ScreenCommand.ServiceError)
+        is WorkState.Error -> {
+          sendEvent(ServiceCommand.UiEvent.SnackText(AppStrings.errorUnexpected))
+        }
         WorkState.Idle -> Unit
         WorkState.Running -> {
-          if (latency != null) {
-            sendEvent(ServiceCommand.UiEvent.SnackText(latency.second))
+          if (speedTestMessage != null) {
+            sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
           }
         }
       }
-    }) { s, (vpnState, _) ->
+    }) { s, (vpnState, speedTestMessage) ->
       s.copy(
         serviceBeingStarted = when (vpnState) {
           is WorkState.Error -> null
           WorkState.Idle -> true
           WorkState.Running -> null
-        }.takeIf { s.serviceBeingStarted != null }, established = when (vpnState) {
+        }.takeIf { s.serviceBeingStarted != null },
+        established = when (vpnState) {
           is WorkState.Error -> false
           WorkState.Idle -> false
           WorkState.Running -> true
-        }
+        },
+        selectedTestConnectionMessage = speedTestMessage,
       )
     }
   }
@@ -156,39 +176,85 @@ private suspend fun FavoriteProfilesFlow.exec(c: ScreenCommand, s: ScreenState):
           val profiles = repository.read()
           s.copy(
             profiles = profiles,
-            selected = null
+            selectedProfiles = emptySet(),
+            selectionMode = false,
           )
         } else {
-          val selected = s.selected
+          val selected = s.selectedProfiles
           repository.delete(c.profile)
           val profiles = repository.read()
           s.copy(
-            selected = selected,
+            selectedProfiles = selected,
             profiles = profiles
           )
         }
       }
     }
 
-    is ScreenCommand.Select -> {
-      withContext(Dispatchers.Default) {
-        V2RayServiceManager.startVService(
-          context = appContext, guid = KeyValueStorage.encodeServerConfig(
-            guid = UUID.randomUUID().toString(), config = c.profile
+    is ScreenCommand.Activate -> {
+        withContext(Dispatchers.Default) {
+          if (s.selected != null) {
+            V2RayServiceManager.stopVService(appContext)
+            (appContext as Application).vpnRuntimeState.filterIsInstance<WorkState.Idle>().first()
+          }
+          V2RayServiceManager.startVService(
+            context = appContext,
+            guid = KeyValueStorage.encodeServerConfig(
+              guid = UUID.randomUUID().toString(), config = c.profile
+            ),
           )
-        )
-        s.copy(selected = c.profile, serviceBeingStarted = true)
+          s.copy(selected = c.profile, serviceBeingStarted = true)
+        }
       }
-    }
 
     ScreenCommand.StopService -> {
       V2RayServiceManager.stopVService(appContext)
       s
     }
 
-    ScreenCommand.ServiceError -> {
-      s.copy(selected = null, established = false)
+    is ScreenCommand.EnterMultiDeletionMode -> {
+        s.copy(selectionMode = true)
     }
+
+    is ScreenCommand.TogglePendingDelete -> {
+      if (c.profile in s.selectedProfiles) {
+        s.copy(
+          selectedProfiles = s.selectedProfiles - c.profile,
+        )
+      } else {
+        s.copy(
+          selectedProfiles = s.selectedProfiles + c.profile,
+        )
+      }
+    }
+
+    is ScreenCommand.ExitMultiDeletionMode -> {
+      s.copy(selectedProfiles = emptySet(), selectionMode = false)
+    }
+
+      ScreenCommand.BatchDelete -> {
+        withContext(Dispatchers.IO) {
+          var hasActiveProfile = false
+          for (profile in s.selectedProfiles) {
+              repository.delete(profile)
+              if (s.selected?.subscriptionId == profile.subscriptionId) {
+                hasActiveProfile = true
+            }
+          }
+
+
+          if (hasActiveProfile) {
+            V2RayServiceManager.stopVService(appContext)
+          }
+          val profiles = repository.read()
+          s.copy(
+            profiles = profiles,
+            selectedProfiles = emptySet(),
+            selectionMode = false,
+            selected = if (hasActiveProfile) null else s.selected
+          )
+        }
+      }
   }
 }
 
@@ -218,69 +284,120 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
               .fillMaxWidth()
               .background(AppTheme.colors.backgroundPrimary)
           ) {
-            Text(
-              text = stringResource(R.string.source_stored),
-              style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary,
-            )
+            Column {
+              Text(
+                text = stringResource(R.string.source_stored),
+                style = AppTheme.typography.headlineLarge,
+                color = AppTheme.colors.contentPrimary,
+              )
+              val text = if (st.selectionMode) {
+                stringResource(R.string.source_stored_delete_active)
+              } else {
+                stringResource(R.string.source_stored_delete_hint)
+              }
+                VSpacer(2.dp)
+                Text(
+                  text = text,
+                  style = AppTheme.typography.labelMedium,
+                  color = AppTheme.colors.contentSecondary,
+                )
+                VSpacer(2.dp)
+            }
           }
         }
         items(
           items = screenState.profiles,
         ) { item ->
+          val isPendingDelete = item in screenState.selectedProfiles
+          val profileRunning = screenState.selected == item && screenState.established
           SentenceRow(
             modifier = Modifier
               .border(
                 border = BorderStroke(
                   width = 1.2.dp,
-                  color = if (screenState.selected == item && screenState.established) {
+                  color = if (isPendingDelete) {
+                    AppTheme.colors.errorPrimary
+                  } else if (profileRunning) {
                     AppTheme.colors.accentPrimary
                   } else AppTheme.colors.backgroundSecondary
                 ), shape = RoundedCornerShape(20.dp)
               )
               .fillMaxWidth(),
-            painter = painterResource(R.drawable.ic_internet_24),
-            title = item.remarks + " " + item.serverPort.orEmpty(),
-            subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
-            loading = false,
-            onClick = { send(ScreenCommand.Select(item)) },
-            onLongClick = if (st.selected == item) {
-              {
-                sendEvent(
-                  ServiceCommand.UiEvent.Decision(
-                    content = {
-                      Aware(
-                        painter = painterResource(R.drawable.ic_close_16),
-                        title = stringResource(R.string.source_stored_delete),
-                        subtitle = stringResource(R.string.source_stored_delete_subtitle)
-                      )
-                    }, primaryAction = Action(
-                      resRef = R.string.source_select_done,
-                      listener = { send(ScreenCommand.Delete(item)) })
-                  )
-                )
+            painter = when {
+              isPendingDelete -> {
+                painterResource(R.drawable.ic_close_16)
               }
-            } else null)
+              profileRunning -> {
+                painterResource(R.drawable.ic_done_square_24)
+              }
+              else -> {
+                painterResource(R.drawable.ic_internet_24)
+              }
+            },
+            title = item.remarks + " " + item.serverPort.orEmpty(),
+            subtitle = when {
+              profileRunning -> if (st.selectedTestConnectionMessage == null) {
+                ""
+              } else {
+                st.selectedTestConnectionMessage
+              }
+              else -> {
+                item.flow ?: item.server ?: item.serviceName.orEmpty()
+              }
+            },
+            loading = false,
+            onClick = {
+              if (screenState.selectionMode) {
+                send(ScreenCommand.TogglePendingDelete(item))
+              } else {
+                send(ScreenCommand.Activate(item))
+              }
+            },
+            onLongClick = {
+              if (st.selectionMode) {
+                send(ScreenCommand.ExitMultiDeletionMode)
+              } else {
+                send(ScreenCommand.EnterMultiDeletionMode(item))
+              }
+            }
+          )
         }
       }
+      val selectedCount = screenState.selectedProfiles.size
       Button(
         modifier = Modifier
           .align(Alignment.BottomCenter)
           .padding(16.dp),
-        enabled = st.established || screenState.profiles.isEmpty(),
+        enabled = st.established || screenState.profiles.isEmpty() || selectedCount > 0,
         text = when {
-          this@RouteScreen.processing.value is ScreenCommand.Select -> ""
+          st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
+          this@RouteScreen.processing.value is ScreenCommand.Activate -> ""
           screenState.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
           st.established -> stringResource(R.string.home_stop_service)
           else -> stringResource(R.string.home_pick_profile_first)
         },
         onClick = {
-          if (st.established) {
-            send(ScreenCommand.StopService)
-          } else {
-
+          when {
+            selectedCount > 0 -> {
+              sendEvent(
+                ServiceCommand.UiEvent.Decision(
+                  content = {
+                    Aware(
+                      painter = painterResource(R.drawable.ic_close_16),
+                      title = stringResource(R.string.source_stored_delete),
+                      subtitle = stringResource(R.string.source_stored_delete_subtitle)
+                    )
+                  }, primaryAction = Action(
+                    resRef = R.string.source_select_done,
+                    listener = { send(ScreenCommand.BatchDelete) })
+                )
+              )
+            }
+            st.established -> send(ScreenCommand.StopService)
           }
-        })
+        },
+        loading = this@RouteScreen.processing.value is ScreenCommand.Activate
+      )
     }
   }
   if (screenState.serviceBeingStarted == true) {

@@ -90,12 +90,17 @@ object SpeedtestManager {
    * @param port The port to connect to.
    * @return A pair containing the elapsed time in milliseconds and the result message.
    */
-  suspend fun testConnection(context: Context, port: Int): Pair<Long, String> = withContext(Dispatchers.IO) {
+  suspend fun testConnection(context: Context, port: Int): String = withContext(Dispatchers.IO) {
     var result: String
-    var elapsed = -1L
+    var elapsed: Long
 
-    val conn = HttpUtil.createProxyConnection(SettingsManager.getDelayTestUrl(), port, 15000, 15000)
-      ?: return@withContext elapsed to ""
+      val conn = HttpUtil.createProxyConnection(
+      urlStr = SettingsManager.getDelayTestUrl(),
+      port = port,
+      connectTimeout = 15000,
+      readTimeout = 15000
+    )
+      ?: return@withContext ""
     try {
       val start = SystemClock.elapsedRealtime()
       val code = conn.responseCode
@@ -119,7 +124,7 @@ object SpeedtestManager {
       conn.disconnect()
     }
 
-    elapsed to result
+    result
   }
 
   suspend fun getRemoteIPInfo(): String? = withContext(Dispatchers.IO) {
