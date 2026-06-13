@@ -21,6 +21,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
@@ -31,10 +35,16 @@ class ConnectionProfileRepositoryImpl(
   private val url: String,
   private val storage: KeyValueStorage,
 ) : ConnectionProfileRepository {
-
   private val httpClient: HttpClient by lazy {
     newAuthenticatedWebdavClient(userName, password)
   }
+
+  private val autoSavedEvents =
+    MutableSharedFlow<String>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
   override suspend fun read(): List<ConnectionProfile> {
     val client = httpClient
@@ -66,6 +76,28 @@ class ConnectionProfileRepositoryImpl(
     val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
     writeInternal(client, url, fallbackBody)
   }
+
+  override fun autoSaved(): Flow<ConnectionProfile?> {
+    return autoSavedEvents
+      .map { guid ->
+        storage.decodeServerConfig(guid)
+      }
+  }
+
+  override suspend fun fetchAutoSaved() {
+    val guid = KeyValueStorage.getLastAutoSaveProfilesJson()
+    guid?.let { autoSavedEvents.tryEmit(it) }
+  }
+
+  override suspend fun saveAuto(guid: String) {
+    KeyValueStorage.setLastAutoSaveProfilesJson(guid)
+    autoSavedEvents.tryEmit(guid)
+  }
+
+  override suspend fun markAutoSavedSeen() {
+    KeyValueStorage.setLastAutoSaveProfilesJson("")
+    autoSavedEvents.tryEmit("")
+  }
 }
 
 private fun parseRemote(trimmedBody: String): List<String> {
@@ -76,7 +108,10 @@ private fun parseRemote(trimmedBody: String): List<String> {
     .filter { it.isNotEmpty() }
 }
 
-private suspend fun readInternal(client: HttpClient, url: String): String =
+private suspend fun readInternal(
+  client: HttpClient,
+  url: String,
+): String =
   withTimeoutOrNull(5_000L) {
     try {
       val response = client.get(url)
@@ -93,13 +128,18 @@ private suspend fun readInternal(client: HttpClient, url: String): String =
     }
   } ?: throw AppError.ServerError.TimeOut
 
-private suspend fun writeInternal(client: HttpClient, url: String, body: String) {
+private suspend fun writeInternal(
+  client: HttpClient,
+  url: String,
+  body: String,
+) {
   withTimeoutOrNull(5_000L) {
     try {
-      val response = client.put(url) {
-        contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
-        setBody(body)
-      }
+      val response =
+        client.put(url) {
+          contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
+          setBody(body)
+        }
       if (!response.status.isSuccess()) {
         throw webDavErrorFromStatus(response.status, url)
       }
@@ -115,7 +155,10 @@ private suspend fun writeInternal(client: HttpClient, url: String, body: String)
 
 private const val SEPARATOR = "########"
 
-private fun newAuthenticatedWebdavClient(userName: String, password: String): HttpClient =
+private fun newAuthenticatedWebdavClient(
+  userName: String,
+  password: String,
+): HttpClient =
   HttpClient(CIO) {
     engine {
       maxConnectionsCount = 32

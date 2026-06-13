@@ -66,6 +66,7 @@
     <string name="home_select_vpn_modes_title">Режимы VPN</string>
     <string name="home_select_vpn_modes_subtitle">фильтр приложений</string>
     <string name="home_downloaded_profiles_header">Скачанные профили</string>
+    <string name="home_autosaved_profile">Был сохранен автоматически</string>
 
     <string name="per_app_proxy_title">Режим VPN</string>
     <string name="per_app_proxy_row_title">Прокси по приложениям</string>

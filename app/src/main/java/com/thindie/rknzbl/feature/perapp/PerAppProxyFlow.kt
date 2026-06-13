@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.Route
@@ -46,16 +47,15 @@ import com.thindie.rknzbl.engine.RouteFactory
 import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.ScreenFlow
 import com.thindie.rknzbl.engine.ScreenScope
+import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.SentenceRow
+import com.thindie.rknzbl.uikit.surface
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.AppManagerUtil
-import androidx.core.graphics.drawable.toBitmap
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.uikit.surface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -63,7 +63,6 @@ class PerAppProxyFlow(
   private val router: Router,
   private val appContext: Context,
 ) : ScreenFlow<Route, Unit>(router) {
-
   override fun start() {
     go(main())
   }
@@ -95,18 +94,27 @@ class PerAppProxyFlow(
 
   sealed interface PerAppProxyCommand : Command {
     data object Back : PerAppProxyCommand
+
     data object LoadApps : PerAppProxyCommand
+
     data object RefreshFromStorage : PerAppProxyCommand
+
     data object SetModeAll : PerAppProxyCommand
+
     data object SetModeSelected : PerAppProxyCommand
+
     data object OpenSearch : PerAppProxyCommand
+
     data class RemovePackage(val packageName: String) : PerAppProxyCommand
   }
 
   sealed interface PerAppSearchCommand : Command {
     data object Back : PerAppSearchCommand
+
     data object LoadApps : PerAppSearchCommand
+
     data class SetSearch(val query: String) : PerAppSearchCommand
+
     data class AddPackage(val packageName: String) : PerAppSearchCommand
   }
 
@@ -123,41 +131,53 @@ class PerAppProxyFlow(
     KeyValueStorage.encodeSettings(AppConfig.PREF_PER_APP_PROXY_SET, set)
   }
 
-  fun main() = RouteFactory.create(
-    initialState = State(
-      mode = if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PER_APP_PROXY)) {
-        ProxyScopeMode.Selected
-      } else {
-        ProxyScopeMode.All
-      },
-      allApps = emptyList(),
-      selectedPackages = KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
-        ?: emptySet(),
-    ),
-    execute = ::execMain,
-    routeContent = { PerAppProxyScreen() },
-    id = "PerApp-main",
-    initialCommand = RouteFactory.InitialCommand {
-      PerAppProxyCommand.LoadApps as PerAppProxyCommand
-    },
-  )
+  fun main() =
+    RouteFactory.create(
+      initialState =
+        State(
+          mode =
+            if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PER_APP_PROXY)) {
+              ProxyScopeMode.Selected
+            } else {
+              ProxyScopeMode.All
+            },
+          allApps = emptyList(),
+          selectedPackages =
+            KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
+              ?: emptySet(),
+        ),
+      execute = ::execMain,
+      routeContent = { PerAppProxyScreen() },
+      id = "PerApp-main",
+      initialCommand =
+        RouteFactory.InitialCommand {
+          PerAppProxyCommand.LoadApps as PerAppProxyCommand
+        },
+    )
 
-  fun search() = RouteFactory.create(
-    initialState = SearchState(
-      searchQuery = "",
-      allApps = emptyList(),
-      selectedPackages = KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
-        ?: emptySet(),
-    ),
-    execute = ::execSearch,
-    routeContent = { PerAppSearchScreen() },
-    id = "Perapp-id",
-    initialCommand = RouteFactory.InitialCommand {
-      PerAppSearchCommand.LoadApps as PerAppSearchCommand
-    },
-  )
+  fun search() =
+    RouteFactory.create(
+      initialState =
+        SearchState(
+          searchQuery = "",
+          allApps = emptyList(),
+          selectedPackages =
+            KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
+              ?: emptySet(),
+        ),
+      execute = ::execSearch,
+      routeContent = { PerAppSearchScreen() },
+      id = "Perapp-id",
+      initialCommand =
+        RouteFactory.InitialCommand {
+          PerAppSearchCommand.LoadApps as PerAppSearchCommand
+        },
+    )
 
-  private suspend fun execMain(command: PerAppProxyCommand, state: State): State {
+  private suspend fun execMain(
+    command: PerAppProxyCommand,
+    state: State,
+  ): State {
     return when (command) {
       PerAppProxyCommand.Back -> {
         finish(Unit)
@@ -165,23 +185,27 @@ class PerAppProxyFlow(
       }
 
       PerAppProxyCommand.LoadApps -> {
-        val rows = withContext(Dispatchers.IO) {
-          AppManagerUtil.loadAppsForPerAppTunneling(appContext)
-            .map { AppRow(it.appName, it.packageName) }
-            .sortedBy { it.appName.lowercase() }
-        }
+        val rows =
+          withContext(Dispatchers.IO) {
+            AppManagerUtil.loadAppsForPerAppTunneling(appContext)
+              .map { AppRow(it.appName, it.packageName) }
+              .sortedBy { it.appName.lowercase() }
+          }
         state.copy(allApps = rows)
       }
 
-      PerAppProxyCommand.RefreshFromStorage -> state.copy(
-        mode = if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PER_APP_PROXY)) {
-          ProxyScopeMode.Selected
-        } else {
-          ProxyScopeMode.All
-        },
-        selectedPackages = KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
-          ?: emptySet(),
-      )
+      PerAppProxyCommand.RefreshFromStorage ->
+        state.copy(
+          mode =
+            if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PER_APP_PROXY)) {
+              ProxyScopeMode.Selected
+            } else {
+              ProxyScopeMode.All
+            },
+          selectedPackages =
+            KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET)
+              ?: emptySet(),
+        )
 
       PerAppProxyCommand.SetModeAll -> {
         persistModeAll()
@@ -206,7 +230,10 @@ class PerAppProxyFlow(
     }
   }
 
-  private suspend fun execSearch(command: PerAppSearchCommand, state: SearchState): SearchState {
+  private suspend fun execSearch(
+    command: PerAppSearchCommand,
+    state: SearchState,
+  ): SearchState {
     return when (command) {
       PerAppSearchCommand.Back -> {
         back()
@@ -214,11 +241,12 @@ class PerAppProxyFlow(
       }
 
       PerAppSearchCommand.LoadApps -> {
-        val rows = withContext(Dispatchers.IO) {
-          AppManagerUtil.loadAppsForPerAppTunneling(appContext)
-            .map { AppRow(it.appName, it.packageName) }
-            .sortedBy { it.appName.lowercase() }
-        }
+        val rows =
+          withContext(Dispatchers.IO) {
+            AppManagerUtil.loadAppsForPerAppTunneling(appContext)
+              .map { AppRow(it.appName, it.packageName) }
+              .sortedBy { it.appName.lowercase() }
+          }
         val sel = KeyValueStorage.decodeSettingsStringSet(AppConfig.PREF_PER_APP_PROXY_SET) ?: emptySet()
         state.copy(allApps = rows, selectedPackages = sel)
       }
@@ -245,54 +273,60 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
   AppScreen(
     modifier = Modifier.imePadding(),
     title = null,
-    primary = Action(
-      resRef = R.drawable.ic_arrow_back_24,
-      listener = { send(PerAppProxyFlow.PerAppProxyCommand.Back) },
-    ),
+    primary =
+      Action(
+        resRef = R.drawable.ic_arrow_back_24,
+        listener = { send(PerAppProxyFlow.PerAppProxyCommand.Back) },
+      ),
   ) {
     BackHandler { send(PerAppProxyFlow.PerAppProxyCommand.Back) }
-    val appsByPackage = remember(screenState.allApps) {
-      screenState.allApps.associateBy { it.packageName }
-    }
+    val appsByPackage =
+      remember(screenState.allApps) {
+        screenState.allApps.associateBy { it.packageName }
+      }
     LazyColumn(
       contentPadding = PaddingValues(16.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       stickyHeader {
         Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .background(AppTheme.colors.backgroundPrimary)
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .background(AppTheme.colors.backgroundPrimary),
         ) {
           Column {
             Text(
               text = stringResource(R.string.per_app_proxy_title),
               style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary
+              color = AppTheme.colors.contentPrimary,
             )
             Text(
               text = stringResource(R.string.per_app_proxy_mode_section),
               style = AppTheme.typography.labelMedium,
-              color = AppTheme.colors.contentSecondary
+              color = AppTheme.colors.contentSecondary,
             )
           }
         }
       }
       item {
         SentenceRow(
-          modifier = Modifier
-            .border(
-              border = BorderStroke(
-                width = 1.2.dp,
-                color = if (screenState.mode == PerAppProxyFlow.ProxyScopeMode.All) {
-                  AppTheme.colors.accentPrimary
-                } else {
-                  AppTheme.colors.backgroundSecondary
-                },
-              ),
-              shape = RoundedCornerShape(20.dp),
-            )
-            .fillMaxWidth(),
+          modifier =
+            Modifier
+              .border(
+                border =
+                  BorderStroke(
+                    width = 1.2.dp,
+                    color =
+                      if (screenState.mode == PerAppProxyFlow.ProxyScopeMode.All) {
+                        AppTheme.colors.accentPrimary
+                      } else {
+                        AppTheme.colors.backgroundSecondary
+                      },
+                  ),
+                shape = RoundedCornerShape(20.dp),
+              )
+              .fillMaxWidth(),
           painter = painterResource(R.drawable.ic_internet_24),
           title = stringResource(R.string.per_app_proxy_mode_all),
           subtitle = stringResource(R.string.per_app_proxy_mode_all_subtitle),
@@ -302,19 +336,22 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
       }
       item {
         SentenceRow(
-          modifier = Modifier
-            .border(
-              border = BorderStroke(
-                width = 1.2.dp,
-                color = if (screenState.mode == PerAppProxyFlow.ProxyScopeMode.Selected) {
-                  AppTheme.colors.accentPrimary
-                } else {
-                  AppTheme.colors.backgroundSecondary
-                },
-              ),
-              shape = RoundedCornerShape(20.dp),
-            )
-            .fillMaxWidth(),
+          modifier =
+            Modifier
+              .border(
+                border =
+                  BorderStroke(
+                    width = 1.2.dp,
+                    color =
+                      if (screenState.mode == PerAppProxyFlow.ProxyScopeMode.Selected) {
+                        AppTheme.colors.accentPrimary
+                      } else {
+                        AppTheme.colors.backgroundSecondary
+                      },
+                  ),
+                shape = RoundedCornerShape(20.dp),
+              )
+              .fillMaxWidth(),
           painter = painterResource(R.drawable.ic_information_24),
           title = stringResource(R.string.per_app_proxy_mode_selected),
           subtitle = stringResource(R.string.per_app_proxy_mode_selected_subtitle),
@@ -325,25 +362,27 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
       if (screenState.mode == PerAppProxyFlow.ProxyScopeMode.Selected) {
         stickyHeader {
           Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .background(AppTheme.colors.backgroundPrimary)
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
               Text(
                 text = stringResource(R.string.per_app_proxy_applied_section),
                 style = AppTheme.typography.headlineLarge,
-                color = AppTheme.colors.contentPrimary
+                color = AppTheme.colors.contentPrimary,
               )
-              val description = if (screenState.selectedPackages.isEmpty()) {
-                stringResource(R.string.per_app_proxy_none_selected)
-              } else {
-                stringResource(R.string.per_app_proxy_mode_selected_header_subtitle)
-              }
+              val description =
+                if (screenState.selectedPackages.isEmpty()) {
+                  stringResource(R.string.per_app_proxy_none_selected)
+                } else {
+                  stringResource(R.string.per_app_proxy_mode_selected_header_subtitle)
+                }
               Text(
                 text = description,
                 style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary
+                color = AppTheme.colors.contentSecondary,
               )
             }
           }
@@ -358,15 +397,17 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
           val fallbackPainter = painterResource(R.drawable.ic_internet_24)
           val appIcon = rememberAppIconPainter(pkg)
           SentenceRow(
-            modifier = Modifier
-              .border(
-                border = BorderStroke(
-                  width = 1.2.dp,
-                  color = AppTheme.colors.backgroundSecondary,
-                ),
-                shape = RoundedCornerShape(20.dp),
-              )
-              .fillMaxWidth(),
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color = AppTheme.colors.backgroundSecondary,
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
             painter = appIcon ?: fallbackPainter,
             tintIcon = appIcon == null,
             title = title,
@@ -379,35 +420,37 @@ private fun ScreenScope<PerAppProxyFlow.State, PerAppProxyFlow.PerAppProxyComman
         }
         stickyHeader {
           Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .background(AppTheme.colors.backgroundPrimary)
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
               Text(
                 text = stringResource(R.string.per_app_proxy_open_search_title),
                 style = AppTheme.typography.headlineLarge,
-                color = AppTheme.colors.contentPrimary
+                color = AppTheme.colors.contentPrimary,
               )
               Text(
                 text = stringResource(R.string.per_app_proxy_open_search_subtitle),
                 style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary
+                color = AppTheme.colors.contentSecondary,
               )
             }
           }
         }
         item {
           Box(
-            modifier = Modifier.fillMaxWidth()
-              .height(52.dp)
-              .surface(
-                shape = RoundedCornerShape(16.dp),
-                onClick = {
-                  send(PerAppProxyFlow.PerAppProxyCommand.OpenSearch)
-                },
-                backgroundColor = AppTheme.colors.backgroundSecondary
-              )
+            modifier =
+              Modifier.fillMaxWidth()
+                .height(52.dp)
+                .surface(
+                  shape = RoundedCornerShape(16.dp),
+                  onClick = {
+                    send(PerAppProxyFlow.PerAppProxyCommand.OpenSearch)
+                  },
+                  backgroundColor = AppTheme.colors.backgroundSecondary,
+                ),
           )
         }
       }
@@ -422,60 +465,65 @@ private fun ScreenScope<PerAppProxyFlow.SearchState, PerAppProxyFlow.PerAppSearc
   val focusRequester = remember { FocusRequester() }
   AppScreen(
     modifier = Modifier.imePadding(),
-    primary = Action(
-      resRef = R.drawable.ic_arrow_back_24,
-      listener = { send(PerAppProxyFlow.PerAppSearchCommand.Back) },
-    ),
+    primary =
+      Action(
+        resRef = R.drawable.ic_arrow_back_24,
+        listener = { send(PerAppProxyFlow.PerAppSearchCommand.Back) },
+      ),
   ) {
     BackHandler { send(PerAppProxyFlow.PerAppSearchCommand.Back) }
-    val filtered = remember(screenState.searchQuery, screenState.allApps) {
-      val q = screenState.searchQuery.trim().lowercase()
-      if (q.isEmpty()) {
-        emptyList()
-      } else {
-        screenState.allApps.filter { row ->
-          row.appName.lowercase().contains(q) ||
-            row.packageName.lowercase().contains(q)
+    val filtered =
+      remember(screenState.searchQuery, screenState.allApps) {
+        val q = screenState.searchQuery.trim().lowercase()
+        if (q.isEmpty()) {
+          emptyList()
+        } else {
+          screenState.allApps.filter { row ->
+            row.appName.lowercase().contains(q) ||
+              row.packageName.lowercase().contains(q)
+          }
         }
       }
-    }
     LazyColumn(
       contentPadding = PaddingValues(16.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       stickyHeader {
         Row(
-          modifier = Modifier
-            .fillMaxWidth()
-            .background(AppTheme.colors.backgroundPrimary)
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .background(AppTheme.colors.backgroundPrimary),
         ) {
           Column {
             Text(
               text = stringResource(R.string.per_app_proxy_search_screen_title),
               style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary
+              color = AppTheme.colors.contentPrimary,
             )
             Text(
               text = stringResource(R.string.per_app_proxy_search_screen_subtitle),
               style = AppTheme.typography.labelMedium,
-              color = AppTheme.colors.contentSecondary
+              color = AppTheme.colors.contentSecondary,
             )
           }
         }
       }
       item {
         BasicTextField(
-          modifier = Modifier
-            .focusRequester(focusRequester)
-            .fillMaxWidth()
-            .background(
-              AppTheme.colors.backgroundSecondary,
-              shape = RoundedCornerShape(16.dp)
-            )
-            .padding(16.dp),
-          textStyle = TextStyle(
-            color = AppTheme.colors.contentPrimary,
-          ),
+          modifier =
+            Modifier
+              .focusRequester(focusRequester)
+              .fillMaxWidth()
+              .background(
+                AppTheme.colors.backgroundSecondary,
+                shape = RoundedCornerShape(16.dp),
+              )
+              .padding(16.dp),
+          textStyle =
+            TextStyle(
+              color = AppTheme.colors.contentPrimary,
+            ),
           value = screenState.searchQuery,
           onValueChange = { send(PerAppProxyFlow.PerAppSearchCommand.SetSearch(it)) },
         )
@@ -487,15 +535,17 @@ private fun ScreenScope<PerAppProxyFlow.SearchState, PerAppProxyFlow.PerAppSearc
         val fallbackPainter = painterResource(R.drawable.ic_internet_24)
         val appIcon = rememberAppIconPainter(row.packageName)
         SentenceRow(
-          modifier = Modifier
-            .border(
-              border = BorderStroke(
-                width = 1.2.dp,
-                color = AppTheme.colors.backgroundSecondary,
-              ),
-              shape = RoundedCornerShape(20.dp),
-            )
-            .fillMaxWidth(),
+          modifier =
+            Modifier
+              .border(
+                border =
+                  BorderStroke(
+                    width = 1.2.dp,
+                    color = AppTheme.colors.backgroundSecondary,
+                  ),
+                shape = RoundedCornerShape(20.dp),
+              )
+              .fillMaxWidth(),
           painter = appIcon ?: fallbackPainter,
           tintIcon = appIcon == null,
           title = row.appName,
@@ -505,7 +555,7 @@ private fun ScreenScope<PerAppProxyFlow.SearchState, PerAppProxyFlow.PerAppSearc
             send(PerAppProxyFlow.PerAppSearchCommand.AddPackage(row.packageName))
             sendEvent(
               ServiceCommand.UiEvent.SnackText(
-                snackText + " ${row.appName}"
+                snackText + " ${row.appName}",
               ),
             )
           },

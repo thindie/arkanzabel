@@ -10,9 +10,13 @@ class HomeFlowModule(
   private val baseUrl: String,
   private val storage: KeyValueStorage,
 ) {
-  private val _repository = ConnectionProfileRepositoryImpl(
-    userName = userName, password = password, url = baseUrl, storage = storage,
-  )
+  private val _repository =
+    ConnectionProfileRepositoryImpl(
+      userName = userName,
+      password = password,
+      url = baseUrl,
+      storage = storage,
+    )
 
   val repository: ConnectionProfileRepository get() = _repository
 }

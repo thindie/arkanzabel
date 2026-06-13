@@ -9,7 +9,6 @@ import com.thindie.rknzbl.application.di.ApplicationScope
 class RknzblWorkerFactory(
   private val applicationScope: ApplicationScope,
 ) : WorkerFactory() {
-
   override fun createWorker(
     appContext: Context,
     workerClassName: String,

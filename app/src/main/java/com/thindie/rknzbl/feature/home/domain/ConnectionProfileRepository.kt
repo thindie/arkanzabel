@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.feature.home.domain
 
 import com.v2ray.ang.dto.ConnectionProfile
+import kotlinx.coroutines.flow.Flow
 
 interface ConnectionProfileRepository {
   suspend fun read(): List<ConnectionProfile>
@@ -8,4 +9,12 @@ interface ConnectionProfileRepository {
   suspend fun save(guid: String)
 
   suspend fun delete(profile: ConnectionProfile)
+
+  fun autoSaved(): Flow<ConnectionProfile?>
+
+  suspend fun saveAuto(guid: String)
+
+  suspend fun markAutoSavedSeen()
+
+  suspend fun fetchAutoSaved()
 }

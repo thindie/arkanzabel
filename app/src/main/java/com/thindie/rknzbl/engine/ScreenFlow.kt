@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 abstract class ScreenFlow<R : Route, RESULT>(private val router: Router) {
-
   private val ids = MutableStateFlow(listOf<Route.Id>())
 
   private var finish: RESULT? = null

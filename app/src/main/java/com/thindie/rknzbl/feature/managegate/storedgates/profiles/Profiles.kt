@@ -67,17 +67,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-fun FavoriteProfilesFlow.profiles() = RouteFactory.create(
-  initialState = ScreenState(),
-  execute = ::exec,
-  stateSink = ::stateSink,
-  routeContent = { RouteScreen() },
-  errorMapper = ::errorMapper,
-  id = "profiles",
-  initialCommand = RouteFactory.InitialCommand {
-    ScreenCommand.RequestStoredProfiles
-  })
-
+fun FavoriteProfilesFlow.profiles() =
+  RouteFactory.create(
+    initialState = ScreenState(),
+    execute = ::exec,
+    stateSink = ::stateSink,
+    routeContent = { RouteScreen() },
+    errorMapper = ::errorMapper,
+    id = "profiles",
+    initialCommand =
+      RouteFactory.InitialCommand {
+        ScreenCommand.RequestStoredProfiles
+      },
+  )
 
 data class ScreenState(
   val profiles: List<ConnectionProfile> = emptyList(),
@@ -91,17 +93,22 @@ data class ScreenState(
 
 sealed interface ScreenCommand : Command {
   data object BackRequested : ScreenCommand
+
   data object RequestStoredProfiles : ScreenCommand
 
   data object StopService : ScreenCommand
 
   // Selection mode commands
   data class EnterMultiDeletionMode(val profile: ConnectionProfile) : ScreenCommand
+
   data class TogglePendingDelete(val profile: ConnectionProfile) : ScreenCommand
+
   data object ExitMultiDeletionMode : ScreenCommand
 
   data class Activate(val profile: ConnectionProfile) : ScreenCommand
+
   data class Delete(val profile: ConnectionProfile) : ScreenCommand
+
   data object BatchDelete : ScreenCommand
 }
 
@@ -111,50 +118,58 @@ private fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState,
       (appContext as Application)
         .vpnRuntimeState
         .map { state ->
-        when (state) {
-          is WorkState.Error -> state to null
-          WorkState.Idle -> state to null
-          WorkState.Running -> {
-            val port = screenScope.state.value.selected?.serverPort
-            if (port != null) {
-              state to SpeedtestManager.testConnection(appContext, SettingsManager.getHttpPort())
-            } else state to null
+          when (state) {
+            is WorkState.Error -> state to null
+            WorkState.Idle -> state to null
+            WorkState.Running -> {
+              val port = screenScope.state.value.selected?.serverPort
+              if (port != null) {
+                state to SpeedtestManager.testConnection(appContext, SettingsManager.getHttpPort())
+              } else {
+                state to null
+              }
+            }
           }
-        }
-      }
+        },
     )
       .transition(
         { _, _, (vpnState, speedTestMessage) ->
-      when (vpnState) {
-        is WorkState.Error -> {
-          sendEvent(ServiceCommand.UiEvent.SnackText(AppStrings.errorUnexpected))
-        }
-        WorkState.Idle -> Unit
-        WorkState.Running -> {
-          if (speedTestMessage != null) {
-            sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
+          when (vpnState) {
+            is WorkState.Error -> {
+              sendEvent(ServiceCommand.UiEvent.SnackText(AppStrings.errorUnexpected))
+            }
+            WorkState.Idle -> Unit
+            WorkState.Running -> {
+              if (speedTestMessage != null) {
+                sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
+              }
+            }
           }
-        }
-      }
-    }) { s, (vpnState, speedTestMessage) ->
-      s.copy(
-        serviceBeingStarted = when (vpnState) {
-          is WorkState.Error -> null
-          WorkState.Idle -> true
-          WorkState.Running -> null
-        }.takeIf { s.serviceBeingStarted != null },
-        established = when (vpnState) {
-          is WorkState.Error -> false
-          WorkState.Idle -> false
-          WorkState.Running -> true
         },
-        selectedTestConnectionMessage = speedTestMessage,
-      )
-    }
+      ) { s, (vpnState, speedTestMessage) ->
+        s.copy(
+          serviceBeingStarted =
+            when (vpnState) {
+              is WorkState.Error -> null
+              WorkState.Idle -> true
+              WorkState.Running -> null
+            }.takeIf { s.serviceBeingStarted != null },
+          established =
+            when (vpnState) {
+              is WorkState.Error -> false
+              WorkState.Idle -> false
+              WorkState.Running -> true
+            },
+          selectedTestConnectionMessage = speedTestMessage,
+        )
+      }
   }
 }
 
-private suspend fun FavoriteProfilesFlow.exec(c: ScreenCommand, s: ScreenState): ScreenState {
+private suspend fun FavoriteProfilesFlow.exec(
+  c: ScreenCommand,
+  s: ScreenState,
+): ScreenState {
   return when (c) {
     ScreenCommand.BackRequested -> {
       finish(Unit)
@@ -185,27 +200,29 @@ private suspend fun FavoriteProfilesFlow.exec(c: ScreenCommand, s: ScreenState):
           val profiles = repository.read()
           s.copy(
             selectedProfiles = selected,
-            profiles = profiles
+            profiles = profiles,
           )
         }
       }
     }
 
     is ScreenCommand.Activate -> {
-        withContext(Dispatchers.Default) {
-          if (s.selected != null) {
-            V2RayServiceManager.stopVService(appContext)
-            (appContext as Application).vpnRuntimeState.filterIsInstance<WorkState.Idle>().first()
-          }
-          V2RayServiceManager.startVService(
-            context = appContext,
-            guid = KeyValueStorage.encodeServerConfig(
-              guid = UUID.randomUUID().toString(), config = c.profile
-            ),
-          )
-          s.copy(selected = c.profile, serviceBeingStarted = true)
+      withContext(Dispatchers.Default) {
+        if (s.selected != null) {
+          V2RayServiceManager.stopVService(appContext)
+          (appContext as Application).vpnRuntimeState.filterIsInstance<WorkState.Idle>().first()
         }
+        V2RayServiceManager.startVService(
+          context = appContext,
+          guid =
+            KeyValueStorage.encodeServerConfig(
+              guid = UUID.randomUUID().toString(),
+              config = c.profile,
+            ),
+        )
+        s.copy(selected = c.profile, serviceBeingStarted = true)
       }
+    }
 
     ScreenCommand.StopService -> {
       V2RayServiceManager.stopVService(appContext)
@@ -213,7 +230,7 @@ private suspend fun FavoriteProfilesFlow.exec(c: ScreenCommand, s: ScreenState):
     }
 
     is ScreenCommand.EnterMultiDeletionMode -> {
-        s.copy(selectionMode = true)
+      s.copy(selectionMode = true)
     }
 
     is ScreenCommand.TogglePendingDelete -> {
@@ -232,57 +249,63 @@ private suspend fun FavoriteProfilesFlow.exec(c: ScreenCommand, s: ScreenState):
       s.copy(selectedProfiles = emptySet(), selectionMode = false)
     }
 
-      ScreenCommand.BatchDelete -> {
-        withContext(Dispatchers.IO) {
-          var hasActiveProfile = false
-          for (profile in s.selectedProfiles) {
-              repository.delete(profile)
-              if (s.selected?.subscriptionId == profile.subscriptionId) {
-                hasActiveProfile = true
-            }
+    ScreenCommand.BatchDelete -> {
+      withContext(Dispatchers.IO) {
+        var hasActiveProfile = false
+        for (profile in s.selectedProfiles) {
+          repository.delete(profile)
+          if (s.selected?.subscriptionId == profile.subscriptionId) {
+            hasActiveProfile = true
           }
-
-
-          if (hasActiveProfile) {
-            V2RayServiceManager.stopVService(appContext)
-          }
-          val profiles = repository.read()
-          s.copy(
-            profiles = profiles,
-            selectedProfiles = emptySet(),
-            selectionMode = false,
-            selected = if (hasActiveProfile) null else s.selected
-          )
         }
+
+        if (hasActiveProfile) {
+          V2RayServiceManager.stopVService(appContext)
+        }
+        val profiles = repository.read()
+        s.copy(
+          profiles = profiles,
+          selectedProfiles = emptySet(),
+          selectionMode = false,
+          selected = if (hasActiveProfile) null else s.selected,
+        )
       }
+    }
   }
 }
 
 @Composable
 private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
-
   val screenState by state.collectAsState()
   AppScreen(
-    primary = Action(
-      resRef = R.drawable.ic_arrow_back_24, listener = {
-        send(command = ScreenCommand.BackRequested)
-      })
+    primary =
+      Action(
+        resRef = R.drawable.ic_arrow_back_24,
+        listener = {
+          send(command = ScreenCommand.BackRequested)
+        },
+      ),
   ) {
     BackHandler { send(ScreenCommand.BackRequested) }
     val st by state.collectAsState()
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
-      isRefreshing = false, modifier = Modifier.height(height), onRefresh = {
+      isRefreshing = false,
+      modifier = Modifier.height(height),
+      onRefresh = {
         send(ScreenCommand.RequestStoredProfiles)
-      }) {
+      },
+    ) {
       LazyColumn(
-        contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         stickyHeader {
           Row(
-            modifier = Modifier
-              .fillMaxWidth()
-              .background(AppTheme.colors.backgroundPrimary)
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
               Text(
@@ -290,18 +313,19 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
                 style = AppTheme.typography.headlineLarge,
                 color = AppTheme.colors.contentPrimary,
               )
-              val text = if (st.selectionMode) {
-                stringResource(R.string.source_stored_delete_active)
-              } else {
-                stringResource(R.string.source_stored_delete_hint)
-              }
-                VSpacer(2.dp)
-                Text(
-                  text = text,
-                  style = AppTheme.typography.labelMedium,
-                  color = AppTheme.colors.contentSecondary,
-                )
-                VSpacer(2.dp)
+              val text =
+                if (st.selectionMode) {
+                  stringResource(R.string.source_stored_delete_active)
+                } else {
+                  stringResource(R.string.source_stored_delete_hint)
+                }
+              VSpacer(2.dp)
+              Text(
+                text = text,
+                style = AppTheme.typography.labelMedium,
+                color = AppTheme.colors.contentSecondary,
+              )
+              VSpacer(2.dp)
             }
           }
         }
@@ -311,40 +335,49 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
           val isPendingDelete = item in screenState.selectedProfiles
           val profileRunning = screenState.selected == item && screenState.established
           SentenceRow(
-            modifier = Modifier
-              .border(
-                border = BorderStroke(
-                  width = 1.2.dp,
-                  color = if (isPendingDelete) {
-                    AppTheme.colors.errorPrimary
-                  } else if (profileRunning) {
-                    AppTheme.colors.accentPrimary
-                  } else AppTheme.colors.backgroundSecondary
-                ), shape = RoundedCornerShape(20.dp)
-              )
-              .fillMaxWidth(),
-            painter = when {
-              isPendingDelete -> {
-                painterResource(R.drawable.ic_close_16)
-              }
-              profileRunning -> {
-                painterResource(R.drawable.ic_done_square_24)
-              }
-              else -> {
-                painterResource(R.drawable.ic_internet_24)
-              }
-            },
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color =
+                        if (isPendingDelete) {
+                          AppTheme.colors.errorPrimary
+                        } else if (profileRunning) {
+                          AppTheme.colors.accentPrimary
+                        } else {
+                          AppTheme.colors.backgroundSecondary
+                        },
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
+            painter =
+              when {
+                isPendingDelete -> {
+                  painterResource(R.drawable.ic_close_16)
+                }
+                profileRunning -> {
+                  painterResource(R.drawable.ic_done_square_24)
+                }
+                else -> {
+                  painterResource(R.drawable.ic_internet_24)
+                }
+              },
             title = item.remarks + " " + item.serverPort.orEmpty(),
-            subtitle = when {
-              profileRunning -> if (st.selectedTestConnectionMessage == null) {
-                ""
-              } else {
-                st.selectedTestConnectionMessage
-              }
-              else -> {
-                item.flow ?: item.server ?: item.serviceName.orEmpty()
-              }
-            },
+            subtitle =
+              when {
+                profileRunning ->
+                  if (st.selectedTestConnectionMessage == null) {
+                    ""
+                  } else {
+                    st.selectedTestConnectionMessage
+                  }
+                else -> {
+                  item.flow ?: item.server ?: item.serviceName.orEmpty()
+                }
+              },
             loading = false,
             onClick = {
               if (screenState.selectionMode) {
@@ -359,23 +392,28 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
               } else {
                 send(ScreenCommand.EnterMultiDeletionMode(item))
               }
-            }
+            },
           )
+        }
+        item {
+          VSpacer(72.dp)
         }
       }
       val selectedCount = screenState.selectedProfiles.size
       Button(
-        modifier = Modifier
-          .align(Alignment.BottomCenter)
-          .padding(16.dp),
+        modifier =
+          Modifier
+            .align(Alignment.BottomCenter)
+            .padding(16.dp),
         enabled = st.established || screenState.profiles.isEmpty() || selectedCount > 0,
-        text = when {
-          st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
-          this@RouteScreen.processing.value is ScreenCommand.Activate -> ""
-          screenState.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
-          st.established -> stringResource(R.string.home_stop_service)
-          else -> stringResource(R.string.home_pick_profile_first)
-        },
+        text =
+          when {
+            st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
+            this@RouteScreen.processing.value is ScreenCommand.Activate -> ""
+            screenState.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
+            st.established -> stringResource(R.string.home_stop_service)
+            else -> stringResource(R.string.home_pick_profile_first)
+          },
         onClick = {
           when {
             selectedCount > 0 -> {
@@ -385,18 +423,21 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
                     Aware(
                       painter = painterResource(R.drawable.ic_close_16),
                       title = stringResource(R.string.source_stored_delete),
-                      subtitle = stringResource(R.string.source_stored_delete_subtitle)
+                      subtitle = stringResource(R.string.source_stored_delete_subtitle),
                     )
-                  }, primaryAction = Action(
-                    resRef = R.string.source_select_done,
-                    listener = { send(ScreenCommand.BatchDelete) })
-                )
+                  },
+                  primaryAction =
+                    Action(
+                      resRef = R.string.source_select_done,
+                      listener = { send(ScreenCommand.BatchDelete) },
+                    ),
+                ),
               )
             }
             st.established -> send(ScreenCommand.StopService)
           }
         },
-        loading = this@RouteScreen.processing.value is ScreenCommand.Activate
+        loading = this@RouteScreen.processing.value is ScreenCommand.Activate,
       )
     }
   }
@@ -405,39 +446,47 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
       Modifier
         .fillMaxSize()
         .background(
-          Color.Transparent.copy(alpha = 0.3f)
+          Color.Transparent.copy(alpha = 0.3f),
         )
-        .clickable(onClick = {}, enabled = false)
+        .clickable(onClick = {}, enabled = false),
     ) {
       CircularProgress(
-        modifier = Modifier
-          .align(Alignment.Center)
-          .background(
-            color = AppTheme.colors.backgroundSecondary, shape = RoundedCornerShape(20.dp)
-          )
-          .padding(16.dp)
+        modifier =
+          Modifier
+            .align(Alignment.Center)
+            .background(
+              color = AppTheme.colors.backgroundSecondary,
+              shape = RoundedCornerShape(20.dp),
+            )
+            .padding(16.dp),
       )
       AnimatedVisibility(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(
-            all = 16.dp
-          ), visible = true
-      ) {
-        Row(
-          modifier = Modifier
+        modifier =
+          Modifier
             .fillMaxWidth()
             .padding(
-              all = 16.dp
-            )
-            .surface(
-              backgroundColor = AppTheme.colors.backgroundPrimary, shape = RoundedCornerShape(20.dp)
-            )
-            .height(56.dp), verticalAlignment = Alignment.CenterVertically
+              all = 16.dp,
+            ),
+        visible = true,
+      ) {
+        Row(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .padding(
+                all = 16.dp,
+              )
+              .surface(
+                backgroundColor = AppTheme.colors.backgroundPrimary,
+                shape = RoundedCornerShape(20.dp),
+              )
+              .height(56.dp),
+          verticalAlignment = Alignment.CenterVertically,
         ) {
           HSpacer(16.dp)
           Text(
-            stringResource(R.string.home_starting_vpn), style = AppTheme.typography.bodyMedium
+            stringResource(R.string.home_starting_vpn),
+            style = AppTheme.typography.bodyMedium,
           )
         }
       }
@@ -453,22 +502,29 @@ private fun Aware(
   subtitle: String?,
 ) {
   Row(
-    modifier = modifier
-      .background(
-        color = AppTheme.colors.backgroundSecondary, shape = RoundedCornerShape(20.dp)
-      )
-      .clip(shape = RoundedCornerShape(20.dp))
-      .padding(horizontal = 16.dp, vertical = 8.dp),
+    modifier =
+      modifier
+        .background(
+          color = AppTheme.colors.backgroundSecondary,
+          shape = RoundedCornerShape(20.dp),
+        )
+        .clip(shape = RoundedCornerShape(20.dp))
+        .padding(horizontal = 16.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Box(contentAlignment = Alignment.Center) {
       Icon(
-        painter = painter, contentDescription = null, modifier = Modifier
-          .background(
-            color = AppTheme.colors.backgroundSecondary, shape = RoundedCornerShape(20.dp)
-          )
-          .padding(8.dp)
-          .size(32.dp), tint = AppTheme.colors.errorPrimary
+        painter = painter,
+        contentDescription = null,
+        modifier =
+          Modifier
+            .background(
+              color = AppTheme.colors.backgroundSecondary,
+              shape = RoundedCornerShape(20.dp),
+            )
+            .padding(8.dp)
+            .size(32.dp),
+        tint = AppTheme.colors.errorPrimary,
       )
     }
     HSpacer(12.dp)
@@ -477,20 +533,20 @@ private fun Aware(
         Text(
           text = title,
           style = AppTheme.typography.titleMedium,
-          color = AppTheme.colors.contentPrimary
+          color = AppTheme.colors.contentPrimary,
         )
         VSpacer(2.dp)
         Text(
           text = subtitle,
           style = AppTheme.typography.bodyMedium,
-          color = AppTheme.colors.contentSecondary
+          color = AppTheme.colors.contentSecondary,
         )
       }
     } else {
       Text(
         text = title,
         style = AppTheme.typography.titleMedium,
-        color = AppTheme.colors.contentPrimary
+        color = AppTheme.colors.contentPrimary,
       )
     }
   }

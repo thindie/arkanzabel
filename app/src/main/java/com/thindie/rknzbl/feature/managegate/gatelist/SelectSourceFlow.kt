@@ -87,51 +87,55 @@ class SelectSourceFlow(
       override val sourceUrl: String? = null
     }
 
-    data object StoredProfiles: Result {
+    data object StoredProfiles : Result {
       override val sourceUrl: String?
         get() = null
     }
   }
 
-  fun main() = RouteFactory.create(
-    initialState = ScreenState(),
-    execute = ::exec,
-    routeContent = { HomeScreen() },
-    id = "Select-main",
-    errorMapper = {
-      ScreenScopeError(
-        message = appContext.getString(R.string.error_unexpected),
-        actions = emptyMap(),
-      )
-    },
-  )
+  fun main() =
+    RouteFactory.create(
+      initialState = ScreenState(),
+      execute = ::exec,
+      routeContent = { HomeScreen() },
+      id = "Select-main",
+      errorMapper = {
+        ScreenScopeError(
+          message = appContext.getString(R.string.error_unexpected),
+          actions = emptyMap(),
+        )
+      },
+    )
 
   @Immutable
   data class ScreenState(
     val selected: Result = Result.NotSelected,
-    val blackSection: List<Result> = listOf(
-      Result.FullBlackShadowSocks,
-      Result.FullBlackVless,
-      Result.MobileBlackVless,
-      Result.StoredProfiles
-    ),
-
-    val whiteSection: List<Result> = listOf(
-      Result.WhiteListMobile,
-      Result.WhiteListMobileV2,
-      Result.WhiteListAll,
-      Result.WhiteListRussian,
-    ),
+    val blackSection: List<Result> =
+      listOf(
+        Result.FullBlackShadowSocks,
+        Result.FullBlackVless,
+        Result.MobileBlackVless,
+        Result.StoredProfiles,
+      ),
+    val whiteSection: List<Result> =
+      listOf(
+        Result.WhiteListMobile,
+        Result.WhiteListMobileV2,
+        Result.WhiteListAll,
+        Result.WhiteListRussian,
+      ),
   ) : com.thindie.rknzbl.engine.State
 
   sealed interface ScreenCommand : Command {
     data object Back : ScreenCommand
-    data class Select(val type: Result) : ScreenCommand
 
+    data class Select(val type: Result) : ScreenCommand
   }
 
-  private suspend fun exec(command: ScreenCommand, state: ScreenState): ScreenState {
-
+  private suspend fun exec(
+    command: ScreenCommand,
+    state: ScreenState,
+  ): ScreenState {
     return when (command) {
       is ScreenCommand.Back -> {
         finish(state.selected)
@@ -154,64 +158,75 @@ fun ScreenScope<SelectSourceFlow.ScreenState, SelectSourceFlow.ScreenCommand>.Ho
   val screenState by state.collectAsState()
   val context = LocalContext.current
   AppScreen(
-    primary = Action(
-      resRef = R.drawable.ic_arrow_back_24,
-      listener = {
-        send(SelectSourceFlow.ScreenCommand.Back)
-      }
-    )
+    primary =
+      Action(
+        resRef = R.drawable.ic_arrow_back_24,
+        listener = {
+          send(SelectSourceFlow.ScreenCommand.Back)
+        },
+      ),
   ) {
     Box {
       BackHandler { send(SelectSourceFlow.ScreenCommand.Back) }
       LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         items(
-          state.value.blackSection
+          state.value.blackSection,
         ) { sentence ->
           val (title, description) = sentence.resolveLabels(context)
           SentenceRow(
-            modifier = Modifier
-              .border(
-                border = BorderStroke(
-                  width = 1.2.dp,
-                  color = if (screenState.selected == sentence) {
-                    AppTheme.colors.accentPrimary
-                  } else AppTheme.colors.backgroundSecondary
-                ),
-                shape = RoundedCornerShape(20.dp)
-              )
-              .fillMaxWidth(),
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color =
+                        if (screenState.selected == sentence) {
+                          AppTheme.colors.accentPrimary
+                        } else {
+                          AppTheme.colors.backgroundSecondary
+                        },
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_information_24),
             title = title,
             subtitle = description,
             loading = false,
-            onClick = { send(SelectSourceFlow.ScreenCommand.Select(sentence)) }
+            onClick = { send(SelectSourceFlow.ScreenCommand.Select(sentence)) },
           )
         }
         item { VSpacer(56.dp) }
         items(
-          state.value.whiteSection
+          state.value.whiteSection,
         ) { sentence ->
           val (title, description) = sentence.resolveLabels(context)
           SentenceRow(
-            modifier = Modifier
-              .border(
-                border = BorderStroke(
-                  width = 1.2.dp,
-                  color = if (screenState.selected == sentence) {
-                    AppTheme.colors.accentPrimary
-                  } else AppTheme.colors.backgroundSecondary
-                ),
-                shape = RoundedCornerShape(20.dp)
-              )
-              .fillMaxWidth(),
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color =
+                        if (screenState.selected == sentence) {
+                          AppTheme.colors.accentPrimary
+                        } else {
+                          AppTheme.colors.backgroundSecondary
+                        },
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_information_24),
             title = title,
             subtitle = description,
             loading = false,
-            onClick = { send(SelectSourceFlow.ScreenCommand.Select(sentence)) }
+            onClick = { send(SelectSourceFlow.ScreenCommand.Select(sentence)) },
           )
         }
         item {
@@ -220,12 +235,13 @@ fun ScreenScope<SelectSourceFlow.ScreenState, SelectSourceFlow.ScreenCommand>.Ho
       }
       val st by state.collectAsState()
       Button(
-        modifier = Modifier
-          .align(Alignment.BottomCenter)
-          .padding(16.dp),
+        modifier =
+          Modifier
+            .align(Alignment.BottomCenter)
+            .padding(16.dp),
         enabled = st.selected != SelectSourceFlow.Result.NotSelected,
         text = stringResource(R.string.source_select_done),
-        onClick = { send(SelectSourceFlow.ScreenCommand.Back) }
+        onClick = { send(SelectSourceFlow.ScreenCommand.Back) },
       )
     }
   }
@@ -239,7 +255,7 @@ internal fun SelectSourceFlow.Result.resolveLabels(context: Context): Pair<Strin
 
     SelectSourceFlow.Result.FullBlackVless,
     SelectSourceFlow.Result.NotSelected,
-      ->
+    ->
       context.getString(R.string.source_black_vless_title) to
         context.getString(R.string.source_subtitle_all_configs)
 
@@ -263,7 +279,8 @@ internal fun SelectSourceFlow.Result.resolveLabels(context: Context): Pair<Strin
       context.getString(R.string.source_white_cidr_title) to
         context.getString(R.string.source_subtitle_ru_services)
 
-    SelectSourceFlow.Result.StoredProfiles -> context.getString(
-      R.string.source_stored
-    ) to context.getString(R.string.source_subtitle_stored)
+    SelectSourceFlow.Result.StoredProfiles ->
+      context.getString(
+        R.string.source_stored,
+      ) to context.getString(R.string.source_subtitle_stored)
   }

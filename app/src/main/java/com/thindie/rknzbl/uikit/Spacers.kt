@@ -11,9 +11,12 @@ import androidx.compose.ui.unit.Dp
 
 @Composable
 fun VSpacer(value: Dp) = Spacer(Modifier.height(value))
+
 @Composable
 fun HSpacer(value: Dp) = Spacer(Modifier.width(value))
+
 @Composable
 fun RowScope.WSpacer(value: Float = 1f) = Spacer(Modifier.weight(value))
+
 @Composable
 fun ColumnScope.WSpacer(value: Float = 1f) = Spacer(Modifier.weight(value))

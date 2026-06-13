@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
+import com.thindie.rknzbl.application.AppStrings
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,25 +22,27 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.thindie.rknzbl.application.AppStrings
 import kotlin.coroutines.cancellation.CancellationException
 
 @Stable
 class Router(val onPopLast: () -> Unit) {
   private val current = MutableStateFlow<List<Route>>(emptyList())
 
-
-  val route = current
-    .map { routes ->
-      val lastRoute = routes.lastOrNull()
-      val veryLastRoute = if (lastRoute != null) {
-        val reducedRoutes = routes.dropLast(1)
-        reducedRoutes.lastOrNull()
-      } else null
-      if (lastRoute == null) return@map null
-      lastRoute to veryLastRoute
-    }
-    .filterNotNull()
+  val route =
+    current
+      .map { routes ->
+        val lastRoute = routes.lastOrNull()
+        val veryLastRoute =
+          if (lastRoute != null) {
+            val reducedRoutes = routes.dropLast(1)
+            reducedRoutes.lastOrNull()
+          } else {
+            null
+          }
+        if (lastRoute == null) return@map null
+        lastRoute to veryLastRoute
+      }
+      .filterNotNull()
 
   @Stable
   fun push(route: Route) {
@@ -93,7 +96,6 @@ interface Route {
 
 @Stable
 object RouteFactory {
-
   @Stable
   fun <C : Command, S : State> create(
     id: String,
@@ -106,137 +108,138 @@ object RouteFactory {
         actions = mapOf(),
       )
     },
-    initialCommand: InitialCommand<C>? = null, // strict invariant struggle with compiler's frontend - SAM
+    initialCommand: InitialCommand<C>? = null,
     routeContent: @Composable ScreenScope<S, C>.() -> Unit,
   ): Route {
     return object : Route {
-
       @Stable
-      private val disposeCommand = MutableSharedFlow<C>(
-        replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-      )
-
-      @Stable
-      var screenScope: ScreenScope<S, C>? = object : ScreenScope<S, C> {
-
-        override var scope: CoroutineScope? =
-          CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
-          private set
-
-        private val _state = MutableStateFlow(initialState)
-        override val state: StateFlow<S>
-          get() = _state.asStateFlow()
-
-        private val _processing = mutableStateOf<C?>(null)
-        override val processing: androidx.compose.runtime.State<C?>
-          get() = _processing
-
-        private val _error = mutableStateOf<ScreenScopeError?>(null)
-        override val error: androidx.compose.runtime.State<ScreenScopeError?>
-          get() = _error
-
-        @Stable
-        private val _event = MutableSharedFlow<ServiceCommand.UiEvent>(
+      private val disposeCommand =
+        MutableSharedFlow<C>(
           replay = 0,
           extraBufferCapacity = 1,
-          onBufferOverflow = BufferOverflow.DROP_OLDEST
+          onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
 
-        override val event: SharedFlow<ServiceCommand.UiEvent>
-          get() = _event.asSharedFlow()
+      @Stable
+      var screenScope: ScreenScope<S, C>? =
+        object : ScreenScope<S, C> {
+          override var scope: CoroutineScope? =
+            CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
+            private set
 
-        override fun sendEvent(event: ServiceCommand.UiEvent) {
-          _event.send(event)
-        }
+          private val _state = MutableStateFlow(initialState)
+          override val state: StateFlow<S>
+            get() = _state.asStateFlow()
 
-        init {
-          stateSink.invoke(this)
-        }
+          private val _processing = mutableStateOf<C?>(null)
+          override val processing: androidx.compose.runtime.State<C?>
+            get() = _processing
 
-        override fun update(s: S) {
-          _state.update { s }
-        }
+          private val _error = mutableStateOf<ScreenScopeError?>(null)
+          override val error: androidx.compose.runtime.State<ScreenScopeError?>
+            get() = _error
 
-        override fun send(command: C) {
-          println("Received command: $command")
-          scope?.launch {
-            when (command) {
-              ServiceCommand.Dispose -> {
-                dispose()
-                disposeCommand.tryEmit(command)
-              }
-              ServiceCommand.DismissError -> {
-                _error.value = null
-              }
-              else -> {
-                if (_error.value == null) {
-                  try {
-                    // non-nervous loading treatment region
-                    val loadingJob = launch {
-                      delay(200)
-                      _processing.value = command
+          @Stable
+          private val _event =
+            MutableSharedFlow<ServiceCommand.UiEvent>(
+              replay = 0,
+              extraBufferCapacity = 1,
+              onBufferOverflow = BufferOverflow.DROP_OLDEST,
+            )
+
+          override val event: SharedFlow<ServiceCommand.UiEvent>
+            get() = _event.asSharedFlow()
+
+          override fun sendEvent(event: ServiceCommand.UiEvent) {
+            _event.send(event)
+          }
+
+          init {
+            stateSink.invoke(this)
+          }
+
+          override fun update(s: S) {
+            _state.update { s }
+          }
+
+          override fun send(command: C) {
+            println("Received command: $command")
+            scope?.launch {
+              when (command) {
+                ServiceCommand.Dispose -> {
+                  dispose()
+                  disposeCommand.tryEmit(command)
+                }
+                ServiceCommand.DismissError -> {
+                  _error.value = null
+                }
+                else -> {
+                  if (_error.value == null) {
+                    try {
+                      // non-nervous loading treatment region
+                      val loadingJob =
+                        launch {
+                          delay(200)
+                          _processing.value = command
+                        }
+                      val newState = execute(command, _state.value)
+                      if (_processing.value != null) {
+                        delay(300)
+                      }
+                      loadingJob.cancel()
+                      // end region
+                      _state.value = newState
+                      _processing.value = null
+                    } catch (e: CancellationException) {
+                      dispose()
+                      disposeCommand.tryEmit(command)
+                      throw e
+                    } catch (e: Throwable) {
+                      val error = errorMapper(e)
+                      _error.value = error
+                      _processing.value = null
                     }
-                    val newState = execute(command, _state.value)
-                    if (_processing.value != null) {
-                      delay(300)
+                  } else {
+                    try {
+                      // non-nervous loading treatment region
+                      val loadingJob =
+                        launch {
+                          delay(200)
+                          _processing.value = command
+                        }
+                      val newState = execute(command, _state.value)
+                      if (_processing.value != null) {
+                        delay(300)
+                      }
+                      loadingJob.cancel()
+                      // end region
+                      _state.value = newState
+                      _error.value = null
+                      _processing.value = null
+                    } catch (e: CancellationException) {
+                      dispose()
+                      disposeCommand.tryEmit(command)
+                      throw e
+                    } catch (e: Throwable) {
+                      val error = errorMapper(e)
+                      _error.value = error
+                      _processing.value = null
                     }
-                    loadingJob.cancel()
-                    // end region
-                    _state.value = newState
-                    _processing.value = null
-
-                  } catch (e: CancellationException) {
-                    dispose()
-                    disposeCommand.tryEmit(command)
-                    throw e
-                  } catch (e: Throwable) {
-                    val error = errorMapper(e)
-                    _error.value = error
-                    _processing.value = null
-                  }
-                } else {
-                  try {
-                    // non-nervous loading treatment region
-                    val loadingJob = launch {
-                      delay(200)
-                      _processing.value = command
-                    }
-                    val newState = execute(command, _state.value)
-                    if (_processing.value != null) {
-                      delay(300)
-                    }
-                    loadingJob.cancel()
-                    // end region
-                    _state.value = newState
-                    _error.value = null
-                    _processing.value = null
-                  } catch (e: CancellationException) {
-                    dispose()
-                    disposeCommand.tryEmit(command)
-                    throw e
-                  } catch (e: Throwable) {
-                    val error = errorMapper(e)
-                    _error.value = error
-                    _processing.value = null
                   }
                 }
               }
             }
           }
-        }
 
-        override fun dispose() {
-          scope?.cancel()
-          scope = null
+          override fun dispose() {
+            scope?.cancel()
+            scope = null
+          }
         }
-      }
         private set
 
       @Stable
       override val id: Route.Id = Route.Id(id)
-
 
       override val content: @Composable () -> Unit = {
         LaunchedEffect(initialState, id) {
@@ -260,6 +263,5 @@ object RouteFactory {
     fun execute(): C
   }
 }
-
 
 fun <C : Command> MutableSharedFlow<C>.send(command: C) = tryEmit(command)
