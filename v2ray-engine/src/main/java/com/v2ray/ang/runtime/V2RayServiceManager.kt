@@ -424,6 +424,11 @@ object V2RayServiceManager {
                     )
                 }
 
+                AppConfig.MSG_STATE_SAVE_PROFILE -> {
+                    Log.i(AppConfig.TAG, "Save Profile")
+                    MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_SAVE_PROFILE, "")
+                }
+
                 AppConfig.MSG_MEASURE_DELAY -> {
                     measureV2rayDelay()
                 }

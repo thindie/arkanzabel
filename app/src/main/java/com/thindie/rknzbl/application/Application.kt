@@ -21,14 +21,22 @@ import com.thindie.rknzbl.engine.WorkState
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider {
 
   val applicationScope = ApplicationScope()
+  private val appCoroutineScope = CoroutineScope(
+    SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> "" }
+  )
 
   override val workManagerConfiguration: Configuration
     get() =
@@ -59,6 +67,13 @@ class Application : Application(), Configuration.Provider {
         AppConfig.MSG_STATE_STOP_SUCCESS,
           -> {
           vpnRuntimeState.value = WorkState.Idle
+        }
+
+        AppConfig.MSG_STATE_SAVE_PROFILE -> {
+          appCoroutineScope.launch {
+            val guid = KeyValueStorage.getSelectServer() ?: return@launch
+            applicationScope.data.repository.save(guid)
+          }
         }
       }
     }

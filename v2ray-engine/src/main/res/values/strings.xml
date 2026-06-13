@@ -5,6 +5,7 @@
     <string name="app_tile_first_use">Сначала добавьте сервер в приложении.</string>
     <string name="notification_action_stop_v2ray">Остановить</string>
     <string name="title_service_restart">Перезапуск сервиса</string>
+    <string name="title_service_save">Сохранить</string>
     <string name="toast_services_start">Запуск сервисов</string>
     <string name="toast_services_stop">Остановка сервисов</string>
     <string name="toast_warning_pref_proxysharing_short">Разрешены подключения из локальной сети. Используйте только в доверенной сети</string>

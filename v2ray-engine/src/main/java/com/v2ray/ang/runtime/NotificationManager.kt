@@ -26,6 +26,8 @@ object NotificationManager {
   private const val NOTIFICATION_PENDING_INTENT_CONTENT = 0
   private const val NOTIFICATION_PENDING_INTENT_STOP_V2RAY = 1
   private const val NOTIFICATION_PENDING_INTENT_RESTART_V2RAY = 2
+
+  private const val NOTIFICATION_PENDING_INTENT_SAVE_PROFILE = 3
   private const val NOTIFICATION_ICON_THRESHOLD = 3000
 
   private val speedHandler = Handler(Looper.getMainLooper())
@@ -123,6 +125,20 @@ object NotificationManager {
         flags
       )
 
+    val saveProfileIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
+      .apply {
+        `package` = AppConfig.ANG_PACKAGE
+        putExtra("key", AppConfig.MSG_STATE_SAVE_PROFILE)
+      }
+
+    val saveProfilePendingIntent =
+      PendingIntent.getBroadcast(
+        service,
+        NOTIFICATION_PENDING_INTENT_SAVE_PROFILE,
+        saveProfileIntent,
+        flags
+      )
+
     val channelId =
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         createNotificationChannel()
@@ -132,7 +148,7 @@ object NotificationManager {
 
     notificationCompatBuilder =
       NotificationCompat.Builder(service, channelId)
-        .setSmallIcon(R.drawable.ic_stat_name)
+        .setSmallIcon(R.drawable.ic_rknzbl)
         .setContentTitle(connectionProfile?.remarks)
         .setPriority(NotificationCompat.PRIORITY_MIN)
         .setOngoing(true)
@@ -148,6 +164,11 @@ object NotificationManager {
           R.drawable.ic_delete_24dp,
           service.getString(R.string.title_service_restart),
           restartV2RayPendingIntent,
+        )
+        .addAction(
+          R.drawable.ic_delete_24dp,
+          service.getString(R.string.title_service_save),
+          saveProfilePendingIntent,
         )
 
     service.startForeground(NOTIFICATION_ID, notificationCompatBuilder?.build())
