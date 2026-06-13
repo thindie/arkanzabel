@@ -42,7 +42,7 @@ class SelectSourceFlow(
   private val appContext: Context,
 ) : ScreenFlow<Route, SelectSourceFlow.Result>(router) {
   override fun start() {
-    router.push(main())
+    go(main())
   }
 
   sealed interface Result {
@@ -97,6 +97,7 @@ class SelectSourceFlow(
     initialState = ScreenState(),
     execute = ::exec,
     routeContent = { HomeScreen() },
+    id = "Select-main",
     errorMapper = {
       ScreenScopeError(
         message = appContext.getString(R.string.error_unexpected),

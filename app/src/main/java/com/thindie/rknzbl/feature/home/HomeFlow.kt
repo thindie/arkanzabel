@@ -91,7 +91,7 @@ class HomeFlow(
   )
 
   override fun start() {
-    router.push(select())
+    go(select())
   }
 
   fun startSelectSourceFlow() {
@@ -100,13 +100,13 @@ class HomeFlow(
       .start()
   }
 
-  fun startStoredProfilesFlow() {
+  fun startStoredProfilesFlow(onFinish: () -> Unit) {
     FavoriteProfilesFlow(
       router = router,
       repository = repository,
       appContext = appContext
     )
-      .onFinishBuilder { go(main()) }
+      .onFinishBuilder { onFinish.invoke() }
       .start()
   }
 
@@ -131,7 +131,7 @@ class HomeFlow(
                 -> send(HomeCommand.Refresh)
 
               SelectSourceFlow.Result.StoredProfiles -> {
-                startStoredProfilesFlow()
+                startStoredProfilesFlow { go(main()) }
               }
             }
           }
@@ -160,13 +160,15 @@ class HomeFlow(
                 } else state to null
               }
             }
-          }).transition({ _, _, (vpnState, latency) ->
+          }
+        )
+          .transition({ _, _, (vpnState, speedTestMessage) ->
           when (vpnState) {
             is WorkState.Error -> send(HomeCommand.Dismissed)
             WorkState.Idle -> Unit
             WorkState.Running -> {
-              if (latency != null) {
-                sendEvent(ServiceCommand.UiEvent.SnackText(latency.second))
+              if (speedTestMessage != null) {
+                sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
               }
             }
           }
@@ -176,7 +178,8 @@ class HomeFlow(
               is WorkState.Error -> null
               WorkState.Idle -> true
               WorkState.Running -> null
-            }.takeIf { s.serviceBeingStarted != null }, established = when (vpnState) {
+            }.takeIf { s.serviceBeingStarted != null },
+            established = when (vpnState) {
               is WorkState.Error -> false
               WorkState.Idle -> false
               WorkState.Running -> true
@@ -195,6 +198,7 @@ class HomeFlow(
     execute = ::exec,
     stateSink = ::stateSink,
     routeContent = { HomeScreen() },
+    id = "Home-main",
     initialCommand = RouteFactory.InitialCommand {
       HomeCommand.Start as HomeCommand
     },
@@ -205,6 +209,7 @@ class HomeFlow(
     data object Home : HomeSelectCommand
     data object New : HomeSelectCommand
     data object Settings : HomeSelectCommand
+    data object Back : HomeSelectCommand
   }
 
   fun select() = RouteFactory.create(
@@ -212,7 +217,7 @@ class HomeFlow(
     execute = { c: HomeSelectCommand, s: HomeSelect ->
       when (c) {
         HomeSelectCommand.Home -> {
-          startStoredProfilesFlow()
+          startStoredProfilesFlow { }
         }
 
         HomeSelectCommand.New -> {
@@ -222,11 +227,16 @@ class HomeFlow(
         HomeSelectCommand.Settings -> {
           startPerAppProxyFlow()
         }
+        HomeSelectCommand.Back -> {
+          finish(Unit)
+        }
       }
       s
     },
+    id = "HomeFlow-select",
     routeContent = {
       AppScreen {
+        BackHandler { send(HomeSelectCommand.Back) }
         Column(modifier = Modifier
           .fillMaxSize()
           .padding(16.dp)) {
@@ -301,7 +311,7 @@ class HomeFlow(
 
     return when (command) {
       is HomeCommand.Back -> {
-        finish(Unit)
+        back()
         homeState
       }
 

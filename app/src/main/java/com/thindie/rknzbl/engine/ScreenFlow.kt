@@ -4,19 +4,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 abstract class ScreenFlow<R : Route, RESULT>(private val router: Router) {
-  // known issue: the first route added not to 'ids'. temp resolution: additional router.pop()
+
   private val ids = MutableStateFlow(listOf<Route.Id>())
 
   private var finish: RESULT? = null
   private val finishActions = mutableListOf<(RESULT) -> Unit>()
 
   fun finish(r: RESULT) {
-    if (ids.value.isEmpty()) {
-      router.pop()
-    } else {
-      router.removeAll(ids.value.toSet())
-      router.pop()
-    }
+    router.removeAll(ids.value.toSet())
     finish = r
     val actions = finishActions.toList()
     finishActions.clear()
@@ -28,6 +23,7 @@ abstract class ScreenFlow<R : Route, RESULT>(private val router: Router) {
       val oldIds = ids.value
       val newIds = oldIds.dropLastWhile { it != route.id }
       val removeIds = (oldIds - newIds).toSet()
+      router.push(route)
       router.removeAll(removeIds)
     } else {
       ids.update { it + route.id }

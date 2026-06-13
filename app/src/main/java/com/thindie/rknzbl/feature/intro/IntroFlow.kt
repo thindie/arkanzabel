@@ -63,19 +63,12 @@ class IntroFlow(
   private val appContext: Context,
 ) : ScreenFlow<Route, IntroFlow.Result>(router) {
 
-  fun startAppFlow() {
-    val repository = (appContext as Application).applicationScope.data.repository
-    HomeFlow(router = router, appContext = appContext, repository = repository)
-      .onFinishBuilder { finish(Result.Success) }
-      .start()
-  }
-
   enum class Result {
     Success,
   }
 
   override fun start() {
-    router.push(main())
+    go(main())
   }
 
   private fun hasVpnPermission(): Boolean = VpnService.prepare(appContext) == null
@@ -90,6 +83,7 @@ class IntroFlow(
         actions = emptyMap(),
       )
     },
+    id = "IntroFlow-vpn",
     initialCommand = RouteFactory.InitialCommand {
       CommandIntro.Start as CommandIntro
     },
@@ -146,7 +140,7 @@ class IntroFlow(
           )
 
           else -> {
-            startAppFlow()
+            finish(Result.Success)
             state
           }
         }
@@ -186,7 +180,7 @@ class IntroFlow(
           }
 
           Permission.Push -> {
-            startAppFlow()
+            finish(Result.Success)
             state
           }
         }
@@ -214,9 +208,9 @@ class IntroFlow(
           Permission.Vpn -> Unit
           Permission.Push -> when (state.stage) {
             Stage.Loading -> Unit
-            Stage.Rationale -> startAppFlow()
-            Stage.SoftRequest -> startAppFlow()
-            Stage.RationaleDismissedOnce -> startAppFlow()
+            Stage.Rationale -> finish(Result.Success)
+            Stage.SoftRequest -> finish(Result.Success)
+            Stage.RationaleDismissedOnce -> finish(Result.Success)
           }
         }
         state

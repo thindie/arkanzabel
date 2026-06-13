@@ -34,6 +34,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Route
+import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
@@ -61,6 +62,12 @@ class MainActivity : ComponentActivity() {
           hasPushPermission = if (hasPermission != null) hasPermission else true,
           appContext = app
         )
+          .onFinishBuilder {
+            val repository = app.applicationScope.data.repository
+            HomeFlow(router = router, appContext = app, repository = repository)
+              .onFinishBuilder { router.pop() }
+              .start()
+          }
           .start()
       }
       val themeSwitcher = remember { ThemeSwitcher() }

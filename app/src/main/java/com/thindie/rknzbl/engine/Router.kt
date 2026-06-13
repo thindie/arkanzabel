@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.thindie.rknzbl.application.AppStrings
-import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 @Stable
@@ -97,6 +96,7 @@ object RouteFactory {
 
   @Stable
   fun <C : Command, S : State> create(
+    id: String,
     initialState: S,
     execute: suspend (c: C, s: S) -> S,
     stateSink: (ScreenScope<S, C>) -> Unit = {},
@@ -235,7 +235,7 @@ object RouteFactory {
         private set
 
       @Stable
-      override val id: Route.Id = Route.Id(UUID.randomUUID().toString())
+      override val id: Route.Id = Route.Id(id)
 
 
       override val content: @Composable () -> Unit = {

@@ -65,7 +65,7 @@ class PerAppProxyFlow(
 ) : ScreenFlow<Route, Unit>(router) {
 
   override fun start() {
-    router.push(main())
+    go(main())
   }
 
   enum class ProxyScopeMode {
@@ -136,6 +136,7 @@ class PerAppProxyFlow(
     ),
     execute = ::execMain,
     routeContent = { PerAppProxyScreen() },
+    id = "PerApp-main",
     initialCommand = RouteFactory.InitialCommand {
       PerAppProxyCommand.LoadApps as PerAppProxyCommand
     },
@@ -150,6 +151,7 @@ class PerAppProxyFlow(
     ),
     execute = ::execSearch,
     routeContent = { PerAppSearchScreen() },
+    id = "Perapp-id",
     initialCommand = RouteFactory.InitialCommand {
       PerAppSearchCommand.LoadApps as PerAppSearchCommand
     },
