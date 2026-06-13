@@ -1,0 +1,4 @@
+# ktlint editorconfig
+[*.kt]
+indent_size = 2
+ktlint.compose.function.names = PascalCase
