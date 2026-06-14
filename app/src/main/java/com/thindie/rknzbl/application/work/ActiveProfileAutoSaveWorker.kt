@@ -13,7 +13,6 @@ class ActiveProfileAutoSaveWorker(
   params: WorkerParameters,
   private val repository: ConnectionProfileRepository,
 ) : CoroutineWorker(appContext, params) {
-
   override suspend fun doWork(): Result {
     val enabledRaw =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_AUTO_SAVE_ACTIVE_PROFILE_ENABLED, "1")
@@ -51,8 +50,11 @@ class ActiveProfileAutoSaveWorker(
     }
 
     return try {
-      repository.save(guid)
-      KeyValueStorage.setVpnSessionLastAutoSaveStartMs(sessionStartMs)
+      val isSaved = repository.save(guid)
+      if (isSaved) {
+        KeyValueStorage.setVpnSessionLastAutoSaveStartMs(sessionStartMs)
+        repository.saveAuto(guid)
+      }
       Result.success()
     } catch (_: AppError.ServerError) {
       Result.retry()

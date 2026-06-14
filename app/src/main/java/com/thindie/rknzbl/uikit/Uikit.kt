@@ -42,9 +42,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import com.thindie.rknzbl.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ScreenScopeError
@@ -52,7 +52,7 @@ import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.engine.State
 
 private object ContentAlpha {
-  const val disabled: Float = 0.3f
+  const val DISABLED: Float = 0.3f
 }
 
 @Composable
@@ -64,34 +64,41 @@ fun Button(
   enabled: Boolean = true,
 ) {
   val contentColor by animateColorAsState(
-    if (enabled) AppTheme.colors.buttonContentPrimary
-    else AppTheme.colors.contentSecondary
+    if (enabled) {
+      AppTheme.colors.buttonContentPrimary
+    } else {
+      AppTheme.colors.contentSecondary
+    },
   )
 
   val backgroundColor by animateColorAsState(
-    if (enabled) AppTheme.colors.accentPrimary
-    else AppTheme.colors.backgroundSecondary
+    if (enabled) {
+      AppTheme.colors.accentPrimary
+    } else {
+      AppTheme.colors.backgroundSecondary
+    },
   )
   Box(
-    modifier = modifier
-      .height(52.dp)
-      .widthIn(min = 328.dp)
-      .surface(
-        shape = RoundedCornerShape(16.dp),
-        backgroundColor = backgroundColor,
-        shadowElevation = 0f,
-        border = null,
-        enabled = enabled && !loading,
-        onClick = onClick
-      )
-      .fillMaxSize()
-      .padding(horizontal = 24.dp),
-    contentAlignment = Alignment.Center
+    modifier =
+      modifier
+        .height(52.dp)
+        .widthIn(min = 328.dp)
+        .surface(
+          shape = RoundedCornerShape(16.dp),
+          backgroundColor = backgroundColor,
+          shadowElevation = 0f,
+          border = null,
+          enabled = enabled && !loading,
+          onClick = onClick,
+        )
+        .fillMaxSize()
+        .padding(horizontal = 24.dp),
+    contentAlignment = Alignment.Center,
   ) {
     AnimatedVisibility(
       visible = loading,
       enter = fadeIn(),
-      exit = fadeOut()
+      exit = fadeOut(),
     ) {
       CircularProgress(
         modifier = Modifier.size(24.dp),
@@ -101,13 +108,13 @@ fun Button(
     AnimatedVisibility(
       visible = !loading,
       enter = fadeIn(),
-      exit = fadeOut()
+      exit = fadeOut(),
     ) {
       Text(
         text = text.uppercase(),
         style = AppTheme.typography.button,
         color = contentColor,
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Center,
       )
     }
   }
@@ -127,21 +134,24 @@ fun Modifier.surface(
   .background(color = backgroundColor, shape = shape)
   .clip(shape)
   .clickable(
-    onClick = if (onClick != null && enabled) onClick else {
-      { }
-    },
+    onClick =
+      if (onClick != null && enabled) {
+        onClick
+      } else {
+        { }
+      },
     enabled = onClick != null && enabled,
   )
-
 
 @Composable
 fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
   val error = this@ErrorMessage.error.value ?: return
   Column(
-    modifier = Modifier
-      .fillMaxSize()
-      .padding(16.dp)
-      .verticalScroll(rememberScrollState()),
+    modifier =
+      Modifier
+        .fillMaxSize()
+        .padding(16.dp)
+        .verticalScroll(rememberScrollState()),
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
@@ -162,12 +172,13 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
               else -> send(cmd as C)
             }
           },
-          loading = processing.value == cmd
+          loading = processing.value == cmd,
         )
       }
       error.actions[ScreenScopeError.Actions.Common.ButtonSecondaryRetry]?.let { cmd ->
-        val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-          .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
+        val action =
+          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
+            .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
         Button(
           text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
@@ -176,12 +187,13 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
               else -> send(cmd as C)
             }
           },
-          loading = processing.value == cmd
+          loading = processing.value == cmd,
         )
       }
       error.actions[ScreenScopeError.Actions.Common.ButtonMain]?.let { cmd ->
-        val action = error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-          .first { it is ScreenScopeError.Actions.Common.ButtonMain }
+        val action =
+          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
+            .first { it is ScreenScopeError.Actions.Common.ButtonMain }
         Button(
           text = action.titleRes?.let { stringResource(it) }.orEmpty(),
           onClick = {
@@ -190,7 +202,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
               else -> send(cmd as C)
             }
           },
-          loading = processing.value == cmd
+          loading = processing.value == cmd,
         )
       }
     }
@@ -209,52 +221,66 @@ fun SentenceRow(
   onClick: (() -> Unit)? = null,
   onLongClick: (() -> Unit)? = null,
 ) {
-  val colorsPrimary = if (enabled) AppTheme.colors.backgroundPrimary else {
-    AppTheme.colors.backgroundPrimary.copy(alpha = ContentAlpha.disabled)
-  }
+  val colorsPrimary =
+    if (enabled) {
+      AppTheme.colors.backgroundPrimary
+    } else {
+      AppTheme.colors.backgroundPrimary.copy(alpha = ContentAlpha.DISABLED)
+    }
 
-  val tint = if (enabled) AppTheme.colors.accentPrimary else {
-    AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.disabled)
-  }
+  val tint =
+    if (enabled) {
+      AppTheme.colors.accentPrimary
+    } else {
+      AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.DISABLED)
+    }
   val iconTint = if (tintIcon) tint else Color.Unspecified
 
-  val colorsSecondary = if (enabled) AppTheme.colors.backgroundSecondary else {
-    AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.disabled)
-  }
-  val interactionModifier = when {
-    !enabled -> Modifier
-    onLongClick != null && onClick != null -> Modifier.combinedClickable(
-      onClick = onClick,
-      onLongClick = onLongClick,
-    )
+  val colorsSecondary =
+    if (enabled) {
+      AppTheme.colors.backgroundSecondary
+    } else {
+      AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.DISABLED)
+    }
+  val interactionModifier =
+    when {
+      !enabled -> Modifier
+      onLongClick != null && onClick != null ->
+        Modifier.combinedClickable(
+          onClick = onClick,
+          onLongClick = onLongClick,
+        )
 
-    onClick != null -> Modifier.clickable(onClick = onClick)
-    onLongClick != null -> Modifier.combinedClickable(
-      onClick = { },
-      onLongClick = onLongClick,
-    )
+      onClick != null -> Modifier.clickable(onClick = onClick)
+      onLongClick != null ->
+        Modifier.combinedClickable(
+          onClick = { },
+          onLongClick = onLongClick,
+        )
 
-    else -> Modifier
-  }
+      else -> Modifier
+    }
   Row(
-    modifier = modifier
-      .background(color = colorsPrimary, shape = RoundedCornerShape(20.dp))
-      .clip(shape = RoundedCornerShape(20.dp))
-      .then(interactionModifier)
-      .padding(horizontal = 16.dp, vertical = 8.dp),
+    modifier =
+      modifier
+        .background(color = colorsPrimary, shape = RoundedCornerShape(20.dp))
+        .clip(shape = RoundedCornerShape(20.dp))
+        .then(interactionModifier)
+        .padding(horizontal = 16.dp, vertical = 8.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Box(contentAlignment = Alignment.Center) {
       if (loading != null) {
         Crossfade(
           modifier = Modifier.size(40.dp),
-          targetState = loading
+          targetState = loading,
         ) { loading ->
           if (loading) {
             CircularProgress(
-              modifier = Modifier
-                .padding(8.dp)
-                .size(32.dp),
+              modifier =
+                Modifier
+                  .padding(8.dp)
+                  .size(32.dp),
             )
           } else {
             if (painter == null) {
@@ -263,11 +289,12 @@ fun SentenceRow(
               Icon(
                 painter = painter,
                 contentDescription = null,
-                modifier = Modifier
-                  .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-                  .padding(8.dp)
-                  .size(32.dp),
-                tint = iconTint
+                modifier =
+                  Modifier
+                    .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+                    .padding(8.dp)
+                    .size(32.dp),
+                tint = iconTint,
               )
             }
           }
@@ -279,11 +306,12 @@ fun SentenceRow(
           Icon(
             painter = painter,
             contentDescription = null,
-            modifier = Modifier
-              .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-              .padding(8.dp)
-              .size(32.dp),
-            tint = iconTint
+            modifier =
+              Modifier
+                .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
+                .padding(8.dp)
+                .size(32.dp),
+            tint = iconTint,
           )
         }
       }
@@ -294,20 +322,20 @@ fun SentenceRow(
         Text(
           text = title,
           style = AppTheme.typography.titleMedium,
-          color = AppTheme.colors.contentPrimary
+          color = AppTheme.colors.contentPrimary,
         )
         VSpacer(2.dp)
         Text(
           text = subtitle,
           style = AppTheme.typography.bodyMedium,
-          color = AppTheme.colors.contentSecondary
+          color = AppTheme.colors.contentSecondary,
         )
       }
     } else {
       Text(
         text = title,
         style = AppTheme.typography.titleMedium,
-        color = AppTheme.colors.contentPrimary
+        color = AppTheme.colors.contentPrimary,
       )
     }
   }
@@ -319,10 +347,9 @@ fun CircularProgress(modifier: Modifier = Modifier) {
     modifier = modifier,
     color = AppTheme.colors.accentPrimary,
     strokeWidth = 1.2.dp,
-    strokeCap = StrokeCap.Round
+    strokeCap = StrokeCap.Round,
   )
 }
-
 
 @Immutable
 data class Action(
@@ -350,7 +377,9 @@ fun TopAppBar(
           tint = AppTheme.colors.accentPrimary,
         )
       }
-    } else HSpacer(12.dp)
+    } else {
+      HSpacer(12.dp)
+    }
     if (description != null) {
       Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -382,10 +411,11 @@ fun TopAppBar(
           tint = AppTheme.colors.accentPrimary,
         )
       }
-    } else HSpacer(12.dp)
+    } else {
+      HSpacer(12.dp)
+    }
   }
 }
-
 
 @Composable
 fun Dialog(
@@ -408,16 +438,18 @@ fun Dialog(
         },
       )
     },
-    dismissButton = if (secondary != null) {
-      {
-        Button(
-          text = stringResource(secondary.resRef),
-          onClick = {
-            secondary.listener
-          },
-        )
-      }
-    } else null,
+    dismissButton =
+      if (secondary != null) {
+        {
+          Button(
+            text = stringResource(secondary.resRef),
+            onClick = {
+              secondary.listener
+            },
+          )
+        }
+      } else {
+        null
+      },
   )
 }
-

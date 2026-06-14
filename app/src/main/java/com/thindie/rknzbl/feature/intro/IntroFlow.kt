@@ -27,7 +27,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.Route
 import com.thindie.rknzbl.engine.RouteFactory
@@ -35,7 +34,6 @@ import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.ScreenFlow
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ScreenScopeError
-import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
@@ -62,45 +60,41 @@ class IntroFlow(
   val hasPushPermission: Boolean,
   private val appContext: Context,
 ) : ScreenFlow<Route, IntroFlow.Result>(router) {
-
-  fun startAppFlow() {
-    val repository = (appContext as Application).applicationScope.data.repository
-    HomeFlow(router = router, appContext = appContext, repository = repository)
-      .onFinishBuilder { finish(Result.Success) }
-      .start()
-  }
-
   enum class Result {
     Success,
   }
 
   override fun start() {
-    router.push(main())
+    go(main())
   }
 
   private fun hasVpnPermission(): Boolean = VpnService.prepare(appContext) == null
 
-  fun main() = RouteFactory.create(
-    initialState = State(),
-    execute = ::exec,
-    routeContent = { IntroScreenContent(this) },
-    errorMapper = {
-      ScreenScopeError(
-        message = appContext.getString(R.string.error_unexpected),
-        actions = emptyMap(),
-      )
-    },
-    initialCommand = RouteFactory.InitialCommand {
-      CommandIntro.Start as CommandIntro
-    },
-  )
+  fun main() =
+    RouteFactory.create(
+      initialState = State(),
+      execute = ::exec,
+      routeContent = { IntroScreenContent(this) },
+      errorMapper = {
+        ScreenScopeError(
+          message = appContext.getString(R.string.error_unexpected),
+          actions = emptyMap(),
+        )
+      },
+      id = "IntroFlow-vpn",
+      initialCommand =
+        RouteFactory.InitialCommand {
+          CommandIntro.Start as CommandIntro
+        },
+    )
 
   @Immutable
   data class State(
-    val permissionScope: List<Permission> = buildList {
-      add(Permission.Vpn)
-      add(Permission.Push)
-    },
+    val permissionScope: List<Permission> =
+      buildList {
+        add(Permission.Vpn)
+        add(Permission.Push)
+      },
     val permit: List<Permission> = emptyList(),
     val current: Permission = Permission.Vpn,
     val stage: Stage = Stage.Loading,
@@ -122,31 +116,41 @@ class IntroFlow(
 
   sealed interface CommandIntro : Command {
     data object Start : CommandIntro
+
     data object Dismiss : CommandIntro
+
     data object AcceptSoftRequest : CommandIntro
+
     data object DeclineSoftRequest : CommandIntro
+
     data object ConfirmRationale : CommandIntro
+
     data object PermissionDenied : CommandIntro
   }
 
-  private suspend fun exec(command: CommandIntro, state: State): State {
+  private suspend fun exec(
+    command: CommandIntro,
+    state: State,
+  ): State {
     return when (command) {
       CommandIntro.Start -> {
         when {
-          !hasVpnPermission() -> state.copy(
-            stage = Stage.SoftRequest,
-            current = Permission.Vpn,
-            hint = null
-          )
+          !hasVpnPermission() ->
+            state.copy(
+              stage = Stage.SoftRequest,
+              current = Permission.Vpn,
+              hint = null,
+            )
 
-          !hasPushPermission -> state.copy(
-            stage = Stage.SoftRequest,
-            current = Permission.Push,
-            hint = null
-          )
+          !hasPushPermission ->
+            state.copy(
+              stage = Stage.SoftRequest,
+              current = Permission.Push,
+              hint = null,
+            )
 
           else -> {
-            startAppFlow()
+            finish(Result.Success)
             state
           }
         }
@@ -155,17 +159,18 @@ class IntroFlow(
       CommandIntro.AcceptSoftRequest -> {
         state.copy(
           stage = Stage.Rationale,
-          hint = null
+          hint = null,
         )
       }
 
       CommandIntro.DeclineSoftRequest -> {
         state.copy(
           stage = Stage.SoftRequest,
-          hint = when (state.current) {
-            Permission.Vpn -> appContext.getString(R.string.intro_hint_vpn_decline)
-            Permission.Push -> appContext.getString(R.string.intro_hint_push_decline)
-          }
+          hint =
+            when (state.current) {
+              Permission.Vpn -> appContext.getString(R.string.intro_hint_vpn_decline)
+              Permission.Push -> appContext.getString(R.string.intro_hint_push_decline)
+            },
         )
       }
 
@@ -180,13 +185,13 @@ class IntroFlow(
             } else {
               state.copy(
                 stage = Stage.SoftRequest,
-                hint = appContext.getString(R.string.intro_hint_vpn_not_granted)
+                hint = appContext.getString(R.string.intro_hint_vpn_not_granted),
               )
             }
           }
 
           Permission.Push -> {
-            startAppFlow()
+            finish(Result.Success)
             state
           }
         }
@@ -197,13 +202,13 @@ class IntroFlow(
           Permission.Vpn -> {
             state.copy(
               stage = Stage.SoftRequest,
-              hint = appContext.getString(R.string.intro_hint_vpn_not_granted)
+              hint = appContext.getString(R.string.intro_hint_vpn_not_granted),
             )
           }
 
           Permission.Push -> {
             state.copy(
-              stage = Stage.RationaleDismissedOnce
+              stage = Stage.RationaleDismissedOnce,
             )
           }
         }
@@ -212,12 +217,13 @@ class IntroFlow(
       CommandIntro.Dismiss -> {
         when (state.current) {
           Permission.Vpn -> Unit
-          Permission.Push -> when (state.stage) {
-            Stage.Loading -> Unit
-            Stage.Rationale -> startAppFlow()
-            Stage.SoftRequest -> startAppFlow()
-            Stage.RationaleDismissedOnce -> startAppFlow()
-          }
+          Permission.Push ->
+            when (state.stage) {
+              Stage.Loading -> Unit
+              Stage.Rationale -> finish(Result.Success)
+              Stage.SoftRequest -> finish(Result.Success)
+              Stage.RationaleDismissedOnce -> finish(Result.Success)
+            }
         }
         state
       }
@@ -230,56 +236,61 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
   with(scope) {
     val st by state.collectAsState()
     val activity = LocalActivity.current
-    val launcher = rememberLauncherForActivityResult(
-      ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-      if (result.resultCode == Activity.RESULT_OK) {
-        send(IntroFlow.CommandIntro.ConfirmRationale)
-      } else {
-        send(IntroFlow.CommandIntro.PermissionDenied)
-      }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-      contract = ActivityResultContracts.RequestPermission()
-    ) {
-      if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
-          PackageManager.PERMISSION_GRANTED
-        ) {
+    val launcher =
+      rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+      ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
           send(IntroFlow.CommandIntro.ConfirmRationale)
         } else {
           send(IntroFlow.CommandIntro.PermissionDenied)
         }
       }
-    }
 
-    val settingsLauncher = rememberLauncherForActivityResult(
-      ActivityResultContracts.StartActivityForResult()
-    ) {
-      if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
-          PackageManager.PERMISSION_GRANTED
-        ) {
-          send(IntroFlow.CommandIntro.ConfirmRationale)
+    val permissionLauncher =
+      rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+      ) {
+        if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+          ) {
+            send(IntroFlow.CommandIntro.ConfirmRationale)
+          } else {
+            send(IntroFlow.CommandIntro.PermissionDenied)
+          }
         }
       }
-    }
+
+    val settingsLauncher =
+      rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+      ) {
+        if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+          ) {
+            send(IntroFlow.CommandIntro.ConfirmRationale)
+          }
+        }
+      }
 
     BackHandler { send(IntroFlow.CommandIntro.Dismiss) }
 
     AppScreen(
-      title = stringResource(
-        when (st.current) {
-          IntroFlow.Permission.Vpn -> R.string.intro_screen_title_vpn
-          IntroFlow.Permission.Push -> R.string.intro_screen_title_push
-        }
-      ),
+      title =
+        stringResource(
+          when (st.current) {
+            IntroFlow.Permission.Vpn -> R.string.intro_screen_title_vpn
+            IntroFlow.Permission.Push -> R.string.intro_screen_title_push
+          },
+        ),
       subtitle = st.hint,
     ) {
       Column(
-        modifier = Modifier
-          .fillMaxSize()
+        modifier =
+          Modifier
+            .fillMaxSize(),
       ) {
         when (st.stage) {
           IntroFlow.Stage.Loading -> Unit
@@ -290,18 +301,20 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                 SentenceRow(
                   painter = painterResource(R.drawable.ic_attention_24),
                   onClick = null,
-                  title = stringResource(
-                    when (st.current) {
-                      IntroFlow.Permission.Vpn -> R.string.intro_soft_title_vpn
-                      IntroFlow.Permission.Push -> R.string.intro_soft_title_push
-                    }
-                  ),
-                  subtitle = stringResource(
-                    when (st.current) {
-                      IntroFlow.Permission.Vpn -> R.string.intro_soft_subtitle_vpn
-                      IntroFlow.Permission.Push -> R.string.intro_soft_subtitle_push
-                    }
-                  ),
+                  title =
+                    stringResource(
+                      when (st.current) {
+                        IntroFlow.Permission.Vpn -> R.string.intro_soft_title_vpn
+                        IntroFlow.Permission.Push -> R.string.intro_soft_title_push
+                      },
+                    ),
+                  subtitle =
+                    stringResource(
+                      when (st.current) {
+                        IntroFlow.Permission.Vpn -> R.string.intro_soft_subtitle_vpn
+                        IntroFlow.Permission.Push -> R.string.intro_soft_subtitle_push
+                      },
+                    ),
                   loading = false,
                 )
               },
@@ -310,16 +323,16 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                 Button(
                   modifier = Modifier.fillMaxWidth(),
                   text = stringResource(R.string.intro_btn_not_now),
-                  onClick = { send(IntroFlow.CommandIntro.DeclineSoftRequest) }
+                  onClick = { send(IntroFlow.CommandIntro.DeclineSoftRequest) },
                 )
               },
               confirmButton = {
                 Button(
                   modifier = Modifier.fillMaxWidth(),
                   text = stringResource(R.string.intro_btn_understood),
-                  onClick = { send(IntroFlow.CommandIntro.AcceptSoftRequest) }
+                  onClick = { send(IntroFlow.CommandIntro.AcceptSoftRequest) },
                 )
-              }
+              },
             )
           }
 
@@ -327,11 +340,12 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
             LaunchedEffect(st.stage, st.current) {
               when (st.current) {
                 IntroFlow.Permission.Vpn -> {
-                  val intent = if (activity != null) {
-                    VpnService.prepare(activity)
-                  } else {
-                    null
-                  }
+                  val intent =
+                    if (activity != null) {
+                      VpnService.prepare(activity)
+                    } else {
+                      null
+                    }
                   if (intent == null) {
                     send(IntroFlow.CommandIntro.ConfirmRationale)
                   } else {
@@ -344,7 +358,7 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                       if (ContextCompat.checkSelfPermission(
                           activity,
-                          Manifest.permission.POST_NOTIFICATIONS
+                          Manifest.permission.POST_NOTIFICATIONS,
                         ) !=
                         PackageManager.PERMISSION_GRANTED
                       ) {
@@ -378,7 +392,7 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                 Button(
                   modifier = Modifier.fillMaxWidth(),
                   text = stringResource(R.string.intro_push_continue_without),
-                  onClick = { send(IntroFlow.CommandIntro.ConfirmRationale) }
+                  onClick = { send(IntroFlow.CommandIntro.ConfirmRationale) },
                 )
               },
               confirmButton = {
@@ -393,9 +407,9 @@ private fun IntroScreenContent(scope: ScreenScope<IntroFlow.State, IntroFlow.Com
                     val target =
                       if (primary.resolveActivity(pm) != null) primary else fallback
                     settingsLauncher.launch(target)
-                  }
+                  },
                 )
-              }
+              },
             )
           }
         }

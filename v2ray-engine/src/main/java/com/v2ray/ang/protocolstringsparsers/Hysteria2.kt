@@ -30,6 +30,7 @@ object Hysteria2 : ProtocolParser() {
         password = uri.userInfo,
         security = AppConfig.TLS,
         network = NetworkType.HYSTERIA.type,
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
       )
 
     if (!uri.rawQuery.isNullOrEmpty()) {

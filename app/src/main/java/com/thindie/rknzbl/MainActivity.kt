@@ -34,6 +34,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Route
+import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
@@ -42,13 +43,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
-        PackageManager.PERMISSION_GRANTED
-    } else null
+    val hasPermission =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+          PackageManager.PERMISSION_GRANTED
+      } else {
+        null
+      }
 
     enableEdgeToEdge()
     val app = application as Application
@@ -59,8 +62,14 @@ class MainActivity : ComponentActivity() {
         IntroFlow(
           router,
           hasPushPermission = if (hasPermission != null) hasPermission else true,
-          appContext = app
+          appContext = app,
         )
+          .onFinishBuilder {
+            val repository = app.applicationScope.data.repository
+            HomeFlow(router = router, appContext = app, repository = repository)
+              .onFinishBuilder { router.pop() }
+              .start()
+          }
           .start()
       }
       val themeSwitcher = remember { ThemeSwitcher() }
@@ -68,12 +77,13 @@ class MainActivity : ComponentActivity() {
         LocalThemeSwitcher provides themeSwitcher,
       ) {
         val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
-        val isDark = when (themeColors.value) {
-          null -> isSystemInDarkTheme()
-          ThemeSwitcher.Choice.Dark -> true
-          ThemeSwitcher.Choice.Light -> false
-          ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
-        }
+        val isDark =
+          when (themeColors.value) {
+            null -> isSystemInDarkTheme()
+            ThemeSwitcher.Choice.Dark -> true
+            ThemeSwitcher.Choice.Light -> false
+            ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
+          }
         val view = LocalView.current
         if (!view.isInEditMode) {
           SideEffect {
@@ -96,13 +106,13 @@ class MainActivity : ComponentActivity() {
               transitionSpec = {
                 if (isPop) {
                   slideInHorizontally(tween) { -it } + fadeIn(tween()) togetherWith
-                      slideOutHorizontally(tween) { it } + fadeOut(tween())
+                    slideOutHorizontally(tween) { it } + fadeOut(tween())
                 } else {
                   slideInHorizontally(tween) { it } + fadeIn(tween()) togetherWith
-                      slideOutHorizontally(tween) { -it } + fadeOut(tween())
+                    slideOutHorizontally(tween) { -it } + fadeOut(tween())
                 }
               },
-              label = "route"
+              label = "route",
             ) { route -> route.content.invoke() }
           }
         }

@@ -1,0 +1,256 @@
+package com.thindie.rknzbl.feature.home.ui.newprofiles
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.thindie.rknzbl.R
+import com.thindie.rknzbl.engine.ScreenScope
+import com.thindie.rknzbl.engine.ServiceCommand
+import com.thindie.rknzbl.feature.home.ui.select.SelectScreenCommand
+import com.thindie.rknzbl.uikit.Action
+import com.thindie.rknzbl.uikit.AppScreen
+import com.thindie.rknzbl.uikit.AppTheme
+import com.thindie.rknzbl.uikit.Button
+import com.thindie.rknzbl.uikit.CircularProgress
+import com.thindie.rknzbl.uikit.HSpacer
+import com.thindie.rknzbl.uikit.LocalThemeSwitcher
+import com.thindie.rknzbl.uikit.SentenceRow
+import com.thindie.rknzbl.uikit.ThemeSwitcher
+import com.thindie.rknzbl.uikit.VSpacer
+import com.thindie.rknzbl.uikit.surface
+
+@Composable
+fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
+  val themeSwitcher = LocalThemeSwitcher.current
+  val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
+  val isDark =
+    when (themeColors.value) {
+      null -> isSystemInDarkTheme()
+      ThemeSwitcher.Choice.Dark -> true
+      ThemeSwitcher.Choice.Light -> false
+      ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
+    }
+  val screenState by state.collectAsState()
+  AppScreen(
+    primary = Action(
+      resRef = R.drawable.ic_arrow_back_24,
+      listener = {
+        send(ScreenCommand.Back)
+      }
+    ),
+    secondary =
+      Action(
+        resRef = R.drawable.ic_theme_24,
+        listener = {
+          themeSwitcher.set(
+            if (isDark) ThemeSwitcher.Choice.Light else ThemeSwitcher.Choice.Dark,
+          )
+        },
+      ),
+  ) {
+    BackHandler { send(ScreenCommand.Back) }
+    val st by state.collectAsState()
+    val height = LocalWindowInfo.current.containerSize.height.dp
+    PullToRefreshBox(
+      isRefreshing = false,
+      modifier = Modifier.height(height),
+      onRefresh = {
+        send(ScreenCommand.Refresh)
+      },
+    ) {
+      LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        stickyHeader {
+          Row(
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .background(AppTheme.colors.backgroundPrimary),
+          ) {
+            Text(
+              text = stringResource(R.string.home_downloaded_profiles_header),
+              style = AppTheme.typography.headlineLarge,
+              color = AppTheme.colors.contentPrimary,
+            )
+          }
+        }
+        item {
+          SentenceRow(
+            painter = painterResource(R.drawable.ic_chevron_right_24),
+            title =
+              if (st.sourceName.isBlank()) {
+                stringResource(R.string.home_choose_source)
+              } else {
+                stringResource(R.string.home_source_selected_prefix)
+              },
+            subtitle = st.sourceName,
+            onClick = { send(ScreenCommand.Choose) },
+            loading = false,
+          )
+        }
+        item {
+          SentenceRow(
+            painter = painterResource(R.drawable.ic_information_24),
+            title = stringResource(R.string.per_app_proxy_row_title),
+            subtitle = stringResource(R.string.per_app_proxy_row_subtitle),
+            onClick = { send(ScreenCommand.OpenPerAppProxy) },
+            loading = false,
+          )
+        }
+        items(
+          items = screenState.links,
+        ) { item ->
+          SentenceRow(
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color =
+                        if (screenState.selected == item && screenState.established) {
+                          AppTheme.colors.accentPrimary
+                        } else {
+                          AppTheme.colors.backgroundSecondary
+                        },
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
+            painter = painterResource(R.drawable.ic_internet_24),
+            title = item.remarks + item.serverPort.orEmpty(),
+            subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
+            loading = false,
+            onClick = { send(ScreenCommand.Select(item)) },
+            onLongClick =
+              if (st.selected == item) {
+                {
+                  sendEvent(
+                    ServiceCommand.UiEvent.Decision(
+                      content = {
+                        Text(
+                          text = stringResource(R.string.source_stored_add),
+                          style = AppTheme.typography.bodyMedium,
+                        )
+                      },
+                      primaryAction =
+                        Action(
+                          resRef = R.string.source_select_done,
+                          listener = { send(ScreenCommand.Save(item)) },
+                        ),
+                    ),
+                  )
+                }
+              } else {
+                null
+              },
+          )
+        }
+        item {
+          VSpacer(72.dp)
+        }
+      }
+      Button(
+        modifier =
+          Modifier
+            .align(Alignment.BottomCenter)
+            .padding(16.dp),
+        enabled = st.established || st.links.isEmpty(),
+        text =
+          when {
+            this@NewProfiles.processing == ScreenCommand.Start -> ""
+            st.links.isEmpty() -> stringResource(R.string.home_fetch_profiles)
+            st.established -> stringResource(R.string.home_stop_service)
+            else -> stringResource(R.string.home_pick_profile_first)
+          },
+        onClick = {
+          if (st.established) {
+            send(ScreenCommand.Stop)
+          } else {
+            send(ScreenCommand.Start)
+          }
+        },
+      )
+    }
+  }
+  if (screenState.serviceBeingStarted == true) {
+    Box(
+      Modifier
+        .fillMaxSize()
+        .background(
+          Color.Transparent.copy(alpha = 0.3f),
+        )
+        .clickable(onClick = {}, enabled = false),
+    ) {
+      CircularProgress(
+        modifier =
+          Modifier
+            .align(Alignment.Center)
+            .background(
+              color = AppTheme.colors.backgroundSecondary,
+              shape = RoundedCornerShape(20.dp),
+            )
+            .padding(16.dp),
+      )
+      AnimatedVisibility(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .padding(
+              all = 16.dp,
+            ),
+        visible = true,
+      ) {
+        Row(
+          modifier =
+            Modifier
+              .fillMaxWidth()
+              .padding(
+                all = 16.dp,
+              )
+              .surface(
+                backgroundColor = AppTheme.colors.backgroundPrimary,
+                shape = RoundedCornerShape(20.dp),
+              )
+              .height(56.dp),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          HSpacer(16.dp)
+          Text(
+            stringResource(R.string.home_starting_vpn),
+            style = AppTheme.typography.bodyMedium,
+          )
+        }
+      }
+    }
+  }
+}

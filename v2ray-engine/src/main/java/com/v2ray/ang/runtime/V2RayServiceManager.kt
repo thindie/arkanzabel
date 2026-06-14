@@ -1,5 +1,6 @@
 package com.v2ray.ang.runtime
 
+import android.app.Application
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -18,6 +19,7 @@ import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.error.AppError
 import com.v2ray.ang.service.V2RayProxyOnlyService
 import com.v2ray.ang.service.V2RayVpnService
+import com.v2ray.ang.util.ConnectionProfileSummariser
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
@@ -141,7 +143,7 @@ object V2RayServiceManager {
      * `registerReceiver(Context, BroadcastReceiver, IntentFilter, int)`.
      * Starts the V2Ray core service.
      */
-    fun startCoreLoop(vpnInterface: ParcelFileDescriptor?): Boolean {
+    fun startCoreLoop(vpnInterface: ParcelFileDescriptor?, application: Application): Boolean {
         if (isRunningInternal) {
             return false
         }
@@ -192,7 +194,8 @@ object V2RayServiceManager {
         }
 
         try {
-            NotificationManager.showNotification(currentConfig)
+            val isFavorite = (application as ConnectionProfileSummariser).isSavedAsFavorite(config)
+            NotificationManager.showNotification(config, isFavorite)
             coreController.startLoop(result.json, tunFd)
         } catch (runtime: RuntimeException) {
             Log.e(AppConfig.TAG, "Failed to start Core loop", runtime)
@@ -422,6 +425,11 @@ object V2RayServiceManager {
                         { startVService(ctx) },
                         500L,
                     )
+                }
+
+                AppConfig.MSG_STATE_SAVE_PROFILE -> {
+                    Log.i(AppConfig.TAG, "Save Profile")
+                    MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_SAVE_PROFILE, "")
                 }
 
                 AppConfig.MSG_MEASURE_DELAY -> {

@@ -92,6 +92,7 @@ object Vmess : ProtocolParser() {
       sni = vmessQRCode.sni,
       fingerPrint = vmessQRCode.fp,
       alpn = vmessQRCode.alpn,
+      subscriptionId = vmessQRCode.add + vmessQRCode.port + vmessQRCode.ps,
       insecure = insecure,
     )
   }
@@ -151,6 +152,7 @@ object Vmess : ProtocolParser() {
         serverPort = uri.port.toString(),
         password = uri.userInfo,
         method = AppConfig.DEFAULT_SECURITY,
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
       )
 
     return getItemFormQuery(base, queryParam, allowInsecure)

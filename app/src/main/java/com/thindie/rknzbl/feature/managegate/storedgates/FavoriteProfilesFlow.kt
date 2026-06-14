@@ -16,11 +16,9 @@ class FavoriteProfilesFlow(
   val repository: ConnectionProfileRepository,
   val appContext: Context,
 ) : ScreenFlow<Route, Unit>(router) {
-
   override fun start() {
     go(profiles())
   }
-
 
   private fun webDavErrorMessage(t: Throwable): String =
     when (t) {
@@ -44,36 +42,40 @@ class FavoriteProfilesFlow(
           is AppError.ServerError.HttpRequestFailed -> {
             ScreenScopeError(
               message = webDavErrorMessage(e),
-              actions = mapOf(
-                ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
-              )
+              actions =
+                mapOf(
+                  ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+                ),
             )
           }
 
           AppError.ServerError.TimeOut -> {
             ScreenScopeError(
               message = webDavErrorMessage(e),
-              actions = mapOf(
-                ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
-              )
+              actions =
+                mapOf(
+                  ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+                ),
             )
           }
 
           AppError.ServerError.ConnectionFailed -> {
             ScreenScopeError(
               message = webDavErrorMessage(e),
-              actions = mapOf(
-                ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
-              )
+              actions =
+                mapOf(
+                  ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+                ),
             )
           }
 
           is AppError.UnexpectedError -> {
             ScreenScopeError(
               message = webDavErrorMessage(e),
-              actions = mapOf(
-                ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
-              )
+              actions =
+                mapOf(
+                  ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+                ),
             )
           }
 
@@ -83,23 +85,26 @@ class FavoriteProfilesFlow(
           is AppError.WebDav.NotFound,
           AppError.WebDav.Unauthorized,
           AppError.WebDav.UploadOpenFailed,
-            -> {
+          -> {
             ScreenScopeError(
               message = webDavErrorMessage(e),
-              actions = mapOf(
-                ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
-              )
+              actions =
+                mapOf(
+                  ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+                ),
             )
           }
         }
       }
 
-      else -> ScreenScopeError(
-        message = webDavErrorMessage(e),
-        actions = mapOf(
-          ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError
+      else ->
+        ScreenScopeError(
+          message = webDavErrorMessage(e),
+          actions =
+            mapOf(
+              ScreenScopeError.Actions.Common.ButtonMain to ServiceCommand.DismissError,
+            ),
         )
-      )
     }
   }
 }

@@ -13,7 +13,7 @@ import com.v2ray.ang.util.Utils
 data class ConnectionProfile(
     val configVersion: Int = 4,
     val protocol: Protocol,
-    val subscriptionId: String = "",
+    val subscriptionId: String,
     val addedTime: Long = System.currentTimeMillis(),
 
     val remarks: String = "",

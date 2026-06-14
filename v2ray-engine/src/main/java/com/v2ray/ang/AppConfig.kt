@@ -177,6 +177,7 @@ object AppConfig {
     const val MSG_STATE_STOP = 4
     const val MSG_STATE_STOP_SUCCESS = 41
     const val MSG_STATE_RESTART = 5
+    const val MSG_STATE_SAVE_PROFILE = 55
     const val MSG_MEASURE_DELAY = 6
     const val MSG_MEASURE_DELAY_SUCCESS = 61
     const val MSG_MEASURE_CONFIG = 7

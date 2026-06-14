@@ -30,6 +30,7 @@ object Socks : ProtocolParser() {
       serverPort = uri.port.toString(),
       username = username,
       password = password,
+      subscriptionId = uri.userInfo + uri.idnHost + username
     )
   }
 

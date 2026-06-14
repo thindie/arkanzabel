@@ -1,7 +1,9 @@
 package com.thindie.rknzbl.feature.home.data
 
+import android.util.Log
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
@@ -21,6 +23,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
@@ -31,10 +37,16 @@ class ConnectionProfileRepositoryImpl(
   private val url: String,
   private val storage: KeyValueStorage,
 ) : ConnectionProfileRepository {
-
   private val httpClient: HttpClient by lazy {
     newAuthenticatedWebdavClient(userName, password)
   }
+
+  private val autoSavedEvents =
+    MutableSharedFlow<String>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
   override suspend fun read(): List<ConnectionProfile> {
     val client = httpClient
@@ -48,14 +60,19 @@ class ConnectionProfileRepositoryImpl(
       .toList()
   }
 
-  override suspend fun save(guid: String) {
-    if (guid.isBlank()) return
+  override suspend fun save(guid: String): Boolean {
+    if (guid.isBlank()) return false
     val profilePretty = storage.decodeServerConfig(guid)
-    if (profilePretty == null) return
-    val client = httpClient
+    if (profilePretty == null) {
+      Log.i(AppConfig.TAG, "Save Profile: failure, decodeServerConfig")
+      return false
+    }
+    val (currentBody, isSaved) = isSavedInternal(profilePretty)
+    if (isSaved) return false
     val profileJson = JsonUtil.toJson(profilePretty)
-    val currentBody = readInternal(client, url)
-    writeInternal(client, url, currentBody + SEPARATOR + profileJson)
+    writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
+    Log.i(AppConfig.TAG, "Save Profile: success")
+    return true
   }
 
   override suspend fun delete(profile: ConnectionProfile) {
@@ -65,6 +82,54 @@ class ConnectionProfileRepositoryImpl(
     val filteredBody = currentBody.replace(oldValue = profileJson, "")
     val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
     writeInternal(client, url, fallbackBody)
+  }
+
+  override fun autoSaved(): Flow<ConnectionProfile?> {
+    return autoSavedEvents
+      .map { guid ->
+        storage.decodeServerConfig(guid)
+      }
+  }
+
+  override suspend fun fetchAutoSaved() {
+    val guid = KeyValueStorage.getLastAutoSaveProfilesJson()
+    guid?.let { autoSavedEvents.tryEmit(it) }
+  }
+
+  override suspend fun activeProfile(): ConnectionProfile? {
+    return activeProfileInternal()
+  }
+
+  override suspend fun isSaved(profile: ConnectionProfile): Boolean {
+    return isSavedInternal(profile).second
+  }
+
+  private suspend fun isSavedInternal(connectionProfile: ConnectionProfile): Pair<String, Boolean> {
+    val id = connectionProfile.subscriptionId
+    Log.i(AppConfig.TAG, "Save Profile: check for $id")
+    val client = httpClient
+    val currentBody = readInternal(client, url)
+    if (id in currentBody) {
+      Log.i(AppConfig.TAG, "Save Profile: already saved")
+      return currentBody to true
+    }
+    return currentBody to false
+  }
+
+  private fun activeProfileInternal(): ConnectionProfile? {
+    val guid = storage.getSelectServer() ?: return null
+    val profilePretty = storage.decodeServerConfig(guid)
+    return profilePretty
+  }
+
+  override suspend fun saveAuto(guid: String) {
+    KeyValueStorage.setLastAutoSaveProfilesJson(guid)
+    autoSavedEvents.tryEmit(guid)
+  }
+
+  override suspend fun markAutoSavedSeen() {
+    KeyValueStorage.setLastAutoSaveProfilesJson("")
+    autoSavedEvents.tryEmit("")
   }
 }
 
@@ -76,14 +141,19 @@ private fun parseRemote(trimmedBody: String): List<String> {
     .filter { it.isNotEmpty() }
 }
 
-private suspend fun readInternal(client: HttpClient, url: String): String =
+private suspend fun readInternal(
+  client: HttpClient,
+  url: String,
+): String =
   withTimeoutOrNull(5_000L) {
     try {
       val response = client.get(url)
       if (!response.status.isSuccess()) {
         throw webDavErrorFromStatus(response.status, url)
       }
-      response.body<String>().trim()
+      val result = response.body<String>().trim()
+      Log.i("readInternal: ", result)
+      result
     } catch (e: CancellationException) {
       throw e
     } catch (_: HttpRequestTimeoutException) {
@@ -93,13 +163,18 @@ private suspend fun readInternal(client: HttpClient, url: String): String =
     }
   } ?: throw AppError.ServerError.TimeOut
 
-private suspend fun writeInternal(client: HttpClient, url: String, body: String) {
+private suspend fun writeInternal(
+  client: HttpClient,
+  url: String,
+  body: String,
+) {
   withTimeoutOrNull(5_000L) {
     try {
-      val response = client.put(url) {
-        contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
-        setBody(body)
-      }
+      val response =
+        client.put(url) {
+          contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
+          setBody(body)
+        }
       if (!response.status.isSuccess()) {
         throw webDavErrorFromStatus(response.status, url)
       }
@@ -115,7 +190,10 @@ private suspend fun writeInternal(client: HttpClient, url: String, body: String)
 
 private const val SEPARATOR = "########"
 
-private fun newAuthenticatedWebdavClient(userName: String, password: String): HttpClient =
+private fun newAuthenticatedWebdavClient(
+  userName: String,
+  password: String,
+): HttpClient =
   HttpClient(CIO) {
     engine {
       maxConnectionsCount = 32

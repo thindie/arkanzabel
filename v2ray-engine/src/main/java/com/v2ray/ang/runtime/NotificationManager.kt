@@ -17,6 +17,7 @@ import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.extension.toSpeedString
+import java.lang.ref.WeakReference
 import kotlin.math.min
 
 private typealias SysNotificationManager = android.app.NotificationManager
@@ -26,12 +27,15 @@ object NotificationManager {
   private const val NOTIFICATION_PENDING_INTENT_CONTENT = 0
   private const val NOTIFICATION_PENDING_INTENT_STOP_V2RAY = 1
   private const val NOTIFICATION_PENDING_INTENT_RESTART_V2RAY = 2
+
+  private const val NOTIFICATION_PENDING_INTENT_SAVE_PROFILE = 3
   private const val NOTIFICATION_ICON_THRESHOLD = 3000
 
   private val speedHandler = Handler(Looper.getMainLooper())
   private var speedTickRunnable: Runnable? = null
   private var lastQueryTime = 0L
-  private var notificationCompatBuilder: NotificationCompat.Builder? = null
+  private var _notificationCompatBuilder: WeakReference<NotificationCompat.Builder>? = null
+  private val notificationCompatBuilder get() = _notificationCompatBuilder?.get()
   private var mNotificationManager: SysNotificationManager? = null
 
   fun startSpeedNotification(connectionProfile: ConnectionProfile?) {
@@ -86,7 +90,7 @@ object NotificationManager {
     speedHandler.post(tick)
   }
 
-  fun showNotification(connectionProfile: ConnectionProfile?) {
+  fun showNotification(connectionProfile: ConnectionProfile?, hideSaveOption: Boolean) {
     val service = getService() ?: return
     val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -123,6 +127,20 @@ object NotificationManager {
         flags
       )
 
+    val saveProfileIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
+      .apply {
+        `package` = AppConfig.ANG_PACKAGE
+        putExtra("key", AppConfig.MSG_STATE_SAVE_PROFILE)
+      }
+
+    val saveProfilePendingIntent =
+      PendingIntent.getBroadcast(
+        service,
+        NOTIFICATION_PENDING_INTENT_SAVE_PROFILE,
+        saveProfileIntent,
+        flags
+      )
+
     val channelId =
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         createNotificationChannel()
@@ -130,9 +148,9 @@ object NotificationManager {
         ""
       }
 
-    notificationCompatBuilder =
+    _notificationCompatBuilder = WeakReference(
       NotificationCompat.Builder(service, channelId)
-        .setSmallIcon(R.drawable.ic_stat_name)
+        .setSmallIcon(R.drawable.ic_rknzbl)
         .setContentTitle(connectionProfile?.remarks)
         .setPriority(NotificationCompat.PRIORITY_MIN)
         .setOngoing(true)
@@ -148,7 +166,17 @@ object NotificationManager {
           R.drawable.ic_delete_24dp,
           service.getString(R.string.title_service_restart),
           restartV2RayPendingIntent,
-        )
+        ).apply {
+          if (!hideSaveOption) {
+            addAction(
+              R.drawable.ic_delete_24dp,
+              service.getString(R.string.title_service_save),
+              saveProfilePendingIntent,
+            )
+          }
+        }
+    )
+
 
     service.startForeground(NOTIFICATION_ID, notificationCompatBuilder?.build())
   }
@@ -159,7 +187,8 @@ object NotificationManager {
 
     speedTickRunnable?.let { speedHandler.removeCallbacks(it) }
     speedTickRunnable = null
-    notificationCompatBuilder = null
+    _notificationCompatBuilder?.clear()
+    _notificationCompatBuilder = null
     mNotificationManager = null
   }
 

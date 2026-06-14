@@ -90,36 +90,62 @@ object SpeedtestManager {
    * @param port The port to connect to.
    * @return A pair containing the elapsed time in milliseconds and the result message.
    */
-  suspend fun testConnection(context: Context, port: Int): Pair<Long, String> = withContext(Dispatchers.IO) {
+  suspend fun testConnection(context: Context, port: Int): SpeedTestResult? = withContext(Dispatchers.IO) {
     var result: String
-    var elapsed = -1L
+    var error: Throwable? = null
+    var elapsed: Long
 
-    val conn = HttpUtil.createProxyConnection(SettingsManager.getDelayTestUrl(), port, 15000, 15000)
-      ?: return@withContext elapsed to ""
+      val conn = HttpUtil.createProxyConnection(
+      urlStr = SettingsManager.getDelayTestUrl(),
+      port = port,
+      connectTimeout = 15000,
+      readTimeout = 15000
+    )
+      ?: return@withContext null
     try {
       val start = SystemClock.elapsedRealtime()
       val code = conn.responseCode
       elapsed = SystemClock.elapsedRealtime() - start
 
-      result = when (code) {
-        204 -> context.getString(R.string.connection_test_available, elapsed)
-        200 if conn.contentLengthLong == 0L -> context.getString(
+      result = when {
+        code == 204 -> context.getString(R.string.connection_test_available, elapsed)
+        code == 200 && conn.contentLengthLong == 0L -> context.getString(
           R.string.connection_test_available,
           elapsed
         )
-
-        else -> throw IOException(
-          context.getString(R.string.connection_test_error_status_code, code)
-        )
+        code in 400 .. 550  -> {
+          throw IOException(
+            context.getString(R.string.connection_test_error_status_code, code)
+          )
+        }
+        else -> return@withContext null
       }
     } catch (e: IOException) {
       Log.e(AppConfig.TAG, "Connection test IOException", e)
-      result = context.getString(R.string.connection_test_error, e.message)
+      error = IOException(
+        context.getString(R.string.connection_test_error, e.message)
+      )
+      result = ""
     } finally {
       conn.disconnect()
     }
+    if (error != null) {
+      SpeedTestResult.Err(error.message!!)
+    } else {
+      SpeedTestResult.Ok(result)
+    }
+  }
 
-    elapsed to result
+  sealed interface SpeedTestResult {
+    @JvmInline
+    value class Ok(val value: String): SpeedTestResult
+    @JvmInline
+    value class Err(val value: String): SpeedTestResult
+
+    val message get() = when (this) {
+        is Err -> value
+        is Ok -> value
+    }
   }
 
   suspend fun getRemoteIPInfo(): String? = withContext(Dispatchers.IO) {

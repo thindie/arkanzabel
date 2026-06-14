@@ -13,7 +13,7 @@ object Custom : ProtocolParser() {
    * @return the parsed ProfileItem object, or null if parsing fails
    */
   fun parse(str: String): ConnectionProfile? {
-    val config = ConnectionProfile(protocol = Protocol.Custom)
+    val config = ConnectionProfile(protocol = Protocol.Custom, subscriptionId = "")
 
     val fullConfig = JsonUtil.fromJson(str, V2rayConfig::class.java)
     val outbound = fullConfig?.getProxyOutbound()
@@ -21,7 +21,8 @@ object Custom : ProtocolParser() {
     return config.copy(
       remarks = fullConfig?.remarks ?: System.currentTimeMillis().toString(),
       server = outbound?.getServerAddress(),
-      serverPort = outbound?.getServerPort().toString()
+      serverPort = outbound?.getServerPort().toString(),
+      subscriptionId = fullConfig?.remarks.toString() + outbound?.getServerAddress() + outbound?.getServerPort().toString()
     )
   }
 }

@@ -10,10 +10,11 @@ class ApplicationScope {
     const val URL = ""
   }
 
-  val data = HomeFlowModule(
-    userName = Creds.NAME,
-    password = Creds.PWD,
-    storage = KeyValueStorage,
-    baseUrl = Creds.URL
-  )
+  val data =
+    HomeFlowModule(
+      userName = Creds.NAME,
+      password = Creds.PWD,
+      storage = KeyValueStorage,
+      baseUrl = Creds.URL,
+    )
 }

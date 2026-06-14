@@ -23,6 +23,7 @@ object Trojan : ProtocolParser() {
         server = uri.idnHost,
         serverPort = uri.port.toString(),
         password = uri.userInfo,
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
       )
 
     return if (uri.rawQuery.isNullOrEmpty()) {

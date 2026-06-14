@@ -38,6 +38,7 @@ object Shadowsocks : ProtocolParser() {
         serverPort = uri.port.toString(),
         method = userSplit.first(),
         password = userSplit.last(),
+        subscriptionId = uri.idnHost + uri.port.toString() + Protocol.ShadowSocks + userSplit.first()
       )
 
     if (!uri.rawQuery.isNullOrEmpty()) {
@@ -98,6 +99,7 @@ object Shadowsocks : ProtocolParser() {
       serverPort = match.groupValues[4],
       password = match.groupValues[2],
       method = match.groupValues[1].lowercase(),
+      subscriptionId = Protocol.ShadowSocks.value.toString() + remarks + match.groupValues[4] + match.groupValues[2]
     )
   }
 
