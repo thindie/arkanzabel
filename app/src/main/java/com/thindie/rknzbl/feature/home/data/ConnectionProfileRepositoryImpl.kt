@@ -1,7 +1,9 @@
 package com.thindie.rknzbl.feature.home.data
 
+import android.util.Log
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
@@ -58,14 +60,19 @@ class ConnectionProfileRepositoryImpl(
       .toList()
   }
 
-  override suspend fun save(guid: String) {
-    if (guid.isBlank()) return
+  override suspend fun save(guid: String): Boolean {
+    if (guid.isBlank()) return false
     val profilePretty = storage.decodeServerConfig(guid)
-    if (profilePretty == null) return
-    val client = httpClient
+    if (profilePretty == null) {
+      Log.i(AppConfig.TAG, "Save Profile: failure, decodeServerConfig")
+      return false
+    }
+    val (currentBody, isSaved) = isSavedInternal(profilePretty)
+    if (isSaved) return false
     val profileJson = JsonUtil.toJson(profilePretty)
-    val currentBody = readInternal(client, url)
-    writeInternal(client, url, currentBody + SEPARATOR + profileJson)
+    writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
+    Log.i(AppConfig.TAG, "Save Profile: success")
+    return true
   }
 
   override suspend fun delete(profile: ConnectionProfile) {
@@ -87,6 +94,32 @@ class ConnectionProfileRepositoryImpl(
   override suspend fun fetchAutoSaved() {
     val guid = KeyValueStorage.getLastAutoSaveProfilesJson()
     guid?.let { autoSavedEvents.tryEmit(it) }
+  }
+
+  override suspend fun activeProfile(): ConnectionProfile? {
+    return activeProfileInternal()
+  }
+
+  override suspend fun isSaved(profile: ConnectionProfile): Boolean {
+    return isSavedInternal(profile).second
+  }
+
+  private suspend fun isSavedInternal(connectionProfile: ConnectionProfile): Pair<String, Boolean> {
+    val id = connectionProfile.subscriptionId
+    Log.i(AppConfig.TAG, "Save Profile: check for $id")
+    val client = httpClient
+    val currentBody = readInternal(client, url)
+    if (id in currentBody) {
+      Log.i(AppConfig.TAG, "Save Profile: already saved")
+      return currentBody to true
+    }
+    return currentBody to false
+  }
+
+  private fun activeProfileInternal(): ConnectionProfile? {
+    val guid = storage.getSelectServer() ?: return null
+    val profilePretty = storage.decodeServerConfig(guid)
+    return profilePretty
   }
 
   override suspend fun saveAuto(guid: String) {
@@ -118,7 +151,9 @@ private suspend fun readInternal(
       if (!response.status.isSuccess()) {
         throw webDavErrorFromStatus(response.status, url)
       }
-      response.body<String>().trim()
+      val result = response.body<String>().trim()
+      Log.i("readInternal: ", result)
+      result
     } catch (e: CancellationException) {
       throw e
     } catch (_: HttpRequestTimeoutException) {

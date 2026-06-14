@@ -58,6 +58,7 @@ object Vless : ProtocolParser() {
         serverPort = uri.port.toString(),
         password = uri.userInfo,
         method = queryParam["encryption"] ?: "none",
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo + Protocol.Vless
       )
 
     val withQuery = getItemFormQuery(base, queryParam, allowInsecure)

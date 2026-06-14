@@ -108,6 +108,16 @@
     <string name="source_subtitle_ru_services">Конфиги VK, YA, CDN, Beeline</string>
     <string name="source_subtitle_stored">Проверенные</string>
 
+    <!-- Theme mode strings -->
+    <string name="home_select_theme_title">Тема</string>
+    <string name="home_select_theme_auto_subtitle">Автоматически (следует за системой)</string>
+    <string name="home_select_theme_light_subtitle">Светлая тема</string>
+    <string name="home_select_theme_dark_subtitle">Тёмная тема</string>
+
+    <!-- Autosave strings -->
+    <string name="home_select_autosave_title">Авто-сохранение</string>
+    <string name="home_select_autosave_subtitle">Включить/выключить авто-сохранение профилей</string>
+
     <string name="webdav_error_unauthorized">Неверный логин или пароль WebDAV.</string>
     <string name="webdav_error_forbidden">Доступ к этой папке запрещён.</string>
     <string name="webdav_error_not_found">Путь на сервере не найден (404).</string>

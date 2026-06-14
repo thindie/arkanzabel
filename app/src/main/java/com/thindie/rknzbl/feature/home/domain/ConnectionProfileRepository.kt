@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface ConnectionProfileRepository {
   suspend fun read(): List<ConnectionProfile>
 
-  suspend fun save(guid: String)
+  suspend fun save(guid: String): Boolean
 
   suspend fun delete(profile: ConnectionProfile)
 
@@ -17,4 +17,8 @@ interface ConnectionProfileRepository {
   suspend fun markAutoSavedSeen()
 
   suspend fun fetchAutoSaved()
+
+  suspend fun activeProfile(): ConnectionProfile?
+
+  suspend fun isSaved(profile: ConnectionProfile): Boolean
 }

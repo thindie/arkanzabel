@@ -17,6 +17,7 @@ import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.extension.toSpeedString
+import java.lang.ref.WeakReference
 import kotlin.math.min
 
 private typealias SysNotificationManager = android.app.NotificationManager
@@ -33,7 +34,8 @@ object NotificationManager {
   private val speedHandler = Handler(Looper.getMainLooper())
   private var speedTickRunnable: Runnable? = null
   private var lastQueryTime = 0L
-  private var notificationCompatBuilder: NotificationCompat.Builder? = null
+  private var _notificationCompatBuilder: WeakReference<NotificationCompat.Builder>? = null
+  private val notificationCompatBuilder get() = _notificationCompatBuilder?.get()
   private var mNotificationManager: SysNotificationManager? = null
 
   fun startSpeedNotification(connectionProfile: ConnectionProfile?) {
@@ -88,7 +90,7 @@ object NotificationManager {
     speedHandler.post(tick)
   }
 
-  fun showNotification(connectionProfile: ConnectionProfile?) {
+  fun showNotification(connectionProfile: ConnectionProfile?, hideSaveOption: Boolean) {
     val service = getService() ?: return
     val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -146,7 +148,7 @@ object NotificationManager {
         ""
       }
 
-    notificationCompatBuilder =
+    _notificationCompatBuilder = WeakReference(
       NotificationCompat.Builder(service, channelId)
         .setSmallIcon(R.drawable.ic_rknzbl)
         .setContentTitle(connectionProfile?.remarks)
@@ -164,12 +166,17 @@ object NotificationManager {
           R.drawable.ic_delete_24dp,
           service.getString(R.string.title_service_restart),
           restartV2RayPendingIntent,
-        )
-        .addAction(
-          R.drawable.ic_delete_24dp,
-          service.getString(R.string.title_service_save),
-          saveProfilePendingIntent,
-        )
+        ).apply {
+          if (!hideSaveOption) {
+            addAction(
+              R.drawable.ic_delete_24dp,
+              service.getString(R.string.title_service_save),
+              saveProfilePendingIntent,
+            )
+          }
+        }
+    )
+
 
     service.startForeground(NOTIFICATION_ID, notificationCompatBuilder?.build())
   }
@@ -180,7 +187,8 @@ object NotificationManager {
 
     speedTickRunnable?.let { speedHandler.removeCallbacks(it) }
     speedTickRunnable = null
-    notificationCompatBuilder = null
+    _notificationCompatBuilder?.clear()
+    _notificationCompatBuilder = null
     mNotificationManager = null
   }
 

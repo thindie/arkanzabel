@@ -50,9 +50,11 @@ class ActiveProfileAutoSaveWorker(
     }
 
     return try {
-      repository.save(guid)
-      KeyValueStorage.setVpnSessionLastAutoSaveStartMs(sessionStartMs)
-      repository.saveAuto(guid)
+      val isSaved = repository.save(guid)
+      if (isSaved) {
+        KeyValueStorage.setVpnSessionLastAutoSaveStartMs(sessionStartMs)
+        repository.saveAuto(guid)
+      }
       Result.success()
     } catch (_: AppError.ServerError) {
       Result.retry()

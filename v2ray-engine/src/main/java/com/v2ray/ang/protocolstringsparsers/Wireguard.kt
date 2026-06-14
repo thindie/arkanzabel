@@ -29,6 +29,7 @@ object Wireguard : ProtocolParser() {
       preSharedKey = queryParam["presharedkey"]?.nullIfBlank(),
       mtu = Utils.parseInt(queryParam["mtu"] ?: AppConfig.WIREGUARD_LOCAL_MTU),
       reserved = queryParam["reserved"] ?: "0,0,0",
+      subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo.orEmpty()
     )
   }
 
@@ -83,6 +84,7 @@ object Wireguard : ProtocolParser() {
       preSharedKey = peerParams["presharedkey"]?.nullIfBlank(),
       server = server,
       serverPort = serverPort,
+      subscriptionId = interfaceParams["privatekey"].orEmpty() + serverPort + Protocol.WireGuard,
       reserved = peerParams["reserved"] ?: "0,0,0",
     )
   }
