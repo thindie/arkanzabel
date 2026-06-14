@@ -1,10 +1,12 @@
 package com.thindie.rknzbl.engine
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.thindie.rknzbl.application.AppStrings
+import com.v2ray.ang.AppConfig
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,7 +126,12 @@ object RouteFactory {
       var screenScope: ScreenScope<S, C>? =
         object : ScreenScope<S, C> {
           override var scope: CoroutineScope? =
-            CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
+            CoroutineScope(
+              SupervisorJob() + Dispatchers.Default +
+                CoroutineExceptionHandler { _, e ->
+                  Log.e(AppConfig.TAG, "${e.cause} + ${e.message}")
+                },
+            )
             private set
 
           private val _state = MutableStateFlow(initialState)
@@ -152,10 +159,6 @@ object RouteFactory {
 
           override fun sendEvent(event: ServiceCommand.UiEvent) {
             _event.send(event)
-          }
-
-          init {
-            stateSink.invoke(this)
           }
 
           override fun update(s: S) {
@@ -255,6 +258,9 @@ object RouteFactory {
 
       init {
         initialCommand?.let { initial -> screenScope?.send(initial.execute()) }
+        screenScope?.let {
+          stateSink.invoke(it)
+        }
       }
     }
   }

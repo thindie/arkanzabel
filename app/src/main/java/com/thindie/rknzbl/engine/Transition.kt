@@ -1,9 +1,8 @@
 package com.thindie.rknzbl.engine
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 fun <S : State, C : Command> ScreenScope<S, C>.stateSink(block: ScreenScope<S, C>.() -> Unit) {
@@ -15,17 +14,12 @@ fun <
   C : Command,
   R : Any?,
   > ScreenScope<S, C>.sub(flow: Flow<R>): Pair<ScreenScope<S, C>, Flow<Pair<S, R>>> {
-  return this to
-    combine(
-      this.state,
-      flow.distinctUntilChanged(),
-      ::Pair,
-    )
+  return this to flow.map { this.state.value to it }
 }
 
 fun <S : State, C : Command, R : Any?> Pair<ScreenScope<S, C>, Flow<Pair<S, R>>>.transition(
-  action: (S, S, R) -> Unit = { _, _, _ -> },
-  block: (S, R) -> S,
+  action: suspend (S, S, R) -> Unit = { _, _, _ -> },
+  block: suspend (S, R) -> S,
 ): ScreenScope<S, C> {
   val (screenScope, flow) = this
   screenScope.scope?.let { scope ->
