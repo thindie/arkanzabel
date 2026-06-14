@@ -35,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.application.AppStrings
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.RouteFactory
@@ -61,9 +60,6 @@ import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
@@ -75,20 +71,17 @@ fun FavoriteProfilesFlow.profiles() =
     routeContent = { RouteScreen() },
     errorMapper = ::errorMapper,
     id = "profiles",
-    initialCommand =
-      RouteFactory.InitialCommand {
-        ScreenCommand.RequestStoredProfiles
-      },
   )
 
 data class ScreenState(
   val profiles: List<ConnectionProfile> = emptyList(),
   val selected: ConnectionProfile? = null,
-  val selectedTestConnectionMessage: String? = null,
+  val selectedTestConnectionMessage: SpeedtestManager.SpeedTestResult? = null,
   val selectedProfiles: Set<ConnectionProfile> = emptySet(),
   val selectionMode: Boolean = false,
   val established: Boolean = false,
   val serviceBeingStarted: Boolean? = null,
+  val showLoading: Boolean = true,
 ) : com.thindie.rknzbl.engine.State
 
 sealed interface ScreenCommand : Command {
@@ -115,38 +108,28 @@ sealed interface ScreenCommand : Command {
 private fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
   screenScope.stateSink {
     sub(
-      (appContext as Application)
-        .vpnRuntimeState
-        .map { state ->
-          when (state) {
-            is WorkState.Error -> state to null
-            WorkState.Idle -> state to null
-            WorkState.Running -> {
-              val port = screenScope.state.value.selected?.serverPort
-              if (port != null) {
-                state to SpeedtestManager.testConnection(appContext, SettingsManager.getHttpPort())
-              } else {
-                state to null
-              }
-            }
-          }
-        },
+      (appContext as Application).vpnRuntimeState,
     )
-      .transition(
-        { _, _, (vpnState, speedTestMessage) ->
+      .transition { s, vpnState ->
+        val profiles = repository.read()
+        val selected =
           when (vpnState) {
-            is WorkState.Error -> {
-              sendEvent(ServiceCommand.UiEvent.SnackText(AppStrings.errorUnexpected))
-            }
-            WorkState.Idle -> Unit
-            WorkState.Running -> {
-              if (speedTestMessage != null) {
-                sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
-              }
+            WorkState.Idle -> null
+            is WorkState.Error,
+            WorkState.Running,
+            -> {
+              repository.activeProfile()
             }
           }
-        },
-      ) { s, (vpnState, speedTestMessage) ->
+        val speedTestMessage =
+          if (selected != null) {
+            SpeedtestManager.testConnection(appContext, SettingsManager.getHttpPort())
+          } else {
+            null
+          }
+        speedTestMessage?.let {
+          sendEvent(ServiceCommand.UiEvent.SnackText(it.message))
+        }
         s.copy(
           serviceBeingStarted =
             when (vpnState) {
@@ -161,6 +144,9 @@ private fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState,
               WorkState.Running -> true
             },
           selectedTestConnectionMessage = speedTestMessage,
+          showLoading = false,
+          selected = selected,
+          profiles = profiles,
         )
       }
   }
@@ -179,7 +165,9 @@ private suspend fun FavoriteProfilesFlow.exec(
     ScreenCommand.RequestStoredProfiles -> {
       withContext(Dispatchers.IO) {
         val parsed = repository.read()
-        s.copy(profiles = parsed)
+        s.copy(
+          profiles = parsed,
+        )
       }
     }
 
@@ -208,10 +196,6 @@ private suspend fun FavoriteProfilesFlow.exec(
 
     is ScreenCommand.Activate -> {
       withContext(Dispatchers.Default) {
-        if (s.selected != null) {
-          V2RayServiceManager.stopVService(appContext)
-          (appContext as Application).vpnRuntimeState.filterIsInstance<WorkState.Idle>().first()
-        }
         V2RayServiceManager.startVService(
           context = appContext,
           guid =
@@ -220,7 +204,10 @@ private suspend fun FavoriteProfilesFlow.exec(
               config = c.profile,
             ),
         )
-        s.copy(selected = c.profile, serviceBeingStarted = true)
+        s.copy(
+          selected = c.profile,
+          serviceBeingStarted = true,
+        )
       }
     }
 
@@ -333,7 +320,8 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
           items = screenState.profiles,
         ) { item ->
           val isPendingDelete = item in screenState.selectedProfiles
-          val profileRunning = screenState.selected == item && screenState.established
+          val profileRunning = screenState.selected?.subscriptionId == item.subscriptionId && screenState.established
+          val isFailedSpeedTest = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
           SentenceRow(
             modifier =
               Modifier
@@ -343,9 +331,13 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
                       width = 1.2.dp,
                       color =
                         if (isPendingDelete) {
-                          AppTheme.colors.errorPrimary
+                          AppTheme.colors.contentSecondary
                         } else if (profileRunning) {
-                          AppTheme.colors.accentPrimary
+                          if (isFailedSpeedTest) {
+                            AppTheme.colors.errorPrimary
+                          } else {
+                            AppTheme.colors.accentPrimary
+                          }
                         } else {
                           AppTheme.colors.backgroundSecondary
                         },
@@ -359,7 +351,11 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
                   painterResource(R.drawable.ic_close_16)
                 }
                 profileRunning -> {
-                  painterResource(R.drawable.ic_done_square_24)
+                  if (isFailedSpeedTest) {
+                    painterResource(R.drawable.ic_attention_24)
+                  } else {
+                    painterResource(R.drawable.ic_done_square_24)
+                  }
                 }
                 else -> {
                   painterResource(R.drawable.ic_internet_24)
@@ -368,11 +364,14 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
             title = item.remarks + " " + item.serverPort.orEmpty(),
             subtitle =
               when {
+                st.serviceBeingStarted == true -> {
+                  item.flow ?: item.server ?: item.serviceName.orEmpty()
+                }
                 profileRunning ->
                   if (st.selectedTestConnectionMessage == null) {
                     ""
                   } else {
-                    st.selectedTestConnectionMessage
+                    st.selectedTestConnectionMessage?.message
                   }
                 else -> {
                   item.flow ?: item.server ?: item.serviceName.orEmpty()
@@ -441,7 +440,7 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
       )
     }
   }
-  if (screenState.serviceBeingStarted == true) {
+  if (screenState.serviceBeingStarted == true || screenState.showLoading) {
     Box(
       Modifier
         .fillMaxSize()
@@ -467,7 +466,7 @@ private fun ScreenScope<ScreenState, ScreenCommand>.RouteScreen() {
             .padding(
               all = 16.dp,
             ),
-        visible = true,
+        visible = screenState.serviceBeingStarted == true,
       ) {
         Row(
           modifier =

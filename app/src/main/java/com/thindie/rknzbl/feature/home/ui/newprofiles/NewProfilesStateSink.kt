@@ -70,7 +70,7 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
           WorkState.Idle -> Unit
           WorkState.Running -> {
             if (speedTestMessage != null) {
-              sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage))
+              sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage.message))
             }
           }
         }
