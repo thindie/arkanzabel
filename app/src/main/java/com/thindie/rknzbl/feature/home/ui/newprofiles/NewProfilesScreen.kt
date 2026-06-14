@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ServiceCommand
+import com.thindie.rknzbl.feature.home.ui.select.SelectScreenCommand
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
@@ -58,6 +59,12 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
     }
   val screenState by state.collectAsState()
   AppScreen(
+    primary = Action(
+      resRef = R.drawable.ic_arrow_back_24,
+      listener = {
+        send(ScreenCommand.Back)
+      }
+    ),
     secondary =
       Action(
         resRef = R.drawable.ic_theme_24,
