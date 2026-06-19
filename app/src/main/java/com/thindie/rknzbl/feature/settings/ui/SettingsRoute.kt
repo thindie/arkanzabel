@@ -1,53 +1,49 @@
 package com.thindie.rknzbl.feature.settings.ui
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Modifier
+import android.app.LocaleManager
+import android.os.Build
+import android.os.LocaleList
 import com.thindie.rknzbl.engine.RouteFactory
-import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.feature.home.HomeFlow
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 
-/**
- * Settings screen for theme mode and autosave configuration.
- * Implements MVI pattern with reactive state management from storage.
- */
-fun HomeFlow.settings() =
+fun HomeFlow.settings(repository: SettingsRepository) =
   RouteFactory.create(
-    initialState = SettingsScreenState(),
-    execute = { c: SettingsScreenCommand, s: SettingsScreenState ->
+    initialState = ScreenState(),
+    execute = { c: ScreenCommand, s: ScreenState ->
       when (c) {
-        is SettingsScreenCommand.SetThemeMode -> {
-          // Theme mode will be applied reactively via state sink
-          s
-        }
-
-        is SettingsScreenCommand.ToggleAutosave -> {
-          val newEnabled = !s.autosaveEnabled ?: true
-          KeyValueStorage.setAutosaveEnabled(newEnabled)
+        is ScreenCommand.ToggleAutosave -> {
+          val newEnabled = s.autosaveEnabled ?: true
+          repository.toggleAutosave(newEnabled)
           s.copy(autosaveEnabled = newEnabled)
         }
 
-        SettingsScreenCommand.Back -> {
-          finish(Unit)
+        ScreenCommand.Back -> {
+          back()
           s
+        }
+
+        is ScreenCommand.SelectLanguage -> {
+          repository.setLanguage(c.languageCode)
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val localeManager = appContext.getSystemService(LocaleManager::class.java)
+            localeManager.applicationLocales = LocaleList.forLanguageTags(c.languageCode)
+            s
+          } else {
+            s.copy(legacyRestart = true)
+          }
+        }
+
+        ScreenCommand.ToggleMux -> {
+          val current = s.muxEnabled ?: false
+          repository.toggleMux(!current)
+          s.copy(muxEnabled = !current)
         }
       }
     },
-    initialCommand = {
-      // Load current theme mode on screen creation
-      SettingsScreenCommand.SetThemeMode(KeyValueStorage.getThemeMode() ?: "auto")
-    },
-    stateSink = ::settingsStateSink,
+    stateSink = { screenScope -> settingsStateSink(screenScope, repository) },
     id = "HomeFlow-settings",
     routeContent = {
-      AppScreen {
-        BackHandler { send(SettingsScreenCommand.Back) }
-        SettingsScreenContent(
-          themeMode = state.themeMode ?: "auto",
-          isAutosaveEnabled = state.autosaveEnabled ?: true,
-          onThemeModeChange = { mode -> send(SettingsScreenCommand.SetThemeMode(mode)) },
-          onToggleAutosave = { send(SettingsScreenCommand.ToggleAutosave) },
-        )
-      }
+      SettingsScreenContent()
     },
   )
