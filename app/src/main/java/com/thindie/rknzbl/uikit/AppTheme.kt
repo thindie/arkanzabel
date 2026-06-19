@@ -1,7 +1,6 @@
 package com.thindie.rknzbl.uikit
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
@@ -14,9 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 
 @Immutable
 class AppColors(
@@ -57,14 +54,8 @@ private val DarkColorScheme =
     buttonContentPrimary = Color(0xFF121212),
   )
 
-class ThemeSwitcher {
-  private val _themeFlow =
-    MutableSharedFlow<Choice>(
-      replay = 1,
-      onBufferOverflow = BufferOverflow.DROP_OLDEST,
-      extraBufferCapacity = 1,
-    )
-  val themeFlow = _themeFlow.asSharedFlow()
+class ThemeSwitcher(private val repository: SettingsRepository) {
+  val themeFlow = repository.themeChoice
 
   enum class Choice {
     Dark,
@@ -73,13 +64,13 @@ class ThemeSwitcher {
   }
 
   fun set(choice: Choice) {
-    _themeFlow.tryEmit(choice)
+    repository.setThemeMode(choice)
   }
 }
 
 private val LocalAppColors = compositionLocalOf { LightColorScheme }
 private val LocalAppTypo = staticCompositionLocalOf { AppTypography }
-val LocalThemeSwitcher = staticCompositionLocalOf { ThemeSwitcher() }
+val LocalThemeSwitcher = compositionLocalOf<ThemeSwitcher> { error("No theme switcher provided") }
 
 object AppTheme {
   val colors: AppColors
@@ -99,11 +90,6 @@ fun AppTheme(
   content: @Composable () -> Unit,
 ) {
   val targetColors = if (darkTheme) DarkColorScheme else LightColorScheme
-
-  val colorSpec: AnimationSpec<Color> = tween(durationMillis = 400)
-
-  @Composable
-  fun animateColor(target: Color) = animateColorAsState(target, colorSpec, label = "color").value
 
   val animatedColors =
     AppColors(
@@ -125,6 +111,14 @@ fun AppTheme(
     content()
   }
 }
+
+@Composable
+fun animateColor(target: Color) =
+  animateColorAsState(
+    targetValue = target,
+    animationSpec = tween(durationMillis = 400),
+    label = "color",
+  ).value
 
 @Immutable
 object AppTypography {
