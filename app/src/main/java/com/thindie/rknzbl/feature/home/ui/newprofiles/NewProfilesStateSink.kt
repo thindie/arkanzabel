@@ -44,35 +44,21 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
         newState
       }
 
+    // Flow 1: Immediate UI state updates — no speed test blocking
     sub(
       (appContext as Application).vpnRuntimeState.map { state ->
         when (state) {
           is WorkState.Error -> state to null
           WorkState.Idle -> state to null
-          WorkState.Running -> {
-            val port = screenScope.state.value.selected?.serverPort
-            if (port != null) {
-              state to
-                SpeedtestManager.testConnection(
-                  appContext,
-                  SettingsManager.getHttpPort(),
-                )
-            } else {
-              state to null
-            }
-          }
+          WorkState.Running -> state to null
         }
       },
     )
-      .transition({ _, _, (vpnState, speedTestMessage) ->
+      .transition({ _, _, (vpnState, _) ->
         when (vpnState) {
           is WorkState.Error -> send(ScreenCommand.Dismissed)
           WorkState.Idle -> Unit
-          WorkState.Running -> {
-            if (speedTestMessage != null) {
-              sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage.message))
-            }
-          }
+          WorkState.Running -> Unit
         }
       }) { s, (vpnState, _) ->
         s.copy(
@@ -89,6 +75,36 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
               WorkState.Running -> true
             },
         )
+      }
+
+    // Flow 2: Background speed test — only runs when service is running
+    sub(
+      (appContext as Application).vpnRuntimeState.map { state ->
+        when (state) {
+          is WorkState.Error -> null
+          WorkState.Idle -> null
+          WorkState.Running -> {
+            val port = screenScope.state.value.selected?.serverPort
+            if (port != null) {
+              SpeedtestManager.testConnection(
+                appContext,
+                SettingsManager.getHttpPort(),
+              )
+            } else {
+              null
+            }
+          }
+        }
+      },
+    )
+      .transition(
+        action = { _, _, speedTestMessage ->
+          if (speedTestMessage != null) {
+            sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage.message))
+          }
+        },
+      ) { s, speedTestMessage ->
+        s
       }
   }
 }
