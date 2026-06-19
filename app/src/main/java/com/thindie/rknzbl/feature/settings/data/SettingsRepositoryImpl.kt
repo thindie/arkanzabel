@@ -1,26 +1,66 @@
 package com.thindie.rknzbl.feature.settings.data
 
-import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import com.thindie.rknzbl.feature.settings.data.theme.toChoice
 import com.thindie.rknzbl.feature.settings.data.theme.toStorageString
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import com.thindie.rknzbl.uikit.ThemeSwitcher
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 
-/**
- * Implementation of [SettingsRepository] using [KeyValueStorage].
- */
 class SettingsRepositoryImpl(
   private val storage: KeyValueStorage,
 ) : SettingsRepository {
-  override suspend fun getThemeMode(): ThemeSwitcher.Choice? =
-    storage.getThemeMode()?.toChoice()
+  override suspend fun getThemeMode(): ThemeSwitcher.Choice? = storage.getThemeMode()?.toChoice()
 
-  override suspend fun setThemeMode(mode: ThemeSwitcher.Choice): Boolean =
-    storage.setThemeMode(mode.toStorageString())
+  private val _themeChoice = MutableStateFlow<ThemeSwitcher.Choice?>(null)
 
-  override suspend fun isAutosaveEnabled(): Boolean =
-    storage.isAutosaveEnabled()
+  override val themeChoice =
+    _themeChoice
+      .filterNotNull()
+      .onStart { storage.getThemeMode()?.toChoice()?.let { emit(it) } }
+      .onEach {
+        storage.setThemeMode(it.toStorageString())
+      }
 
-  override suspend fun toggleAutosave(enabled: Boolean): Boolean =
-    storage.setAutosaveMode(enabled)
+  override fun setThemeMode(mode: ThemeSwitcher.Choice): Boolean {
+    _themeChoice.value = mode
+    return true
+  }
+
+  override suspend fun isAutosaveEnabled(): Boolean = storage.isAutosaveEnabled()
+
+  override val autosaveEnabled = flow { emit(false) }
+
+  override suspend fun toggleAutosave(enabled: Boolean): Boolean = storage.setAutosaveMode(enabled)
+
+  // MUX support
+  private val _muxEnabled = MutableStateFlow<Boolean?>(null)
+
+  override val muxEnabled =
+    _muxEnabled
+      .filterNotNull()
+      .onStart { storage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED)?.let { emit(it) } }
+      .onEach {
+        storage.encodeSettings(AppConfig.PREF_MUX_ENABLED, it)
+      }
+
+  override fun language(): String? {
+    return storage.decodeSettingsString(AppConfig.PREF_LANGUAGE)
+  }
+
+  override fun setLanguage(code: String) {
+    storage.encodeSettings(AppConfig.PREF_LANGUAGE, code)
+  }
+
+  override suspend fun isMuxEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false)
+
+  override suspend fun toggleMux(enabled: Boolean): Boolean {
+    _muxEnabled.value = enabled
+    return true
+  }
 }

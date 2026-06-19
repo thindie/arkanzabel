@@ -130,4 +130,18 @@
 <string name="webdav_error_conflict">Operation rejected by server (conflict).</string>
 <string name="webdav_error_invalid_response">Server returned unexpected WebDAV response.</string>
 <string name="webdav_error_upload_open">Could not open selected file.</string>
+
+    <!-- Language strings -->
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_subtitle">Select the app language</string>
+    <string name="language_auto">Auto</string>
+    <string name="language_en">English</string>
+    <string name="language_ru">Russian</string>
+
+    <!-- MUX strings -->
+    <string name="settings_mux_title">Multiplexing (MUX)</string>
+    <string name="settings_mux_subtitle">Combine multiple connections into one</string>
+    <string name="mux_faq_title">What is MUX?</string>
+    <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
+    <string name="mux_faq_ok">Got it</string>
 </resources>
