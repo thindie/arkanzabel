@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_language_title">Язык приложения</string>
+    <string name="settings_language_subtitle">Выберите язык интерфейса</string>
+    <string name="language_auto">Авто</string>
+    <string name="language_en">English</string>
+    <string name="language_ru">Русский</string>
+
+    <string name="settings_mux_title">Мультиплексация (MUX)</string>
+    <string name="settings_mux_subtitle">Объединяет множество соединений в одно</string>
+    <string name="mux_faq_title">Что такое MUX?</string>
+    <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
+    <string name="mux_faq_ok">Понятно</string>
+</resources>
