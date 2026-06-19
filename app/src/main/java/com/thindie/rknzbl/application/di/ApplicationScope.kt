@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.application.di
 
 import com.thindie.rknzbl.feature.home.data.di.HomeFlowModule
+import com.thindie.rknzbl.feature.settings.data.di.SettingsFlowModule
 import com.v2ray.ang.runtime.KeyValueStorage
 
 class ApplicationScope {
@@ -17,4 +18,6 @@ class ApplicationScope {
       storage = KeyValueStorage,
       baseUrl = Creds.URL,
     )
+
+  val settings = SettingsFlowModule(storage = KeyValueStorage)
 }
