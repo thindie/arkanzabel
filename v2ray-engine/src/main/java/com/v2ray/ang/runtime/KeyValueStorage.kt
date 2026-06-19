@@ -400,4 +400,19 @@ object KeyValueStorage {
 
     fun getLastAutoSaveProfilesJson(): String? =
         mainStorage.decodeString(KEY_LAST_AUTO_SAVE_PROFILES_JSON)
+
+    fun getThemeMode(): String? = decodeSettingsString(KEY_THEME_MODE)
+
+    fun setThemeMode(mode: String): Boolean {
+        return encodeSettings(KEY_THEME_MODE, mode)
+    }
+
+    fun isAutosaveEnabled(): Boolean = decodeSettingsBool(KEY_AUTOSAVE_ENABLED, true)
+
+    fun setAutosaveMode(enabled: Boolean): Boolean {
+        return encodeSettings(KEY_AUTOSAVE_ENABLED, enabled)
+    }
 }
+
+private const val KEY_AUTOSAVE_ENABLED = "autosave_enabled"
+private const val KEY_THEME_MODE = "theme_mode"

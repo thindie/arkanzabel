@@ -23,13 +23,15 @@ import com.thindie.rknzbl.engine.sub
 import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.home.ui.newprofiles.newProfiles
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
+import com.thindie.rknzbl.feature.settings.ui.settings
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.WSpacer
 
-fun HomeFlow.select() =
+fun HomeFlow.select(settingsRepository: SettingsRepository) =
   RouteFactory.create(
     initialState = ScreenState(),
     execute = { c: ScreenCommand, s: ScreenState ->
@@ -43,6 +45,10 @@ fun HomeFlow.select() =
         }
 
         ScreenCommand.Settings -> {
+          go(settings(settingsRepository))
+        }
+
+        ScreenCommand.PerAppProxy -> {
           startPerAppProxyFlow()
         }
 
@@ -107,6 +113,15 @@ fun HomeFlow.select() =
             modifier = Modifier.fillMaxWidth(),
             title = stringResource(R.string.home_select_vpn_modes_title),
             subtitle = stringResource(R.string.home_select_vpn_modes_subtitle),
+            painter = painterResource(R.drawable.ic_filter_24),
+            onClick = { send(ScreenCommand.PerAppProxy) },
+            loading = false,
+          )
+          VSpacer(16.dp)
+          SentenceRow(
+            modifier = Modifier.fillMaxWidth(),
+            title = stringResource(R.string.home_select_settings_title),
+            subtitle = stringResource(R.string.home_select_settings_subtitle),
             painter = painterResource(R.drawable.ic_settings_24),
             onClick = { send(ScreenCommand.Settings) },
             loading = false,

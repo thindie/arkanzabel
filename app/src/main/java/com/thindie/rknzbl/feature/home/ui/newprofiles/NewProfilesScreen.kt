@@ -6,7 +6,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,45 +32,25 @@ import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.feature.home.ui.select.SelectScreenCommand
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
 import com.thindie.rknzbl.uikit.CircularProgress
 import com.thindie.rknzbl.uikit.HSpacer
-import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.SentenceRow
-import com.thindie.rknzbl.uikit.ThemeSwitcher
 import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.surface
 
 @Composable
 fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
-  val themeSwitcher = LocalThemeSwitcher.current
-  val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
-  val isDark =
-    when (themeColors.value) {
-      null -> isSystemInDarkTheme()
-      ThemeSwitcher.Choice.Dark -> true
-      ThemeSwitcher.Choice.Light -> false
-      ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
-    }
   val screenState by state.collectAsState()
   AppScreen(
-    primary = Action(
-      resRef = R.drawable.ic_arrow_back_24,
-      listener = {
-        send(ScreenCommand.Back)
-      }
-    ),
-    secondary =
+    primary =
       Action(
-        resRef = R.drawable.ic_theme_24,
+        resRef = R.drawable.ic_arrow_back_24,
         listener = {
-          themeSwitcher.set(
-            if (isDark) ThemeSwitcher.Choice.Light else ThemeSwitcher.Choice.Dark,
-          )
+          send(ScreenCommand.Back)
         },
       ),
   ) {
