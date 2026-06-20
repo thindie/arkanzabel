@@ -117,6 +117,7 @@
 <string name="home_select_theme_auto_subtitle">(follows system)</string>
 <string name="home_select_theme_light_subtitle">Light theme</string>
 <string name="home_select_theme_dark_subtitle">Dark theme</string>
+<string name="home_select_theme_locked_hint">Theme selection is locked when Auto is enabled</string>
 
 <!-- Autosave strings -->
 <string name="home_select_autosave_title">Auto-save</string>
@@ -144,4 +145,5 @@
     <string name="mux_faq_title">What is MUX?</string>
     <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
     <string name="mux_faq_ok">Got it</string>
+<string name="home_select_theme_auto_locked">Theme selection is locked when Auto theme is enabled</string>
 </resources>

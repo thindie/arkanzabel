@@ -117,6 +117,7 @@
 <string name="home_select_theme_auto_subtitle">(следует за системой)</string>
 <string name="home_select_theme_light_subtitle">Светлая тема</string>
 <string name="home_select_theme_dark_subtitle">Тёмная тема</string>
+<string name="home_select_theme_locked_hint">Выбор темы заблокирован при включённой автоматике</string>
 
 <!-- Autosave strings -->
 <string name="home_select_autosave_title">Авто-сохранение</string>
@@ -145,4 +146,5 @@
 <string name="mux_faq_title">Что такое MUX?</string>
 <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
 <string name="mux_faq_ok">Понятно</string>
+<string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
 </resources>

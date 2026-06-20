@@ -101,6 +101,15 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           checked = theme == ThemeSwitcher.Choice.Auto,
         )
       }
+      if (theme == ThemeSwitcher.Choice.Auto) {
+        VSpacer(8.dp)
+        Text(
+          text = stringResource(R.string.home_select_theme_auto_locked),
+          style = AppTheme.typography.bodySmall,
+          color = AppTheme.colors.contentSecondary,
+        )
+      }
+
       VSpacer(16.dp)
       // Light theme option
       Row(
