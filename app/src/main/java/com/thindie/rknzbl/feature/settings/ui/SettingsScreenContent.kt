@@ -47,10 +47,11 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       }
     }
     TopAppBar(
-      primary = Action(
-        listener = { send(ScreenCommand.Back) },
-        resRef = R.drawable.ic_arrow_back_24
-      )
+      primary =
+        Action(
+          listener = { send(ScreenCommand.Back) },
+          resRef = R.drawable.ic_arrow_back_24,
+        ),
     )
     Column(
       modifier =
@@ -193,7 +194,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           Modifier
             .fillMaxWidth()
             .clickable {
-              selectLanguage()
+              selectLanguage(state.language)
             }
             .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -268,12 +269,14 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
                     Column {
                       Text(
                         text = faqTitle,
-                        style = AppTheme.typography.titleMedium,
+                        style = AppTheme.typography.headlineMedium,
+                        color = AppTheme.colors.contentPrimary,
                       )
                       VSpacer(16.dp)
                       Text(
                         text = stringResource(R.string.mux_faq_body),
                         style = AppTheme.typography.bodyMedium,
+                        color = AppTheme.colors.contentPrimary,
                       )
                     }
                   },
@@ -297,14 +300,15 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
   }
 }
 
-private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage() {
+private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage(currentLanguage: String?) {
   sendEvent(
     ServiceCommand.UiEvent.Decision(
       content = {
         Column {
           Text(
             text = stringResource(R.string.settings_language_title),
-            style = AppTheme.typography.titleMedium,
+            style = AppTheme.typography.headlineMedium,
+            color = AppTheme.colors.contentPrimary,
           )
           VSpacer(24.dp)
 
@@ -317,9 +321,17 @@ private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage() {
             Text(
               text = stringResource(R.string.language_en),
               style = AppTheme.typography.bodyMedium,
+              color = if (currentLanguage == "en") AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary,
             )
+            if (currentLanguage == "en") {
+              Text(
+                text = "✓",
+                style = AppTheme.typography.labelMedium,
+                color = AppTheme.colors.accentPrimary,
+              )
+            }
           }
-          VSpacer(8.dp)
+          VSpacer(24.dp)
           // Russian option
           Row(
             modifier = Modifier.clickable { send(ScreenCommand.SelectLanguage(languageCode = "ru")) },
@@ -329,7 +341,15 @@ private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage() {
             Text(
               text = stringResource(R.string.language_ru),
               style = AppTheme.typography.bodyMedium,
+              color = if (currentLanguage == "ru") AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary,
             )
+            if (currentLanguage == "ru") {
+              Text(
+                text = "✓",
+                style = AppTheme.typography.labelMedium,
+                color = AppTheme.colors.accentPrimary,
+              )
+            }
           }
         }
       },
