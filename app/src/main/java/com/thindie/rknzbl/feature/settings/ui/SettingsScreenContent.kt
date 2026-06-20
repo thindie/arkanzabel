@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,7 +66,8 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
               themeSwitcher.set(
                 if (theme == ThemeSwitcher.Choice.Auto) ThemeSwitcher.Choice.Dark else ThemeSwitcher.Choice.Auto,
               )
-            },
+            }
+            .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
@@ -138,6 +140,8 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       }
 
       VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
 
       // Autosave toggle
       Row(
@@ -168,6 +172,10 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           checked = state.autosaveEnabled ?: true,
         )
       }
+
+      VSpacer(16.dp)
+      Divider()
+      VSpacer(16.dp)
 
       // Language selection
       Row(
@@ -201,6 +209,10 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         }
       }
 
+      VSpacer(16.dp)
+      Divider()
+      VSpacer(16.dp)
+
       // MUX toggle
       Row(
         modifier =
@@ -228,6 +240,10 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         }
         Toggle(checked = state.muxEnabled ?: false)
       }
+
+      VSpacer(16.dp)
+      Divider()
+      VSpacer(16.dp)
 
       // FAQ button
       val faqTitle = stringResource(R.string.mux_faq_title)
