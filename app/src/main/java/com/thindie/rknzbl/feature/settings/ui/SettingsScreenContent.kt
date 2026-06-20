@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.ThemeSwitcher
 import com.thindie.rknzbl.uikit.Toggle
+import com.thindie.rknzbl.uikit.TopAppBar
 import com.thindie.rknzbl.uikit.VSpacer
 
 @Composable
@@ -43,10 +46,17 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         context?.recreate()
       }
     }
+    TopAppBar(
+      primary = Action(
+        listener = { send(ScreenCommand.Back) },
+        resRef = R.drawable.ic_arrow_back_24
+      )
+    )
     Column(
       modifier =
         Modifier
           .fillMaxSize()
+          .verticalScroll(rememberScrollState())
           .padding(16.dp),
     ) {
       Text(
