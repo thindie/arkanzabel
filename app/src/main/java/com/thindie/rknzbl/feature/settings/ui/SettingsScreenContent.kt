@@ -145,7 +145,6 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           Modifier
             .fillMaxWidth()
             .clickable {
-              if (theme == ThemeSwitcher.Choice.Auto) return@clickable
               send(ScreenCommand.ToggleAutosave)
             }
             .padding(12.dp),
@@ -190,7 +189,12 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           )
           VSpacer(2.dp)
           Text(
-            text = stringResource(R.string.settings_language_subtitle),
+            text =
+              when (state.language) {
+                "en" -> stringResource(R.string.language_en)
+                "ru" -> stringResource(R.string.language_ru)
+                else -> state.language ?: ""
+              },
             style = AppTheme.typography.bodySmall,
             color = AppTheme.colors.contentSecondary,
           )
@@ -203,7 +207,6 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           Modifier
             .fillMaxWidth()
             .clickable {
-              if (theme == ThemeSwitcher.Choice.Auto) return@clickable
               send(ScreenCommand.ToggleMux)
             }
             .padding(12.dp),
@@ -227,6 +230,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       }
 
       // FAQ button
+      val faqTitle = stringResource(R.string.mux_faq_title)
       Row(
         modifier =
           Modifier
@@ -237,7 +241,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
                   content = {
                     Column {
                       Text(
-                        text = stringResource(R.string.mux_faq_title),
+                        text = faqTitle,
                         style = AppTheme.typography.titleMedium,
                       )
                       VSpacer(16.dp)
@@ -257,7 +261,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       ) {
         Column(modifier = Modifier.weight(1f)) {
           Text(
-            text = stringResource(R.string.mux_faq_title),
+            text = faqTitle,
             style = AppTheme.typography.titleMedium,
             color = AppTheme.colors.contentPrimary,
           )

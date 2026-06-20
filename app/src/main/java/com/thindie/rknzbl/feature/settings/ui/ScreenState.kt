@@ -7,5 +7,6 @@ import com.thindie.rknzbl.engine.State
 internal data class ScreenState(
   val autosaveEnabled: Boolean? = null,
   val muxEnabled: Boolean? = null,
+  val language: String? = null,
   val legacyRestart: Boolean = false,
 ) : State
