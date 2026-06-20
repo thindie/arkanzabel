@@ -13,9 +13,9 @@ fun HomeFlow.settings(repository: SettingsRepository) =
     execute = { c: ScreenCommand, s: ScreenState ->
       when (c) {
         is ScreenCommand.ToggleAutosave -> {
-          val newEnabled = s.autosaveEnabled ?: true
-          repository.toggleAutosave(newEnabled)
-          s.copy(autosaveEnabled = newEnabled)
+          val current = s.autosaveEnabled ?: true
+          repository.toggleAutosave(!current)
+          s.copy(autosaveEnabled = !current)
         }
 
         ScreenCommand.Back -> {
