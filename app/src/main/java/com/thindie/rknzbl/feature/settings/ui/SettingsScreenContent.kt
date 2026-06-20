@@ -2,6 +2,7 @@ package com.thindie.rknzbl.feature.settings.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
@@ -119,10 +121,19 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           style = AppTheme.typography.titleMedium,
           color = AppTheme.colors.contentPrimary,
         )
-        Toggle(
-          enabled = theme != ThemeSwitcher.Choice.Auto,
-          checked = theme == ThemeSwitcher.Choice.Light,
-        )
+        Row {
+          Toggle(
+            enabled = theme != ThemeSwitcher.Choice.Auto,
+            checked = theme == ThemeSwitcher.Choice.Light,
+          )
+          if (theme == ThemeSwitcher.Choice.Auto) {
+            Image(
+              painter = painterResource(R.drawable.ic_lock_24),
+              contentDescription = null,
+              modifier = Modifier.padding(start = 8.dp),
+            )
+          }
+        }
       }
       VSpacer(16.dp)
       // Dark theme option
@@ -144,10 +155,19 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           style = AppTheme.typography.titleMedium,
           color = AppTheme.colors.contentPrimary,
         )
-        Toggle(
-          enabled = theme != ThemeSwitcher.Choice.Auto,
-          checked = theme == ThemeSwitcher.Choice.Dark,
-        )
+        Row {
+          Toggle(
+            enabled = theme != ThemeSwitcher.Choice.Auto,
+            checked = theme == ThemeSwitcher.Choice.Dark,
+          )
+          if (theme == ThemeSwitcher.Choice.Auto) {
+            Image(
+              painter = painterResource(R.drawable.ic_lock_24),
+              contentDescription = null,
+              modifier = Modifier.padding(start = 8.dp),
+            )
+          }
+        }
       }
 
       VSpacer(24.dp)
