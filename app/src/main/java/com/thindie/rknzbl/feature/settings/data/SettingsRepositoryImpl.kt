@@ -8,7 +8,6 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 
@@ -32,11 +31,20 @@ class SettingsRepositoryImpl(
     return true
   }
 
+  private val _autosaveEnabled = MutableStateFlow<Boolean?>(null)
+
+  override val autosaveEnabled =
+    _autosaveEnabled
+      .filterNotNull()
+      .onStart { emit(storage.isAutosaveEnabled()) }
+      .onEach { storage.setAutosaveMode(it) }
+
   override suspend fun isAutosaveEnabled(): Boolean = storage.isAutosaveEnabled()
 
-  override val autosaveEnabled = flow { emit(false) }
-
-  override suspend fun toggleAutosave(enabled: Boolean): Boolean = storage.setAutosaveMode(enabled)
+  override suspend fun toggleAutosave(enabled: Boolean): Boolean {
+    _autosaveEnabled.value = enabled
+    return true
+  }
 
   // MUX support
   private val _muxEnabled = MutableStateFlow<Boolean?>(null)
