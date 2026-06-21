@@ -197,7 +197,7 @@ object V2RayServiceManager {
             val isFavorite = (application as ConnectionProfileSummariser).isSavedAsFavorite(config)
             NotificationManager.showNotification(config, isFavorite)
             coreController.startLoop(result.json, tunFd)
-        } catch (runtime: RuntimeException) {
+        } catch (runtime: Exception) {
             Log.e(AppConfig.TAG, "Failed to start Core loop", runtime)
             NotificationManager.cancelNotification()
             val detail = runtime.message?.trim()
