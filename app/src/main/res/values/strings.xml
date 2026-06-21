@@ -67,6 +67,12 @@
     <string name="home_select_settings_title">Settings</string>
     <string name="home_select_vpn_modes_subtitle">app filter</string>
     <string name="home_select_settings_subtitle">miscellaneous</string>
+
+    <!-- Settings section titles -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_section_mux">MUX</string>
     <string name="home_downloaded_profiles_header">Downloaded profiles</string>
     <string name="home_autosaved_profile">Was saved automatically</string>
 

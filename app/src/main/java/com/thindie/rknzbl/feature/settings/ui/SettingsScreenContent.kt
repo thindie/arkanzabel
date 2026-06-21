@@ -2,7 +2,6 @@ package com.thindie.rknzbl.feature.settings.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,7 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
@@ -55,6 +53,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           resRef = R.drawable.ic_arrow_back_24,
         ),
     )
+
     Column(
       modifier =
         Modifier
@@ -63,44 +62,27 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
           .padding(16.dp),
     ) {
       Text(
-        text = stringResource(R.string.home_select_settings),
+        text = stringResource(R.string.home_select_settings_title),
         style = AppTheme.typography.headlineLarge,
         color = AppTheme.colors.contentPrimary,
       )
-      VSpacer(24.dp)
 
-      // Theme mode selection
-      // Auto theme option
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              themeSwitcher.set(
-                if (theme == ThemeSwitcher.Choice.Auto) ThemeSwitcher.Choice.Dark else ThemeSwitcher.Choice.Auto,
-              )
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column {
-          Text(
-            text = stringResource(R.string.home_select_theme_auto_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
+      // === Appearance ===
+      VSpacer(24.dp)
+      SectionTitle(stringResource(R.string.settings_section_appearance))
+      VSpacer(16.dp)
+
+      ThemeOption(
+        label = stringResource(R.string.home_select_theme_auto_title),
+        subtitle = stringResource(R.string.home_select_theme_auto_subtitle),
+        checked = theme == ThemeSwitcher.Choice.Auto,
+        onCheckedChange = {
+          themeSwitcher.set(
+            if (theme == ThemeSwitcher.Choice.Auto) ThemeSwitcher.Choice.Dark else ThemeSwitcher.Choice.Auto,
           )
-          VSpacer(2.dp)
-          Text(
-            text = stringResource(R.string.home_select_theme_auto_subtitle),
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-        Toggle(
-          checked = theme == ThemeSwitcher.Choice.Auto,
-        )
-      }
+        },
+      )
+
       if (theme == ThemeSwitcher.Choice.Auto) {
         VSpacer(8.dp)
         Text(
@@ -110,365 +92,307 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         )
       }
 
-      VSpacer(16.dp)
-      // Light theme option
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              if (theme == ThemeSwitcher.Choice.Auto) return@clickable
-              themeSwitcher.set(ThemeSwitcher.Choice.Light)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(
-          modifier = Modifier.weight(1f),
-          text = stringResource(R.string.home_select_theme_light_subtitle),
-          style = AppTheme.typography.titleMedium,
-          color = AppTheme.colors.contentPrimary,
-        )
-        Row {
-          Toggle(
-            enabled = theme != ThemeSwitcher.Choice.Auto,
-            checked = theme == ThemeSwitcher.Choice.Light,
-          )
-          if (theme == ThemeSwitcher.Choice.Auto) {
-            Image(
-              painter = painterResource(R.drawable.ic_lock_24),
-              contentDescription = null,
-              modifier = Modifier.padding(start = 8.dp),
-            )
-          }
-        }
-      }
-      VSpacer(16.dp)
-      // Dark theme option
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              if (theme == ThemeSwitcher.Choice.Auto) return@clickable
-              themeSwitcher.set(ThemeSwitcher.Choice.Dark)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Text(
-          modifier = Modifier.weight(1f),
-          text = stringResource(R.string.home_select_theme_dark_subtitle),
-          style = AppTheme.typography.titleMedium,
-          color = AppTheme.colors.contentPrimary,
-        )
-        Row {
-          Toggle(
-            enabled = theme != ThemeSwitcher.Choice.Auto,
-            checked = theme == ThemeSwitcher.Choice.Dark,
-          )
-          if (theme == ThemeSwitcher.Choice.Auto) {
-            Image(
-              painter = painterResource(R.drawable.ic_lock_24),
-              contentDescription = null,
-              modifier = Modifier.padding(start = 8.dp),
-            )
-          }
-        }
-      }
+      ThemeOption(
+        label = stringResource(R.string.home_select_theme_light_subtitle),
+        checked = theme == ThemeSwitcher.Choice.Light,
+        enabled = theme != ThemeSwitcher.Choice.Auto,
+        onCheckedChange = {
+          if (theme == ThemeSwitcher.Choice.Auto) return@ThemeOption
+          themeSwitcher.set(ThemeSwitcher.Choice.Light)
+        },
+      )
 
+      ThemeOption(
+        label = stringResource(R.string.home_select_theme_dark_subtitle),
+        checked = theme == ThemeSwitcher.Choice.Dark,
+        enabled = theme != ThemeSwitcher.Choice.Auto,
+        onCheckedChange = {
+          if (theme == ThemeSwitcher.Choice.Auto) return@ThemeOption
+          themeSwitcher.set(ThemeSwitcher.Choice.Dark)
+        },
+      )
+
+      // === General ===
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-
-      // Autosave toggle
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              send(ScreenCommand.ToggleAutosave)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.home_select_autosave_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(2.dp)
-          Text(
-            text = stringResource(R.string.home_select_autosave_subtitle),
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-        Toggle(
-          checked = state.autosaveEnabled ?: true,
-        )
-      }
-
-      VSpacer(16.dp)
-      Divider()
+      SectionTitle(stringResource(R.string.settings_section_general))
       VSpacer(16.dp)
 
-      // Language selection
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              selectLanguage(state.language)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.settings_language_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(2.dp)
-          Text(
-            text =
-              when (state.language) {
-                "en" -> stringResource(R.string.language_en)
-                "ru" -> stringResource(R.string.language_ru)
-                else -> state.language ?: ""
-              },
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-      }
+      ToggleRow(
+        label = stringResource(R.string.home_select_autosave_title),
+        subtitle = stringResource(R.string.home_select_autosave_subtitle),
+        checked = state.autosaveEnabled ?: true,
+        onCheckedChange = { send(ScreenCommand.ToggleAutosave) },
+      )
 
-      VSpacer(16.dp)
-      Divider()
-      VSpacer(16.dp)
+      ToggleRow(
+        label = stringResource(R.string.settings_start_with_favorite_profiles_title),
+        subtitle = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
+        checked = state.startWithFavoriteProfiles ?: false,
+        onCheckedChange = { send(ScreenCommand.StartWithFavoriteProfiles) },
+      )
 
-      // Local storage mode toggle
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              if (state.isLocalSave == true) {
-                sendEvent(
-                  ServiceCommand.UiEvent.Decision(
-                    content = {
-                      Column {
-                        Text(
-                          text = stringResource(R.string.storage_mode_warning_title),
-                          style = AppTheme.typography.headlineMedium,
-                          color = AppTheme.colors.contentPrimary,
-                        )
-                        VSpacer(16.dp)
-                        Text(
-                          text = stringResource(R.string.storage_mode_warning_message),
-                          style = AppTheme.typography.bodyMedium,
-                          color = AppTheme.colors.contentPrimary,
-                        )
-                      }
-                    },
-                    primaryAction =
-                      Action(listener = {
-                        send(ScreenCommand.ToggleStorageMode)
-                      }, resRef = R.string.storage_mode_warning_ok),
+      ToggleRow(
+        label = stringResource(R.string.home_select_storage_mode_title),
+        subtitle = stringResource(R.string.home_select_storage_mode_subtitle),
+        checked = state.isLocalSave ?: false,
+        onCheckedChange = {
+          if (state.isLocalSave == false) {
+            sendEvent(
+              ServiceCommand.UiEvent.Decision(
+                content = { StorageWarningDialog() },
+                primaryAction =
+                  Action(
+                    listener = { send(ScreenCommand.ToggleStorageMode) },
+                    resRef = R.string.storage_mode_warning_ok,
                   ),
-                )
-              } else {
-                send(ScreenCommand.ToggleStorageMode)
-              }
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.home_select_storage_mode_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(2.dp)
-          Text(
-            text = stringResource(R.string.home_select_storage_mode_subtitle),
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-        Toggle(checked = state.isLocalSave ?: false)
-      }
+              ),
+            )
+          } else {
+            send(ScreenCommand.ToggleStorageMode)
+          }
+        },
+      )
 
-      VSpacer(16.dp)
+      // === Language ===
+      VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-
-      // MUX toggle
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              send(ScreenCommand.ToggleMux)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.settings_mux_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(2.dp)
-          Text(
-            text = stringResource(R.string.settings_mux_subtitle),
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-        Toggle(checked = state.muxEnabled ?: false)
-      }
-
+      SectionTitle(stringResource(R.string.settings_section_language))
       VSpacer(16.dp)
+
+      LanguageSection(
+        label = stringResource(R.string.settings_language_title),
+        subtitle = languageLabel(state.language),
+        onClick = { selectLanguage(state.language.orEmpty()) },
+      )
+
+      // === MUX ===
+      VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_mux))
+      VSpacer(16.dp)
 
-      // Start with favorite profiles toggle
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              send(ScreenCommand.StartWithFavoriteProfiles)
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.settings_start_with_favorite_profiles_title),
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(2.dp)
-          Text(
-            text = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-        Toggle(
-          checked = state.startWithFavoriteProfiles ?: false,
-        )
-      }
-      val faqTitle = stringResource(R.string.mux_faq_title)
-      Row(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .clickable {
-              sendEvent(
-                ServiceCommand.UiEvent.Decision(
-                  content = {
-                    Column {
-                      Text(
-                        text = faqTitle,
-                        style = AppTheme.typography.headlineMedium,
-                        color = AppTheme.colors.contentPrimary,
-                      )
-                      VSpacer(16.dp)
-                      Text(
-                        text = stringResource(R.string.mux_faq_body),
-                        style = AppTheme.typography.bodyMedium,
-                        color = AppTheme.colors.contentPrimary,
-                      )
-                    }
-                  },
-                  primaryAction = Action(listener = {}, resRef = R.string.mux_faq_ok),
-                ),
-              )
-            }
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        Column(modifier = Modifier.weight(1f)) {
-          Text(
-            text = faqTitle,
-            style = AppTheme.typography.titleMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-        }
-      }
+      ToggleRow(
+        label = stringResource(R.string.settings_mux_title),
+        subtitle = stringResource(R.string.settings_mux_subtitle),
+        checked = state.muxEnabled ?: false,
+        onCheckedChange = { send(ScreenCommand.ToggleMux) },
+      )
+
+      MuxFaqRow { sendMuxFaq() }
     }
   }
 }
 
-private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage(currentLanguage: String?) {
+// === Helper composables ===
+
+@Composable
+private fun SectionTitle(text: String) {
+  Text(
+    text = text,
+    style = AppTheme.typography.titleMedium,
+    color = AppTheme.colors.contentSecondary,
+  )
+}
+
+@Composable
+private fun ThemeOption(
+  label: String,
+  checked: Boolean,
+  enabled: Boolean = true,
+  subtitle: String? = null,
+  onCheckedChange: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onCheckedChange).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(text = label, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+      if (subtitle != null) {
+        VSpacer(2.dp)
+        Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+      }
+    }
+    Toggle(checked = checked, enabled = enabled)
+  }
+}
+
+@Composable
+private fun ToggleRow(
+  label: String,
+  subtitle: String,
+  checked: Boolean,
+  onCheckedChange: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onCheckedChange).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(text = label, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+      VSpacer(2.dp)
+      Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+    }
+    Toggle(checked = checked)
+  }
+}
+
+@Composable
+private fun LanguageSection(
+  label: String,
+  subtitle: String,
+  onClick: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(text = label, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+      VSpacer(2.dp)
+      Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+    }
+  }
+}
+
+@Composable
+private fun MuxFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.mux_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun ScreenScope<*, *>.sendMuxFaq() {
+  sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { MuxFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.mux_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun StorageWarningDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.storage_mode_warning_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.storage_mode_warning_message),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun MuxFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.mux_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.mux_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage(currentLanguage: String) {
   sendEvent(
     ServiceCommand.UiEvent.Decision(
       content = {
-        Column {
-          Text(
-            text = stringResource(R.string.settings_language_title),
-            style = AppTheme.typography.headlineMedium,
-            color = AppTheme.colors.contentPrimary,
-          )
-          VSpacer(24.dp)
-
-          // English option
-          Row(
-            modifier = Modifier.clickable { send(ScreenCommand.SelectLanguage(languageCode = "en")) },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Text(
-              text = stringResource(R.string.language_en),
-              style = AppTheme.typography.bodyMedium,
-              color = if (currentLanguage == "en") AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary,
-            )
-            if (currentLanguage == "en") {
-              Text(
-                text = "✓",
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.accentPrimary,
-              )
-            }
-          }
-          VSpacer(24.dp)
-          // Russian option
-          Row(
-            modifier = Modifier.clickable { send(ScreenCommand.SelectLanguage(languageCode = "ru")) },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            Text(
-              text = stringResource(R.string.language_ru),
-              style = AppTheme.typography.bodyMedium,
-              color = if (currentLanguage == "ru") AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary,
-            )
-            if (currentLanguage == "ru") {
-              Text(
-                text = "✓",
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.accentPrimary,
-              )
-            }
-          }
-        }
+        LanguagePickerDialog(
+          currentLanguage = currentLanguage,
+          onClick = { code ->
+            send(ScreenCommand.SelectLanguage(code))
+          },
+        )
       },
-      primaryAction = Action(listener = {}, resRef = R.string.btn_close),
+      primaryAction = Action(listener = { }, resRef = R.string.btn_close),
     ),
   )
+}
+
+@Composable
+private fun LanguagePickerDialog(
+  currentLanguage: String,
+  onClick: (String) -> Unit,
+) {
+  Column {
+    Text(
+      text = stringResource(R.string.settings_language_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(24.dp)
+
+    LanguageOption("en", currentLanguage) {
+      onClick("en")
+    }
+    VSpacer(24.dp)
+    LanguageOption("ru", currentLanguage) {
+      onClick("ru")
+    }
+  }
+}
+
+@Composable
+private fun LanguageOption(
+  languageCode: String,
+  currentLanguage: String?,
+  onClick: () -> Unit,
+) {
+  Row(
+    modifier = Modifier.clickable { onClick.invoke() },
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    val isSelected = currentLanguage == languageCode
+    Text(
+      text =
+        when (languageCode) {
+          "en" -> stringResource(R.string.language_en)
+          "ru" -> stringResource(R.string.language_ru)
+          else -> error("Unsupported locale")
+        },
+      style = AppTheme.typography.bodyMedium,
+      color = if (isSelected) AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary,
+    )
+    if (isSelected) {
+      Text(
+        text = "✓",
+        style = AppTheme.typography.labelMedium,
+        color = AppTheme.colors.accentPrimary,
+      )
+    }
+  }
+}
+
+@Composable
+private fun languageLabel(language: String?): String {
+  return when (language) {
+    "en" -> stringResource(R.string.language_en)
+    "ru" -> stringResource(R.string.language_ru)
+    else -> language ?: ""
+  }
 }
