@@ -35,6 +35,15 @@ interface SettingsRepository {
   /** Reactive flow for MUX state updates */
   val muxEnabled: Flow<Boolean>
 
+  /** Check if local storage mode is enabled */
+  suspend fun isLocalSaveEnabled(): Boolean
+
+  /** Enable or disable local storage mode */
+  suspend fun toggleLocalSave(enabled: Boolean): Boolean
+
+  /** Reactive flow for local save state updates */
+  val isLocalSave: Flow<Boolean>
+
   fun language(): String?
 
   fun setLanguage(code: String)

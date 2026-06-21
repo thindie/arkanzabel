@@ -71,4 +71,20 @@ class SettingsRepositoryImpl(
     _muxEnabled.value = enabled
     return true
   }
+
+  // Local storage mode support
+  private val _isLocalSave = MutableStateFlow<Boolean?>(null)
+
+  override val isLocalSave =
+    _isLocalSave
+      .filterNotNull()
+      .onStart { emit(storage.isLocalSaveEnabled()) }
+      .onEach { storage.setLocalSaveMode(it) }
+
+  override suspend fun isLocalSaveEnabled(): Boolean = storage.isLocalSaveEnabled()
+
+  override suspend fun toggleLocalSave(enabled: Boolean): Boolean {
+    _isLocalSave.value = enabled
+    return true
+  }
 }

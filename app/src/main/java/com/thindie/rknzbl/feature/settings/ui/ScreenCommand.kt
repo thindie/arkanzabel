@@ -12,4 +12,7 @@ internal sealed interface ScreenCommand : Command {
 
   // MUX toggle command
   data object ToggleMux : ScreenCommand
+
+  // Local storage mode toggle command
+  data object ToggleStorageMode : ScreenCommand
 }

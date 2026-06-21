@@ -29,4 +29,10 @@ internal fun HomeFlow.settingsStateSink(
     .transition { state, lang ->
       state.copy(language = lang)
     }
+
+  // Local storage mode support
+  screenScope.sub(repository.isLocalSave)
+    .transition { state, enabled ->
+      state.copy(isLocalSave = enabled)
+    }
 }
