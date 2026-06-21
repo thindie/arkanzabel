@@ -1,16 +1,12 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -24,7 +20,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,15 +31,14 @@ import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
-import com.thindie.rknzbl.uikit.CircularProgress
-import com.thindie.rknzbl.uikit.HSpacer
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
-import com.thindie.rknzbl.uikit.surface
+import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
 fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
   val screenState by state.collectAsState()
+  val established = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
@@ -116,7 +110,7 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
                     BorderStroke(
                       width = 1.2.dp,
                       color =
-                        if (screenState.selected == item && screenState.established) {
+                        if (screenState.selected == item && established) {
                           AppTheme.colors.accentPrimary
                         } else {
                           AppTheme.colors.backgroundSecondary
@@ -163,73 +157,22 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
           Modifier
             .align(Alignment.BottomCenter)
             .padding(16.dp),
-        enabled = st.established || st.links.isEmpty(),
+        enabled = established || st.links.isEmpty(),
         text =
           when {
             this@NewProfiles.processing == ScreenCommand.Start -> ""
             st.links.isEmpty() -> stringResource(R.string.home_fetch_profiles)
-            st.established -> stringResource(R.string.home_stop_service)
+            established -> stringResource(R.string.home_stop_service)
             else -> stringResource(R.string.home_pick_profile_first)
           },
         onClick = {
-          if (st.established) {
+          if (established) {
             send(ScreenCommand.Stop)
           } else {
             send(ScreenCommand.Start)
           }
         },
       )
-    }
-  }
-  if (screenState.serviceBeingStarted == true) {
-    Box(
-      Modifier
-        .fillMaxSize()
-        .background(
-          Color.Transparent.copy(alpha = 0.3f),
-        )
-        .clickable(onClick = {}, enabled = false),
-    ) {
-      CircularProgress(
-        modifier =
-          Modifier
-            .align(Alignment.Center)
-            .background(
-              color = AppTheme.colors.backgroundSecondary,
-              shape = RoundedCornerShape(20.dp),
-            )
-            .padding(16.dp),
-      )
-      AnimatedVisibility(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .padding(
-              all = 16.dp,
-            ),
-        visible = true,
-      ) {
-        Row(
-          modifier =
-            Modifier
-              .fillMaxWidth()
-              .padding(
-                all = 16.dp,
-              )
-              .surface(
-                backgroundColor = AppTheme.colors.backgroundPrimary,
-                shape = RoundedCornerShape(20.dp),
-              )
-              .height(56.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          HSpacer(16.dp)
-          Text(
-            stringResource(R.string.home_starting_vpn),
-            style = AppTheme.typography.bodyMedium,
-          )
-        }
-      }
     }
   }
 }
