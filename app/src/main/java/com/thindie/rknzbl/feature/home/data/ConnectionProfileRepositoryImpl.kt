@@ -150,7 +150,7 @@ class ConnectionProfileRepositoryImpl(
     autoSavedEvents.tryEmit("")
   }
 
-  private fun invalidateCache()  {
+  private fun invalidateCache() {
     profilesCache.value = null
   }
 }
