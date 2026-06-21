@@ -34,7 +34,7 @@ class HomeFlow(
     )
 
   override fun start() {
-    go(select(settingsRepository))
+    go(select(settingsRepository, repository))
   }
 
   fun startSelectSourceFlow() {

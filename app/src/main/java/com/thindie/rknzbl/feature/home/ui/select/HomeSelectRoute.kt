@@ -22,6 +22,7 @@ import com.thindie.rknzbl.engine.stateSink
 import com.thindie.rknzbl.engine.sub
 import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
+import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.home.ui.newprofiles.newProfiles
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import com.thindie.rknzbl.feature.settings.ui.settings
@@ -31,135 +32,137 @@ import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.WSpacer
 
-fun HomeFlow.select(settingsRepository: SettingsRepository) =
-  RouteFactory.create(
-    initialState = ScreenState(),
-    execute = { c: ScreenCommand, s: ScreenState ->
-      when (c) {
-        ScreenCommand.Home -> {
-          startStoredProfilesFlow { }
-        }
-
-        ScreenCommand.New -> {
-          go(newProfiles())
-        }
-
-        ScreenCommand.Settings -> {
-          go(settings(settingsRepository))
-        }
-
-        ScreenCommand.PerAppProxy -> {
-          startPerAppProxyFlow()
-        }
-
-        ScreenCommand.Back -> {
-          finish(Unit)
-        }
-
-        ScreenCommand.FetchAutoSaved -> {
-          repository.fetchAutoSaved()
-        }
-
-        ScreenCommand.DismissAutoSaved -> {
-          repository.markAutoSavedSeen()
-        }
+fun HomeFlow.select(
+  settingsRepository: SettingsRepository,
+  connectionProfileRepository: ConnectionProfileRepository,
+) = RouteFactory.create(
+  initialState = ScreenState(),
+  execute = { c: ScreenCommand, s: ScreenState ->
+    when (c) {
+      ScreenCommand.Home -> {
+        startStoredProfilesFlow { }
       }
-      s
-    },
-    initialCommand = { ScreenCommand.FetchAutoSaved },
-    stateSink = ::selectStateSink,
-    id = "HomeFlow-select",
-    routeContent = {
-      AppScreen {
-        BackHandler { send(ScreenCommand.Back) }
-        Column(
-          modifier =
-            Modifier
-              .fillMaxSize()
-              .padding(16.dp),
-        ) {
-          Row(modifier = Modifier.fillMaxWidth()) {
-            Text(
-              text = stringResource(R.string.app_name),
-              style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary,
-            )
-          }
+
+      ScreenCommand.New -> {
+        go(newProfiles())
+      }
+
+      ScreenCommand.Settings -> {
+        go(settings(settingsRepository, connectionProfileRepository))
+      }
+
+      ScreenCommand.PerAppProxy -> {
+        startPerAppProxyFlow()
+      }
+
+      ScreenCommand.Back -> {
+        finish(Unit)
+      }
+
+      ScreenCommand.FetchAutoSaved -> {
+        repository.fetchAutoSaved()
+      }
+
+      ScreenCommand.DismissAutoSaved -> {
+        repository.markAutoSavedSeen()
+      }
+    }
+    s
+  },
+  initialCommand = { ScreenCommand.FetchAutoSaved },
+  stateSink = ::selectStateSink,
+  id = "HomeFlow-select",
+  routeContent = {
+    AppScreen {
+      BackHandler { send(ScreenCommand.Back) }
+      Column(
+        modifier =
+          Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+      ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
           Text(
-            text = stringResource(R.string.home_select_tagline),
-            style = AppTheme.typography.labelMedium,
-            color = AppTheme.colors.contentSecondary,
+            text = stringResource(R.string.app_name),
+            style = AppTheme.typography.headlineLarge,
+            color = AppTheme.colors.contentPrimary,
           )
-          VSpacer(24.dp)
+        }
+        Text(
+          text = stringResource(R.string.home_select_tagline),
+          style = AppTheme.typography.labelMedium,
+          color = AppTheme.colors.contentSecondary,
+        )
+        VSpacer(24.dp)
+        SentenceRow(
+          modifier = Modifier.fillMaxWidth(),
+          title = stringResource(R.string.home_select_new_profiles_title),
+          subtitle = stringResource(R.string.home_select_new_profiles_subtitle),
+          painter = painterResource(R.drawable.ic_internet_24),
+          onClick = { send(ScreenCommand.New) },
+          loading = false,
+        )
+        VSpacer(16.dp)
+        SentenceRow(
+          modifier = Modifier.fillMaxWidth(),
+          title = stringResource(R.string.home_select_stored_title),
+          subtitle = stringResource(R.string.home_select_stored_subtitle),
+          painter = painterResource(R.drawable.ic_home_24),
+          onClick = { send(ScreenCommand.Home) },
+          loading = false,
+        )
+        VSpacer(16.dp)
+        SentenceRow(
+          modifier = Modifier.fillMaxWidth(),
+          title = stringResource(R.string.home_select_vpn_modes_title),
+          subtitle = stringResource(R.string.home_select_vpn_modes_subtitle),
+          painter = painterResource(R.drawable.ic_filter_24),
+          onClick = { send(ScreenCommand.PerAppProxy) },
+          loading = false,
+        )
+        VSpacer(16.dp)
+        SentenceRow(
+          modifier = Modifier.fillMaxWidth(),
+          title = stringResource(R.string.home_select_settings_title),
+          subtitle = stringResource(R.string.home_select_settings_subtitle),
+          painter = painterResource(R.drawable.ic_settings_24),
+          onClick = { send(ScreenCommand.Settings) },
+          loading = false,
+        )
+        val autoSaved = state.collectAsState()
+        val profile = autoSaved.value.autoSaved
+        if (profile != null) {
+          WSpacer()
+          Text(
+            text = stringResource(R.string.home_autosaved_profile),
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
           SentenceRow(
-            modifier = Modifier.fillMaxWidth(),
-            title = stringResource(R.string.home_select_new_profiles_title),
-            subtitle = stringResource(R.string.home_select_new_profiles_subtitle),
-            painter = painterResource(R.drawable.ic_internet_24),
-            onClick = { send(ScreenCommand.New) },
+            modifier =
+              Modifier
+                .border(
+                  border =
+                    BorderStroke(
+                      width = 1.2.dp,
+                      color = AppTheme.colors.backgroundSecondary,
+                    ),
+                  shape = RoundedCornerShape(20.dp),
+                )
+                .fillMaxWidth(),
+            painter = painterResource(R.drawable.ic_folder_24),
+            title = profile.remarks + profile.serverPort.orEmpty(),
+            subtitle = profile.flow ?: profile.server ?: profile.serviceName ?: "",
             loading = false,
+            onClick = { send(ScreenCommand.DismissAutoSaved) },
+            onLongClick = null,
           )
-          VSpacer(16.dp)
-          SentenceRow(
-            modifier = Modifier.fillMaxWidth(),
-            title = stringResource(R.string.home_select_stored_title),
-            subtitle = stringResource(R.string.home_select_stored_subtitle),
-            painter = painterResource(R.drawable.ic_home_24),
-            onClick = { send(ScreenCommand.Home) },
-            loading = false,
-          )
-          VSpacer(16.dp)
-          SentenceRow(
-            modifier = Modifier.fillMaxWidth(),
-            title = stringResource(R.string.home_select_vpn_modes_title),
-            subtitle = stringResource(R.string.home_select_vpn_modes_subtitle),
-            painter = painterResource(R.drawable.ic_filter_24),
-            onClick = { send(ScreenCommand.PerAppProxy) },
-            loading = false,
-          )
-          VSpacer(16.dp)
-          SentenceRow(
-            modifier = Modifier.fillMaxWidth(),
-            title = stringResource(R.string.home_select_settings_title),
-            subtitle = stringResource(R.string.home_select_settings_subtitle),
-            painter = painterResource(R.drawable.ic_settings_24),
-            onClick = { send(ScreenCommand.Settings) },
-            loading = false,
-          )
-          val autoSaved = state.collectAsState()
-          val profile = autoSaved.value.autoSaved
-          if (profile != null) {
-            WSpacer()
-            Text(
-              text = stringResource(R.string.home_autosaved_profile),
-              style = AppTheme.typography.bodyMedium,
-              color = AppTheme.colors.contentPrimary,
-            )
-            VSpacer(2.dp)
-            SentenceRow(
-              modifier =
-                Modifier
-                  .border(
-                    border =
-                      BorderStroke(
-                        width = 1.2.dp,
-                        color = AppTheme.colors.backgroundSecondary,
-                      ),
-                    shape = RoundedCornerShape(20.dp),
-                  )
-                  .fillMaxWidth(),
-              painter = painterResource(R.drawable.ic_folder_24),
-              title = profile.remarks + profile.serverPort.orEmpty(),
-              subtitle = profile.flow ?: profile.server ?: profile.serviceName ?: "",
-              loading = false,
-              onClick = { send(ScreenCommand.DismissAutoSaved) },
-              onLongClick = null,
-            )
-          }
         }
       }
-    },
-  )
+    }
+  },
+)
 
 private fun HomeFlow.selectStateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
   screenScope.stateSink {
