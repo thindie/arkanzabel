@@ -16,10 +16,12 @@ import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 
 class QSTileService : TileService() {
-
   private val tileStateReceiver =
     object : BroadcastReceiver() {
-      override fun onReceive(ctx: Context?, intent: Intent?) {
+      override fun onReceive(
+        ctx: Context?,
+        intent: Intent?,
+      ) {
         when (intent?.getIntExtra("key", 0)) {
           AppConfig.MSG_STATE_RUNNING -> setState(Tile.STATE_ACTIVE)
           AppConfig.MSG_STATE_NOT_RUNNING -> setState(Tile.STATE_INACTIVE)

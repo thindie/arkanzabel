@@ -13,93 +13,98 @@ import com.v2ray.ang.util.LocaleContextWrapper
 import java.lang.ref.SoftReference
 
 class V2RayProxyOnlyService : Service(), ServiceControl {
-    /**
-     * Initializes the service.
-     */
-    override fun onCreate() {
-        super.onCreate()
-        V2RayServiceManager.serviceControl = SoftReference(this)
-    }
+  /**
+   * Initializes the service.
+   */
+  override fun onCreate() {
+    super.onCreate()
+    V2RayServiceManager.serviceControl = SoftReference(this)
+  }
 
-    /**
-     * Handles the start command for the service.
-     * @param intent The intent.
-     * @param flags The flags.
-     * @param startId The start ID.
-     * @return The start mode.
-     */
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (V2RayServiceManager.isRunning()) {
-            Log.i(AppConfig.TAG, "Proxy-only core running; restarting loop for new profile")
-            V2RayServiceManager.stopCoreLoop()
-                if (!V2RayServiceManager.startCoreLoop(null, application)) {
-                    Log.e(
-                        AppConfig.TAG,
-                        "Failed to restart proxy-only core after profile switch"
-                    )
-                }
-            return START_STICKY
-        }
-            V2RayServiceManager.startCoreLoop(null, application)
-        return START_STICKY
+  /**
+   * Handles the start command for the service.
+   * @param intent The intent.
+   * @param flags The flags.
+   * @param startId The start ID.
+   * @return The start mode.
+   */
+  override fun onStartCommand(
+    intent: Intent?,
+    flags: Int,
+    startId: Int,
+  ): Int {
+    if (V2RayServiceManager.isRunning()) {
+      Log.i(AppConfig.TAG, "Proxy-only core running; restarting loop for new profile")
+      V2RayServiceManager.stopCoreLoop()
+      if (!V2RayServiceManager.startCoreLoop(null, application)) {
+        Log.e(
+          AppConfig.TAG,
+          "Failed to restart proxy-only core after profile switch",
+        )
+      }
+      return START_STICKY
     }
+    V2RayServiceManager.startCoreLoop(null, application)
+    return START_STICKY
+  }
 
-    /**
-     * Destroys the service.
-     */
-    override fun onDestroy() {
-        super.onDestroy()
-        V2RayServiceManager.stopCoreLoop()
-    }
+  /**
+   * Destroys the service.
+   */
+  override fun onDestroy() {
+    super.onDestroy()
+    V2RayServiceManager.stopCoreLoop()
+  }
 
-    /**
-     * Gets the service instance.
-     * @return The service instance.
-     */
-    override fun getService(): Service {
-        return this
-    }
+  /**
+   * Gets the service instance.
+   * @return The service instance.
+   */
+  override fun getService(): Service {
+    return this
+  }
 
-    /**
-     * Starts the service.
-     */
-    override fun startService() {
-        // do nothing
-    }
+  /**
+   * Starts the service.
+   */
+  override fun startService() {
+    // do nothing
+  }
 
-    /**
-     * Stops the service.
-     */
-    override fun stopService() {
-        stopSelf()
-    }
+  /**
+   * Stops the service.
+   */
+  override fun stopService() {
+    stopSelf()
+  }
 
-    /**
-     * Protects the VPN socket.
-     * @param socket The socket to protect.
-     * @return True if the socket is protected, false otherwise.
-     */
-    override fun vpnProtect(socket: Int): Boolean {
-        return true
-    }
+  /**
+   * Protects the VPN socket.
+   * @param socket The socket to protect.
+   * @return True if the socket is protected, false otherwise.
+   */
+  override fun vpnProtect(socket: Int): Boolean {
+    return true
+  }
 
-    /**
-     * Binds the service.
-     * @param intent The intent.
-     * @return The binder.
-     */
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+  /**
+   * Binds the service.
+   * @param intent The intent.
+   * @return The binder.
+   */
+  override fun onBind(intent: Intent?): IBinder? {
+    return null
+  }
 
-    /**
-     * Attaches the base context to the service.
-     * @param newBase The new base context.
-     */
-    override fun attachBaseContext(newBase: Context?) {
-        val context = newBase?.let {
-            LocaleContextWrapper.wrap(newBase, SettingsManager.getLocale())
-        }
-        super.attachBaseContext(context)
-    }
+  /**
+   * Attaches the base context to the service.
+   * @param newBase The new base context.
+   */
+  override fun attachBaseContext(newBase: Context?) {
+    val context =
+      newBase?.let {
+        LocaleContextWrapper.wrap(newBase, SettingsManager.getLocale())
+      }
+    super.attachBaseContext(context)
+  }
 }

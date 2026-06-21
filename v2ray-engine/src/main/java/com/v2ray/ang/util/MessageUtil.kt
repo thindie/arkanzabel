@@ -9,8 +9,6 @@ import com.v2ray.ang.service.V2RayTestService
 import java.io.Serializable
 
 object MessageUtil {
-
-
   /**
    * Sends a message to the service.
    *
@@ -18,7 +16,11 @@ object MessageUtil {
    * @param what The message identifier.
    * @param content The message content.
    */
-  fun sendMsg2Service(ctx: Context, what: Int, content: Serializable) {
+  fun sendMsg2Service(
+    ctx: Context,
+    what: Int,
+    content: Serializable,
+  ) {
     sendMsg(ctx, AppConfig.BROADCAST_ACTION_SERVICE, what, content)
   }
 
@@ -29,7 +31,11 @@ object MessageUtil {
    * @param what The message identifier.
    * @param content The message content.
    */
-  fun sendMsg2UI(ctx: Context, what: Int, content: Serializable) {
+  fun sendMsg2UI(
+    ctx: Context,
+    what: Int,
+    content: Serializable,
+  ) {
     sendMsg(ctx, AppConfig.BROADCAST_ACTION_ACTIVITY, what, content)
   }
 
@@ -40,7 +46,11 @@ object MessageUtil {
    * @param what The message identifier.
    * @param content The message content.
    */
-  fun sendMsg2TestService(ctx: Context, what: Int, content: Serializable) {
+  fun sendMsg2TestService(
+    ctx: Context,
+    what: Int,
+    content: Serializable,
+  ) {
     try {
       val intent = Intent()
       intent.component = ComponentName(ctx, V2RayTestService::class.java)
@@ -60,7 +70,12 @@ object MessageUtil {
    * @param what The message identifier.
    * @param content The message content.
    */
-  private fun sendMsg(ctx: Context, action: String, what: Int, content: Serializable) {
+  private fun sendMsg(
+    ctx: Context,
+    action: String,
+    what: Int,
+    content: Serializable,
+  ) {
     try {
       val intent = Intent()
       intent.action = action

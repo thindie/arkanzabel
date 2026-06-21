@@ -4,8 +4,8 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings.FinalMask
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
@@ -30,7 +30,7 @@ object Hysteria2 : ProtocolParser() {
         password = uri.userInfo,
         security = AppConfig.TLS,
         network = NetworkType.HYSTERIA.type,
-        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo,
       )
 
     if (!uri.rawQuery.isNullOrEmpty()) {

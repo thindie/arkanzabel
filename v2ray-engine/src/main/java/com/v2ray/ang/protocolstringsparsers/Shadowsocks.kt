@@ -4,8 +4,8 @@ import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.util.Utils
@@ -38,7 +38,7 @@ object Shadowsocks : ProtocolParser() {
         serverPort = uri.port.toString(),
         method = userSplit.first(),
         password = userSplit.last(),
-        subscriptionId = uri.idnHost + uri.port.toString() + Protocol.ShadowSocks + userSplit.first()
+        subscriptionId = uri.idnHost + uri.port.toString() + Protocol.ShadowSocks + userSplit.first(),
       )
 
     if (!uri.rawQuery.isNullOrEmpty()) {
@@ -99,7 +99,7 @@ object Shadowsocks : ProtocolParser() {
       serverPort = match.groupValues[4],
       password = match.groupValues[2],
       method = match.groupValues[1].lowercase(),
-      subscriptionId = Protocol.ShadowSocks.value.toString() + remarks + match.groupValues[4] + match.groupValues[2]
+      subscriptionId = Protocol.ShadowSocks.value.toString() + remarks + match.groupValues[4] + match.groupValues[2],
     )
   }
 

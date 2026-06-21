@@ -30,16 +30,17 @@ object Socks : ProtocolParser() {
       serverPort = uri.port.toString(),
       username = username,
       password = password,
-      subscriptionId = uri.userInfo + uri.idnHost + username
+      subscriptionId = uri.userInfo + uri.idnHost + username,
     )
   }
 
   fun toUri(config: ConnectionProfile): String {
     val pw =
-      if (config.username.isNotNullEmpty())
+      if (config.username.isNotNullEmpty()) {
         "${config.username}:${config.password}"
-      else
+      } else {
         ":"
+      }
 
     return toUri(config, Utils.encode(pw, true), null)
   }

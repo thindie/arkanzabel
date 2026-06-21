@@ -17,7 +17,6 @@ import com.v2ray.ang.protocolstringsparsers.Wireguard
  * Keeps [com.v2ray.ang.runtime.V2rayConfigManager] free of direct parser dependencies for this path.
  */
 object ConnectionProfileToOutboundMapper {
-
   fun map(connectionProfile: ConnectionProfile): Outbound? {
     return when (connectionProfile.protocol) {
       Protocol.Vmess -> Vmess.toOutbound(connectionProfile)

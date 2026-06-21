@@ -1,8 +1,8 @@
 package com.v2ray.ang.runtimebuilder
 
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.error.ConfigBuildError
 import com.v2ray.ang.runtime.KeyValueStorage
 
@@ -16,7 +16,6 @@ internal class ConfigAssembler(
   private val applyCustomLocalDns: (V2rayConfig) -> V2rayConfig,
   private val applyResolveOutboundDomainsToHosts: (V2rayConfig) -> V2rayConfig,
 ) {
-
   fun applyStandardSteps(
     v2rayConfig: V2rayConfig,
     connectionProfile: ConnectionProfile,
@@ -57,7 +56,7 @@ internal class ConfigAssembler(
         throw ConfigBuildError(
           message = "Failed to resolve outbound domains",
           stage = "domainResolve",
-          cause = runtime
+          cause = runtime,
         )
       }
     }

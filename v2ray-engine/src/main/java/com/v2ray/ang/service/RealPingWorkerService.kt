@@ -23,9 +23,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * Each batch owns its own CoroutineScope/dispatcher and can be cancelled separately.
  */
 class RealPingWorkerService(
-    private val context: Context,
-    private val guids: List<String>,
-    private val onFinish: (status: String) -> Unit = {},
+  private val context: Context,
+  private val guids: List<String>,
+  private val onFinish: (status: String) -> Unit = {},
 ) {
   private val job = SupervisorJob()
   private val cpu = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
@@ -36,28 +36,29 @@ class RealPingWorkerService(
   private val totalCount = AtomicInteger(0)
 
   fun start() {
-    val jobs = guids.map { guid ->
-      totalCount.incrementAndGet()
-      scope.launch {
-        runningCount.incrementAndGet()
-        try {
-          val result = startRealPing(guid)
-          MessageUtil.sendMsg2UI(
-            ctx = context,
-            what = AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
-            content = guid to result
-          )
-        } finally {
-          val count = totalCount.decrementAndGet()
-          val left = runningCount.decrementAndGet()
-          MessageUtil.sendMsg2UI(
-            ctx = context,
-            what = AppConfig.MSG_MEASURE_CONFIG_NOTIFY,
-            content = "$left / $count"
-          )
+    val jobs =
+      guids.map { guid ->
+        totalCount.incrementAndGet()
+        scope.launch {
+          runningCount.incrementAndGet()
+          try {
+            val result = startRealPing(guid)
+            MessageUtil.sendMsg2UI(
+              ctx = context,
+              what = AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
+              content = guid to result,
+            )
+          } finally {
+            val count = totalCount.decrementAndGet()
+            val left = runningCount.decrementAndGet()
+            MessageUtil.sendMsg2UI(
+              ctx = context,
+              what = AppConfig.MSG_MEASURE_CONFIG_NOTIFY,
+              content = "$left / $count",
+            )
+          }
         }
       }
-    }
 
     scope.launch {
       try {
@@ -88,7 +89,7 @@ class RealPingWorkerService(
       val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
       V2RayNativeManager.measureOutboundDelay(
         built.json,
-        SettingsManager.getDelayTestUrl()
+        SettingsManager.getDelayTestUrl(),
       )
     } catch (cancel: CancellationException) {
       throw cancel
@@ -101,4 +102,3 @@ class RealPingWorkerService(
     }
   }
 }
-

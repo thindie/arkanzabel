@@ -15,11 +15,17 @@ class BootReceiver : BroadcastReceiver() {
    * @param context The Context in which the receiver is running.
    * @param intent The Intent being received.
    */
-  override fun onReceive(context: Context?, intent: Intent?) {
+  override fun onReceive(
+    context: Context?,
+    intent: Intent?,
+  ) {
     if (context == null || intent?.action != Intent.ACTION_BOOT_COMPLETED) return
-    if (!KeyValueStorage.decodeStartOnBoot() || KeyValueStorage.getSelectServer()
+    if (!KeyValueStorage.decodeStartOnBoot() ||
+      KeyValueStorage.getSelectServer()
         .isNullOrEmpty()
-    ) return
+    ) {
+      return
+    }
     V2RayServiceManager.startVService(context)
   }
 }

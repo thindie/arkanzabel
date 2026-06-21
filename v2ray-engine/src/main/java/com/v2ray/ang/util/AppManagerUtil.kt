@@ -10,16 +10,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object AppManagerUtil {
-
   suspend fun loadAppsForPerAppTunneling(context: Context): ArrayList<AppInfo> =
     withContext(Dispatchers.IO) {
       val packageManager = context.packageManager
       val flags = PackageManager.GET_PERMISSIONS.toLong()
-      val packages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(flags))
-      } else {
-        packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
-      }
+      val packages =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(flags))
+        } else {
+          packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS)
+        }
       val apps = ArrayList<AppInfo>(packages.size / 4)
 
       for (pkg in packages) {

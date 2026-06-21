@@ -32,7 +32,6 @@ private class UrlFetchSession(val maxRedirects: Int = URL_FETCH_MAX_REDIRECTS) {
 }
 
 object HttpUtil {
-
   fun toIdnUrl(str: String): String {
     val url = URL(str)
     val host = url.host
@@ -46,16 +45,20 @@ object HttpUtil {
     return IDN.toASCII(domain, IDN.ALLOW_UNASSIGNED)
   }
 
-  fun resolveHostToIP(host: String, ipv6Preferred: Boolean = false): List<String>? {
+  fun resolveHostToIP(
+    host: String,
+    ipv6Preferred: Boolean = false,
+  ): List<String>? {
     return try {
       if (Utils.isPureIpAddress(host)) return null
       val addresses = InetAddress.getAllByName(host)
       if (addresses.isEmpty()) return null
-      val sortedAddresses = if (ipv6Preferred) {
-        addresses.sortedWith(compareByDescending { it is Inet6Address })
-      } else {
-        addresses.sortedWith(compareBy { it is Inet6Address })
-      }
+      val sortedAddresses =
+        if (ipv6Preferred) {
+          addresses.sortedWith(compareByDescending { it is Inet6Address })
+        } else {
+          addresses.sortedWith(compareBy { it is Inet6Address })
+        }
       val ipList = sortedAddresses.mapNotNull { it.hostAddress }
       Log.i(AppConfig.TAG, "Resolved IPs for $host: ${ipList.joinToString()}")
       ipList
@@ -65,7 +68,11 @@ object HttpUtil {
     }
   }
 
-  fun getUrlContent(url: String, timeout: Int, httpPort: Int = 0): String? {
+  fun getUrlContent(
+    url: String,
+    timeout: Int,
+    httpPort: Int = 0,
+  ): String? {
     val conn = createProxyConnection(url, httpPort, timeout, timeout) ?: return null
     return try {
       conn.inputStream.bufferedReader().readText()
@@ -85,52 +92,54 @@ object HttpUtil {
     userAgent: String?,
     timeout: Int = 15000,
     httpPort: Int = 0,
-  ): String = withContext(Dispatchers.IO) {
-    val session = UrlFetchSession()
-    coroutineContext.job.invokeOnCompletion { cause ->
-      if (cause != null) {
-        session.activeConnection.update {
-          it?.disconnect()
-          null
-        }
-      }
-    }
-
-    var currentUrl = url
-
-    while (session.redirects.value++ < session.maxRedirects) {
-      ensureActive()
-      if (currentUrl == null) continue
-      val conn = createProxyConnection(currentUrl, httpPort, timeout, timeout) ?: continue
-      session.activeConnection.value = conn
-      try {
-        val finalUserAgent = if (userAgent.isNullOrBlank()) {
-          AppConfig.httpUserAgent
-        } else {
-          userAgent
-        }
-        conn.setRequestProperty("User-agent", finalUserAgent)
-        conn.connect()
-
-        val responseCode = conn.responseCode
-        when (responseCode) {
-          in 300..399 -> {
-            val location = resolveLocation(conn)
-            if (location.isNullOrEmpty()) {
-              throw IOException("Redirect location not found")
-            }
-            currentUrl = location
+  ): String =
+    withContext(Dispatchers.IO) {
+      val session = UrlFetchSession()
+      coroutineContext.job.invokeOnCompletion { cause ->
+        if (cause != null) {
+          session.activeConnection.update {
+            it?.disconnect()
+            null
           }
-
-          else -> return@withContext conn.inputStream.use { it.bufferedReader().readText() }
         }
-      } finally {
-        session.activeConnection.update { current -> if (current === conn) null else current }
-        conn.disconnect()
       }
+
+      var currentUrl = url
+
+      while (session.redirects.value++ < session.maxRedirects) {
+        ensureActive()
+        if (currentUrl == null) continue
+        val conn = createProxyConnection(currentUrl, httpPort, timeout, timeout) ?: continue
+        session.activeConnection.value = conn
+        try {
+          val finalUserAgent =
+            if (userAgent.isNullOrBlank()) {
+              AppConfig.httpUserAgent
+            } else {
+              userAgent
+            }
+          conn.setRequestProperty("User-agent", finalUserAgent)
+          conn.connect()
+
+          val responseCode = conn.responseCode
+          when (responseCode) {
+            in 300..399 -> {
+              val location = resolveLocation(conn)
+              if (location.isNullOrEmpty()) {
+                throw IOException("Redirect location not found")
+              }
+              currentUrl = location
+            }
+
+            else -> return@withContext conn.inputStream.use { it.bufferedReader().readText() }
+          }
+        } finally {
+          session.activeConnection.update { current -> if (current === conn) null else current }
+          conn.disconnect()
+        }
+      }
+      throw IOException("Too many redirects")
     }
-    throw IOException("Too many redirects")
-  }
 
   fun createProxyConnection(
     urlStr: String,
@@ -142,16 +151,17 @@ object HttpUtil {
     var conn: HttpURLConnection? = null
     return try {
       val url = URL(urlStr)
-      conn = if (port == 0) {
-        url.openConnection()
-      } else {
-        url.openConnection(
-          Proxy(
-            Proxy.Type.HTTP,
-            InetSocketAddress(LOOPBACK, port),
-          ),
-        )
-      } as HttpURLConnection
+      conn =
+        if (port == 0) {
+          url.openConnection()
+        } else {
+          url.openConnection(
+            Proxy(
+              Proxy.Type.HTTP,
+              InetSocketAddress(LOOPBACK, port),
+            ),
+          )
+        } as HttpURLConnection
 
       conn.connectTimeout = connectTimeout
       conn.readTimeout = readTimeout
@@ -180,7 +190,10 @@ object HttpUtil {
     return resolveRedirectUrl(conn.url, raw)
   }
 
-  private fun resolveRedirectUrl(baseUrl: URL, raw: String): String? {
+  private fun resolveRedirectUrl(
+    baseUrl: URL,
+    raw: String,
+  ): String? {
     return try {
       val locUri = URI(raw)
       val baseUri = baseUrl.toURI()
@@ -195,13 +208,17 @@ object HttpUtil {
     }
   }
 
-  private fun resolveRedirectUrlFallback(baseUrl: URL, raw: String): String? = try {
-    URL(raw).toString()
-  } catch (e: MalformedURLException) {
+  private fun resolveRedirectUrlFallback(
+    baseUrl: URL,
+    raw: String,
+  ): String? =
     try {
-      URL(baseUrl, raw).toString()
-    } catch (e2: MalformedURLException) {
-      null
+      URL(raw).toString()
+    } catch (e: MalformedURLException) {
+      try {
+        URL(baseUrl, raw).toString()
+      } catch (e2: MalformedURLException) {
+        null
+      }
     }
-  }
 }

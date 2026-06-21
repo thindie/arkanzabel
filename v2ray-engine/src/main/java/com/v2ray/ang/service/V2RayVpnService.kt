@@ -15,6 +15,7 @@ import android.os.ParcelFileDescriptor
 import android.os.StrictMode
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.contracts.ServiceControl
@@ -23,11 +24,10 @@ import com.v2ray.ang.error.AppError
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
-import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.runtime.V2RayServiceManager
-import com.v2ray.ang.util.MessageUtil
-import com.thindie.rknzbl.v2rayengine.R
+import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.util.LocaleContextWrapper
+import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
@@ -64,7 +64,10 @@ class V2RayVpnService : VpnService(), ServiceControl {
                 setUnderlyingNetworks(arrayOf(network))
             }
 
-            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities,
+            ) {
                 // it's a good idea to refresh capabilities
                 setUnderlyingNetworks(arrayOf(network))
             }
@@ -91,7 +94,11 @@ class V2RayVpnService : VpnService(), ServiceControl {
         NotificationManager.cancelNotification()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         // Second startForegroundService while VPN is up (e.g. new profile): KeyValueStorage already
         // points at the new server, but re-running setup without stopping core first breaks TUN/core.
         // Tear down core + TUN in-process, then rebuild — same safe order as a full stop, without stopSelf.
@@ -116,7 +123,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
         startService()
         return START_STICKY
-        //return super.onStartCommand(intent, flags, startId)
+        // return super.onStartCommand(intent, flags, startId)
     }
 
     override fun getService(): Service {
@@ -124,14 +131,15 @@ class V2RayVpnService : VpnService(), ServiceControl {
     }
 
     override fun startService() {
-            val iface = mInterface ?: run {
+        val iface =
+            mInterface ?: run {
                 Log.e(AppConfig.TAG, "Failed to create VPN interface")
                 return
             }
-            if (!V2RayServiceManager.startCoreLoop(vpnInterface = iface, application)) {
-                Log.e(AppConfig.TAG, "Failed to start V2Ray core loop")
-                stopAllService()
-            }
+        if (!V2RayServiceManager.startCoreLoop(vpnInterface = iface, application)) {
+            Log.e(AppConfig.TAG, "Failed to start V2Ray core loop")
+            stopAllService()
+        }
     }
 
     override fun stopService() {
@@ -143,17 +151,18 @@ class V2RayVpnService : VpnService(), ServiceControl {
     }
 
     override fun attachBaseContext(newBase: Context?) {
-        val context = newBase?.let {
-            LocaleContextWrapper.wrap(newBase, SettingsManager.getLocale())
-        }
+        val context =
+            newBase?.let {
+                LocaleContextWrapper.wrap(newBase, SettingsManager.getLocale())
+            }
         super.attachBaseContext(context)
     }
 
     /**
      * Sets up the VPN service.
-     * Prepares the VPN and configures it if preparation is successful.
+     *
+     * @return false if VPN interface was not established (caller must not run [startService])
      */
-    /** @return false if VPN interface was not established (caller must not run [startService]). */
     private fun setupVpnService(): Boolean {
         val prepare = prepare(this)
         if (prepare != null) {
@@ -183,8 +192,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
             return false
         } catch (runtime: RuntimeException) {
             Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", runtime)
-            val payload = runtime.message?.trim()?.takeIf { it.isNotEmpty() }
-                ?: getString(R.string.vpn_core_config_build_failed)
+            val payload =
+                runtime.message?.trim()?.takeIf { it.isNotEmpty() }
+                    ?: getString(R.string.vpn_core_config_build_failed)
             MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, payload)
             stopSelf()
             return false
@@ -277,9 +287,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
 
         // Configure DNS servers
-        //if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) == true) {
+        // if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) == true) {
         //  builder.addDnsServer(PRIVATE_VLAN4_ROUTER)
-        //} else {
+        // } else {
         SettingsManager.getVpnDnsServers().forEach {
             if (Utils.isPureIpAddress(it)) {
                 builder.addDnsServer(it)
@@ -366,12 +376,13 @@ class V2RayVpnService : VpnService(), ServiceControl {
     private fun runTun2socks() {
         val iface = mInterface ?: return
         if (SettingsManager.isUsingHevTun()) {
-            tun2SocksService = TProxyService(
-                context = applicationContext,
-                vpnInterface = iface,
-                isRunningProvider = { isRunning },
-                restartCallback = { runTun2socks() }
-            )
+            tun2SocksService =
+                TProxyService(
+                    context = applicationContext,
+                    vpnInterface = iface,
+                    isRunningProvider = { isRunning },
+                    restartCallback = { runTun2socks() },
+                )
         } else {
             tun2SocksService = null
         }
@@ -414,11 +425,11 @@ class V2RayVpnService : VpnService(), ServiceControl {
         V2RayServiceManager.stopCoreLoop()
 
         if (isForced) {
-            //stopSelf has to be called ahead of mInterface.close(). otherwise v2ray core cannot be stooped
-            //It's strage but true.
-            //This can be verified by putting stopself() behind and call stopLoop and startLoop
-            //in a row for several times. You will find that later created v2ray core report port in use
-            //which means the first v2ray core somehow failed to stop and release the port.
+            // stopSelf has to be called ahead of mInterface.close(). otherwise v2ray core cannot be stooped
+            // It's strage but true.
+            // This can be verified by putting stopself() behind and call stopLoop and startLoop
+            // in a row for several times. You will find that later created v2ray core report port in use
+            // which means the first v2ray core somehow failed to stop and release the port.
             stopSelf()
 
             try {
@@ -430,4 +441,3 @@ class V2RayVpnService : VpnService(), ServiceControl {
         }
     }
 }
-
