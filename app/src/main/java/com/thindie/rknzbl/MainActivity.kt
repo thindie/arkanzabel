@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
     val app = application as Application
     val router = app.requireRouter()
+    val repository = app.applicationScope.data.repository
     awaitFinish()
     setContent {
       SideEffect {
@@ -67,7 +68,6 @@ class MainActivity : ComponentActivity() {
           appContext = app,
         )
           .onFinishBuilder {
-            val repository = app.applicationScope.data.repository
             val settingsRepository = app.applicationScope.settings.repository
             HomeFlow(router = router, appContext = app, repository = repository, settingsRepository)
               .onFinishBuilder { router.pop() }
