@@ -20,5 +20,5 @@ interface ConnectionProfileRepository {
 
   suspend fun activeProfile(): ConnectionProfile?
 
-  suspend fun isSaved(profile: ConnectionProfile): Boolean
+  fun isSaved(profile: ConnectionProfile): Boolean
 }
