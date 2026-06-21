@@ -1,17 +1,14 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -41,16 +37,15 @@ import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
-import com.thindie.rknzbl.uikit.CircularProgress
 import com.thindie.rknzbl.uikit.HSpacer
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
-import com.thindie.rknzbl.uikit.surface
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
 internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
   val screenState by state.collectAsState()
+  val established = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
@@ -107,7 +102,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
           items = screenState.profiles,
         ) { item ->
           val isPendingDelete = item in screenState.selectedProfiles
-          val profileRunning = screenState.selected?.subscriptionId == item.subscriptionId && screenState.established
+          val profileRunning = screenState.selected?.subscriptionId == item.subscriptionId && established
           val isFailedSpeedTest = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
           SentenceRow(
             modifier =
@@ -151,9 +146,6 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
             title = item.remarks + " " + item.serverPort.orEmpty(),
             subtitle =
               when {
-                st.serviceBeingStarted == true -> {
-                  item.flow ?: item.server ?: item.serviceName.orEmpty()
-                }
                 profileRunning ->
                   if (st.selectedTestConnectionMessage == null) {
                     ""
@@ -191,13 +183,13 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
           Modifier
             .align(Alignment.BottomCenter)
             .padding(16.dp),
-        enabled = st.established || screenState.profiles.isEmpty() || selectedCount > 0,
+        enabled = established || screenState.profiles.isEmpty() || selectedCount > 0,
         text =
           when {
             st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
             this@ProfilesScreen.processing.value is ScreenCommand.Activate -> ""
             screenState.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
-            st.established -> stringResource(R.string.home_stop_service)
+            established -> stringResource(R.string.home_stop_service)
             else -> stringResource(R.string.home_pick_profile_first)
           },
         onClick = {
@@ -220,62 +212,11 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                 ),
               )
             }
-            st.established -> send(ScreenCommand.StopService)
+            established -> send(ScreenCommand.StopService)
           }
         },
         loading = this@ProfilesScreen.processing.value is ScreenCommand.Activate,
       )
-    }
-  }
-  if (screenState.serviceBeingStarted == true || screenState.showLoading) {
-    Box(
-      Modifier
-        .fillMaxSize()
-        .background(
-          Color.Transparent.copy(alpha = 0.3f),
-        )
-        .clickable(onClick = {}, enabled = false),
-    ) {
-      CircularProgress(
-        modifier =
-          Modifier
-            .align(Alignment.Center)
-            .background(
-              color = AppTheme.colors.backgroundSecondary,
-              shape = RoundedCornerShape(20.dp),
-            )
-            .padding(16.dp),
-      )
-      AnimatedVisibility(
-        modifier =
-          Modifier
-            .fillMaxWidth()
-            .padding(
-              all = 16.dp,
-            ),
-        visible = screenState.serviceBeingStarted == true,
-      ) {
-        Row(
-          modifier =
-            Modifier
-              .fillMaxWidth()
-              .padding(
-                all = 16.dp,
-              )
-              .surface(
-                backgroundColor = AppTheme.colors.backgroundPrimary,
-                shape = RoundedCornerShape(20.dp),
-              )
-              .height(56.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          HSpacer(16.dp)
-          Text(
-            stringResource(R.string.home_starting_vpn),
-            style = AppTheme.typography.bodyMedium,
-          )
-        }
-      }
     }
   }
 }
