@@ -43,6 +43,8 @@ class ConnectionProfileRepositoryImpl(
     newAuthenticatedWebdavClient(userName, password)
   }
 
+  private val isLocalSave get() = storage.isLocalSaveEnabled()
+
   private val profilesCache: MutableStateFlow<List<ConnectionProfile>?> = MutableStateFlow(null)
 
   private val autoSavedEvents =
@@ -53,22 +55,39 @@ class ConnectionProfileRepositoryImpl(
     )
 
   override suspend fun read(): List<ConnectionProfile> {
-    val cache = profilesCache.value
-    if (cache != null) return cache
+    if (isLocalSave) {
+      val cache = profilesCache.value
+      if (cache != null) return cache
+      val body = storage.getLocalProfiles().orEmpty()
 
-    val client = httpClient
-    val body = readInternal(client, url)
+      val profiles =
+        parseRemote(body)
+          .mapNotNull {
+            JsonUtil.fromJson(it, ConnectionProfile::class.java)
+          }
+          .toSet()
+          .toList()
 
-    val profiles =
-      parseRemote(body)
-        .mapNotNull {
-          JsonUtil.fromJson(it, ConnectionProfile::class.java)
-        }
-        .toSet()
-        .toList()
+      profilesCache.updateAndGet { profiles }
+      return requireNotNull(profilesCache.value)
+    } else {
+      val cache = profilesCache.value
+      if (cache != null) return cache
 
-    profilesCache.updateAndGet { profiles }
-    return requireNotNull(profilesCache.value)
+      val client = httpClient
+      val body = readInternal(client, url)
+
+      val profiles =
+        parseRemote(body)
+          .mapNotNull {
+            JsonUtil.fromJson(it, ConnectionProfile::class.java)
+          }
+          .toSet()
+          .toList()
+
+      profilesCache.updateAndGet { profiles }
+      return requireNotNull(profilesCache.value)
+    }
   }
 
   override suspend fun save(guid: String): Boolean {
@@ -78,23 +97,53 @@ class ConnectionProfileRepositoryImpl(
       Log.i(AppConfig.TAG, "Save Profile: failure, decodeServerConfig")
       return false
     }
-    val (currentBody, isSaved) = isSavedInternal(profilePretty)
-    if (isSaved) return false
-    val profileJson = JsonUtil.toJson(profilePretty)
-    writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
-    Log.i(AppConfig.TAG, "Save Profile: success")
-    invalidateCache()
-    return true
+    if (isLocalSave) {
+      val currentBody = storage.getLocalProfiles().orEmpty()
+      val isSaved =
+        if (currentBody.isEmpty()) {
+          false
+        } else {
+          isSavedInternal(
+            connectionProfile = profilePretty,
+            currentBody = currentBody,
+          )
+        }
+      if (isSaved) return false
+      val profileJson = JsonUtil.toJson(profilePretty)
+      val updatedBody = currentBody + SEPARATOR + profileJson
+      storage.setLocalProfiles(updatedBody)
+      Log.i(AppConfig.TAG, "Save Profile [LOCAL]: success")
+      invalidateCacheInternal()
+      return true
+    } else {
+      val currentBody = readInternal(httpClient, url)
+      val isSaved = isSavedInternal(profilePretty, currentBody)
+      if (isSaved) return false
+      val profileJson = JsonUtil.toJson(profilePretty)
+      writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
+      Log.i(AppConfig.TAG, "Save Profile: success")
+      invalidateCacheInternal()
+      return true
+    }
   }
 
   override suspend fun delete(profile: ConnectionProfile) {
-    val profileJson = JsonUtil.toJson(profile)
-    val client = httpClient
-    val currentBody = readInternal(client, url)
-    val filteredBody = currentBody.replace(oldValue = profileJson, "")
-    val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
-    writeInternal(client, url, fallbackBody)
-    invalidateCache()
+    if (isLocalSave) {
+      val profileJson = JsonUtil.toJson(profile)
+      val client = httpClient
+      val currentBody = readInternal(client, url)
+      val filteredBody = currentBody.replace(oldValue = profileJson, "")
+      val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
+      writeInternal(client, url, fallbackBody)
+      invalidateCacheInternal()
+    } else {
+      val profileJson = JsonUtil.toJson(profile)
+      val currentBody = storage.getLocalProfiles().orEmpty()
+      val filteredBody = currentBody.replace(oldValue = profileJson, "")
+      val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
+      storage.setLocalProfiles(fallbackBody)
+      invalidateCacheInternal()
+    }
   }
 
   override fun autoSaved(): Flow<ConnectionProfile?> {
@@ -122,16 +171,21 @@ class ConnectionProfileRepositoryImpl(
     }
   }
 
-  private suspend fun isSavedInternal(connectionProfile: ConnectionProfile): Pair<String, Boolean> {
+  override fun invalidateCaches() {
+    invalidateCacheInternal()
+  }
+
+  private fun isSavedInternal(
+    connectionProfile: ConnectionProfile,
+    currentBody: String,
+  ): Boolean {
     val id = connectionProfile.subscriptionId
     Log.i(AppConfig.TAG, "Save Profile: check for $id")
-    val client = httpClient
-    val currentBody = readInternal(client, url)
     if (id in currentBody) {
       Log.i(AppConfig.TAG, "Save Profile: already saved")
-      return currentBody to true
+      return true
     }
-    return currentBody to false
+    return false
   }
 
   private fun activeProfileInternal(): ConnectionProfile? {
@@ -150,7 +204,7 @@ class ConnectionProfileRepositoryImpl(
     autoSavedEvents.tryEmit("")
   }
 
-  private fun invalidateCache() {
+  private fun invalidateCacheInternal() {
     profilesCache.value = null
   }
 }
