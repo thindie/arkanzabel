@@ -128,6 +128,7 @@ object SpeedtestManager {
       result = ""
     } finally {
       conn.disconnect()
+      closeAllTcpSockets()
     }
     if (error != null) {
       SpeedTestResult.Err(error.message!!)
