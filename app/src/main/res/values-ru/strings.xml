@@ -150,6 +150,10 @@
 <string name="mux_faq_title">Что такое MUX?</string>
 <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
 <string name="mux_faq_ok">Понятно</string>
+
+    <!-- Start with favorite profiles -->
+    <string name="settings_start_with_favorite_profiles_title">Начинать с сохранённых профилей</string>
+    <string name="settings_start_with_favorite_profiles_subtitle">Показывать экран сохранённых профилей при старте приложения</string>
 <string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
 
 <!-- Local storage mode warning dialog -->

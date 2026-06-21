@@ -35,4 +35,10 @@ internal fun HomeFlow.settingsStateSink(
     .transition { state, enabled ->
       state.copy(isLocalSave = enabled)
     }
+
+  // Start with favorite profiles support
+  screenScope.sub(repository.startWithFavoriteProfiles)
+    .transition { state, enabled ->
+      state.copy(startWithFavoriteProfiles = enabled)
+    }
 }

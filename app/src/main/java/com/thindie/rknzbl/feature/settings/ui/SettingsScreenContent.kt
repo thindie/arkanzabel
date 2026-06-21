@@ -343,7 +343,35 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       Divider()
       VSpacer(16.dp)
 
-      // FAQ button
+      // Start with favorite profiles toggle
+      Row(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .clickable {
+              send(ScreenCommand.StartWithFavoriteProfiles)
+            }
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = stringResource(R.string.settings_start_with_favorite_profiles_title),
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
+            style = AppTheme.typography.bodySmall,
+            color = AppTheme.colors.contentSecondary,
+          )
+        }
+        Toggle(
+          checked = state.startWithFavoriteProfiles ?: false,
+        )
+      }
       val faqTitle = stringResource(R.string.mux_faq_title)
       Row(
         modifier =

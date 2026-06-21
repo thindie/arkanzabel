@@ -47,4 +47,13 @@ interface SettingsRepository {
   fun language(): String?
 
   fun setLanguage(code: String)
+
+  /** Check if start with favorite profiles is enabled */
+  fun isStartWithFavoriteProfilesEnabled(): Boolean
+
+  /** Enable or disable start with favorite profiles */
+  suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean): Boolean
+
+  /** Reactive flow for start with favorite profiles state updates */
+  val startWithFavoriteProfiles: Flow<Boolean>
 }

@@ -15,4 +15,7 @@ internal sealed interface ScreenCommand : Command {
 
   // Local storage mode toggle command
   data object ToggleStorageMode : ScreenCommand
+
+  // Start with favorite profiles toggle
+  data object StartWithFavoriteProfiles : ScreenCommand
 }

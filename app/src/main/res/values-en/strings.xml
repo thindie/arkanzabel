@@ -144,11 +144,15 @@
     <string name="language_ru">Russian</string>
 
     <!-- MUX strings -->
-    <string name="settings_mux_title">Multiplexing (MUX)</string>
-    <string name="settings_mux_subtitle">Combine multiple connections into one</string>
-    <string name="mux_faq_title">What is MUX?</string>
+        <string name="settings_mux_title">Multiplexing (MUX)</string>
+        <string name="settings_mux_subtitle">Combine multiple connections into one</string>
+        <string name="mux_faq_title">What is MUX?</string>
     <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
     <string name="mux_faq_ok">Got it</string>
+
+    <!-- Start with favorite profiles -->
+    <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
+    <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
 <string name="home_select_theme_auto_locked">Theme selection is locked when Auto theme is enabled</string>
 
 <!-- Local storage mode warning dialog -->

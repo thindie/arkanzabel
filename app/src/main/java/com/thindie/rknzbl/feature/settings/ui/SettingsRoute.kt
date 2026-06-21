@@ -49,6 +49,12 @@ fun HomeFlow.settings(
         connectionProfileRepository.invalidateCaches()
         s.copy(isLocalSave = !current)
       }
+
+      ScreenCommand.StartWithFavoriteProfiles -> {
+        val current = s.startWithFavoriteProfiles ?: false
+        repository.toggleStartWithFavoriteProfiles(!current)
+        s.copy(startWithFavoriteProfiles = !current)
+      }
     }
   },
   stateSink = { screenScope -> settingsStateSink(screenScope, repository) },

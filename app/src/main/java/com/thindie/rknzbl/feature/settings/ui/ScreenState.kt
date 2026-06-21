@@ -10,4 +10,5 @@ internal data class ScreenState(
   val isLocalSave: Boolean? = null,
   val language: String? = null,
   val legacyRestart: Boolean = false,
+  val startWithFavoriteProfiles: Boolean? = null,
 ) : State

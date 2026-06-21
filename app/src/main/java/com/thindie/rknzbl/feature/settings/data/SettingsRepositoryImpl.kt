@@ -87,4 +87,20 @@ class SettingsRepositoryImpl(
     _isLocalSave.value = enabled
     return true
   }
+
+  // Start with favorite profiles support
+  private val _startWithFavoriteProfiles = MutableStateFlow<Boolean?>(null)
+
+  override val startWithFavoriteProfiles =
+    _startWithFavoriteProfiles
+      .filterNotNull()
+      .onStart { emit(storage.isLocalSaveEnabled()) }
+      .onEach { storage.setLocalSaveMode(it) }
+
+  override fun isStartWithFavoriteProfilesEnabled(): Boolean = storage.isLocalSaveEnabled()
+
+  override suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean): Boolean {
+    _startWithFavoriteProfiles.value = enabled
+    return true
+  }
 }
