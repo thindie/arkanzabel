@@ -10,6 +10,7 @@ import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
 import com.thindie.rknzbl.feature.perapp.PerAppProxyFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
+import com.v2ray.ang.dto.ConnectionProfile
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -23,6 +24,20 @@ class HomeFlow(
     MutableSharedFlow<SelectSourceFlow.Result>(
       extraBufferCapacity = 1,
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+  internal val selected =
+    MutableSharedFlow<ConnectionProfile>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      BufferOverflow.DROP_OLDEST,
+    )
+
+  internal val startVpn =
+    MutableSharedFlow<Unit>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      BufferOverflow.DROP_OLDEST,
     )
 
   override fun start() {
