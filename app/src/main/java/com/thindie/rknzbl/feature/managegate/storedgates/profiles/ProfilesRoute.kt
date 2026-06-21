@@ -10,5 +10,6 @@ internal fun FavoriteProfilesFlow.profiles() =
     stateSink = ::stateSink,
     routeContent = { ProfilesScreen() },
     errorMapper = ::errorMapper,
+    initialCommand = { ScreenCommand.RequestStoredProfiles },
     id = "profiles",
   )
