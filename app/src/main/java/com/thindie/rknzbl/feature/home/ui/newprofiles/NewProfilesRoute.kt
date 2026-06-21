@@ -1,6 +1,8 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
+import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.rknzbl.engine.WorkState
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
@@ -11,6 +13,8 @@ import com.v2ray.ang.util.HttpUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
@@ -51,7 +55,10 @@ private suspend fun HomeFlow.exec(
               config = command.profile,
             ),
         )
-        homeState.copy(selected = command.profile, serviceBeingStarted = true)
+        startVpn.tryEmit(Unit)
+        (appContext as Application).vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
+        selected.tryEmit(command.profile)
+        homeState.copy(selected = command.profile)
       }
     }
 
@@ -97,7 +104,7 @@ private suspend fun HomeFlow.exec(
     }
 
     ScreenCommand.Dismissed -> {
-      homeState.copy(selected = null, established = false)
+      homeState.copy(selected = null)
     }
 
     ScreenCommand.Choose -> {
