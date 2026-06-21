@@ -16,10 +16,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -34,11 +40,13 @@ import com.thindie.rknzbl.uikit.Button
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
 import com.v2ray.ang.runtime.SpeedtestManager
+import kotlinx.coroutines.delay
 
 @Composable
 fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
   val screenState by state.collectAsState()
-  val established = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
+  val established =
+    screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
@@ -105,24 +113,88 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
           SentenceRow(
             modifier =
               Modifier
-                .border(
-                  border =
-                    BorderStroke(
-                      width = 1.2.dp,
-                      color =
-                        if (screenState.selected == item && established) {
-                          AppTheme.colors.accentPrimary
-                        } else {
-                          AppTheme.colors.backgroundSecondary
-                        },
-                    ),
-                  shape = RoundedCornerShape(20.dp),
+                .then(
+                  if (screenState.selected == item) {
+                    if (st.selectedTestConnectionMessage == null) {
+                      var progress by remember { mutableStateOf(0f) }
+                      var moveRight by remember { mutableStateOf(true) }
+                      LaunchedEffect(Unit) {
+                        while (true) {
+                          if (moveRight) {
+                            if (progress > 1f) {
+                              moveRight = false
+                              progress -= 0.1f
+                            } else {
+                              progress += 0.1f
+                            }
+                          } else {
+                            if (progress < -1f) {
+                              moveRight = true
+                              progress += 0.1f
+                            } else {
+                              progress -= 0.1f
+                            }
+                          }
+                          delay(50)
+                        }
+                      }
+
+                      Modifier
+                        .border(
+                          brush =
+                            Brush.linearGradient(
+                              colors =
+                                listOf(
+                                  AppTheme.colors.contentPrimary,
+                                  AppTheme.colors.contentSecondary,
+                                  AppTheme.colors.backgroundSecondary,
+                                  AppTheme.colors.contentSecondary,
+                                  AppTheme.colors.backgroundPrimary,
+                                ),
+                              start = Offset(progress * 500f, 0f),
+                              end = Offset((progress + 1f) * 500f, 200f),
+                            ),
+                          shape = RoundedCornerShape(20.dp),
+                          width = 1.2.dp,
+                        )
+                    } else {
+                      Modifier
+                        .border(
+                          border =
+                            BorderStroke(
+                              width = 1.2.dp,
+                              color =
+                                when (st.selectedTestConnectionMessage) {
+                                  is SpeedtestManager.SpeedTestResult.Err -> AppTheme.colors.errorPrimary
+                                  is SpeedtestManager.SpeedTestResult.Ok -> AppTheme.colors.accentPrimary
+                                  null -> AppTheme.colors.backgroundSecondary
+                                },
+                            ),
+                          shape = RoundedCornerShape(20.dp),
+                        )
+                    }
+                  } else {
+                    Modifier
+                      .border(
+                        border =
+                          BorderStroke(
+                            width = 1.2.dp,
+                            color =
+                              if (screenState.selected == item && established) {
+                                AppTheme.colors.accentPrimary
+                              } else {
+                                AppTheme.colors.backgroundSecondary
+                              },
+                          ),
+                        shape = RoundedCornerShape(20.dp),
+                      )
+                  },
                 )
                 .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_internet_24),
             title = item.remarks + item.serverPort.orEmpty(),
             subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
-            loading = false,
+            loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = { send(ScreenCommand.Select(item)) },
             onLongClick =
               if (st.selected == item) {

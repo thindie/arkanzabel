@@ -20,11 +20,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -41,11 +47,13 @@ import com.thindie.rknzbl.uikit.HSpacer
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
 import com.v2ray.ang.runtime.SpeedtestManager
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
   val screenState by state.collectAsState()
-  val established = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
+  val established =
+    screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
@@ -103,28 +111,87 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
         ) { item ->
           val isPendingDelete = item in screenState.selectedProfiles
           val profileRunning = screenState.selected?.subscriptionId == item.subscriptionId && established
-          val isFailedSpeedTest = screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
+          val isFailedSpeedTest =
+            screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
           SentenceRow(
             modifier =
               Modifier
-                .border(
-                  border =
-                    BorderStroke(
-                      width = 1.2.dp,
-                      color =
-                        if (isPendingDelete) {
-                          AppTheme.colors.contentSecondary
-                        } else if (profileRunning) {
-                          if (isFailedSpeedTest) {
-                            AppTheme.colors.errorPrimary
+                .then(
+                  if (screenState.selected == item) {
+                    if (st.selectedTestConnectionMessage == null) {
+                      var progress by remember { mutableStateOf(0f) }
+                      var moveRight by remember { mutableStateOf(true) }
+                      LaunchedEffect(Unit) {
+                        while (true) {
+                          if (moveRight) {
+                            if (progress > 1f) {
+                              moveRight = false
+                              progress -= 0.1f
+                            } else {
+                              progress += 0.1f
+                            }
                           } else {
-                            AppTheme.colors.accentPrimary
+                            if (progress < -1f) {
+                              moveRight = true
+                              progress += 0.1f
+                            } else {
+                              progress -= 0.1f
+                            }
                           }
-                        } else {
-                          AppTheme.colors.backgroundSecondary
-                        },
-                    ),
-                  shape = RoundedCornerShape(20.dp),
+                          delay(50)
+                        }
+                      }
+
+                      Modifier
+                        .border(
+                          brush =
+                            Brush.linearGradient(
+                              colors =
+                                listOf(
+                                  AppTheme.colors.contentPrimary,
+                                  AppTheme.colors.contentSecondary,
+                                  AppTheme.colors.backgroundSecondary,
+                                  AppTheme.colors.contentSecondary,
+                                  AppTheme.colors.backgroundPrimary,
+                                ),
+                              start = Offset(progress * 500f, 0f),
+                              end = Offset((progress + 1f) * 500f, 200f),
+                            ),
+                          shape = RoundedCornerShape(20.dp),
+                          width = 1.2.dp,
+                        )
+                    } else {
+                      Modifier
+                        .border(
+                          border =
+                            BorderStroke(
+                              width = 1.2.dp,
+                              color =
+                                when (st.selectedTestConnectionMessage) {
+                                  is SpeedtestManager.SpeedTestResult.Err -> AppTheme.colors.errorPrimary
+                                  is SpeedtestManager.SpeedTestResult.Ok -> AppTheme.colors.accentPrimary
+                                  null -> AppTheme.colors.backgroundSecondary
+                                },
+                            ),
+                          shape = RoundedCornerShape(20.dp),
+                        )
+                    }
+                  } else {
+                    Modifier
+                      .border(
+                        border =
+                          BorderStroke(
+                            width = 1.2.dp,
+                            color =
+                              if (screenState.selected == item && established) {
+                                AppTheme.colors.accentPrimary
+                              } else {
+                                AppTheme.colors.backgroundSecondary
+                              },
+                          ),
+                        shape = RoundedCornerShape(20.dp),
+                      )
+                  },
                 )
                 .fillMaxWidth(),
             painter =
@@ -132,6 +199,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                 isPendingDelete -> {
                   painterResource(R.drawable.ic_close_16)
                 }
+
                 profileRunning -> {
                   if (isFailedSpeedTest) {
                     painterResource(R.drawable.ic_attention_24)
@@ -139,6 +207,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                     painterResource(R.drawable.ic_done_square_24)
                   }
                 }
+
                 else -> {
                   painterResource(R.drawable.ic_internet_24)
                 }
@@ -152,11 +221,12 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                   } else {
                     st.selectedTestConnectionMessage?.message
                   }
+
                 else -> {
                   item.flow ?: item.server ?: item.serviceName.orEmpty()
                 }
               },
-            loading = false,
+            loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = {
               if (screenState.selectionMode) {
                 send(ScreenCommand.TogglePendingDelete(item))
@@ -212,6 +282,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                 ),
               )
             }
+
             established -> send(ScreenCommand.StopService)
           }
         },
