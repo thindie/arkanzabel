@@ -33,7 +33,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
@@ -164,6 +163,6 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     }
 
   override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return runBlocking { applicationScope.data.repository.isSaved(connectionProfile) }
+    return applicationScope.data.repository.isSaved(connectionProfile)
   }
 }
