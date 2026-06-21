@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -139,6 +140,19 @@ class MainActivity : ComponentActivity() {
       }
     } else {
       super.attachBaseContext(newBase)
+    }
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    val lang = (application as? Application)?.applicationScope?.settings?.repository?.language()
+    if (lang != null) {
+      val locale = Locale(lang)
+      Locale.setDefault(locale)
+      val config = resources.configuration
+      config.setLocale(locale)
+      resources.updateConfiguration(config, resources.displayMetrics)
+    } else {
+      super.onConfigurationChanged(newConfig)
     }
   }
 
