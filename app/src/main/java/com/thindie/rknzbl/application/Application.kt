@@ -66,24 +66,24 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
             val fallback = this@Application.getString(R.string.vpn_core_failure_unspecified)
             val broadcastString = readBroadcastString(intent, "content")
             val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
-            vpnRuntimeState.tryEmit(WorkState.Error(message = errorMessage))
+            vpnRuntimeState.value = WorkState.Error(message = errorMessage)
           }
 
           AppConfig.MSG_STATE_RUNNING,
           AppConfig.MSG_STATE_START_SUCCESS,
           -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: running or started")
-            vpnRuntimeState.tryEmit(WorkState.Running)
+            vpnRuntimeState.value = WorkState.Running
           }
 
           AppConfig.MSG_STATE_NOT_RUNNING -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: not running")
-            vpnRuntimeState.tryEmit(WorkState.Idle)
+            vpnRuntimeState.value = WorkState.NotRunning
           }
           AppConfig.MSG_STATE_STOP_SUCCESS,
           -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: stopped")
-            vpnRuntimeState.tryEmit(WorkState.Idle)
+            vpnRuntimeState.value = WorkState.NotRunning
           }
 
           AppConfig.MSG_STATE_SAVE_PROFILE -> {
@@ -104,7 +104,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       extraBufferCapacity = 3,
       BufferOverflow.DROP_LATEST,
     )
-  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.Idle)
+  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.NotRunning)
 
   override fun onCreate() {
     super.onCreate()
@@ -122,7 +122,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       ContextCompat.RECEIVER_NOT_EXPORTED,
     )
     enqueueActiveProfileAutoSaveWork()
-    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle
+    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.NotRunning
   }
 
   private fun enqueueActiveProfileAutoSaveWork() {
