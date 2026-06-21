@@ -68,6 +68,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
         LaunchedEffect(screenScope) {
           event
             .collect {
+              showEvent = null
               showEvent = it
             }
         }

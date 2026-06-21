@@ -33,13 +33,6 @@ class HomeFlow(
       BufferOverflow.DROP_OLDEST,
     )
 
-  internal val startVpn =
-    MutableSharedFlow<Unit>(
-      replay = 0,
-      extraBufferCapacity = 3,
-      BufferOverflow.DROP_OLDEST,
-    )
-
   override fun start() {
     go(select(settingsRepository))
   }

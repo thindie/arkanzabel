@@ -13,6 +13,7 @@ import com.v2ray.ang.util.HttpUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -55,10 +56,13 @@ private suspend fun HomeFlow.exec(
               config = command.profile,
             ),
         )
-        startVpn.tryEmit(Unit)
-        (appContext as Application).vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
+        (appContext as Application).vpnRuntimeState.filter { it is WorkState.NotRunning }.first()
+        appContext.vpnRuntimeState.filterNot { it is WorkState.NotRunning }.first()
         selected.tryEmit(command.profile)
-        homeState.copy(selected = command.profile)
+        homeState.copy(
+          selected = command.profile,
+          selectedTestConnectionMessage = null,
+        )
       }
     }
 
