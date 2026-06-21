@@ -36,7 +36,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
-  val applicationScope = ApplicationScope()
+  private lateinit var applicationScopeInternal: ApplicationScope
+  val applicationScope get() = applicationScopeInternal
   private val appCoroutineScope =
     CoroutineScope(
       SupervisorJob() + Dispatchers.Default +
@@ -111,6 +112,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
+    applicationScopeInternal = ApplicationScope()
     SettingsManager.ensureDefaultSettings()
     SettingsManager.initRoutingRulesets(this)
     SettingsManager.initAssets(this, assets)
