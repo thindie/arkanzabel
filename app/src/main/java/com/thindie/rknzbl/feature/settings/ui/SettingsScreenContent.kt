@@ -253,6 +253,64 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       Divider()
       VSpacer(16.dp)
 
+      // Local storage mode toggle
+      Row(
+        modifier =
+          Modifier
+            .fillMaxWidth()
+            .clickable {
+              if (state.isLocalSave == true) {
+                sendEvent(
+                  ServiceCommand.UiEvent.Decision(
+                    content = {
+                      Column {
+                        Text(
+                          text = stringResource(R.string.storage_mode_warning_title),
+                          style = AppTheme.typography.headlineMedium,
+                          color = AppTheme.colors.contentPrimary,
+                        )
+                        VSpacer(16.dp)
+                        Text(
+                          text = stringResource(R.string.storage_mode_warning_message),
+                          style = AppTheme.typography.bodyMedium,
+                          color = AppTheme.colors.contentPrimary,
+                        )
+                      }
+                    },
+                    primaryAction =
+                      Action(listener = {
+                        send(ScreenCommand.ToggleStorageMode)
+                      }, resRef = R.string.storage_mode_warning_ok),
+                  ),
+                )
+              } else {
+                send(ScreenCommand.ToggleStorageMode)
+              }
+            }
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = stringResource(R.string.home_select_storage_mode_title),
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = stringResource(R.string.home_select_storage_mode_subtitle),
+            style = AppTheme.typography.bodySmall,
+            color = AppTheme.colors.contentSecondary,
+          )
+        }
+        Toggle(checked = state.isLocalSave ?: false)
+      }
+
+      VSpacer(16.dp)
+      Divider()
+      VSpacer(16.dp)
+
       // MUX toggle
       Row(
         modifier =

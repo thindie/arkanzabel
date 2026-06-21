@@ -123,6 +123,10 @@
 <string name="home_select_autosave_title">Auto-save</string>
 <string name="home_select_autosave_subtitle">Enable/disable auto-saving profiles</string>
 
+<!-- Local storage mode strings (English) -->
+<string name="home_select_storage_mode_title">Local profile storage</string>
+<string name="home_select_storage_mode_subtitle">Store profiles locally instead of on a WebDAV server</string>
+
 <string name="webdav_error_unauthorized">Invalid WebDAV username or password.</string>
 <string name="webdav_error_forbidden">Access to this folder is denied.</string>
 <string name="webdav_error_not_found">Path not found on server (404).</string>
@@ -146,4 +150,10 @@
     <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
     <string name="mux_faq_ok">Got it</string>
 <string name="home_select_theme_auto_locked">Theme selection is locked when Auto theme is enabled</string>
+
+<!-- Local storage mode warning dialog -->
+<string name="storage_mode_warning_title">Warning</string>
+<string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>
+<string name="storage_mode_warning_ok">Got it</string>
+
 </resources>

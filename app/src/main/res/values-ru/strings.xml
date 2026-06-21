@@ -119,6 +119,10 @@
 <string name="home_select_theme_dark_subtitle">Тёмная тема</string>
 <string name="home_select_theme_locked_hint">Выбор темы заблокирован при включённой автоматике</string>
 
+    <!-- Local storage mode strings -->
+    <string name="home_select_storage_mode_title">Локальное хранение профилей</string>
+    <string name="home_select_storage_mode_subtitle">Хранить профили локально, а не на сервере WebDAV</string>
+
 <!-- Autosave strings -->
 <string name="home_select_autosave_title">Авто-сохранение</string>
 <string name="home_select_autosave_subtitle">Включить/выключить авто-сохранение профилей</string>
@@ -147,4 +151,10 @@
 <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
 <string name="mux_faq_ok">Понятно</string>
 <string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+
+<!-- Local storage mode warning dialog -->
+<string name="storage_mode_warning_title">Внимание!</string>
+<string name="storage_mode_warning_message">Если вы включите локальное хранение, вы будете изолированы от выборок других пользователей. Локальные профили не будут участвовать в общем пуле.</string>
+<string name="storage_mode_warning_ok">Понятно</string>
+
 </resources>
