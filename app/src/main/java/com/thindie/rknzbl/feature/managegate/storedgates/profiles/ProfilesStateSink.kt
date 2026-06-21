@@ -1,5 +1,6 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
+import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ServiceCommand
@@ -8,93 +9,66 @@ import com.thindie.rknzbl.engine.stateSink
 import com.thindie.rknzbl.engine.sub
 import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
+import com.thindie.rknzbl.uikit.Action
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.filterNot
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
 internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
   screenScope.stateSink {
-    // Flow 1: Immediate UI state updates — no speed test blocking
     sub(
-      (appContext as Application).vpnRuntimeState.map { state ->
-        when (state) {
-          is WorkState.Error -> state to null
-          WorkState.Idle -> state to null
-          WorkState.Running -> state to null
-        }
-      },
-    )
-      .transition({ _, _, (vpnState, _) ->
-        when (vpnState) {
-          is WorkState.Error -> send(ScreenCommand.Dismissed)
-          WorkState.Idle -> Unit
-          WorkState.Running -> Unit
-        }
-      }) { s, (vpnState, _) ->
-        val profiles = repository.read()
-        val selected =
-          when (vpnState) {
-            WorkState.Idle -> null
-            is WorkState.Error,
-            WorkState.Running,
-            -> {
-              repository.activeProfile()
-            }
-          }
-        s.copy(
-          serviceBeingStarted =
-            when (vpnState) {
-              is WorkState.Error -> null
-              WorkState.Idle -> true
-              WorkState.Running -> null
-            }.takeIf { s.serviceBeingStarted != null },
-          established =
-            when (vpnState) {
-              is WorkState.Error -> false
-              WorkState.Idle -> false
-              WorkState.Running -> true
-            },
-          selectedTestConnectionMessage = null,
-          showLoading = false,
-          selected = selected,
-          profiles = profiles,
-        )
-      }
-
-    // Flow 2: Background speed test — only runs when service is running
-    sub(
-      (appContext as Application).vpnRuntimeState.map { state ->
-        when (state) {
-          is WorkState.Error -> null
-          WorkState.Idle -> null
-          WorkState.Running -> {
-            val port = screenScope.state.value.selected?.serverPort
-            if (port != null) {
-              SpeedtestManager.testConnection(
-                appContext,
-                SettingsManager.getHttpPort(),
-              )
-            } else {
-              null
-            }
-          }
-        }
-      },
+      selected
+        .mapLatest {
+          val port = it.serverPort?.toIntOrNull() ?: SettingsManager.getHttpPort()
+          it to
+            SpeedtestManager.testConnection(
+              context = appContext,
+              port = port,
+            )
+        },
     )
       .transition(
-        action = { _, _, speedTestMessage ->
-          if (speedTestMessage != null) {
-            sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage.message))
+        action = { _, _, (_, result) ->
+          when (result) {
+            is SpeedtestManager.SpeedTestResult.Err ->
+              sendEvent(
+                ServiceCommand.UiEvent.SnackText(result.message),
+              )
+            is SpeedtestManager.SpeedTestResult.Ok -> {
+              sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
+            }
+            null -> Unit
           }
         },
-      ) { s, speedTestMessage ->
-        s.copy(selectedTestConnectionMessage = speedTestMessage)
-      }
+        block = { s, (profile, result) ->
+          s.copy(
+            selected = profile,
+            selectedTestConnectionMessage = result,
+          )
+        },
+      )
+
+    sub(startVpn)
+      .transition(
+        action = { _, _, _ ->
+          sendEvent(
+            ServiceCommand.UiEvent.Snack(
+              action =
+                Action(
+                  resRef = R.string.home_starting_vpn,
+                  listener = { },
+                ),
+            ),
+          )
+        },
+      )
   }
 }
 
@@ -116,8 +90,13 @@ internal suspend fun FavoriteProfilesFlow.exec(
     ScreenCommand.RequestStoredProfiles -> {
       withContext(Dispatchers.IO) {
         val profiles = repository.read()
+        val active = repository.activeProfile()
+        if (active != null) {
+          selected.tryEmit(active)
+        }
         s.copy(
           profiles = profiles,
+          selected = active,
         )
       }
     }
@@ -155,9 +134,11 @@ internal suspend fun FavoriteProfilesFlow.exec(
               config = c.profile,
             ),
         )
+        startVpn.tryEmit(Unit)
+        (appContext as Application).vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
+        selected.tryEmit(c.profile)
         s.copy(
           selected = c.profile,
-          serviceBeingStarted = true,
         )
       }
     }
