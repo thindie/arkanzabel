@@ -3,6 +3,7 @@ package com.v2ray.ang.runtime
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import com.google.errorprone.annotations.Immutable
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.IPAPIInfo
@@ -137,6 +138,7 @@ object SpeedtestManager {
     }
   }
 
+  @Immutable
   sealed interface SpeedTestResult {
     @JvmInline
     value class Ok(val value: String): SpeedTestResult

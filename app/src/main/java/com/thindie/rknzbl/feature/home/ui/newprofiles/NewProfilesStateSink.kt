@@ -1,15 +1,15 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
-import com.thindie.rknzbl.R
+import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ServiceCommand
+import com.thindie.rknzbl.engine.WorkState
 import com.thindie.rknzbl.engine.stateSink
 import com.thindie.rknzbl.engine.sub
 import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
-import com.thindie.rknzbl.uikit.Action
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
 import kotlinx.coroutines.flow.mapLatest
@@ -46,52 +46,43 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
 
     sub(
       selected
-        .mapLatest {
-          val port = it.serverPort?.toIntOrNull() ?: SettingsManager.getHttpPort()
-          it to
-            SpeedtestManager.testConnection(
-              context = appContext,
-              port = port,
-            )
+        .mapLatest { profile ->
+          val result =
+            when ((appContext as Application).vpnRuntimeState.value) {
+              is WorkState.Error -> {
+                SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
+              }
+              WorkState.NotRunning -> {
+                SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              }
+              WorkState.Running -> {
+                SpeedtestManager.testConnection(
+                  context = appContext,
+                  port = SettingsManager.getHttpPort(),
+                )
+              }
+            }
+          profile to result
         },
     )
       .transition(
         action = { _, _, (_, result) ->
           when (result) {
             is SpeedtestManager.SpeedTestResult.Err -> {
-              println("SPEEDTEST ERR")
               sendEvent(
                 ServiceCommand.UiEvent.SnackText(result.message),
               )
             }
             is SpeedtestManager.SpeedTestResult.Ok -> {
-              println("SPEEDTEST OK")
               sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
             }
-            null -> {
-              println("SPEEDTEST NULL")
-            }
+            null -> Unit
           }
         },
         block = { s, (profile, result) ->
           s.copy(
             selected = profile,
             selectedTestConnectionMessage = result,
-          )
-        },
-      )
-
-    sub(startVpn)
-      .transition(
-        action = { _, _, _ ->
-          sendEvent(
-            ServiceCommand.UiEvent.Snack(
-              action =
-                Action(
-                  resRef = R.string.home_starting_vpn,
-                  listener = { },
-                ),
-            ),
           )
         },
       )
