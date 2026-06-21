@@ -386,6 +386,7 @@ object KeyValueStorage {
 
     /** Key for storing JSON array of profile summaries (guid + remarks) saved during auto-save. */
     const val KEY_LAST_AUTO_SAVE_PROFILES_JSON = "last_auto_save_profiles_json"
+    const val KEY_SAVED_PROFILES_JSON = "saved_profiles_json"
 
     fun setLastAutoSaveNotificationTimestamp(epochMs: Long) {
         mainStorage.encode(KEY_LAST_AUTO_SAVE_NOTIFICATION_TIMESTAMP, epochMs)
@@ -401,10 +402,23 @@ object KeyValueStorage {
     fun getLastAutoSaveProfilesJson(): String? =
         mainStorage.decodeString(KEY_LAST_AUTO_SAVE_PROFILES_JSON)
 
+    fun getLocalProfiles(): String? =
+        mainStorage.decodeString(KEY_SAVED_PROFILES_JSON)
+
+    fun setLocalProfiles(profilesJson: String) {
+        mainStorage.encode(KEY_SAVED_PROFILES_JSON, profilesJson)
+    }
+
     fun getThemeMode(): String? = decodeSettingsString(KEY_THEME_MODE)
 
     fun setThemeMode(mode: String): Boolean {
         return encodeSettings(KEY_THEME_MODE, mode)
+    }
+
+    fun isLocalSaveEnabled(): Boolean = decodeSettingsBool(KEY_STORAGE_MODE_LOCAL, false)
+
+    fun setLocalSaveMode(enabled: Boolean): Boolean {
+        return encodeSettings(KEY_STORAGE_MODE_LOCAL, enabled)
     }
 
     fun isAutosaveEnabled(): Boolean = decodeSettingsBool(KEY_AUTOSAVE_ENABLED, true)
@@ -414,5 +428,6 @@ object KeyValueStorage {
     }
 }
 
+private const val KEY_STORAGE_MODE_LOCAL = "storage_mode_local"
 private const val KEY_AUTOSAVE_ENABLED = "autosave_enabled"
 private const val KEY_THEME_MODE = "theme_mode"
