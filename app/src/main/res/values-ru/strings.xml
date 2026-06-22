@@ -157,6 +157,12 @@
 <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
 <string name="mux_faq_ok">Понятно</string>
 
+<!-- Speed notification strings -->
+<string name="settings_speed_notification_title">Показывать скорость</string>
+<string name="settings_speed_notification_subtitle">Отображать текущую скорость в уведомлении</string>
+<string name="settings_speed_notification_restart_title">Перезапусти</string>
+<string name="settings_speed_notification_restart_message">перезапусти сервис в шторке уведомлений, чтобы увидеть скорость.</string>
+
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Начинать с сохранённых профилей</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Показывать экран сохранённых профилей при старте приложения</string>

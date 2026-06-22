@@ -165,4 +165,10 @@
     <string name="storage_mode_warning_title">Warning</string>
     <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>
     <string name="storage_mode_warning_ok">Got it</string>
+
+    <!-- Speed notification strings -->
+    <string name="settings_speed_notification_title">Show speed</string>
+    <string name="settings_speed_notification_subtitle">Display current speed in notification</string>
+    <string name="settings_speed_notification_restart_title">Restart service</string>
+    <string name="settings_speed_notification_restart_message">restart service from the notification for changes to take effect.</string>
 </resources>

@@ -55,6 +55,12 @@ fun HomeFlow.settings(
         repository.toggleStartWithFavoriteProfiles(!current)
         s.copy(startWithFavoriteProfiles = !current)
       }
+
+      ScreenCommand.ToggleSpeed -> {
+        val current = s.speedEnabled ?: false
+        repository.toggleSpeed(!current)
+        s.copy(speedEnabled = !current)
+      }
     }
   },
   stateSink = { screenScope -> settingsStateSink(screenScope, repository) },

@@ -56,4 +56,11 @@ interface SettingsRepository {
 
   /** Reactive flow for start with favorite profiles state updates */
   val startWithFavoriteProfiles: Flow<Boolean>
+
+  // Speed notification
+  val speedEnabled: kotlinx.coroutines.flow.Flow<Boolean?>
+
+  fun isSpeedEnabled(): Boolean
+
+  suspend fun toggleSpeed(enabled: Boolean): Boolean
 }

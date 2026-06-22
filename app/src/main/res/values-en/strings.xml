@@ -156,6 +156,12 @@
     <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
     <string name="mux_faq_ok">Got it</string>
 
+    <!-- Speed notification strings -->
+    <string name="settings_speed_notification_title">Show speed</string>
+    <string name="settings_speed_notification_subtitle">Display current speed in notification</string>
+    <string name="settings_speed_notification_restart_title">Restart service</string>
+    <string name="settings_speed_notification_restart_message">restart service from the notification for changes to take effect.</string>
+
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>

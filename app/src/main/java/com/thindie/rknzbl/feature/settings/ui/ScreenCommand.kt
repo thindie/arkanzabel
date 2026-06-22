@@ -18,4 +18,7 @@ internal sealed interface ScreenCommand : Command {
 
   // Start with favorite profiles toggle
   data object StartWithFavoriteProfiles : ScreenCommand
+
+  // Speed notification toggle
+  data object ToggleSpeed : ScreenCommand
 }

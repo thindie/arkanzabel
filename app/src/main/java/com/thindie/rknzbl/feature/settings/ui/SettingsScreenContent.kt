@@ -155,6 +155,26 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         },
       )
 
+      ToggleRow(
+        label = stringResource(R.string.settings_speed_notification_title),
+        subtitle = stringResource(R.string.settings_speed_notification_subtitle),
+        checked = state.speedEnabled ?: false,
+        onCheckedChange = {
+          if (state.speedEnabled != true) {
+            sendEvent(
+              ServiceCommand.UiEvent.Decision(
+                content = { SpeedNotificationRestartDialog() },
+                primaryAction =
+                  Action(
+                    listener = { send(ScreenCommand.ToggleSpeed) },
+                    resRef = R.string.btn_close,
+                  ),
+              ),
+            )
+          }
+        },
+      )
+
       // === Language ===
       VSpacer(24.dp)
       Divider()
@@ -394,5 +414,22 @@ private fun languageLabel(language: String?): String {
     "en" -> stringResource(R.string.language_en)
     "ru" -> stringResource(R.string.language_ru)
     else -> language ?: ""
+  }
+}
+
+@Composable
+private fun SpeedNotificationRestartDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.settings_speed_notification_restart_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.settings_speed_notification_restart_message),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
   }
 }

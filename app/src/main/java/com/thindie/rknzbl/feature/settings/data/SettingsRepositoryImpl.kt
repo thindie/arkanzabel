@@ -103,4 +103,22 @@ class SettingsRepositoryImpl(
     _startWithFavoriteProfiles.value = enabled
     return true
   }
+
+  // Speed notification support
+  private val _speedEnabled = MutableStateFlow<Boolean?>(null)
+
+  override val speedEnabled =
+    _speedEnabled
+      .filterNotNull()
+      .onStart { storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)?.let { emit(it) } }
+      .onEach {
+        storage.encodeSettings(AppConfig.PREF_SPEED_ENABLED, it)
+      }
+
+  override fun isSpeedEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED, false)
+
+  override suspend fun toggleSpeed(enabled: Boolean): Boolean {
+    _speedEnabled.value = enabled
+    return true
+  }
 }

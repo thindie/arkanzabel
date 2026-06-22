@@ -90,7 +90,10 @@ object NotificationManager {
     speedHandler.post(tick)
   }
 
-  fun showNotification(connectionProfile: ConnectionProfile?, hideSaveOption: Boolean) {
+  fun showNotification(
+    connectionProfile: ConnectionProfile?,
+    hideSaveOption: Boolean,
+  ) {
     val service = getService() ?: return
     val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
 
@@ -99,46 +102,49 @@ object NotificationManager {
     val contentPendingIntent =
       PendingIntent.getActivity(service, NOTIFICATION_PENDING_INTENT_CONTENT, startMainIntent, flags)
 
-    val stopV2RayIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
-      .apply {
-        `package` = AppConfig.ANG_PACKAGE
-        putExtra("key", AppConfig.MSG_STATE_STOP)
-      }
+    val stopV2RayIntent =
+      Intent(AppConfig.BROADCAST_ACTION_SERVICE)
+        .apply {
+          `package` = AppConfig.ANG_PACKAGE
+          putExtra("key", AppConfig.MSG_STATE_STOP)
+        }
 
     val stopV2RayPendingIntent =
       PendingIntent.getBroadcast(
         service,
         NOTIFICATION_PENDING_INTENT_STOP_V2RAY,
         stopV2RayIntent,
-        flags
+        flags,
       )
 
-    val restartV2RayIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
-      .apply {
-        `package` = AppConfig.ANG_PACKAGE
-        putExtra("key", AppConfig.MSG_STATE_RESTART)
-      }
+    val restartV2RayIntent =
+      Intent(AppConfig.BROADCAST_ACTION_SERVICE)
+        .apply {
+          `package` = AppConfig.ANG_PACKAGE
+          putExtra("key", AppConfig.MSG_STATE_RESTART)
+        }
 
     val restartV2RayPendingIntent =
       PendingIntent.getBroadcast(
         service,
         NOTIFICATION_PENDING_INTENT_RESTART_V2RAY,
         restartV2RayIntent,
-        flags
+        flags,
       )
 
-    val saveProfileIntent = Intent(AppConfig.BROADCAST_ACTION_SERVICE)
-      .apply {
-        `package` = AppConfig.ANG_PACKAGE
-        putExtra("key", AppConfig.MSG_STATE_SAVE_PROFILE)
-      }
+    val saveProfileIntent =
+      Intent(AppConfig.BROADCAST_ACTION_SERVICE)
+        .apply {
+          `package` = AppConfig.ANG_PACKAGE
+          putExtra("key", AppConfig.MSG_STATE_SAVE_PROFILE)
+        }
 
     val saveProfilePendingIntent =
       PendingIntent.getBroadcast(
         service,
         NOTIFICATION_PENDING_INTENT_SAVE_PROFILE,
         saveProfileIntent,
-        flags
+        flags,
       )
 
     val channelId =
@@ -148,35 +154,35 @@ object NotificationManager {
         ""
       }
 
-    _notificationCompatBuilder = WeakReference(
-      NotificationCompat.Builder(service, channelId)
-        .setSmallIcon(R.drawable.ic_rknzbl)
-        .setContentTitle(connectionProfile?.remarks)
-        .setPriority(NotificationCompat.PRIORITY_MIN)
-        .setOngoing(true)
-        .setShowWhen(false)
-        .setOnlyAlertOnce(true)
-        .setContentIntent(contentPendingIntent)
-        .addAction(
-          R.drawable.ic_delete_24dp,
-          service.getString(R.string.notification_action_stop_v2ray),
-          stopV2RayPendingIntent,
-        )
-        .addAction(
-          R.drawable.ic_delete_24dp,
-          service.getString(R.string.title_service_restart),
-          restartV2RayPendingIntent,
-        ).apply {
-          if (!hideSaveOption) {
-            addAction(
-              R.drawable.ic_delete_24dp,
-              service.getString(R.string.title_service_save),
-              saveProfilePendingIntent,
-            )
-          }
-        }
-    )
-
+    _notificationCompatBuilder =
+      WeakReference(
+        NotificationCompat.Builder(service, channelId)
+          .setSmallIcon(R.drawable.ic_rknzbl)
+          .setContentTitle(connectionProfile?.remarks)
+          .setPriority(NotificationCompat.PRIORITY_MIN)
+          .setOngoing(true)
+          .setShowWhen(false)
+          .setOnlyAlertOnce(true)
+          .setContentIntent(contentPendingIntent)
+          .addAction(
+            R.drawable.ic_delete_24dp,
+            service.getString(R.string.notification_action_stop_v2ray),
+            stopV2RayPendingIntent,
+          )
+          .addAction(
+            R.drawable.ic_delete_24dp,
+            service.getString(R.string.title_service_restart),
+            restartV2RayPendingIntent,
+          ).apply {
+            if (!hideSaveOption) {
+              addAction(
+                R.drawable.ic_delete_24dp,
+                service.getString(R.string.title_service_save),
+                saveProfilePendingIntent,
+              )
+            }
+          },
+      )
 
     service.startForeground(NOTIFICATION_ID, notificationCompatBuilder?.build())
   }
@@ -215,7 +221,11 @@ object NotificationManager {
     return channelId
   }
 
-  private fun updateNotification(contentText: String?, proxyTraffic: Long, directTraffic: Long) {
+  private fun updateNotification(
+    contentText: String?,
+    proxyTraffic: Long,
+    directTraffic: Long,
+  ) {
     if (notificationCompatBuilder != null) {
       if (proxyTraffic < NOTIFICATION_ICON_THRESHOLD && directTraffic < NOTIFICATION_ICON_THRESHOLD) {
         notificationCompatBuilder?.setSmallIcon(R.drawable.ic_stat_name)
@@ -238,7 +248,12 @@ object NotificationManager {
     return mNotificationManager
   }
 
-  private fun appendSpeedString(text: StringBuilder, name: String?, up: Double, down: Double) {
+  private fun appendSpeedString(
+    text: StringBuilder,
+    name: String?,
+    up: Double,
+    down: Double,
+  ) {
     var n = name ?: "no tag"
     n = n.take(min(n.length, 6))
     text.append(n)

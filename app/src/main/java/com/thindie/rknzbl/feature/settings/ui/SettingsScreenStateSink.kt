@@ -41,4 +41,10 @@ internal fun HomeFlow.settingsStateSink(
     .transition { state, enabled ->
       state.copy(startWithFavoriteProfiles = enabled)
     }
+
+  // Speed notification support
+  screenScope.sub(repository.speedEnabled)
+    .transition { state, enabled ->
+      state.copy(speedEnabled = enabled)
+    }
 }
