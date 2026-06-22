@@ -174,6 +174,8 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
                   ),
               ),
             )
+          } else {
+            send(ScreenCommand.ToggleSpeed)
           }
         },
       )
