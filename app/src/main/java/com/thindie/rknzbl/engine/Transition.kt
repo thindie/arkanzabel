@@ -19,7 +19,7 @@ fun <
 
 fun <S : State, C : Command, R : Any?> Pair<ScreenScope<S, C>, Flow<Pair<S, R>>>.transition(
   action: suspend (S, S, R) -> Unit = { _, _, _ -> },
-  block: suspend (S, R) -> S,
+  block: suspend (S, R) -> S = { s, _ -> s },
 ): ScreenScope<S, C> {
   val (screenScope, flow) = this
   screenScope.scope?.let { scope ->

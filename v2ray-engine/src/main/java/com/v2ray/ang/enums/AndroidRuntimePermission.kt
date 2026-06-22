@@ -22,10 +22,9 @@ enum class AndroidRuntimePermission {
   PostNotifications {
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun getPermission(): String = Manifest.permission.POST_NOTIFICATIONS
-  };
+  }, ;
 
   abstract fun getPermission(): String
-
 
   fun getLabel(): String {
     return when (this) {

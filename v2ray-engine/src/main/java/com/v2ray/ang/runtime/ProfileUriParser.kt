@@ -14,7 +14,6 @@ import java.net.URISyntaxException
 
 /** Resolves a single share line (subscription row, clipboard) to [ConnectionProfile]. */
 object ProfileUriParser {
-
   fun parse(raw: String): ConnectionProfile? {
     val t = raw.trim()
     if (t.isEmpty() || t.startsWith("#")) return null

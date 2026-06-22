@@ -1,6 +1,18 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
 plugins {
   alias(libs.plugins.android.library)
   alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.ktlint)
+}
+
+ktlint {
+  reporters {
+    reporter(ReporterType.PLAIN)
+  }
+  additionalEditorconfig.set(
+    mapOf("indent_size" to "2"),
+  )
 }
 
 android {

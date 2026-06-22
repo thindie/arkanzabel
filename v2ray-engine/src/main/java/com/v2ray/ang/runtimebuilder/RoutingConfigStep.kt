@@ -10,7 +10,6 @@ import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
 
 internal class RoutingConfigStep {
-
   fun applyRouting(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       v2rayConfig.routing.domainStrategy =
@@ -26,7 +25,7 @@ internal class RoutingConfigStep {
       throw RoutingConfigError(
         message = "Failed to configure routing",
         source = "RoutingConfigStep.applyRouting",
-        cause = runtime
+        cause = runtime,
       )
     }
     return v2rayConfig
@@ -39,8 +38,8 @@ internal class RoutingConfigStep {
     rulesetItems?.forEach { key ->
       if (key.enabled && key.outboundTag == tag && !key.domain.isNullOrEmpty()) {
         key.domain?.forEach {
-          if (it != AppConfig.GEOSITE_PRIVATE
-            && (it.startsWith("geosite:") || it.startsWith("domain:"))
+          if (it != AppConfig.GEOSITE_PRIVATE &&
+            (it.startsWith("geosite:") || it.startsWith("domain:"))
           ) {
             domain.add(it)
           }
@@ -51,7 +50,10 @@ internal class RoutingConfigStep {
     return domain
   }
 
-  private fun applyRoutingUserRule(item: RulesetItem?, v2rayConfig: V2rayConfig) {
+  private fun applyRoutingUserRule(
+    item: RulesetItem?,
+    v2rayConfig: V2rayConfig,
+  ) {
     try {
       if (item == null || !item.enabled) {
         return
@@ -64,7 +66,7 @@ internal class RoutingConfigStep {
       throw RoutingConfigError(
         message = "Failed to apply routing user rule",
         source = "RoutingConfigStep.applyRoutingUserRule",
-        cause = runtime
+        cause = runtime,
       )
     }
   }

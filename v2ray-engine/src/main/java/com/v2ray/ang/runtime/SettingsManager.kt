@@ -13,8 +13,8 @@ import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.Language
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.RoutingType
 import com.v2ray.ang.enums.VpnInterfaceAddressConfig
 import com.v2ray.ang.util.JsonUtil
@@ -26,7 +26,6 @@ import java.util.Collections
 import java.util.Locale
 
 object SettingsManager {
-
   fun initRoutingRulesets(context: Context) {
     val exist = KeyValueStorage.decodeRoutingRulesets()
     if (exist.isNullOrEmpty()) {
@@ -37,14 +36,20 @@ object SettingsManager {
     }
   }
 
-  private fun getPresetRoutingRulesets(context: Context, index: Int = 0): List<RulesetItem>? {
+  private fun getPresetRoutingRulesets(
+    context: Context,
+    index: Int = 0,
+  ): List<RulesetItem>? {
     val fileName = RoutingType.fromIndex(index).fileName
     val assets = Utils.readTextFromAssets(context, fileName)
     if (assets.isEmpty()) return null
     return JsonUtil.fromJson(assets, Array<RulesetItem>::class.java)?.toList()
   }
 
-  fun resetRoutingRulesetsFromPresets(context: Context, index: Int) {
+  fun resetRoutingRulesetsFromPresets(
+    context: Context,
+    index: Int,
+  ) {
     val rulesetList = getPresetRoutingRulesets(context, index) ?: return
     resetRoutingRulesetsCommon(rulesetList.toMutableList())
   }
@@ -81,7 +86,10 @@ object SettingsManager {
     return rulesetList[index]
   }
 
-  fun saveRoutingRuleset(index: Int, ruleset: RulesetItem?) {
+  fun saveRoutingRuleset(
+    index: Int,
+    ruleset: RulesetItem?,
+  ) {
     if (ruleset == null) return
     val rulesetList = KeyValueStorage.decodeRoutingRulesets()?.toMutableList() ?: mutableListOf()
     if (index < 0 || index >= rulesetList.size) {
@@ -110,27 +118,35 @@ object SettingsManager {
     if (config.protocol == Protocol.Custom) {
       val raw = KeyValueStorage.decodeServerRaw(guid) ?: return false
       val v2rayConfig = JsonUtil.fromJson(raw, V2rayConfig::class.java)
-      val exist = v2rayConfig?.routing?.rules?.filter { it.outboundTag == TAG_DIRECT }?.any {
-        it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
-      }
+      val exist =
+        v2rayConfig?.routing?.rules?.filter { it.outboundTag == TAG_DIRECT }?.any {
+          it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
+        }
       return exist == true
     }
 
     val rulesetItems = KeyValueStorage.decodeRoutingRulesets()
-    val exist = rulesetItems?.filter { it.enabled && it.outboundTag == TAG_DIRECT }?.any {
-      it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
-    }
+    val exist =
+      rulesetItems?.filter { it.enabled && it.outboundTag == TAG_DIRECT }?.any {
+        it.domain?.contains(GEOSITE_PRIVATE) == true || it.ip?.contains(GEOIP_PRIVATE) == true
+      }
     return exist == true
   }
 
-  fun swapRoutingRuleset(fromPosition: Int, toPosition: Int) {
+  fun swapRoutingRuleset(
+    fromPosition: Int,
+    toPosition: Int,
+  ) {
     val rulesetList = KeyValueStorage.decodeRoutingRulesets()?.toMutableList() ?: return
     if (rulesetList.isEmpty()) return
     Collections.swap(rulesetList, fromPosition, toPosition)
     KeyValueStorage.encodeRoutingRulesets(rulesetList)
   }
 
-  fun swapSubscriptions(fromPosition: Int, toPosition: Int) {
+  fun swapSubscriptions(
+    fromPosition: Int,
+    toPosition: Int,
+  ) {
     val subsList = KeyValueStorage.decodeSubsList().toMutableList()
     if (subsList.isEmpty()) return
     Collections.swap(subsList, fromPosition, toPosition)
@@ -158,7 +174,10 @@ object SettingsManager {
     return getSocksPort() + if (Utils.isXray()) 0 else 1
   }
 
-  fun initAssets(context: Context, assets: AssetManager) {
+  fun initAssets(
+    context: Context,
+    assets: AssetManager,
+  ) {
     val extFolder = Utils.userAssetPath(context)
     try {
       val geo = arrayOf("geosite.dat", "geoip.dat")
@@ -243,8 +262,7 @@ object SettingsManager {
     return VpnInterfaceAddressConfig.getConfigByIndex(selectedIndex ?: 0)
   }
 
-  fun getVpnMtu(): Int =
-    KeyValueStorage.decodeSettingsStringAsInt(AppConfig.PREF_VPN_MTU, AppConfig.VPN_MTU)
+  fun getVpnMtu(): Int = KeyValueStorage.decodeSettingsStringAsInt(AppConfig.PREF_VPN_MTU, AppConfig.VPN_MTU)
 
   fun isUsingHevTun(): Boolean {
     // Default off: hev requires bundled `libhev-socks5-tunnel.so`; without it use TUN fd → core.
@@ -262,7 +280,7 @@ object SettingsManager {
     ensureDefaultValue(AppConfig.PREF_VPN_MTU, AppConfig.VPN_MTU.toString())
     ensureDefaultValue(
       AppConfig.SUBSCRIPTION_AUTO_UPDATE_INTERVAL,
-      AppConfig.SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL
+      AppConfig.SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL,
     )
     ensureDefaultValue(AppConfig.PREF_SOCKS_PORT, AppConfig.PORT_SOCKS)
     ensureDefaultValue(AppConfig.PREF_REMOTE_DNS, AppConfig.DNS_PROXY)
@@ -281,7 +299,10 @@ object SettingsManager {
     ensureDefaultValue(AppConfig.PREF_AUTO_SAVE_ACTIVE_PROFILE_ENABLED, "1")
   }
 
-  private fun ensureDefaultValue(key: String, default: String) {
+  private fun ensureDefaultValue(
+    key: String,
+    default: String,
+  ) {
     if (KeyValueStorage.decodeSettingsString(key).isNullOrEmpty()) {
       KeyValueStorage.encodeSettings(key, default)
     }

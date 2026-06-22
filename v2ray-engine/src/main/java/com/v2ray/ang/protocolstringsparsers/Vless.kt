@@ -11,7 +11,6 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 object Vless : ProtocolParser() {
-
   private val realityPublicKeyFromRawRegexes =
     listOf(
       Regex("""(?i)(?:^|[?&])pbk=([^&#]+)"""),
@@ -20,7 +19,10 @@ object Vless : ProtocolParser() {
       Regex("""(?i)(?:^|[?&])public-key=([^&#]+)"""),
     )
 
-  private fun mergeRealityPublicKeyFromRawLine(config: ConnectionProfile, rawLine: String): ConnectionProfile {
+  private fun mergeRealityPublicKeyFromRawLine(
+    config: ConnectionProfile,
+    rawLine: String,
+  ): ConnectionProfile {
     if (!config.publicKey.isNullOrBlank()) return config
     val chunks =
       buildList {
@@ -58,7 +60,7 @@ object Vless : ProtocolParser() {
         serverPort = uri.port.toString(),
         password = uri.userInfo,
         method = queryParam["encryption"] ?: "none",
-        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo + Protocol.Vless
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo + Protocol.Vless,
       )
 
     val withQuery = getItemFormQuery(base, queryParam, allowInsecure)

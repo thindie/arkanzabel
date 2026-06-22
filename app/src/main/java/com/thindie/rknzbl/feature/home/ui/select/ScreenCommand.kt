@@ -9,6 +9,8 @@ internal sealed interface ScreenCommand : Command {
 
   data object Settings : ScreenCommand
 
+  data object PerAppProxy : ScreenCommand
+
   data object Back : ScreenCommand
 
   data object FetchAutoSaved : ScreenCommand

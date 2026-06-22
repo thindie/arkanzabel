@@ -7,7 +7,6 @@ import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.HttpUtil
 
 internal class DomainResolveStep {
-
   fun resolveOutboundDomainsToHosts(v2rayConfig: V2rayConfig): V2rayConfig {
     val proxyOutboundList = v2rayConfig.getAllProxyOutbound()
     val dns = v2rayConfig.dns ?: return v2rayConfig
@@ -20,10 +19,11 @@ internal class DomainResolveStep {
 
       if (newHosts.containsKey(domain)) {
         item.ensureSockopt().domainStrategy = "UseIP"
-        item.ensureSockopt().happyEyeballs = StreamSettings.HappyEyeballs(
-          prioritizeIPv6 = preferIpv6,
-          interleave = 2
-        )
+        item.ensureSockopt().happyEyeballs =
+          StreamSettings.HappyEyeballs(
+            prioritizeIPv6 = preferIpv6,
+            interleave = 2,
+          )
         continue
       }
 
@@ -31,15 +31,17 @@ internal class DomainResolveStep {
       if (resolvedIps.isNullOrEmpty()) continue
 
       item.ensureSockopt().domainStrategy = "UseIP"
-      item.ensureSockopt().happyEyeballs = StreamSettings.HappyEyeballs(
-        prioritizeIPv6 = preferIpv6,
-        interleave = 2
-      )
-      newHosts[domain] = if (resolvedIps.size == 1) {
-        resolvedIps[0]
-      } else {
-        resolvedIps
-      }
+      item.ensureSockopt().happyEyeballs =
+        StreamSettings.HappyEyeballs(
+          prioritizeIPv6 = preferIpv6,
+          interleave = 2,
+        )
+      newHosts[domain] =
+        if (resolvedIps.size == 1) {
+          resolvedIps[0]
+        } else {
+          resolvedIps
+        }
     }
 
     dns.hosts = newHosts

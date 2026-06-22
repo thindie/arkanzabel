@@ -16,11 +16,11 @@ class IncomingConfigError(
   userReadable: String = message,
   explicitPayload: ErrorPayload? = null,
 ) : AppError(
-  message,
-  cause,
-  userReadable,
-  explicitPayload ?: source?.let { ErrorPayload(source = it) },
-)
+    message,
+    cause,
+    userReadable,
+    explicitPayload ?: source?.let { ErrorPayload(source = it) },
+  )
 
 class OutboundConfigError(
   message: String,
@@ -29,11 +29,11 @@ class OutboundConfigError(
   userReadable: String = message,
   explicitPayload: ErrorPayload? = null,
 ) : AppError(
-  message,
-  cause,
-  userReadable,
-  explicitPayload ?: source?.let { ErrorPayload(source = it) },
-)
+    message,
+    cause,
+    userReadable,
+    explicitPayload ?: source?.let { ErrorPayload(source = it) },
+  )
 
 class RoutingConfigError(
   message: String,
@@ -42,11 +42,11 @@ class RoutingConfigError(
   userReadable: String = message,
   explicitPayload: ErrorPayload? = null,
 ) : AppError(
-  message,
-  cause,
-  userReadable,
-  explicitPayload ?: source?.let { ErrorPayload(source = it) },
-)
+    message,
+    cause,
+    userReadable,
+    explicitPayload ?: source?.let { ErrorPayload(source = it) },
+  )
 
 class DnsConfigError(
   message: String,
@@ -55,11 +55,11 @@ class DnsConfigError(
   userReadable: String = message,
   explicitPayload: ErrorPayload? = null,
 ) : AppError(
-  message,
-  cause,
-  userReadable,
-  explicitPayload ?: source?.let { ErrorPayload(source = it) },
-)
+    message,
+    cause,
+    userReadable,
+    explicitPayload ?: source?.let { ErrorPayload(source = it) },
+  )
 
 class ConfigBuildError(
   message: String,
@@ -67,27 +67,27 @@ class ConfigBuildError(
   cause: Throwable? = null,
   userReadable: String = message,
 ) : AppError(
-  message,
-  cause,
-  userReadable,
-  ErrorPayload(stage = stage),
-)
+    message,
+    cause,
+    userReadable,
+    ErrorPayload(stage = stage),
+  )
 
 class ProfileNotFoundError(
   val guid: String,
 ) : AppError(
-  message = "No profile for guid=$guid",
-  userReadable = "Selected profile was not found",
-  payload = ErrorPayload(stage = "profile", extras = mapOf("guid" to guid)),
-)
+    message = "No profile for guid=$guid",
+    userReadable = "Selected profile was not found",
+    payload = ErrorPayload(stage = "profile", extras = mapOf("guid" to guid)),
+  )
 
 class StoredRawMissingError(
   val guid: String,
 ) : AppError(
-  message = "No stored raw JSON for custom profile guid=$guid",
-  userReadable = "Custom profile data is missing",
-  payload = ErrorPayload(stage = "customRaw", extras = mapOf("guid" to guid)),
-)
+    message = "No stored raw JSON for custom profile guid=$guid",
+    userReadable = "Custom profile data is missing",
+    payload = ErrorPayload(stage = "customRaw", extras = mapOf("guid" to guid)),
+  )
 
 class ConfigValidationError(
   message: String,
@@ -95,24 +95,24 @@ class ConfigValidationError(
   stage: String = "validation",
   extras: Map<String, String> = emptyMap(),
 ) : AppError(
-  message,
-  null,
-  userReadable,
-  ErrorPayload(stage = stage, extras = extras),
-)
+    message,
+    null,
+    userReadable,
+    ErrorPayload(stage = stage, extras = extras),
+  )
 
 class AssetConfigMissingError(
   val templateName: String,
 ) : AppError(
-  message = "Empty or unreadable template: $templateName",
-  userReadable = "Built-in VPN template is missing",
-  payload = ErrorPayload(stage = "assetTemplate", extras = mapOf("template" to templateName)),
-)
+    message = "Empty or unreadable template: $templateName",
+    userReadable = "Built-in VPN template is missing",
+    payload = ErrorPayload(stage = "assetTemplate", extras = mapOf("template" to templateName)),
+  )
 
 class ConfigSerializationError(
   val stage: String,
 ) : AppError(
-  message = "Failed to serialize config at stage=$stage",
-  userReadable = "Could not build configuration JSON",
-  payload = ErrorPayload(stage = stage),
-)
+    message = "Failed to serialize config at stage=$stage",
+    userReadable = "Could not build configuration JSON",
+    payload = ErrorPayload(stage = stage),
+  )

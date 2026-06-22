@@ -10,12 +10,29 @@ import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.managegate.storedgates.profiles.profiles
+import com.v2ray.ang.dto.ConnectionProfile
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class FavoriteProfilesFlow(
   private val router: Router,
   val repository: ConnectionProfileRepository,
   val appContext: Context,
 ) : ScreenFlow<Route, Unit>(router) {
+  internal val selected =
+    MutableSharedFlow<ConnectionProfile>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      BufferOverflow.DROP_OLDEST,
+    )
+
+  internal val startVpn =
+    MutableSharedFlow<Unit>(
+      replay = 0,
+      extraBufferCapacity = 3,
+      BufferOverflow.DROP_OLDEST,
+    )
+
   override fun start() {
     go(profiles())
   }

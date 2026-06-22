@@ -15,7 +15,10 @@ class ProcessService {
    * Runs a process with the given command. [Process.waitFor] runs on a single background thread
    * so the caller is not blocked.
    */
-  fun runProcess(context: Context, cmd: List<String>) {
+  fun runProcess(
+    context: Context,
+    cmd: List<String>,
+  ) {
     Log.i(AppConfig.TAG, cmd.toString())
     shutdownWaitExecutor()
     waitExecutor = Executors.newSingleThreadExecutor()

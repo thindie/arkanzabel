@@ -2,7 +2,9 @@ package com.thindie.rknzbl
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -41,6 +43,7 @@ import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.ThemeSwitcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +59,7 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
     val app = application as Application
     val router = app.requireRouter()
+    val repository = app.applicationScope.data.repository
     awaitFinish()
     setContent {
       SideEffect {
@@ -65,14 +69,14 @@ class MainActivity : ComponentActivity() {
           appContext = app,
         )
           .onFinishBuilder {
-            val repository = app.applicationScope.data.repository
-            HomeFlow(router = router, appContext = app, repository = repository)
+            val settingsRepository = app.applicationScope.settings.repository
+            HomeFlow(router = router, appContext = app, repository = repository, settingsRepository)
               .onFinishBuilder { router.pop() }
               .start()
           }
           .start()
       }
-      val themeSwitcher = remember { ThemeSwitcher() }
+      val themeSwitcher = remember { ThemeSwitcher(repository = app.applicationScope.settings.repository) }
       CompositionLocalProvider(
         LocalThemeSwitcher provides themeSwitcher,
       ) {
@@ -117,6 +121,38 @@ class MainActivity : ComponentActivity() {
           }
         }
       }
+    }
+  }
+
+  override fun attachBaseContext(newBase: Context?) {
+    val lang = (application as? Application)?.applicationScope?.settings?.repository?.language()
+    if (lang != null) {
+      val locale = Locale(lang)
+      Locale.setDefault(locale)
+
+      val config = newBase?.resources?.configuration
+      config?.setLocale(locale)
+      val createdContext = config?.let { createConfigurationContext(it) }
+      if (createdContext != null) {
+        super.attachBaseContext(createdContext)
+      } else {
+        super.attachBaseContext(newBase)
+      }
+    } else {
+      super.attachBaseContext(newBase)
+    }
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    val lang = (application as? Application)?.applicationScope?.settings?.repository?.language()
+    if (lang != null) {
+      val locale = Locale(lang)
+      Locale.setDefault(locale)
+      val config = resources.configuration
+      config.setLocale(locale)
+      resources.updateConfiguration(config, resources.displayMetrics)
+    } else {
+      super.onConfigurationChanged(newConfig)
     }
   }
 

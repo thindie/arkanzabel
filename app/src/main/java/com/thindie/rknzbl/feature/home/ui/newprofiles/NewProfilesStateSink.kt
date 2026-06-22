@@ -12,7 +12,7 @@ import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 
 fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
   screenScope.stateSink {
@@ -45,50 +45,46 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
       }
 
     sub(
-      (appContext as Application).vpnRuntimeState.map { state ->
-        when (state) {
-          is WorkState.Error -> state to null
-          WorkState.Idle -> state to null
-          WorkState.Running -> {
-            val port = screenScope.state.value.selected?.serverPort
-            if (port != null) {
-              state to
+      selected
+        .mapLatest { profile ->
+          val result =
+            when ((appContext as Application).vpnRuntimeState.value) {
+              is WorkState.Error -> {
+                SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
+              }
+              WorkState.NotRunning -> {
+                SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              }
+              WorkState.Running -> {
                 SpeedtestManager.testConnection(
-                  appContext,
-                  SettingsManager.getHttpPort(),
+                  context = appContext,
+                  port = SettingsManager.getHttpPort(),
                 )
-            } else {
-              state to null
+              }
             }
-          }
-        }
-      },
+          profile to result
+        },
     )
-      .transition({ _, _, (vpnState, speedTestMessage) ->
-        when (vpnState) {
-          is WorkState.Error -> send(ScreenCommand.Dismissed)
-          WorkState.Idle -> Unit
-          WorkState.Running -> {
-            if (speedTestMessage != null) {
-              sendEvent(ServiceCommand.UiEvent.SnackText(speedTestMessage.message))
+      .transition(
+        action = { _, _, (_, result) ->
+          when (result) {
+            is SpeedtestManager.SpeedTestResult.Err -> {
+              sendEvent(
+                ServiceCommand.UiEvent.SnackText(result.message),
+              )
             }
+            is SpeedtestManager.SpeedTestResult.Ok -> {
+              sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
+            }
+            null -> Unit
           }
-        }
-      }) { s, (vpnState, _) ->
-        s.copy(
-          serviceBeingStarted =
-            when (vpnState) {
-              is WorkState.Error -> null
-              WorkState.Idle -> true
-              WorkState.Running -> null
-            }.takeIf { s.serviceBeingStarted != null },
-          established =
-            when (vpnState) {
-              is WorkState.Error -> false
-              WorkState.Idle -> false
-              WorkState.Running -> true
-            },
-        )
-      }
+        },
+        block = { s, (profile, result) ->
+          s.copy(
+            selected = profile,
+            selectedTestConnectionMessage = result,
+          )
+        },
+      )
   }
 }

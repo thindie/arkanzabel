@@ -6,8 +6,8 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.VmessQRCode
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -31,10 +31,10 @@ object Vmess : ProtocolParser() {
       return null
     }
     val vmessQRCode = JsonUtil.fromJson(result, VmessQRCode::class.java) ?: return null
-    if (TextUtils.isEmpty(vmessQRCode.add)
-      || TextUtils.isEmpty(vmessQRCode.port)
-      || TextUtils.isEmpty(vmessQRCode.id)
-      || TextUtils.isEmpty(vmessQRCode.net)
+    if (TextUtils.isEmpty(vmessQRCode.add) ||
+      TextUtils.isEmpty(vmessQRCode.port) ||
+      TextUtils.isEmpty(vmessQRCode.id) ||
+      TextUtils.isEmpty(vmessQRCode.net)
     ) {
       Log.w(AppConfig.TAG, "Toast incorrect protocol")
       return null
@@ -152,7 +152,7 @@ object Vmess : ProtocolParser() {
         serverPort = uri.port.toString(),
         password = uri.userInfo,
         method = AppConfig.DEFAULT_SECURITY,
-        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo,
       )
 
     return getItemFormQuery(base, queryParam, allowInsecure)

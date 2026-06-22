@@ -10,7 +10,6 @@ import com.v2ray.ang.util.Utils
 import java.net.URI
 
 open class ProtocolParser {
-
   private fun firstQueryValueIgnoreCase(
     queryParam: Map<String, String>,
     vararg names: String,
@@ -31,21 +30,31 @@ open class ProtocolParser {
    * @param dicQuery the query parameters to include in the URI
    * @return the converted URI string
    */
-  fun toUri(config: ConnectionProfile, userInfo: String?, dicQuery: HashMap<String, String>?): String {
-    val query = if (dicQuery != null)
-      "?" + dicQuery.toList().joinToString(
-        separator = "&",
-        transform = { it.first + "=" + Utils.encodeURIComponent(it.second) })
-    else ""
+  fun toUri(
+    config: ConnectionProfile,
+    userInfo: String?,
+    dicQuery: HashMap<String, String>?,
+  ): String {
+    val query =
+      if (dicQuery != null) {
+        "?" +
+          dicQuery.toList().joinToString(
+            separator = "&",
+            transform = { it.first + "=" + Utils.encodeURIComponent(it.second) },
+          )
+      } else {
+        ""
+      }
 
-    val url = String.format(
-      "%s@%s:%s",
-      Utils.encodeURIComponent(userInfo ?: ""),
-      Utils.getIpv6Address(HttpUtil.toIdnDomain(config.server.orEmpty())),
-      config.serverPort
-    )
+    val url =
+      String.format(
+        "%s@%s:%s",
+        Utils.encodeURIComponent(userInfo ?: ""),
+        Utils.getIpv6Address(HttpUtil.toIdnDomain(config.server.orEmpty())),
+        config.serverPort,
+      )
 
-    return "${url}${query}#${Utils.encodeURIComponent(config.remarks)}"
+    return "${url}$query#${Utils.encodeURIComponent(config.remarks)}"
   }
 
   /**
@@ -84,11 +93,12 @@ open class ProtocolParser {
     allowInsecure: Boolean,
   ): ConnectionProfile {
     val allowInsecureKeys = arrayOf("insecure", "allowInsecure", "allow_insecure")
-    val insecureResolved = when {
-      allowInsecureKeys.any { queryParam[it] == "1" } -> true
-      allowInsecureKeys.any { queryParam[it] == "0" } -> false
-      else -> allowInsecure
-    }
+    val insecureResolved =
+      when {
+        allowInsecureKeys.any { queryParam[it] == "1" } -> true
+        allowInsecureKeys.any { queryParam[it] == "0" } -> false
+        else -> allowInsecure
+      }
     return config.copy(
       network = queryParam["type"] ?: NetworkType.TCP.type,
       headerType = queryParam["headerType"],
@@ -102,9 +112,10 @@ open class ProtocolParser {
       authority = queryParam["authority"],
       xhttpMode = queryParam["mode"],
       xhttpExtra = queryParam["extra"],
-      security = queryParam["security"]?.trim()?.lowercase().takeIf {
-        it == AppConfig.TLS || it == AppConfig.REALITY
-      },
+      security =
+        queryParam["security"]?.trim()?.lowercase().takeIf {
+          it == AppConfig.TLS || it == AppConfig.REALITY
+        },
       insecure = insecureResolved,
       sni = queryParam["sni"],
       fingerPrint = queryParam["fp"],
@@ -204,16 +215,17 @@ open class ProtocolParser {
     val domain = HttpUtil.toIdnDomain(connectionProfile.server.orEmpty())
     if (KeyValueStorage.decodeSettingsString(
         AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-        "1"
+        "1",
       ) != "2"
     ) {
       return domain
     }
-    //Resolve and replace domain
-    val resolvedIps = HttpUtil.resolveHostToIP(
-      domain,
-      KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6)
-    )
+    // Resolve and replace domain
+    val resolvedIps =
+      HttpUtil.resolveHostToIP(
+        domain,
+        KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6),
+      )
     if (resolvedIps.isNullOrEmpty()) {
       return domain
     }

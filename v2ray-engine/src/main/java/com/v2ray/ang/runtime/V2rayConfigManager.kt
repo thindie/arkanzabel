@@ -3,13 +3,6 @@ package com.v2ray.ang.runtime
 import android.content.Context
 import android.text.TextUtils
 import android.util.Log
-import com.v2ray.ang.runtimebuilder.ConfigAssembler
-import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
-import com.v2ray.ang.runtimebuilder.DnsConfigStep
-import com.v2ray.ang.runtimebuilder.DomainResolveStep
-import com.v2ray.ang.runtimebuilder.InboundConfigStep
-import com.v2ray.ang.runtimebuilder.OutboundConfigStep
-import com.v2ray.ang.runtimebuilder.RoutingConfigStep
 import com.google.gson.JsonArray
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
@@ -19,16 +12,23 @@ import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.V2rayConfig.Outbound.OutSettings
 import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings
 import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
+import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.error.AssetConfigMissingError
 import com.v2ray.ang.error.ConfigSerializationError
 import com.v2ray.ang.error.ConfigValidationError
 import com.v2ray.ang.error.ProfileNotFoundError
 import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.error.StoredRawMissingError
-import com.v2ray.ang.enums.NetworkType
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
+import com.v2ray.ang.runtimebuilder.ConfigAssembler
+import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
+import com.v2ray.ang.runtimebuilder.DnsConfigStep
+import com.v2ray.ang.runtimebuilder.DomainResolveStep
+import com.v2ray.ang.runtimebuilder.InboundConfigStep
+import com.v2ray.ang.runtimebuilder.OutboundConfigStep
+import com.v2ray.ang.runtimebuilder.RoutingConfigStep
 import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
 import java.util.regex.PatternSyntaxException
@@ -61,7 +61,10 @@ object V2rayConfigManager {
    *
    * Throws [com.v2ray.ang.error.AppError] (or other [RuntimeException]) on failure; callers map to UI.
    */
-  fun getV2rayConfig(context: Context, guid: String): V2Ray {
+  fun getV2rayConfig(
+    context: Context,
+    guid: String,
+  ): V2Ray {
     val config = KeyValueStorage.decodeServerConfig(guid) ?: throw ProfileNotFoundError(guid)
     return when (config.protocol) {
       Protocol.Custom -> getV2rayCustomConfig(context, guid)
@@ -73,7 +76,10 @@ object V2rayConfigManager {
   /**
    * Same as [getV2rayConfig] but tuned for outbound delay measurement.
    */
-  fun getV2rayConfig4Speedtest(context: Context, guid: String): V2Ray {
+  fun getV2rayConfig4Speedtest(
+    context: Context,
+    guid: String,
+  ): V2Ray {
     val config = KeyValueStorage.decodeServerConfig(guid) ?: throw ProfileNotFoundError(guid)
     return when (config.protocol) {
       Protocol.Custom -> getV2rayCustomConfig(context, guid)
@@ -92,11 +98,12 @@ object V2rayConfigManager {
     }
 
     val json = JsonUtil.parseString(raw) ?: return V2Ray(guid, raw)
-    val inboundsJson = if (json.has("inbounds") && json.get("inbounds")?.isJsonNull == false) {
-      json.getAsJsonArray("inbounds")
-    } else {
-      JsonArray()
-    }
+    val inboundsJson =
+      if (json.has("inbounds") && json.get("inbounds")?.isJsonNull == false) {
+        json.getAsJsonArray("inbounds")
+      } else {
+        JsonArray()
+      }
 
     for (i in 0 until inboundsJson.size()) {
       val elem = inboundsJson.get(i)
@@ -109,12 +116,13 @@ object V2rayConfigManager {
     }
 
     val templateConfig = initV2rayConfig(context)
-    val inboundTun = templateConfig.inbounds.firstOrNull { it.tag == "tun" }
-      ?: throw ConfigValidationError(
-        message = "Template has no tun inbound",
-        userReadable = "VPN template is missing TUN settings",
-        stage = "customTun",
-      )
+    val inboundTun =
+      templateConfig.inbounds.firstOrNull { it.tag == "tun" }
+        ?: throw ConfigValidationError(
+          message = "Template has no tun inbound",
+          userReadable = "VPN template is missing TUN settings",
+          stage = "customTun",
+        )
     inboundTun.settings?.mtu = SettingsManager.getVpnMtu()
 
     inboundsJson.add(JsonUtil.parseString(JsonUtil.toJson(inboundTun)))
@@ -132,28 +140,29 @@ object V2rayConfigManager {
     config: ConnectionProfile,
   ): V2Ray {
     val serverList = KeyValueStorage.decodeServerList()
-    val configList = serverList
-      .mapNotNull { id -> KeyValueStorage.decodeServerConfig(id) }
-      .filter { profile ->
-        val subscriptionId = config.policyGroupSubscriptionId
-        if (subscriptionId.isNullOrBlank()) {
-          true
-        } else {
-          profile.subscriptionId == subscriptionId
-        }
-      }
-      .filter { profile ->
-        val filter = config.policyGroupFilter
-        if (filter.isNullOrBlank()) {
-          true
-        } else {
-          try {
-            Regex(filter).containsMatchIn(profile.remarks)
-          } catch (invalidRegex: PatternSyntaxException) {
-            profile.remarks.contains(filter)
+    val configList =
+      serverList
+        .mapNotNull { id -> KeyValueStorage.decodeServerConfig(id) }
+        .filter { profile ->
+          val subscriptionId = config.policyGroupSubscriptionId
+          if (subscriptionId.isNullOrBlank()) {
+            true
+          } else {
+            profile.subscriptionId == subscriptionId
           }
         }
-      }
+        .filter { profile ->
+          val filter = config.policyGroupFilter
+          if (filter.isNullOrBlank()) {
+            true
+          } else {
+            try {
+              Regex(filter).containsMatchIn(profile.remarks)
+            } catch (invalidRegex: PatternSyntaxException) {
+              profile.remarks.contains(filter)
+            }
+          }
+        }
 
     val v2rayConfig = getV2rayMultipleConfig(context, config, configList)
     return V2Ray(guid, v2RayJson(v2rayConfig, "policyGroup"))
@@ -164,11 +173,12 @@ object V2rayConfigManager {
     guid: String,
     config: ConnectionProfile,
   ): V2Ray {
-    val address = config.server ?: throw ConfigValidationError(
-      message = "Server address is missing",
-      userReadable = "Server address is missing",
-      extras = mapOf("guid" to guid),
-    )
+    val address =
+      config.server ?: throw ConfigValidationError(
+        message = "Server address is missing",
+        userReadable = "Server address is missing",
+        extras = mapOf("guid" to guid),
+      )
     if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
       throw ConfigValidationError(
         message = "$address is an invalid ip or domain",
@@ -199,11 +209,12 @@ object V2rayConfigManager {
     config: ConnectionProfile,
     configList: List<ConnectionProfile>,
   ): V2rayConfig {
-    val validConfigs = configList.asSequence().filter { it.server.isNotNullEmpty() }
-      .filter { !Utils.isPureIpAddress(it.server!!) || Utils.isValidUrl(it.server!!) }
-      .filter { it.protocol != Protocol.Custom }
-      .filter { it.protocol != Protocol.PolicyGroup }
-      .toList()
+    val validConfigs =
+      configList.asSequence().filter { it.server.isNotNullEmpty() }
+        .filter { !Utils.isPureIpAddress(it.server!!) || Utils.isValidUrl(it.server!!) }
+        .filter { it.protocol != Protocol.Custom }
+        .filter { it.protocol != Protocol.PolicyGroup }
+        .toList()
 
     if (validConfigs.isEmpty()) {
       throw ConfigValidationError(
@@ -258,11 +269,12 @@ object V2rayConfigManager {
     guid: String,
     config: ConnectionProfile,
   ): V2Ray {
-    val address = config.server ?: throw ConfigValidationError(
-      message = "Server address is missing",
-      userReadable = "Server address is missing",
-      extras = mapOf("guid" to guid),
-    )
+    val address =
+      config.server ?: throw ConfigValidationError(
+        message = "Server address is missing",
+        userReadable = "Server address is missing",
+        extras = mapOf("guid" to guid),
+      )
     if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
       throw ConfigValidationError(
         message = "$address is an invalid ip or domain",
@@ -272,10 +284,11 @@ object V2rayConfigManager {
     }
 
     val initialConfig = initV2rayConfig(context)
-    val speedtestConfig = initialConfig
-      .then { getOutbounds(it, config) }
-      .then { getMoreOutbounds(it, config.subscriptionId) }
-      .then { it.invalidateForSpeedtest() }
+    val speedtestConfig =
+      initialConfig
+        .then { getOutbounds(it, config) }
+        .then { getMoreOutbounds(it, config.subscriptionId) }
+        .then { it.invalidateForSpeedtest() }
 
     return V2Ray(guid, v2RayJson(speedtestConfig, "speedtest"))
   }
@@ -309,14 +322,15 @@ object V2rayConfigManager {
       )
   }
 
-  private fun v2RayJson(model: V2rayConfig, stage: String): String {
+  private fun v2RayJson(
+    model: V2rayConfig,
+    stage: String,
+  ): String {
     return JsonUtil.toJsonPretty(model)?.takeIf { it.isNotEmpty() }
       ?: throw ConfigSerializationError(stage)
   }
 
-
   //endregion
-
 
   //region some sub function
 
@@ -395,9 +409,7 @@ object V2rayConfigManager {
     return dnsConfigStep.applyDns(v2rayConfig)
   }
 
-
   //endregion
-
 
   //region outbound related functions
 
@@ -410,7 +422,10 @@ object V2rayConfigManager {
    * @param connectionProfile The connection profile containing connection details
    * @return Updated config, or null if outbound configuration fails.
    */
-  private fun getOutbounds(v2rayConfig: V2rayConfig, connectionProfile: ConnectionProfile): V2rayConfig {
+  private fun getOutbounds(
+    v2rayConfig: V2rayConfig,
+    connectionProfile: ConnectionProfile,
+  ): V2rayConfig {
     return outboundConfigStep.applyOutbounds(v2rayConfig, connectionProfile)
   }
 
@@ -423,7 +438,10 @@ object V2rayConfigManager {
    * @param subscriptionId The subscription ID to look up related proxies
    * @return Updated config. If additional outbounds cannot be applied, returns original config.
    */
-  private fun getMoreOutbounds(v2rayConfig: V2rayConfig, subscriptionId: String): V2rayConfig {
+  private fun getMoreOutbounds(
+    v2rayConfig: V2rayConfig,
+    subscriptionId: String,
+  ): V2rayConfig {
     return outboundConfigStep.applyMoreOutbounds(v2rayConfig, subscriptionId)
   }
 
@@ -445,7 +463,10 @@ object V2rayConfigManager {
    * @param v2rayConfig The V2ray configuration object to be modified with balancing settings
    * @param config The profile item containing policy group settings
    */
-  private fun getBalance(v2rayConfig: V2rayConfig, config: ConnectionProfile) {
+  private fun getBalance(
+    v2rayConfig: V2rayConfig,
+    config: ConnectionProfile,
+  ) {
     try {
       v2rayConfig.routing.rules.forEach { rule ->
         if (rule.outboundTag == "proxy") {
@@ -459,67 +480,80 @@ object V2rayConfigManager {
         // Least Ping goto else
         "1" -> {
           // Least Load
-          val balancer = V2rayConfig.Routing.Balancer(
-            tag = AppConfig.TAG_BALANCER,
-            selector = lstSelector,
-            strategy = V2rayConfig.Routing.StrategyObject(
-              type = "leastLoad"
+          val balancer =
+            V2rayConfig.Routing.Balancer(
+              tag = AppConfig.TAG_BALANCER,
+              selector = lstSelector,
+              strategy =
+                V2rayConfig.Routing.StrategyObject(
+                  type = "leastLoad",
+                ),
             )
-          )
           v2rayConfig.routing.balancers = listOf(balancer)
-          v2rayConfig.burstObservatory = V2rayConfig.BurstObservatoryObject(
-            subjectSelector = lstSelector,
-            pingConfig = V2rayConfig.BurstObservatoryObject.PingConfigObject(
-              destination = KeyValueStorage.decodeSettingsString(AppConfig.PREF_DELAY_TEST_URL)
-                ?: AppConfig.DELAY_TEST_URL,
-              interval = "5m",
-              sampling = 2,
-              timeout = "30s"
+          v2rayConfig.burstObservatory =
+            V2rayConfig.BurstObservatoryObject(
+              subjectSelector = lstSelector,
+              pingConfig =
+                V2rayConfig.BurstObservatoryObject.PingConfigObject(
+                  destination =
+                    KeyValueStorage.decodeSettingsString(AppConfig.PREF_DELAY_TEST_URL)
+                      ?: AppConfig.DELAY_TEST_URL,
+                  interval = "5m",
+                  sampling = 2,
+                  timeout = "30s",
+                ),
             )
-          )
         }
 
         "2" -> {
           // Random
-          val balancer = V2rayConfig.Routing.Balancer(
-            tag = AppConfig.TAG_BALANCER,
-            selector = lstSelector,
-            strategy = V2rayConfig.Routing.StrategyObject(
-              type = "random"
+          val balancer =
+            V2rayConfig.Routing.Balancer(
+              tag = AppConfig.TAG_BALANCER,
+              selector = lstSelector,
+              strategy =
+                V2rayConfig.Routing.StrategyObject(
+                  type = "random",
+                ),
             )
-          )
           v2rayConfig.routing.balancers = listOf(balancer)
         }
 
         "3" -> {
           // Round Robin
-          val balancer = V2rayConfig.Routing.Balancer(
-            tag = AppConfig.TAG_BALANCER,
-            selector = lstSelector,
-            strategy = V2rayConfig.Routing.StrategyObject(
-              type = "roundRobin"
+          val balancer =
+            V2rayConfig.Routing.Balancer(
+              tag = AppConfig.TAG_BALANCER,
+              selector = lstSelector,
+              strategy =
+                V2rayConfig.Routing.StrategyObject(
+                  type = "roundRobin",
+                ),
             )
-          )
           v2rayConfig.routing.balancers = listOf(balancer)
         }
 
         else -> {
           // Default: Least Ping
-          val balancer = V2rayConfig.Routing.Balancer(
-            tag = AppConfig.TAG_BALANCER,
-            selector = lstSelector,
-            strategy = V2rayConfig.Routing.StrategyObject(
-              type = "leastPing"
+          val balancer =
+            V2rayConfig.Routing.Balancer(
+              tag = AppConfig.TAG_BALANCER,
+              selector = lstSelector,
+              strategy =
+                V2rayConfig.Routing.StrategyObject(
+                  type = "leastPing",
+                ),
             )
-          )
           v2rayConfig.routing.balancers = listOf(balancer)
-          v2rayConfig.observatory = V2rayConfig.ObservatoryObject(
-            subjectSelector = lstSelector,
-            probeUrl = KeyValueStorage.decodeSettingsString(AppConfig.PREF_DELAY_TEST_URL)
-              ?: AppConfig.DELAY_TEST_URL,
-            probeInterval = "3m",
-            enableConcurrency = true
-          )
+          v2rayConfig.observatory =
+            V2rayConfig.ObservatoryObject(
+              subjectSelector = lstSelector,
+              probeUrl =
+                KeyValueStorage.decodeSettingsString(AppConfig.PREF_DELAY_TEST_URL)
+                  ?: AppConfig.DELAY_TEST_URL,
+              probeInterval = "3m",
+              enableConcurrency = true,
+            )
         }
       }
 
@@ -528,14 +562,14 @@ object V2rayConfigManager {
           Rules(
             ip = arrayListOf("0.0.0.0/0", "::/0"),
             balancerTag = AppConfig.TAG_BALANCER,
-          )
+          ),
         )
       } else {
         v2rayConfig.routing.rules.add(
           Rules(
             network = "tcp,udp",
             balancerTag = AppConfig.TAG_BALANCER,
-          )
+          ),
         )
       }
     } catch (runtime: RuntimeException) {
@@ -543,7 +577,7 @@ object V2rayConfigManager {
       throw RoutingConfigError(
         message = "Failed to configure balance for policy group",
         source = "V2rayConfigManager.getBalance",
-        cause = runtime
+        cause = runtime,
       )
     }
   }
@@ -600,7 +634,6 @@ object V2rayConfigManager {
 
   private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
 
-
   /**
    * Creates an initial outbound configuration for a specific protocol type.
    *
@@ -613,50 +646,55 @@ object V2rayConfigManager {
     return when (configType) {
       Protocol.Vmess,
       Protocol.Vless,
-        ->
+      ->
         return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettings(
-            vnext = listOf(
-              OutSettings.Vnext(
-                users = listOf(OutSettings.Vnext.Users())
-              )
-            )
-          ),
-          streamSettings = StreamSettings()
+          settings =
+            OutSettings(
+              vnext =
+                listOf(
+                  OutSettings.Vnext(
+                    users = listOf(OutSettings.Vnext.Users()),
+                  ),
+                ),
+            ),
+          streamSettings = StreamSettings(),
         )
 
       Protocol.ShadowSocks,
       Protocol.Socks,
       Protocol.Http,
       Protocol.Trojan,
-        ->
+      ->
         return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettings(
-            servers = listOf(OutSettings.Servers())
-          ),
-          streamSettings = StreamSettings()
+          settings =
+            OutSettings(
+              servers = listOf(OutSettings.Servers()),
+            ),
+          streamSettings = StreamSettings(),
         )
 
       Protocol.WireGuard ->
         return Outbound(
           protocol = configType.name.lowercase(),
-          settings = OutSettings(
-            secretKey = "",
-            peers = listOf(OutSettings.WireGuard())
-          )
+          settings =
+            OutSettings(
+              secretKey = "",
+              peers = listOf(OutSettings.WireGuard()),
+            ),
         )
 
       Protocol.Hysteria,
       Protocol.Hysteria2,
-        ->
+      ->
         return Outbound(
           protocol = Protocol.Hysteria.name.lowercase(),
-          settings = OutSettings(
-            servers = null
-          ),
-          streamSettings = StreamSettings()
+          settings =
+            OutSettings(
+              servers = null,
+            ),
+          streamSettings = StreamSettings(),
         )
 
       Protocol.Custom -> null
@@ -714,42 +752,46 @@ object V2rayConfigManager {
         streamSettings.kcpSettings = StreamSettings.KcpSettings()
         val udpMaskList = mutableListOf<StreamSettings.FinalMask.Mask>()
         if (!headerType.isNullOrEmpty() && headerType != "none") {
-          val kcpHeaderType = when {
-            headerType == "wechat-video" -> "header-wechat"
-            else -> "header-$headerType"
-          }
+          val kcpHeaderType =
+            when {
+              headerType == "wechat-video" -> "header-wechat"
+              else -> "header-$headerType"
+            }
           udpMaskList.add(
             StreamSettings.FinalMask.Mask(
               type = kcpHeaderType,
-              settings = if (headerType == "dns" && !host.isNullOrEmpty()) {
-                StreamSettings.FinalMask.Mask.MaskSettings(
-                  domain = host
-                )
-              } else {
-                null
-              }
-            )
+              settings =
+                if (headerType == "dns" && !host.isNullOrEmpty()) {
+                  StreamSettings.FinalMask.Mask.MaskSettings(
+                    domain = host,
+                  )
+                } else {
+                  null
+                },
+            ),
           )
         }
         if (seed.isNullOrEmpty()) {
           udpMaskList.add(
             StreamSettings.FinalMask.Mask(
-              type = "mkcp-original"
-            )
+              type = "mkcp-original",
+            ),
           )
         } else {
           udpMaskList.add(
             StreamSettings.FinalMask.Mask(
               type = "mkcp-aes128gcm",
-              settings = StreamSettings.FinalMask.Mask.MaskSettings(
-                password = seed
-              )
-            )
+              settings =
+                StreamSettings.FinalMask.Mask.MaskSettings(
+                  password = seed,
+                ),
+            ),
           )
         }
-        streamSettings.finalmask = StreamSettings.FinalMask(
-          udp = udpMaskList.toList()
-        )
+        streamSettings.finalmask =
+          StreamSettings.FinalMask(
+            udp = udpMaskList.toList(),
+          )
       }
 
       NetworkType.WS.type -> {
@@ -799,22 +841,25 @@ object V2rayConfigManager {
       }
 
       NetworkType.HYSTERIA.type -> {
-        val hysteriaSetting = StreamSettings.HysteriaSettings(
-          version = 2,
-          auth = connectionProfile.password.orEmpty(),
-          up = connectionProfile.bandwidthUp?.ifEmpty { "0" }.orEmpty(),
-          down = connectionProfile.bandwidthDown?.ifEmpty { "0" }.orEmpty(),
-          udphop = null
-        )
-        if (connectionProfile.portHopping.isNotNullEmpty()) {
-          hysteriaSetting.udphop = StreamSettings.HysteriaSettings.HysteriaUdpHop(
-            port = connectionProfile.portHopping,
-            interval = connectionProfile.portHoppingInterval
-              ?.trim()
-              ?.toIntOrNull()
-              ?.takeIf { it >= 5 }
-              ?: 30
+        val hysteriaSetting =
+          StreamSettings.HysteriaSettings(
+            version = 2,
+            auth = connectionProfile.password.orEmpty(),
+            up = connectionProfile.bandwidthUp?.ifEmpty { "0" }.orEmpty(),
+            down = connectionProfile.bandwidthDown?.ifEmpty { "0" }.orEmpty(),
+            udphop = null,
           )
+        if (connectionProfile.portHopping.isNotNullEmpty()) {
+          hysteriaSetting.udphop =
+            StreamSettings.HysteriaSettings.HysteriaUdpHop(
+              port = connectionProfile.portHopping,
+              interval =
+                connectionProfile.portHoppingInterval
+                  ?.trim()
+                  ?.toIntOrNull()
+                  ?.takeIf { it >= 5 }
+                  ?: 30,
+            )
         }
         streamSettings.hysteriaSettings = hysteriaSetting
       }
@@ -838,34 +883,37 @@ object V2rayConfigManager {
   ) {
     val streamSecurity = connectionProfile.security.orEmpty()
     val allowInsecure = connectionProfile.insecure
-    val sni = if (connectionProfile.sni.isNullOrEmpty()) {
-      when {
-        sniExt.isNotNullEmpty() && Utils.isDomainName(sniExt) -> sniExt
-        connectionProfile.server.isNotNullEmpty() && Utils.isDomainName(connectionProfile.server) -> connectionProfile.server
-        else -> sniExt
+    val sni =
+      if (connectionProfile.sni.isNullOrEmpty()) {
+        when {
+          sniExt.isNotNullEmpty() && Utils.isDomainName(sniExt) -> sniExt
+          connectionProfile.server.isNotNullEmpty() && Utils.isDomainName(connectionProfile.server) -> connectionProfile.server
+          else -> sniExt
+        }
+      } else {
+        connectionProfile.sni
       }
-    } else {
-      connectionProfile.sni
-    }
 
     streamSettings.security = streamSecurity.nullIfBlank()
     if (streamSettings.security == null) return
     val realityPk = connectionProfile.publicKey.nullIfBlank()
-    val tlsSetting = StreamSettings.TlsSettings(
-      allowInsecure = allowInsecure,
-      serverName = sni.nullIfBlank(),
-      fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
-      alpn = connectionProfile.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
-        .takeIf { !it.isNullOrEmpty() },
-      echConfigList = connectionProfile.echConfigList.nullIfBlank(),
-      echForceQuery = connectionProfile.echForceQuery.nullIfBlank(),
-      pinnedPeerCertSha256 = connectionProfile.pinnedCA256.nullIfBlank(),
-      publicKey = realityPk,
-      realityPublicKeyPassword = realityPk,
-      shortId = connectionProfile.shortId.nullIfBlank(),
-      spiderX = connectionProfile.spiderX.nullIfBlank(),
-      mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
-    )
+    val tlsSetting =
+      StreamSettings.TlsSettings(
+        allowInsecure = allowInsecure,
+        serverName = sni.nullIfBlank(),
+        fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
+        alpn =
+          connectionProfile.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+            .takeIf { !it.isNullOrEmpty() },
+        echConfigList = connectionProfile.echConfigList.nullIfBlank(),
+        echForceQuery = connectionProfile.echForceQuery.nullIfBlank(),
+        pinnedPeerCertSha256 = connectionProfile.pinnedCA256.nullIfBlank(),
+        publicKey = realityPk,
+        realityPublicKeyPassword = realityPk,
+        shortId = connectionProfile.shortId.nullIfBlank(),
+        spiderX = connectionProfile.spiderX.nullIfBlank(),
+        mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
+      )
     if (streamSettings.security == AppConfig.TLS) {
       streamSettings.tlsSettings = tlsSetting
       streamSettings.realitySettings = null

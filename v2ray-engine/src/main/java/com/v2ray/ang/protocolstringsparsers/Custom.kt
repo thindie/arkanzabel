@@ -22,7 +22,7 @@ object Custom : ProtocolParser() {
       remarks = fullConfig?.remarks ?: System.currentTimeMillis().toString(),
       server = outbound?.getServerAddress(),
       serverPort = outbound?.getServerPort().toString(),
-      subscriptionId = fullConfig?.remarks.toString() + outbound?.getServerAddress() + outbound?.getServerPort().toString()
+      subscriptionId = fullConfig?.remarks.toString() + outbound?.getServerAddress() + outbound?.getServerPort().toString(),
     )
   }
 }

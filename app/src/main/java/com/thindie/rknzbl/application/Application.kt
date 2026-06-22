@@ -33,11 +33,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
-  val applicationScope = ApplicationScope()
+  private lateinit var applicationScopeInternal: ApplicationScope
+  val applicationScope get() = applicationScopeInternal
   private val appCoroutineScope =
     CoroutineScope(
       SupervisorJob() + Dispatchers.Default +
@@ -67,24 +67,24 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
             val fallback = this@Application.getString(R.string.vpn_core_failure_unspecified)
             val broadcastString = readBroadcastString(intent, "content")
             val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
-            vpnRuntimeState.tryEmit(WorkState.Error(message = errorMessage))
+            vpnRuntimeState.value = WorkState.Error(message = errorMessage)
           }
 
           AppConfig.MSG_STATE_RUNNING,
           AppConfig.MSG_STATE_START_SUCCESS,
           -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: running or started")
-            vpnRuntimeState.tryEmit(WorkState.Running)
+            vpnRuntimeState.value = WorkState.Running
           }
 
           AppConfig.MSG_STATE_NOT_RUNNING -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: not running")
-            vpnRuntimeState.tryEmit(WorkState.Idle)
+            vpnRuntimeState.value = WorkState.NotRunning
           }
           AppConfig.MSG_STATE_STOP_SUCCESS,
           -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: stopped")
-            vpnRuntimeState.tryEmit(WorkState.Idle)
+            vpnRuntimeState.value = WorkState.NotRunning
           }
 
           AppConfig.MSG_STATE_SAVE_PROFILE -> {
@@ -105,13 +105,14 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       extraBufferCapacity = 3,
       BufferOverflow.DROP_LATEST,
     )
-  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.Idle)
+  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.NotRunning)
 
   override fun onCreate() {
     super.onCreate()
     AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
+    applicationScopeInternal = ApplicationScope()
     SettingsManager.ensureDefaultSettings()
     SettingsManager.initRoutingRulesets(this)
     SettingsManager.initAssets(this, assets)
@@ -123,7 +124,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       ContextCompat.RECEIVER_NOT_EXPORTED,
     )
     enqueueActiveProfileAutoSaveWork()
-    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle
+    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.NotRunning
   }
 
   private fun enqueueActiveProfileAutoSaveWork() {
@@ -164,6 +165,6 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     }
 
   override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return runBlocking { applicationScope.data.repository.isSaved(connectionProfile) }
+    return applicationScope.data.repository.isSaved(connectionProfile)
   }
 }

@@ -1,128 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Arkanzabel</string>
-
-    <string name="vpn_mvp_hint">Вставьте одну строку-поделиться (vless://, ss://, hysteria2://, …). Пример списка: github.com/igareck/vpn-configs-for-russia — скопируйте один URI локально, не коммитьте его в git.</string>
-    <string name="vpn_import">Сохранить профиль</string>
-    <string name="vpn_start">Запустить VPN</string>
-    <string name="vpn_stop">Остановить VPN</string>
-    <string name="vpn_import_ok">Профиль сохранён</string>
-    <string name="vpn_import_fail">Не удалось разобрать URI</string>
-    <string name="vpn_import_save_failed_storage">Не удалось сохранить профиль: хранилище не готово. Перезапустите приложение.</string>
-    <string name="vpn_import_save_failed_storage_detail">Не удалось сохранить профиль (хранилище): %1$s</string>
-    <string name="vpn_import_save_failed_json">Не удалось сохранить профиль: ошибка сериализации. Попробуйте другую ссылку.</string>
-    <string name="vpn_import_save_failed_native">Не удалось сохранить профиль: сбой нативного хранилища (MMKV). Переустановите приложение.</string>
-    <string name="vpn_import_save_failed_other">Не удалось сохранить профиль (%1$s).</string>
-    <string name="vpn_import_save_failed_detail">Не удалось сохранить профиль (%1$s): %2$s</string>
-    <string name="vpn_screen_error_generic">Что-то пошло не так (%1$s).</string>
-    <string name="vpn_screen_error_detail">Что-то пошло не так (%1$s): %2$s</string>
-    <string name="vpn_running">Ядро запущено: %1$s</string>
-    <string name="vpn_running_no_remarks">Ядро запущено (без подписи сервера)</string>
-    <string name="vpn_idle">Ядро остановлено</string>
-    <string name="vpn_need_activity">Нужен контекст Activity для разрешения VPN</string>
-    <string name="vpn_permission_denied">Разрешение VPN не выдано (диалог закрыт или отказ).</string>
-    <string name="vpn_start_need_profile">Сначала сохраните профиль: вставьте URI, нажмите «Сохранить профиль», затем «Запустить VPN».</string>
-    <string name="vpn_core_failure_unspecified">Не удалось запустить VPN (подробности недоступны).</string>
-    <string name="profile_probe_tcp_ok">TCP (без VPN): %1$s:%2$d ~%3$d мс</string>
-    <string name="profile_probe_tcp_fail">TCP (без VPN): %1$s:%2$d — нет ответа</string>
-    <string name="profile_probe_no_server">Проверка TCP: в профиле нет адреса сервера</string>
-    <string name="profile_probe_no_port">Проверка TCP: порт отсутствует или неверный</string>
-    <string name="profile_probe_bad_port">Проверка TCP: порт вне допустимого диапазона</string>
-    <string name="profile_probe_policy_group">Проверка TCP: для групп политик не поддерживается</string>
-    <string name="profile_probe_custom_local">Проверка TCP: локальный/кастомный endpoint — пропуск</string>
-    <string name="profile_row_probe_tcp_ms">TCP ~%d мс (без VPN)</string>
-    <string name="profile_row_probe_tcp_fail">TCP — (без VPN)</string>
+    <string name="vpn_mvp_hint">Paste a share-line (vless://, ss://, hysteria2://, …). Example list: github.com/igareck/vpn-configs-for-russia — copy one URI locally; do not commit it to git.</string>
+    <string name="vpn_import">Save profile</string>
+    <string name="vpn_start">Start VPN</string>
+    <string name="vpn_stop">Stop VPN</string>
+    <string name="vpn_import_ok">Profile saved</string>
+    <string name="vpn_import_fail">Failed to parse URI</string>
+    <string name="vpn_import_save_failed_storage">Could not save profile: storage is not ready. Restart the app.</string>
+    <string name="vpn_import_save_failed_storage_detail">Could not save profile (storage): %1$s</string>
+    <string name="vpn_import_save_failed_json">Could not save profile: serialization error. Try a different link.</string>
+    <string name="vpn_import_save_failed_native">Could not save profile: native storage failure (MMKV). Reinstall the app.</string>
+    <string name="vpn_import_save_failed_other">Could not save profile (%1$s).</string>
+    <string name="vpn_import_save_failed_detail">Could not save profile (%1$s): %2$s</string>
+    <string name="vpn_screen_error_generic">Something went wrong (%1$s).</string>
+    <string name="vpn_screen_error_detail">Something went wrong (%1$s): %2$s</string>
+    <string name="vpn_running">Core running: %1$s</string>
+    <string name="vpn_running_no_remarks">Core running (no server signature)</string>
+    <string name="vpn_idle">Core stopped</string>
+    <string name="vpn_need_activity">Activity context required for VPN permission</string>
+    <string name="vpn_permission_denied">VPN permission not granted (dialog dismissed or denied).</string>
+    <string name="vpn_start_need_profile">Save a profile first: paste the URI, tap "Save profile", then "Start VPN".</string>
+    <string name="vpn_core_failure_unspecified">Could not start VPN (details unavailable).</string>
+    <string name="profile_probe_tcp_ok">TCP (no VPN): %1$s:%2$d ~%3$d ms</string>
+    <string name="profile_probe_tcp_fail">TCP (no VPN): %1$s:%2$d — no response</string>
+    <string name="profile_probe_no_server">TCP check: profile has no server address</string>
+    <string name="profile_probe_no_port">TCP check: port missing or invalid</string>
+    <string name="profile_probe_bad_port">TCP check: port out of valid range</string>
+    <string name="profile_probe_policy_group">TCP check: policy groups not supported</string>
+    <string name="profile_probe_custom_local">TCP check: local/custom endpoint — skip</string>
+    <string name="profile_row_probe_tcp_ms">TCP ~%d ms (no VPN)</string>
+    <string name="profile_row_probe_tcp_fail">TCP — (no VPN)</string>
     <string name="profile_row_probe_skip">—</string>
 
-    <string name="intro_screen_title_vpn">Доступ к VPN</string>
-    <string name="intro_screen_title_push">Уведомления</string>
-    <string name="intro_soft_title_vpn">Для работы приложения</string>
-    <string name="intro_soft_subtitle_vpn">Нужно разрешение на использование VPN в системе — без него соединение не заработает.</string>
-    <string name="intro_soft_title_push">Уведомления</string>
-    <string name="intro_soft_subtitle_push">Разрешите уведомления — так проще следить за состоянием и управлять приложением.</string>
-    <string name="intro_btn_not_now">Не сейчас</string>
-    <string name="intro_btn_understood">Понял</string>
-    <string name="intro_hint_vpn_decline">Без доступа к VPN продолжить нельзя.</string>
-    <string name="intro_hint_push_decline">Без уведомлений управлять приложением будет неудобнее.</string>
-    <string name="intro_hint_vpn_not_granted">Разрешение на VPN не выдано.</string>
-    <string name="intro_push_denied_title">Уведомления отключены</string>
-    <string name="intro_push_denied_subtitle">Система больше не показывает запрос разрешения. Включите уведомления в настройках приложения или продолжите без них.</string>
-    <string name="intro_push_open_settings">В настройки</string>
-    <string name="intro_push_continue_without">Продолжить без уведомлений</string>
+    <string name="intro_screen_title_vpn">VPN Access</string>
+    <string name="intro_screen_title_push">Notifications</string>
+    <string name="intro_soft_title_vpn">For app to work</string>
+    <string name="intro_soft_subtitle_vpn">Permission is needed to use VPN in the system — without it, the connection will not work.</string>
+    <string name="intro_soft_title_push">Notifications</string>
+    <string name="intro_soft_subtitle_push">Allow notifications so you can easily monitor and manage the app.</string>
+    <string name="intro_btn_not_now">Not now</string>
+    <string name="intro_btn_understood">Got it</string>
+    <string name="intro_hint_vpn_decline">You cannot continue without VPN access.</string>
+    <string name="intro_hint_push_decline">Managing the app will be less convenient without notifications.</string>
+    <string name="intro_hint_vpn_not_granted">VPN permission not granted.</string>
+    <string name="intro_push_denied_title">Notifications disabled</string>
+    <string name="intro_push_denied_subtitle">The system no longer shows a permission request. Enable notifications in app settings or continue without them.</string>
+    <string name="intro_push_open_settings">Go to Settings</string>
+    <string name="intro_push_continue_without">Continue without notifications</string>
 
-    <string name="error_unexpected">Что-то пошло не так. Попробуйте ещё раз.</string>
-    <string name="btn_close">Закрыть</string>
+    <string name="error_unexpected">Something went wrong. Try again.</string>
+    <string name="btn_close">Close</string>
 
-    <string name="home_choose_source">Выбрать источник</string>
-    <string name="home_source_selected_prefix">Выбрано:</string>
-    <string name="home_fetch_profiles">Загрузить списки</string>
-    <string name="home_stop_service">Остановить сервис</string>
-    <string name="home_pick_profile_first">Сначала выберите профиль</string>
-    <string name="home_starting_vpn">Запуск VPN…</string>
-    <string name="home_select_tagline">свободу попугаям!</string>
-    <string name="home_select_new_profiles_title">Новые профили</string>
-    <string name="home_select_new_profiles_subtitle">скачать</string>
-    <string name="home_select_stored_title">Сохраненные профили</string>
-    <string name="home_select_stored_subtitle">возможно, еще работают</string>
-    <string name="home_select_vpn_modes_title">Режимы VPN</string>
-    <string name="home_select_vpn_modes_subtitle">фильтр приложений</string>
-    <string name="home_downloaded_profiles_header">Скачанные профили</string>
-    <string name="home_autosaved_profile">Был сохранен автоматически</string>
+    <string name="home_choose_source">Choose source</string>
+    <string name="home_source_selected_prefix">Selected:</string>
+    <string name="home_fetch_profiles">Download lists</string>
+    <string name="home_stop_service">Stop service</string>
+    <string name="home_pick_profile_first">Select a profile first</string>
+    <string name="home_starting_vpn">Starting VPN…</string>
+    <string name="home_select_tagline">freedom for parrots!</string>
+    <string name="home_select_new_profiles_title">New profiles</string>
+    <string name="home_select_new_profiles_subtitle">download</string>
+    <string name="home_select_stored_title">Saved profiles</string>
+    <string name="home_select_stored_subtitle">possibly still active</string>
+    <string name="home_select_vpn_modes_title">VPN modes</string>
+    <string name="home_select_settings_title">Settings</string>
+    <string name="home_select_vpn_modes_subtitle">app filter</string>
+    <string name="home_select_settings_subtitle">miscellaneous</string>
 
-    <string name="per_app_proxy_title">Режим VPN</string>
-    <string name="per_app_proxy_row_title">Прокси по приложениям</string>
-    <string name="per_app_proxy_row_subtitle">Для всех или только выбранных</string>
-    <string name="per_app_proxy_mode_section">выбери:</string>
-    <string name="per_app_proxy_mode_all">Все приложения</string>
-    <string name="per_app_proxy_mode_all_subtitle">кроме Arkanzabel</string>
-    <string name="per_app_proxy_mode_selected">Только выбранные</string>
-    <string name="per_app_proxy_mode_selected_subtitle">в списке ниже</string>
-    <string name="per_app_proxy_mode_selected_header_subtitle">только они будут использовать vpn</string>
-    <string name="per_app_proxy_applied_section">Выбранные</string>
-    <string name="per_app_proxy_none_selected">Пока ни к одному</string>
-    <string name="per_app_proxy_search_hint">Поиск приложения</string>
-    <string name="per_app_proxy_search_placeholder">Название (английский язык)</string>
-    <string name="per_app_proxy_open_search_title">Найти</string>
-    <string name="per_app_proxy_open_search_subtitle">добавить в список</string>
-    <string name="per_app_proxy_search_screen_title">Поиск приложения</string>
-    <string name="per_app_proxy_search_screen_subtitle">пиши транслитом, e.g sber</string>
-    <string name="per_app_proxy_added_snack">Добавлено в список:</string>
+    <!-- Settings section titles -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_section_mux">MUX</string>
+    <string name="home_downloaded_profiles_header">Downloaded profiles</string>
+    <string name="home_autosaved_profile">Was saved automatically</string>
 
-    <string name="error_action_ok">Ок</string>
-    <string name="error_action_retry">Попробовать снова</string>
+    <string name="per_app_proxy_title">VPN mode</string>
+    <string name="per_app_proxy_row_title">Per-app proxy</string>
+    <string name="per_app_proxy_row_subtitle">For all or only selected apps</string>
+    <string name="per_app_proxy_mode_section">choose:</string>
+    <string name="per_app_proxy_mode_all">All apps</string>
+    <string name="per_app_proxy_mode_all_subtitle">except Arkanzabel</string>
+    <string name="per_app_proxy_mode_selected">Only selected</string>
+    <string name="per_app_proxy_mode_selected_subtitle">in the list below</string>
+    <string name="per_app_proxy_mode_selected_header_subtitle">only they will use VPN</string>
+    <string name="per_app_proxy_applied_section">Selected</string>
+    <string name="per_app_proxy_none_selected">None yet</string>
+    <string name="per_app_proxy_search_hint">Search app</string>
+    <string name="per_app_proxy_search_placeholder">Name (English)</string>
+    <string name="per_app_proxy_open_search_title">Find</string>
+    <string name="per_app_proxy_open_search_subtitle">add to list</string>
+    <string name="per_app_proxy_search_screen_title">App search</string>
+    <string name="per_app_proxy_search_screen_subtitle">type in translit, e.g. sber</string>
+    <string name="per_app_proxy_added_snack">Added to list:</string>
 
-    <string name="source_select_done">Готово</string>
-    <string name="source_black_ss_title">Чёрные списки Shadowsocks+All</string>
-    <string name="source_black_vless_title">Чёрные списки VLESS</string>
-    <string name="source_white_cidr_title">Белые списки / CIDR</string>
-    <string name="source_stored">Сохраненные профили</string>
-    <string name="source_stored_delete_active">Тапай по профилям, которые нужно удалить</string>
-    <string name="source_stored_add">Сохранить профиль?</string>
-    <string name="source_stored_delete">Удалить выбранное?</string>
-    <string name="source_stored_delete_subtitle">пропадут у всех!</string>
-    <string name="source_stored_delete_hint">Долгий тап по профилю активирует режим удаления</string>
-    <string name="source_stored_selected_count">Удалить их: %d</string>
-    <string name="source_subtitle_all_configs">Все конфиги</string>
-    <string name="source_subtitle_top150_phone">150 лучших для телефона</string>
-    <string name="source_subtitle_top150_phone_1">150 лучших для телефона (1)</string>
-    <string name="source_subtitle_top150_phone_2">150 лучших для телефона (2)</string>
-    <string name="source_subtitle_ru_services">Конфиги VK, YA, CDN, Beeline</string>
-    <string name="source_subtitle_stored">Проверенные</string>
+    <string name="error_action_ok">OK</string>
+    <string name="error_action_retry">Try again</string>
+
+    <string name="source_select_done">Done</string>
+    <string name="source_black_ss_title">Blacklist Shadowsocks+All</string>
+    <string name="source_black_vless_title">Blacklist VLESS</string>
+    <string name="source_white_cidr_title">Whitelist / CIDR</string>
+    <string name="source_stored">Saved profiles</string>
+    <string name="source_stored_delete_active">Tap profiles to delete them</string>
+    <string name="source_stored_add">Save profile?</string>
+    <string name="source_stored_delete">Delete selected?</string>
+    <string name="source_stored_delete_subtitle">they will be removed for everyone!</string>
+    <string name="source_stored_delete_hint">Long-tap a profile to activate delete mode</string>
+    <string name="source_stored_selected_count">Delete %d items:</string>
+    <string name="source_subtitle_all_configs">All configs</string>
+    <string name="source_subtitle_top150_phone">Top 150 for phone</string>
+    <string name="source_subtitle_top150_phone_1">Top 150 for phone (1)</string>
+    <string name="source_subtitle_top150_phone_2">Top 150 for phone (2)</string>
+    <string name="source_subtitle_ru_services">VK, YA, CDN, Beeline configs</string>
+    <string name="source_subtitle_stored">Verified</string>
 
     <!-- Theme mode strings -->
-    <string name="home_select_theme_title">Тема</string>
-    <string name="home_select_theme_auto_subtitle">Автоматически (следует за системой)</string>
-    <string name="home_select_theme_light_subtitle">Светлая тема</string>
-    <string name="home_select_theme_dark_subtitle">Тёмная тема</string>
+    <string name="home_select_settings">Settings</string>
+    <string name="home_select_theme_title">Theme</string>
+    <string name="home_select_theme_auto_title">Auto</string>
+    <string name="home_select_theme_auto_subtitle">(follows system)</string>
+    <string name="home_select_theme_light_subtitle">Light theme</string>
+    <string name="home_select_theme_dark_subtitle">Dark theme</string>
+    <string name="home_select_theme_locked_hint">Theme selection is locked when Auto is enabled</string>
 
     <!-- Autosave strings -->
-    <string name="home_select_autosave_title">Авто-сохранение</string>
-    <string name="home_select_autosave_subtitle">Включить/выключить авто-сохранение профилей</string>
+    <string name="home_select_autosave_title">Auto-save</string>
+    <string name="home_select_autosave_subtitle">Enable/disable auto-saving profiles</string>
 
-    <string name="webdav_error_unauthorized">Неверный логин или пароль WebDAV.</string>
-    <string name="webdav_error_forbidden">Доступ к этой папке запрещён.</string>
-    <string name="webdav_error_not_found">Путь на сервере не найден (404).</string>
-    <string name="webdav_error_not_found_url">Путь не найден (404):\n%1$s</string>
-    <string name="webdav_error_conflict">Операция отклонена сервером (конфликт).</string>
-    <string name="webdav_error_invalid_response">Сервер вернул неожиданный ответ WebDAV.</string>
-    <string name="webdav_error_upload_open">Не удалось открыть выбранный файл.</string>
+    <!-- English translations for local storage mode -->
+    <string name="home_select_storage_mode_title">Local profile storage</string>
+    <string name="home_select_storage_mode_subtitle">Store profiles locally instead of on a WebDAV server</string>
+
+    <string name="webdav_error_unauthorized">Invalid WebDAV username or password.</string>
+    <string name="webdav_error_forbidden">Access to this folder is denied.</string>
+    <string name="webdav_error_not_found">Path not found on server (404).</string>
+    <string name="webdav_error_not_found_url">Path not found (404):
+%1$s</string>
+    <string name="webdav_error_conflict">Operation rejected by server (conflict).</string>
+    <string name="webdav_error_invalid_response">Server returned unexpected WebDAV response.</string>
+    <string name="webdav_error_upload_open">Could not open selected file.</string>
+
+    <!-- Language strings -->
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_subtitle">Select the app language</string>
+    <string name="language_auto">Auto</string>
+    <string name="language_en">English</string>
+    <string name="language_ru">Russian</string>
+
+    <!-- MUX strings -->
+        <string name="settings_mux_title">Multiplexing (MUX)</string>
+        <string name="settings_mux_subtitle">Combine multiple connections into one</string>
+        <string name="mux_faq_title">What is MUX?</string>
+    <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
+    <string name="mux_faq_ok">Got it</string>
+
+    <!-- Start with favorite profiles -->
+    <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
+    <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
+<string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+
+    <!-- Local storage mode warning dialog -->
+    <string name="storage_mode_warning_title">Warning</string>
+    <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>
+    <string name="storage_mode_warning_ok">Got it</string>
+
+    <!-- Speed notification strings -->
+    <string name="settings_speed_notification_title">Show speed</string>
+    <string name="settings_speed_notification_subtitle">Display current speed in notification</string>
+    <string name="settings_speed_notification_restart_title">Restart service</string>
+    <string name="settings_speed_notification_restart_message">restart service from the notification for changes to take effect.</string>
 </resources>

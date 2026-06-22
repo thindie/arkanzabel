@@ -425,7 +425,7 @@ fun Dialog(
   secondary: Action? = null,
 ) {
   AlertDialog(
-    containerColor = AppTheme.colors.backgroundPrimary,
+    containerColor = AppTheme.colors.backgroundSecondary,
     onDismissRequest = onDismiss,
     text = {
       content()

@@ -21,24 +21,27 @@ object Http : ProtocolParser() {
     val servers = outboundSettings.servers ?: return outbound
     if (servers.isEmpty()) return outbound
 
-    val firstServer = servers.first().copy(
-      address = getServerAddress(connectionProfile),
-      port = connectionProfile.serverPort.orEmpty().toInt(),
-      users = listOfNotNull(
-        if (connectionProfile.username.isNotNullEmpty()) {
-          Outbound.OutSettings.Servers.SocksUsers(
-            user = connectionProfile.username.orEmpty(),
-            pass = connectionProfile.password.orEmpty()
-          )
-        } else {
-          null
-        }
+    val firstServer =
+      servers.first().copy(
+        address = getServerAddress(connectionProfile),
+        port = connectionProfile.serverPort.orEmpty().toInt(),
+        users =
+          listOfNotNull(
+            if (connectionProfile.username.isNotNullEmpty()) {
+              Outbound.OutSettings.Servers.SocksUsers(
+                user = connectionProfile.username.orEmpty(),
+                pass = connectionProfile.password.orEmpty(),
+              )
+            } else {
+              null
+            },
+          ),
       )
-    )
 
-    val updatedSettings = outboundSettings.copy(
-      servers = listOf(firstServer) + servers.drop(1)
-    )
+    val updatedSettings =
+      outboundSettings.copy(
+        servers = listOf(firstServer) + servers.drop(1),
+      )
 
     return outbound.copy(settings = updatedSettings)
   }

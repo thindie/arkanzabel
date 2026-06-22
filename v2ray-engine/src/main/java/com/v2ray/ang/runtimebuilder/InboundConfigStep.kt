@@ -3,8 +3,8 @@ package com.v2ray.ang.runtimebuilder
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
-import com.v2ray.ang.error.IncomingConfigError
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.error.IncomingConfigError
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.util.JsonUtil
@@ -41,7 +41,7 @@ internal class InboundConfigStep(
           JsonUtil.fromJson(JsonUtil.toJson(inbound1), V2rayConfig.Inbound::class.java)
             ?: throw IncomingConfigError(
               message = "Inbound mapping failed: cloned inbound is null",
-              source = "InboundConfigStep.applyInbounds"
+              source = "InboundConfigStep.applyInbounds",
             )
         inbound2.tag = Protocol.Http.name.lowercase()
         inbound2.port = SettingsManager.getHttpPort()
@@ -59,7 +59,7 @@ internal class InboundConfigStep(
       throw IncomingConfigError(
         message = "Failed to configure inbounds",
         source = "InboundConfigStep.applyInbounds",
-        cause = runtime
+        cause = runtime,
       )
     }
     return v2rayConfig

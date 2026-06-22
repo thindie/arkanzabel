@@ -3,8 +3,8 @@ package com.v2ray.ang.protocolstringsparsers
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
-import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -23,7 +23,7 @@ object Trojan : ProtocolParser() {
         server = uri.idnHost,
         serverPort = uri.port.toString(),
         password = uri.userInfo,
-        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo
+        subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo,
       )
 
     return if (uri.rawQuery.isNullOrEmpty()) {

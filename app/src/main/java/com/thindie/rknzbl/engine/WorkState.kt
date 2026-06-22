@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 @Immutable
 sealed interface WorkState {
   @Immutable
-  data object Idle : WorkState
+  data object NotRunning : WorkState
 
   @Immutable
   data object Running : WorkState
