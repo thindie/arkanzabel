@@ -128,7 +128,7 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override suspend fun delete(profile: ConnectionProfile) {
-    if (isLocalSave) {
+    if (!isLocalSave) {
       val profileJson = JsonUtil.toJson(profile)
       val client = httpClient
       val currentBody = readInternal(client, url)
