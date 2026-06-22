@@ -2,6 +2,7 @@ package com.thindie.rknzbl.feature.settings.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
@@ -27,6 +29,7 @@ import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
+import com.thindie.rknzbl.uikit.HSpacer
 import com.thindie.rknzbl.uikit.LocalThemeSwitcher
 import com.thindie.rknzbl.uikit.ThemeSwitcher
 import com.thindie.rknzbl.uikit.Toggle
@@ -228,17 +231,28 @@ private fun ThemeOption(
 ) {
   Row(
     modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onCheckedChange).padding(12.dp),
-    horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {
     Column(modifier = Modifier.weight(1f)) {
-      Text(text = label, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+      Text(
+        text = label,
+        style = AppTheme.typography.titleMedium,
+        color = AppTheme.colors.contentPrimary,
+      )
       if (subtitle != null) {
         VSpacer(2.dp)
         Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
       }
     }
     Toggle(checked = checked, enabled = enabled)
+    if (!enabled) {
+      HSpacer(2.dp)
+      Image(
+        painter = painterResource(R.drawable.ic_lock_24),
+        contentDescription = null,
+        modifier = Modifier.padding(start = 8.dp),
+      )
+    }
   }
 }
 
