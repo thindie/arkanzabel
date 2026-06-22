@@ -54,6 +54,7 @@ class HomeFlow(
       router = router,
       repository = repository,
       appContext = appContext,
+      settingsRepository = settingsRepository,
     )
       .onFinishBuilder { onFinish.invoke() }
       .start()

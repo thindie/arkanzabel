@@ -64,6 +64,11 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
           )
         },
       )
+
+    sub(settingsRepository.isLocalSave)
+      .transition(
+        block = { s, r -> s.copy(isLocalMode = r) },
+      )
   }
 }
 

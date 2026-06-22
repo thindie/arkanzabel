@@ -265,22 +265,26 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
         onClick = {
           when {
             selectedCount > 0 -> {
-              sendEvent(
-                ServiceCommand.UiEvent.Decision(
-                  content = {
-                    Aware(
-                      painter = painterResource(R.drawable.ic_close_16),
-                      title = stringResource(R.string.source_stored_delete),
-                      subtitle = stringResource(R.string.source_stored_delete_subtitle),
-                    )
-                  },
-                  primaryAction =
-                    Action(
-                      resRef = R.string.source_select_done,
-                      listener = { send(ScreenCommand.BatchDelete) },
-                    ),
-                ),
-              )
+              if (st.isLocalMode) {
+                send(ScreenCommand.BatchDelete)
+              } else {
+                sendEvent(
+                  ServiceCommand.UiEvent.Decision(
+                    content = {
+                      Aware(
+                        painter = painterResource(R.drawable.ic_close_16),
+                        title = stringResource(R.string.source_stored_delete),
+                        subtitle = stringResource(R.string.source_stored_delete_subtitle),
+                      )
+                    },
+                    primaryAction =
+                      Action(
+                        resRef = R.string.source_select_done,
+                        listener = { send(ScreenCommand.BatchDelete) },
+                      ),
+                  ),
+                )
+              }
             }
 
             established -> send(ScreenCommand.StopService)

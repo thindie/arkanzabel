@@ -12,6 +12,7 @@ data class ScreenState(
   val selectedTestConnectionMessage: SpeedtestManager.SpeedTestResult? = null,
   val selectedProfiles: Set<ConnectionProfile> = emptySet(),
   val selectionMode: Boolean = false,
+  val isLocalMode: Boolean = false,
 ) : State
 
 sealed interface ScreenCommand : com.thindie.rknzbl.engine.Command {

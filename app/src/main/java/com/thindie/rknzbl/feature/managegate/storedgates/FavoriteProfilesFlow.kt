@@ -10,6 +10,7 @@ import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.managegate.storedgates.profiles.profiles
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import com.v2ray.ang.dto.ConnectionProfile
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 class FavoriteProfilesFlow(
   private val router: Router,
   val repository: ConnectionProfileRepository,
+  val settingsRepository: SettingsRepository,
   val appContext: Context,
 ) : ScreenFlow<Route, Unit>(router) {
   internal val selected =
