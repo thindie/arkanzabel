@@ -116,6 +116,14 @@
 <string name="source_subtitle_ru_services">Конфиги VK, YA, CDN, Beeline</string>
 <string name="source_subtitle_stored">Проверенные</string>
 
+<!-- Custom source settings -->
+<string name="settings_custom_source_title">Своя ссылка</string>
+<string name="settings_custom_source_subtitle_off">Отключено</string>
+<string name="settings_custom_source_placeholder">Введите URL ссылки на профили</string>
+
+<string name="source_custom_title">Своя ссылка</string>
+<string name="source_subtitle_custom">Использовать свою ссылку для поставки профилей</string>
+
 <!-- Theme mode strings -->
 <string name="home_select_settings">Настройки</string>
 <string name="home_select_theme_title">Тема</string>

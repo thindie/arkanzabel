@@ -3,6 +3,7 @@ package com.v2ray.ang.util
 import android.util.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
+import com.v2ray.ang.error.ConfigValidationError
 import com.v2ray.ang.util.Utils.encode
 import com.v2ray.ang.util.Utils.urlDecode
 import kotlinx.coroutines.Dispatchers
@@ -178,6 +179,11 @@ object HttpUtil {
         )
       }
       conn
+    } catch (e: MalformedURLException) {
+      throw ConfigValidationError(
+        message = e.message.toString(),
+        userReadable = "Url is broken :'("
+      )
     } catch (e: IOException) {
       Log.e(AppConfig.TAG, "Failed to create proxy connection", e)
       conn?.disconnect()

@@ -12,6 +12,10 @@ import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.SpeedtestManager
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -20,6 +24,7 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
       .transition(
         action = { _, _, source ->
           when (source) {
+            is SelectSourceFlow.Result.CustomSource,
             SelectSourceFlow.Result.FullBlackShadowSocks,
             SelectSourceFlow.Result.FullBlackVless,
             SelectSourceFlow.Result.MobileBlackVless,
@@ -45,6 +50,31 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
       }
 
     sub(
+      (appContext as Application)
+        .applicationScope
+        .settings
+        .repository
+        .isCustomSourceEnabled
+        .filter { it }
+        .flatMapLatest {
+          appContext
+            .applicationScope
+            .settings
+            .repository
+            .customSourceUrl
+            .filterNotNull()
+            .map { SelectSourceFlow.Result.CustomSource(it) }
+        },
+    ).transition { state, source ->
+      val newState =
+        state.copy(
+          sourceName = source.resolveLabels(appContext).second,
+          sourceUrl = source.sourceUrl.orEmpty(),
+        )
+      newState
+    }
+
+    sub(
       selected
         .mapLatest { profile ->
           val result =
@@ -52,9 +82,11 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
               is WorkState.Error -> {
                 SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
               }
+
               WorkState.NotRunning -> {
                 SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
               }
+
               WorkState.Running -> {
                 SpeedtestManager.testConnection(
                   context = appContext,
@@ -73,9 +105,11 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
                 ServiceCommand.UiEvent.SnackText(result.message),
               )
             }
+
             is SpeedtestManager.SpeedTestResult.Ok -> {
               sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
             }
+
             null -> Unit
           }
         },

@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.Route
 import com.thindie.rknzbl.engine.RouteFactory
@@ -30,12 +31,19 @@ import com.thindie.rknzbl.engine.Router
 import com.thindie.rknzbl.engine.ScreenFlow
 import com.thindie.rknzbl.engine.ScreenScope
 import com.thindie.rknzbl.engine.ScreenScopeError
+import com.thindie.rknzbl.engine.stateSink
+import com.thindie.rknzbl.engine.sub
+import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 
 class SelectSourceFlow(
   private val router: Router,
@@ -91,6 +99,10 @@ class SelectSourceFlow(
       override val sourceUrl: String?
         get() = null
     }
+
+    data class CustomSource(val url: String) : Result {
+      override val sourceUrl: String? = url
+    }
   }
 
   fun main() =
@@ -104,6 +116,32 @@ class SelectSourceFlow(
           message = appContext.getString(R.string.error_unexpected),
           actions = emptyMap(),
         )
+      },
+      stateSink = {
+        it.stateSink {
+          sub(
+            (appContext as Application)
+              .applicationScope
+              .settings
+              .repository
+              .isCustomSourceEnabled
+              .filter { it }
+              .flatMapLatest {
+                appContext
+                  .applicationScope
+                  .settings
+                  .repository
+                  .customSourceUrl
+                  .filterNotNull()
+              }
+              .distinctUntilChanged(),
+          ).transition { state, url ->
+            val sections = (state.blackSection + Result.CustomSource(url)).toSet()
+            state.copy(
+              blackSection = sections.toList(),
+            )
+          }
+        }
       },
     )
 
@@ -283,4 +321,9 @@ internal fun SelectSourceFlow.Result.resolveLabels(context: Context): Pair<Strin
       context.getString(
         R.string.source_stored,
       ) to context.getString(R.string.source_subtitle_stored)
+
+    is SelectSourceFlow.Result.CustomSource,
+    ->
+      context.getString(R.string.source_custom_title) to
+        context.getString(R.string.source_subtitle_custom)
   }

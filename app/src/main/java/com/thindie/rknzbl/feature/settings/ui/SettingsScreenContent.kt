@@ -137,25 +137,15 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       )
 
       ToggleRow(
-        label = stringResource(R.string.home_select_storage_mode_title),
-        subtitle = stringResource(R.string.home_select_storage_mode_subtitle),
-        checked = state.isLocalSave ?: false,
-        onCheckedChange = {
-          if (state.isLocalSave == false) {
-            sendEvent(
-              ServiceCommand.UiEvent.Decision(
-                content = { StorageWarningDialog() },
-                primaryAction =
-                  Action(
-                    listener = { send(ScreenCommand.ToggleStorageMode) },
-                    resRef = R.string.storage_mode_warning_ok,
-                  ),
-              ),
-            )
+        label = stringResource(R.string.settings_custom_source_title),
+        subtitle =
+          if (state.isCustomSourceEnabled) {
+            state.customSourceUrl.orEmpty()
           } else {
-            send(ScreenCommand.ToggleStorageMode)
-          }
-        },
+            stringResource(R.string.settings_custom_source_subtitle_off)
+          },
+        checked = state.isCustomSourceEnabled,
+        onCheckedChange = { send(ScreenCommand.ToggleCustomSource) },
       )
 
       ToggleRow(

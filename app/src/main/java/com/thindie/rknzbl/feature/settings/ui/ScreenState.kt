@@ -12,4 +12,6 @@ internal data class ScreenState(
   val legacyRestart: Boolean = false,
   val startWithFavoriteProfiles: Boolean? = null,
   val speedEnabled: Boolean? = null,
+  val customSourceUrl: String? = null,
+  val isCustomSourceEnabled: Boolean = false,
 ) : State

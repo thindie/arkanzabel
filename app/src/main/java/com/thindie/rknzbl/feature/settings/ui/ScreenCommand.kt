@@ -21,4 +21,10 @@ internal sealed interface ScreenCommand : Command {
 
   // Speed notification toggle
   data object ToggleSpeed : ScreenCommand
+
+  // Custom source URL toggle
+  data object ToggleCustomSource : ScreenCommand
+
+  // Set custom source URL
+  data class SetCustomSourceUrl(val url: String) : ScreenCommand
 }

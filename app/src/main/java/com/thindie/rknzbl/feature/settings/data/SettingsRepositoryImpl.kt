@@ -121,4 +121,29 @@ class SettingsRepositoryImpl(
     _speedEnabled.value = enabled
     return true
   }
+
+  // Custom source URL support
+  private val _customSourceUrl = MutableStateFlow<String?>(null)
+
+  override val customSourceUrl =
+    _customSourceUrl
+      .filterNotNull()
+      .onStart { storage.getCustomSourceUrl()?.let { emit(it) } }
+      .onEach(storage::setCustomSourceUrl)
+
+  private val customSourceEnabledInternal = MutableStateFlow<Boolean?>(null)
+
+  override val isCustomSourceEnabled =
+    customSourceEnabledInternal
+      .filterNotNull()
+      .onStart { emit(storage.isCustomSourceEnabled()) }
+      .onEach(storage::setCustomSourceEnabled)
+
+  override fun setCustomSourceUrl(url: String) {
+    _customSourceUrl.value = url
+  }
+
+  override fun setCustomSourceEnabled(enabled: Boolean) {
+    customSourceEnabledInternal.value = enabled
+  }
 }

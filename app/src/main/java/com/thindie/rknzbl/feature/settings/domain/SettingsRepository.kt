@@ -63,4 +63,13 @@ interface SettingsRepository {
   fun isSpeedEnabled(): Boolean
 
   suspend fun toggleSpeed(enabled: Boolean): Boolean
+
+  // Custom source URL
+  val customSourceUrl: Flow<String?>
+
+  fun setCustomSourceUrl(url: String)
+
+  val isCustomSourceEnabled: Flow<Boolean>
+
+  fun setCustomSourceEnabled(enabled: Boolean)
 }

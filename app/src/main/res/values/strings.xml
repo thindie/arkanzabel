@@ -116,6 +116,14 @@
     <string name="source_subtitle_ru_services">VK, YA, CDN, Beeline configs</string>
     <string name="source_subtitle_stored">Verified</string>
 
+    <!-- Custom source settings -->
+    <string name="settings_custom_source_title">Custom Source URL</string>
+    <string name="settings_custom_source_subtitle_off">Disabled</string>
+    <string name="settings_custom_source_placeholder">Enter profile link URL</string>
+
+    <string name="source_custom_title">Custom Source URL</string>
+    <string name="source_subtitle_custom">Use your own link for profile delivery</string>
+
     <!-- Theme mode strings -->
     <string name="home_select_settings">Settings</string>
     <string name="home_select_theme_title">Theme</string>
@@ -159,7 +167,7 @@
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
-<string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+<string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
 
     <!-- Local storage mode warning dialog -->
     <string name="storage_mode_warning_title">Warning</string>

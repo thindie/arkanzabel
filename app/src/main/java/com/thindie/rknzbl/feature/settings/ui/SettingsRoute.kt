@@ -7,6 +7,7 @@ import com.thindie.rknzbl.engine.RouteFactory
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
+import com.thindie.rknzbl.feature.settings.ui.inputurl.createInputUrl
 
 fun HomeFlow.settings(
   repository: SettingsRepository,
@@ -60,6 +61,23 @@ fun HomeFlow.settings(
         val current = s.speedEnabled ?: false
         repository.toggleSpeed(!current)
         s.copy(speedEnabled = !current)
+      }
+
+      ScreenCommand.ToggleCustomSource -> {
+        val current = s.isCustomSourceEnabled
+        if (current) {
+          repository.setCustomSourceEnabled(false)
+          s.copy(isCustomSourceEnabled = false, customSourceUrl = null)
+        } else {
+          repository.setCustomSourceEnabled(true)
+          go(createInputUrl())
+          s.copy(isCustomSourceEnabled = true)
+        }
+      }
+
+      is ScreenCommand.SetCustomSourceUrl -> {
+        repository.setCustomSourceUrl(c.url)
+        s.copy(customSourceUrl = c.url)
       }
     }
   },
