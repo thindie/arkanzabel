@@ -182,7 +182,7 @@ object HttpUtil {
     } catch (e: MalformedURLException) {
       throw ConfigValidationError(
         message = e.message.toString(),
-        userReadable = "Url is broken :'("
+        userReadable = "Url is broken :'(",
       )
     } catch (e: IOException) {
       Log.e(AppConfig.TAG, "Failed to create proxy connection", e)

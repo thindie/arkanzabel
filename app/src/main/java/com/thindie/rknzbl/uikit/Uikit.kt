@@ -47,9 +47,9 @@ import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ScreenScopeError
 import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.engine.State
+import com.thindie.rknzbl.engine.ref
 
 private object ContentAlpha {
   const val DISABLED: Float = 0.3f
@@ -73,7 +73,11 @@ fun Button(
 
   val backgroundColor by animateColorAsState(
     if (enabled) {
-      AppTheme.colors.accentPrimary
+      if (loading) {
+        AppTheme.colors.onAccentPrimary
+      } else {
+        AppTheme.colors.accentPrimary
+      }
     } else {
       AppTheme.colors.backgroundSecondary
     },
@@ -159,43 +163,13 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
       text = error.message,
       style = AppTheme.typography.titleMedium,
     )
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier.padding(top = 16.dp),
     ) {
-      error.actions[ScreenScopeError.Actions.Common.DismissMain]?.let { cmd ->
+      error.actions.entries.forEach { (a, cmd) ->
         Button(
-          text = stringResource(R.string.btn_close),
-          onClick = {
-            when {
-              cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
-            }
-          },
-          loading = processing.value == cmd,
-        )
-      }
-      error.actions[ScreenScopeError.Actions.Common.ButtonSecondaryRetry]?.let { cmd ->
-        val action =
-          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-            .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
-        Button(
-          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
-          onClick = {
-            when {
-              cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
-            }
-          },
-          loading = processing.value == cmd,
-        )
-      }
-      error.actions[ScreenScopeError.Actions.Common.ButtonMain]?.let { cmd ->
-        val action =
-          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-            .first { it is ScreenScopeError.Actions.Common.ButtonMain }
-        Button(
-          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
+          text = stringResource(a.ref ?: R.string.btn_close),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()

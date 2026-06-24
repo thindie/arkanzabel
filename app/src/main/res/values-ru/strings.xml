@@ -50,6 +50,9 @@
 <string name="intro_push_continue_without">Продолжить без уведомлений</string>
 
 <string name="error_unexpected">Что-то пошло не так. Попробуйте ещё раз.</string>
+    <string name="error_timeout">Превышено время ожидания</string>
+    <string name="error_connection_failed">Не удалось подключиться</string>
+    <string name="error_http_failed">Ошибка HTTP %d</string>
 <string name="btn_close">Закрыть</string>
 
 <string name="home_choose_source">Выбрать источник</string>
@@ -99,6 +102,7 @@
 <string name="error_action_retry">Попробовать снова</string>
 
 <string name="source_select_done">Готово</string>
+    <string name="settings_custom_source_save">Сохранить</string>
 <string name="source_black_ss_title">Чёрные списки Shadowsocks+All</string>
 <string name="source_black_vless_title">Чёрные списки VLESS</string>
 <string name="source_white_cidr_title">Белые списки / CIDR</string>
@@ -120,6 +124,10 @@
 <string name="settings_custom_source_title">Своя ссылка</string>
 <string name="settings_custom_source_subtitle_off">Отключено</string>
 <string name="settings_custom_source_placeholder">Введите URL ссылки на профили</string>
+
+<!-- Custom source validation errors (Russian) -->
+<string name="custom_source_error_empty_url">URL не может быть пустым</string>
+<string name="custom_source_error_invalid_url">Нужно вводить http:// или https://</string>
 
 <string name="source_custom_title">Своя ссылка</string>
 <string name="source_subtitle_custom">Использовать свою ссылку для поставки профилей</string>

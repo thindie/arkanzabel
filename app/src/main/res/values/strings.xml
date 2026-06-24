@@ -50,6 +50,9 @@
     <string name="intro_push_continue_without">Continue without notifications</string>
 
     <string name="error_unexpected">Something went wrong. Try again.</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="error_connection_failed">Failed to connect</string>
+    <string name="error_http_failed">HTTP error %d</string>
     <string name="btn_close">Close</string>
 
     <string name="home_choose_source">Choose source</string>
@@ -99,6 +102,7 @@
     <string name="error_action_retry">Try again</string>
 
     <string name="source_select_done">Done</string>
+    <string name="settings_custom_source_save">Save</string>
     <string name="source_black_ss_title">Blacklist Shadowsocks+All</string>
     <string name="source_black_vless_title">Blacklist VLESS</string>
     <string name="source_white_cidr_title">Whitelist / CIDR</string>
@@ -120,6 +124,10 @@
     <string name="settings_custom_source_title">Custom Source URL</string>
     <string name="settings_custom_source_subtitle_off">Disabled</string>
     <string name="settings_custom_source_placeholder">Enter profile link URL</string>
+
+    <!-- Custom source validation errors -->
+    <string name="custom_source_error_empty_url">URL cannot be empty</string>
+    <string name="custom_source_error_invalid_url">Must start with http:// or https://</string>
 
     <string name="source_custom_title">Custom Source URL</string>
     <string name="source_subtitle_custom">Use your own link for profile delivery</string>

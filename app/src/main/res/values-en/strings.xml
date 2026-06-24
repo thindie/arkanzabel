@@ -50,6 +50,9 @@
 <string name="intro_push_continue_without">Continue without notifications</string>
 
 <string name="error_unexpected">Something went wrong. Try again.</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="error_connection_failed">Failed to connect</string>
+    <string name="error_http_failed">HTTP error %d</string>
 <string name="btn_close">Close</string>
 
 <string name="home_choose_source">Choose source</string>

@@ -28,3 +28,14 @@ data class ScreenScopeError(
     }
   }
 }
+
+val ScreenScopeError.Actions.ref get() =
+  when (this) {
+    is ScreenScopeError.Actions.Common -> {
+      when (this) {
+        ScreenScopeError.Actions.Common.ButtonMain -> this.titleRes
+        ScreenScopeError.Actions.Common.ButtonSecondaryRetry -> this.titleRes
+        ScreenScopeError.Actions.Common.DismissMain -> this.titleRes
+      }
+    }
+  }

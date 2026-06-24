@@ -1,8 +1,11 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
+import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.rknzbl.engine.ScreenScopeError
 import com.thindie.rknzbl.engine.WorkState
+import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
@@ -34,7 +37,48 @@ fun HomeFlow.newProfiles() =
       RouteFactory.InitialCommand {
         ScreenCommand.Start as ScreenCommand
       },
+    errorMapper = ::newProfilesErrorMapper,
   )
+
+private fun HomeFlow.newProfilesErrorMapper(e: Throwable): ScreenScopeError {
+  return when (e) {
+    is AppError.ServerError.TimeOut ->
+      ScreenScopeError(
+        message = appContext.getString(R.string.error_timeout),
+        actions =
+          mapOf(
+            ScreenScopeError.Actions.Common.ButtonSecondaryRetry to ScreenCommand.Refresh,
+            ScreenScopeError.Actions.Common.ButtonMain to ScreenCommand.Back,
+          ),
+      )
+
+    is AppError.ServerError.ConnectionFailed ->
+      ScreenScopeError(
+        message = appContext.getString(R.string.error_connection_failed),
+        actions =
+          mapOf(
+            ScreenScopeError.Actions.Common.ButtonSecondaryRetry to ScreenCommand.Refresh,
+            ScreenScopeError.Actions.Common.ButtonMain to ScreenCommand.Back,
+          ),
+      )
+
+    is AppError.ServerError.HttpRequestFailed ->
+      ScreenScopeError(
+        message = appContext.getString(R.string.error_http_failed, e.statusCode),
+        actions = mapOf(ScreenScopeError.Actions.Common.ButtonMain to ScreenCommand.Back),
+      )
+
+    else ->
+      ScreenScopeError(
+        message = appContext.getString(R.string.error_unexpected),
+        actions =
+          mapOf(
+            ScreenScopeError.Actions.Common.ButtonSecondaryRetry to ScreenCommand.Refresh,
+            ScreenScopeError.Actions.Common.ButtonMain to ScreenCommand.Back,
+          ),
+      )
+  }
+}
 
 private suspend fun HomeFlow.exec(
   command: ScreenCommand,
