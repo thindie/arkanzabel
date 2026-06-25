@@ -18,7 +18,7 @@ fun PerAppProxyFlow.search() =
             ?: emptySet(),
       ),
     execute = ::execSearch,
-    routeContent = { PerAppSearchScreen() },
+    routeContent = ::PerAppSearchScreen,
     id = "Perapp-id",
     initialCommand =
       RouteFactory.InitialCommand {

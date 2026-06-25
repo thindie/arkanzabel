@@ -34,10 +34,10 @@ import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.surface
 
 @Composable
-internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
-  val screenState by state.collectAsState()
+internal fun PerAppProxyScreen(scope: ScreenScope<State, PerAppProxyCommand>) {
+  val screenState by scope.state.collectAsState()
   LaunchedEffect(Unit) {
-    send(PerAppProxyCommand.RefreshFromStorage)
+    scope.send(PerAppProxyCommand.RefreshFromStorage)
   }
   AppScreen(
     modifier = Modifier.imePadding(),
@@ -45,10 +45,10 @@ internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { send(PerAppProxyCommand.Back) },
+        listener = { scope.send(PerAppProxyCommand.Back) },
       ),
   ) {
-    BackHandler { send(PerAppProxyCommand.Back) }
+    BackHandler { scope.send(PerAppProxyCommand.Back) }
     val appsByPackage =
       remember(screenState.allApps) {
         screenState.allApps.associateBy { it.packageName }
@@ -100,7 +100,7 @@ internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
           title = stringResource(R.string.per_app_proxy_mode_all),
           subtitle = stringResource(R.string.per_app_proxy_mode_all_subtitle),
           loading = false,
-          onClick = { send(PerAppProxyCommand.SetModeAll) },
+          onClick = { scope.send(PerAppProxyCommand.SetModeAll) },
         )
       }
       item {
@@ -125,7 +125,7 @@ internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
           title = stringResource(R.string.per_app_proxy_mode_selected),
           subtitle = stringResource(R.string.per_app_proxy_mode_selected_subtitle),
           loading = false,
-          onClick = { send(PerAppProxyCommand.SetModeSelected) },
+          onClick = { scope.send(PerAppProxyCommand.SetModeSelected) },
         )
       }
       if (screenState.mode == ProxyScopeMode.Selected) {
@@ -175,7 +175,7 @@ internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
             title = row?.appName ?: pkg,
             subtitle = row?.packageName ?: pkg,
             loading = false,
-            onClick = { send(PerAppProxyCommand.RemovePackage(pkg)) },
+            onClick = { scope.send(PerAppProxyCommand.RemovePackage(pkg)) },
           )
         }
         stickyHeader {
@@ -207,7 +207,7 @@ internal fun ScreenScope<State, PerAppProxyCommand>.PerAppProxyScreen() {
                 .height(52.dp)
                 .surface(
                   shape = RoundedCornerShape(16.dp),
-                  onClick = { send(PerAppProxyCommand.OpenSearch) },
+                  onClick = { scope.send(PerAppProxyCommand.OpenSearch) },
                   backgroundColor = AppTheme.colors.backgroundSecondary,
                 ),
           )

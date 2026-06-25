@@ -23,7 +23,7 @@ fun PerAppProxyFlow.main() =
             ?: emptySet(),
       ),
     execute = ::execMain,
-    routeContent = { PerAppProxyScreen() },
+    routeContent = ::PerAppProxyScreen,
     id = "PerApp-main",
     initialCommand =
       RouteFactory.InitialCommand {

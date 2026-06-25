@@ -45,8 +45,8 @@ import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.SentenceRow
 
 @Composable
-internal fun ScreenScope<SearchState, PerAppSearchCommand>.PerAppSearchScreen() {
-  val screenState by state.collectAsState()
+internal fun PerAppSearchScreen(scope: ScreenScope<SearchState, PerAppSearchCommand>) {
+  val screenState by scope.state.collectAsState()
   val snackText = stringResource(R.string.per_app_proxy_added_snack)
   val focusRequester = remember { FocusRequester() }
   AppScreen(
@@ -54,10 +54,10 @@ internal fun ScreenScope<SearchState, PerAppSearchCommand>.PerAppSearchScreen() 
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { send(PerAppSearchCommand.Back) },
+        listener = { scope.send(PerAppSearchCommand.Back) },
       ),
   ) {
-    BackHandler { send(PerAppSearchCommand.Back) }
+    BackHandler { scope.send(PerAppSearchCommand.Back) }
     val filtered =
       remember(screenState.searchQuery, screenState.allApps) {
         val q = screenState.searchQuery.trim().lowercase()
@@ -104,7 +104,7 @@ internal fun ScreenScope<SearchState, PerAppSearchCommand>.PerAppSearchScreen() 
               .padding(16.dp),
           textStyle = TextStyle(color = AppTheme.colors.contentPrimary),
           value = screenState.searchQuery,
-          onValueChange = { send(PerAppSearchCommand.SetSearch(it)) },
+          onValueChange = { scope.send(PerAppSearchCommand.SetSearch(it)) },
         )
       }
       items(
@@ -126,8 +126,8 @@ internal fun ScreenScope<SearchState, PerAppSearchCommand>.PerAppSearchScreen() 
           subtitle = row.packageName,
           loading = false,
           onClick = {
-            send(PerAppSearchCommand.AddPackage(row.packageName))
-            sendEvent(ServiceCommand.UiEvent.SnackText("$snackText ${row.appName}"))
+            scope.send(PerAppSearchCommand.AddPackage(row.packageName))
+            scope.sendEvent(ServiceCommand.UiEvent.SnackText("$snackText ${row.appName}"))
           },
         )
       }
