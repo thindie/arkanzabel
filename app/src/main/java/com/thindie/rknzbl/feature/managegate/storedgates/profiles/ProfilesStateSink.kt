@@ -21,24 +21,18 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 
 internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
-  screenScope.stateSink {
-    sub(
+  stateSink(screenScope) { s ->
+    s.sub(
       selected
         .mapLatest { profile ->
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
-              is WorkState.Error -> {
-                SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              }
-              WorkState.NotRunning -> {
-                SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
-              }
-              WorkState.Running -> {
-                SpeedtestManager.testConnection(
-                  context = appContext,
-                  port = SettingsManager.getHttpPort(),
-                )
-              }
+              is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
+              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Running -> SpeedtestManager.testConnection(
+                context = appContext,
+                port = SettingsManager.getHttpPort(),
+              )
             }
           profile to result
         },
@@ -46,28 +40,24 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
       .transition(
         action = { _, _, (_, result) ->
           when (result) {
-            is SpeedtestManager.SpeedTestResult.Err -> {
-              sendEvent(
-                ServiceCommand.UiEvent.SnackText(result.message),
-              )
-            }
-            is SpeedtestManager.SpeedTestResult.Ok -> {
-              sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
-            }
+            is SpeedtestManager.SpeedTestResult.Err ->
+              s.sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
+            is SpeedtestManager.SpeedTestResult.Ok ->
+              s.sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
             null -> Unit
           }
         },
-        block = { s, (profile, result) ->
-          s.copy(
+        block = { state, (profile, result) ->
+          state.copy(
             selected = profile,
             selectedTestConnectionMessage = result,
           )
         },
       )
 
-    sub(settingsRepository.isLocalSave)
+    s.sub(settingsRepository.isLocalSave)
       .transition(
-        block = { s, r -> s.copy(isLocalMode = r) },
+        block = { state, r -> state.copy(isLocalMode = r) },
       )
   }
 }

@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 
 internal fun SelectSourceFlow.selectSourceStateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
-  screenScope.stateSink {
-    sub(
+  stateSink(screenScope) { s ->
+    s.sub(
       (appContext as Application)
         .applicationScope
         .settings

@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-fun <S : State, C : Command> ScreenScope<S, C>.stateSink(block: ScreenScope<S, C>.() -> Unit) {
-  block.invoke(this)
+fun <S : State, C : Command> stateSink(scope: ScreenScope<S, C>, block: (ScreenScope<S, C>) -> Unit) {
+  block(scope)
 }
 
 fun <S : State, C : Command, R : Any?> ScreenScope<S, C>.sub(flow: Flow<R>): Pair<ScreenScope<S, C>, Flow<R>> {

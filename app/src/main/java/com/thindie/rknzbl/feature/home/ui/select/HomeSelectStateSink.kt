@@ -7,8 +7,8 @@ import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 
 internal fun HomeFlow.selectStateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
-  screenScope.stateSink {
-    sub(repository.autoSaved())
+  stateSink(screenScope) { s ->
+    s.sub(repository.autoSaved())
       .transition(
         block = { state, autosaved ->
           state.copy(autoSaved = autosaved)

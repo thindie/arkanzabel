@@ -19,8 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
-  screenScope.stateSink {
-    sub(sourceChanges)
+  stateSink(screenScope) { s ->
+    s.sub(sourceChanges)
       .transition(
         action = { _, _, source ->
           when (source) {
@@ -33,23 +33,21 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
             SelectSourceFlow.Result.WhiteListMobile,
             SelectSourceFlow.Result.WhiteListMobileV2,
             SelectSourceFlow.Result.WhiteListRussian,
-            -> send(ScreenCommand.Refresh)
+            -> s.send(ScreenCommand.Refresh)
 
             SelectSourceFlow.Result.StoredProfiles -> {
               startStoredProfilesFlow { go(newProfiles()) }
             }
           }
         },
-      ) { s, source ->
-        val newState =
-          s.copy(
-            sourceName = source.resolveLabels(appContext).second,
-            sourceUrl = source.sourceUrl.orEmpty(),
-          )
-        newState
+      ) { state, source ->
+        state.copy(
+          sourceName = source.resolveLabels(appContext).second,
+          sourceUrl = source.sourceUrl.orEmpty(),
+        )
       }
 
-    sub(
+    s.sub(
       (appContext as Application)
         .applicationScope
         .settings
@@ -66,33 +64,23 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
             .map { SelectSourceFlow.Result.CustomSource(it) }
         },
     ).transition { state, source ->
-      val newState =
-        state.copy(
-          sourceName = source.resolveLabels(appContext).second,
-          sourceUrl = source.sourceUrl.orEmpty(),
-        )
-      newState
+      state.copy(
+        sourceName = source.resolveLabels(appContext).second,
+        sourceUrl = source.sourceUrl.orEmpty(),
+      )
     }
 
-    sub(
+    s.sub(
       selected
         .mapLatest { profile ->
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
-              is WorkState.Error -> {
-                SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              }
-
-              WorkState.NotRunning -> {
-                SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
-              }
-
-              WorkState.Running -> {
-                SpeedtestManager.testConnection(
-                  context = appContext,
-                  port = SettingsManager.getHttpPort(),
-                )
-              }
+              is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
+              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Running -> SpeedtestManager.testConnection(
+                context = appContext,
+                port = SettingsManager.getHttpPort(),
+              )
             }
           profile to result
         },
@@ -100,21 +88,15 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
       .transition(
         action = { _, _, (_, result) ->
           when (result) {
-            is SpeedtestManager.SpeedTestResult.Err -> {
-              sendEvent(
-                ServiceCommand.UiEvent.SnackText(result.message),
-              )
-            }
-
-            is SpeedtestManager.SpeedTestResult.Ok -> {
-              sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
-            }
-
+            is SpeedtestManager.SpeedTestResult.Err ->
+              s.sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
+            is SpeedtestManager.SpeedTestResult.Ok ->
+              s.sendEvent(ServiceCommand.UiEvent.SnackText(result.message))
             null -> Unit
           }
         },
-        block = { s, (profile, result) ->
-          s.copy(
+        block = { state, (profile, result) ->
+          state.copy(
             selected = profile,
             selectedTestConnectionMessage = result,
           )
