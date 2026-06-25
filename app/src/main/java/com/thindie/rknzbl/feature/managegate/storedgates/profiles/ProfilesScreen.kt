@@ -43,25 +43,25 @@ import com.thindie.rknzbl.uikit.profileBorder
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
-internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
-  val st by state.collectAsState()
+internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
+  val st by scope.state.collectAsState()
   val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
         listener = {
-          send(command = ScreenCommand.BackRequested)
+          scope.send(command = ScreenCommand.BackRequested)
         },
       ),
   ) {
-    BackHandler { send(ScreenCommand.BackRequested) }
+    BackHandler { scope.send(ScreenCommand.BackRequested) }
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
       isRefreshing = false,
       modifier = Modifier.height(height),
       onRefresh = {
-        send(ScreenCommand.RequestStoredProfiles)
+        scope.send(ScreenCommand.RequestStoredProfiles)
       },
     ) {
       LazyColumn(
@@ -150,16 +150,16 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = {
               if (st.selectionMode) {
-                send(ScreenCommand.TogglePendingDelete(item))
+                scope.send(ScreenCommand.TogglePendingDelete(item))
               } else {
-                send(ScreenCommand.Activate(item))
+                scope.send(ScreenCommand.Activate(item))
               }
             },
             onLongClick = {
               if (st.selectionMode) {
-                send(ScreenCommand.ExitMultiDeletionMode)
+                scope.send(ScreenCommand.ExitMultiDeletionMode)
               } else {
-                send(ScreenCommand.EnterMultiDeletionMode(item))
+                scope.send(ScreenCommand.EnterMultiDeletionMode(item))
               }
             },
           )
@@ -178,7 +178,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
         text =
           when {
             st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
-            this@ProfilesScreen.processing.value is ScreenCommand.Activate -> ""
+            scope.processing.value is ScreenCommand.Activate -> ""
             st.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
             established -> stringResource(R.string.home_stop_service)
             else -> stringResource(R.string.home_pick_profile_first)
@@ -187,9 +187,9 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
           when {
             selectedCount > 0 -> {
               if (st.isLocalMode) {
-                send(ScreenCommand.BatchDelete)
+                scope.send(ScreenCommand.BatchDelete)
               } else {
-                sendEvent(
+                scope.sendEvent(
                   ServiceCommand.UiEvent.Decision(
                     content = {
                       Aware(
@@ -201,17 +201,17 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
                     primaryAction =
                       Action(
                         resRef = R.string.source_select_done,
-                        listener = { send(ScreenCommand.BatchDelete) },
+                        listener = { scope.send(ScreenCommand.BatchDelete) },
                       ),
                   ),
                 )
               }
             }
 
-            established -> send(ScreenCommand.StopService)
+            established -> scope.send(ScreenCommand.StopService)
           }
         },
-        loading = this@ProfilesScreen.processing.value is ScreenCommand.Activate,
+        loading = scope.processing.value is ScreenCommand.Activate,
       )
     }
   }
