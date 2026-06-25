@@ -83,7 +83,5 @@ fun HomeFlow.settings(
   },
   stateSink = { screenScope -> settingsStateSink(screenScope, repository) },
   id = "HomeFlow-settings",
-  routeContent = {
-    SettingsScreenContent()
-  },
+  routeContent = ::SettingsScreenContent,
 )

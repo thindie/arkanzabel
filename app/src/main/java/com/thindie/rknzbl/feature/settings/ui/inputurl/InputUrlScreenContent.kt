@@ -31,18 +31,18 @@ import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.WSpacer
 
 @Composable
-internal fun ScreenScope<InputUrlState, InputUrlCommand>.InputUrlScreenContent() {
-  val screenState by state.collectAsState()
+internal fun InputUrlScreenContent(scope: ScreenScope<InputUrlState, InputUrlCommand>) {
+  val screenState by scope.state.collectAsState()
   val focusRequester = remember { FocusRequester() }
   AppScreen(
     modifier = Modifier.imePadding(),
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { send(InputUrlCommand.Back) },
+        listener = { scope.send(InputUrlCommand.Back) },
       ),
   ) {
-    BackHandler { send(InputUrlCommand.Back) }
+    BackHandler { scope.send(InputUrlCommand.Back) }
     Column(modifier = Modifier.padding(16.dp)) {
       Text(
         text = stringResource(R.string.settings_custom_source_title),
@@ -70,12 +70,12 @@ internal fun ScreenScope<InputUrlState, InputUrlCommand>.InputUrlScreenContent()
             color = AppTheme.colors.contentPrimary,
           ),
         value = screenState.url,
-        onValueChange = { send(InputUrlCommand.SetUrl(it)) },
+        onValueChange = { scope.send(InputUrlCommand.SetUrl(it)) },
       )
       WSpacer()
       Button(
         text = stringResource(R.string.mux_faq_ok),
-        onClick = { send(InputUrlCommand.Done) },
+        onClick = { scope.send(InputUrlCommand.Done) },
       )
     }
 

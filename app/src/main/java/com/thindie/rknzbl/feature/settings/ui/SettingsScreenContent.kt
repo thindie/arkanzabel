@@ -37,12 +37,12 @@ import com.thindie.rknzbl.uikit.TopAppBar
 import com.thindie.rknzbl.uikit.VSpacer
 
 @Composable
-internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
+internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   AppScreen {
-    val state by state.collectAsState()
+    val state by scope.state.collectAsState()
     val themeSwitcher = LocalThemeSwitcher.current
     val theme by themeSwitcher.themeFlow.collectAsState(ThemeSwitcher.Choice.Auto)
-    BackHandler { send(ScreenCommand.Back) }
+    BackHandler { scope.send(ScreenCommand.Back) }
     if (state.legacyRestart) {
       val context = LocalActivity.current
       LaunchedEffect(Unit) {
@@ -52,7 +52,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
     TopAppBar(
       primary =
         Action(
-          listener = { send(ScreenCommand.Back) },
+          listener = { scope.send(ScreenCommand.Back) },
           resRef = R.drawable.ic_arrow_back_24,
         ),
     )
@@ -126,14 +126,14 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         label = stringResource(R.string.home_select_autosave_title),
         subtitle = stringResource(R.string.home_select_autosave_subtitle),
         checked = state.autosaveEnabled ?: true,
-        onCheckedChange = { send(ScreenCommand.ToggleAutosave) },
+        onCheckedChange = { scope.send(ScreenCommand.ToggleAutosave) },
       )
 
       ToggleRow(
         label = stringResource(R.string.settings_start_with_favorite_profiles_title),
         subtitle = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
         checked = state.startWithFavoriteProfiles ?: false,
-        onCheckedChange = { send(ScreenCommand.StartWithFavoriteProfiles) },
+        onCheckedChange = { scope.send(ScreenCommand.StartWithFavoriteProfiles) },
       )
 
       ToggleRow(
@@ -145,7 +145,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
             stringResource(R.string.settings_custom_source_subtitle_off)
           },
         checked = state.isCustomSourceEnabled,
-        onCheckedChange = { send(ScreenCommand.ToggleCustomSource) },
+        onCheckedChange = { scope.send(ScreenCommand.ToggleCustomSource) },
       )
 
       ToggleRow(
@@ -154,18 +154,18 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         checked = state.speedEnabled ?: false,
         onCheckedChange = {
           if (state.speedEnabled != true) {
-            sendEvent(
+            scope.sendEvent(
               ServiceCommand.UiEvent.Decision(
                 content = { SpeedNotificationRestartDialog() },
                 primaryAction =
                   Action(
-                    listener = { send(ScreenCommand.ToggleSpeed) },
+                    listener = { scope.send(ScreenCommand.ToggleSpeed) },
                     resRef = R.string.btn_close,
                   ),
               ),
             )
           } else {
-            send(ScreenCommand.ToggleSpeed)
+            scope.send(ScreenCommand.ToggleSpeed)
           }
         },
       )
@@ -180,7 +180,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
       LanguageSection(
         label = stringResource(R.string.settings_language_title),
         subtitle = languageLabel(state.language),
-        onClick = { selectLanguage(state.language.orEmpty()) },
+        onClick = { selectLanguage(scope, state.language.orEmpty()) },
       )
 
       // === MUX ===
@@ -194,10 +194,10 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SettingsScreenContent() {
         label = stringResource(R.string.settings_mux_title),
         subtitle = stringResource(R.string.settings_mux_subtitle),
         checked = state.muxEnabled ?: false,
-        onCheckedChange = { send(ScreenCommand.ToggleMux) },
+        onCheckedChange = { scope.send(ScreenCommand.ToggleMux) },
       )
 
-      MuxFaqRow { sendMuxFaq() }
+      MuxFaqRow { sendMuxFaq(scope) }
     }
   }
 }
@@ -300,8 +300,8 @@ private fun MuxFaqRow(onClick: () -> Unit) {
   }
 }
 
-private fun ScreenScope<*, *>.sendMuxFaq() {
-  sendEvent(
+private fun sendMuxFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
     ServiceCommand.UiEvent.Decision(
       content = { MuxFaqDialog() },
       primaryAction = Action(listener = {}, resRef = R.string.mux_faq_ok),
@@ -343,14 +343,14 @@ private fun MuxFaqDialog() {
   }
 }
 
-private fun ScreenScope<ScreenState, ScreenCommand>.selectLanguage(currentLanguage: String) {
-  sendEvent(
+private fun selectLanguage(scope: ScreenScope<ScreenState, ScreenCommand>, currentLanguage: String) {
+  scope.sendEvent(
     ServiceCommand.UiEvent.Decision(
       content = {
         LanguagePickerDialog(
           currentLanguage = currentLanguage,
           onClick = { code ->
-            send(ScreenCommand.SelectLanguage(code))
+            scope.send(ScreenCommand.SelectLanguage(code))
           },
         )
       },

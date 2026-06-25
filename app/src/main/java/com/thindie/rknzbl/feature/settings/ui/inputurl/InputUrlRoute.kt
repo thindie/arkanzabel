@@ -22,7 +22,5 @@ fun HomeFlow.createInputUrl() =
       }
     },
     id = "InputUrlRoute",
-    routeContent = {
-      InputUrlScreenContent()
-    },
+    routeContent = ::InputUrlScreenContent,
   )
