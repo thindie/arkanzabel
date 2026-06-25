@@ -8,7 +8,7 @@ fun IntroFlow.main() =
   RouteFactory.create(
     initialState = State(),
     execute = ::exec,
-    routeContent = { IntroScreenContent() },
+    routeContent = ::IntroScreenContent,
     errorMapper = {
       ScreenScopeError(
         message = appContext.getString(R.string.error_unexpected),

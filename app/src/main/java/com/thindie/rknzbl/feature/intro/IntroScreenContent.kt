@@ -33,17 +33,17 @@ import com.thindie.rknzbl.uikit.Button
 import com.thindie.rknzbl.uikit.SentenceRow
 
 @Composable
-internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
-  val st by state.collectAsState()
+internal fun IntroScreenContent(scope: ScreenScope<State, CommandIntro>) {
+  val st by scope.state.collectAsState()
   val activity = LocalActivity.current
   val launcher =
     rememberLauncherForActivityResult(
       ActivityResultContracts.StartActivityForResult(),
     ) { result ->
       if (result.resultCode == Activity.RESULT_OK) {
-        send(CommandIntro.ConfirmRationale)
+        scope.send(CommandIntro.ConfirmRationale)
       } else {
-        send(CommandIntro.PermissionDenied)
+        scope.send(CommandIntro.PermissionDenied)
       }
     }
 
@@ -55,9 +55,9 @@ internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
           PackageManager.PERMISSION_GRANTED
         ) {
-          send(CommandIntro.ConfirmRationale)
+          scope.send(CommandIntro.ConfirmRationale)
         } else {
-          send(CommandIntro.PermissionDenied)
+          scope.send(CommandIntro.PermissionDenied)
         }
       }
     }
@@ -70,12 +70,12 @@ internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
         if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS) ==
           PackageManager.PERMISSION_GRANTED
         ) {
-          send(CommandIntro.ConfirmRationale)
+          scope.send(CommandIntro.ConfirmRationale)
         }
       }
     }
 
-  BackHandler { send(CommandIntro.Dismiss) }
+  BackHandler { scope.send(CommandIntro.Dismiss) }
 
   AppScreen(
     title =
@@ -120,14 +120,14 @@ internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
               Button(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.intro_btn_not_now),
-                onClick = { send(CommandIntro.DeclineSoftRequest) },
+                onClick = { scope.send(CommandIntro.DeclineSoftRequest) },
               )
             },
             confirmButton = {
               Button(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.intro_btn_understood),
-                onClick = { send(CommandIntro.AcceptSoftRequest) },
+                onClick = { scope.send(CommandIntro.AcceptSoftRequest) },
               )
             },
           )
@@ -139,7 +139,7 @@ internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
               Permission.Vpn -> {
                 val intent = if (activity != null) VpnService.prepare(activity) else null
                 if (intent == null) {
-                  send(CommandIntro.ConfirmRationale)
+                  scope.send(CommandIntro.ConfirmRationale)
                 } else {
                   launcher.launch(intent)
                 }
@@ -155,11 +155,11 @@ internal fun ScreenScope<State, CommandIntro>.IntroScreenContent() {
                     ) {
                       permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } else {
-                      send(CommandIntro.ConfirmRationale)
+                      scope.send(CommandIntro.ConfirmRationale)
                     }
                   }
                 } else {
-                  send(CommandIntro.ConfirmRationale)
+                  scope.send(CommandIntro.ConfirmRationale)
                 }
               }
             }
