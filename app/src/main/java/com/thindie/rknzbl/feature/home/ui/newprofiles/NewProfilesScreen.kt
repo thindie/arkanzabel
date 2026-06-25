@@ -1,9 +1,7 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,20 +10,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,34 +28,29 @@ import com.thindie.rknzbl.uikit.Action
 import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
+import com.thindie.rknzbl.uikit.ProfileBorderState
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
+import com.thindie.rknzbl.uikit.profileBorder
 import com.v2ray.ang.runtime.SpeedtestManager
-import kotlinx.coroutines.delay
 
 @Composable
 fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
-  val screenState by state.collectAsState()
-  val established =
-    screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
+  val st by state.collectAsState()
+  val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = {
-          send(ScreenCommand.Back)
-        },
+        listener = { send(ScreenCommand.Back) },
       ),
   ) {
     BackHandler { send(ScreenCommand.Back) }
-    val st by state.collectAsState()
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
       isRefreshing = false,
       modifier = Modifier.height(height),
-      onRefresh = {
-        send(ScreenCommand.Refresh)
-      },
+      onRefresh = { send(ScreenCommand.Refresh) },
     ) {
       LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -107,89 +93,19 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
             loading = false,
           )
         }
-        items(
-          items = screenState.links,
-        ) { item ->
+        items(items = st.links) { item ->
+          val borderState =
+            when {
+              st.selected != item -> ProfileBorderState.Inactive
+              st.selectedTestConnectionMessage == null -> ProfileBorderState.Testing
+              st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok ->
+                ProfileBorderState.Connected
+              else -> ProfileBorderState.Failed
+            }
           SentenceRow(
             modifier =
               Modifier
-                .then(
-                  if (screenState.selected == item) {
-                    if (st.selectedTestConnectionMessage == null) {
-                      var progress by remember { mutableStateOf(0f) }
-                      var moveRight by remember { mutableStateOf(true) }
-                      LaunchedEffect(Unit) {
-                        while (true) {
-                          if (moveRight) {
-                            if (progress > 1f) {
-                              moveRight = false
-                              progress -= 0.1f
-                            } else {
-                              progress += 0.1f
-                            }
-                          } else {
-                            if (progress < -1f) {
-                              moveRight = true
-                              progress += 0.1f
-                            } else {
-                              progress -= 0.1f
-                            }
-                          }
-                          delay(50)
-                        }
-                      }
-
-                      Modifier
-                        .border(
-                          brush =
-                            Brush.linearGradient(
-                              colors =
-                                listOf(
-                                  AppTheme.colors.contentPrimary,
-                                  AppTheme.colors.contentSecondary,
-                                  AppTheme.colors.backgroundSecondary,
-                                  AppTheme.colors.contentSecondary,
-                                  AppTheme.colors.backgroundPrimary,
-                                ),
-                              start = Offset(progress * 500f, 0f),
-                              end = Offset((progress + 1f) * 500f, 200f),
-                            ),
-                          shape = RoundedCornerShape(20.dp),
-                          width = 1.2.dp,
-                        )
-                    } else {
-                      Modifier
-                        .border(
-                          border =
-                            BorderStroke(
-                              width = 1.2.dp,
-                              color =
-                                when (st.selectedTestConnectionMessage) {
-                                  is SpeedtestManager.SpeedTestResult.Err -> AppTheme.colors.errorPrimary
-                                  is SpeedtestManager.SpeedTestResult.Ok -> AppTheme.colors.accentPrimary
-                                  null -> AppTheme.colors.backgroundSecondary
-                                },
-                            ),
-                          shape = RoundedCornerShape(20.dp),
-                        )
-                    }
-                  } else {
-                    Modifier
-                      .border(
-                        border =
-                          BorderStroke(
-                            width = 1.2.dp,
-                            color =
-                              if (screenState.selected == item && established) {
-                                AppTheme.colors.accentPrimary
-                              } else {
-                                AppTheme.colors.backgroundSecondary
-                              },
-                          ),
-                        shape = RoundedCornerShape(20.dp),
-                      )
-                  },
-                )
+                .profileBorder(borderState)
                 .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_internet_24),
             title = item.remarks + item.serverPort.orEmpty(),
@@ -232,7 +148,7 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
         enabled = established || st.links.isEmpty(),
         text =
           when {
-            this@NewProfiles.processing == ScreenCommand.Start -> ""
+            this@NewProfiles.processing.value == ScreenCommand.Start -> ""
             st.links.isEmpty() -> stringResource(R.string.home_fetch_profiles)
             established -> stringResource(R.string.home_stop_service)
             else -> stringResource(R.string.home_pick_profile_first)
