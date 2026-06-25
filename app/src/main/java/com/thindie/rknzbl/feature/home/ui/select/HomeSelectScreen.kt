@@ -26,7 +26,7 @@ import com.thindie.rknzbl.uikit.WSpacer
 
 @Composable
 internal fun HomeSelectScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
-  AppScreen {
+  AppScreen(scope) {
     BackHandler { scope.send(ScreenCommand.Back) }
     Column(
       modifier =

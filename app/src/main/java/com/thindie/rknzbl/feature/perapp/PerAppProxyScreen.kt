@@ -40,6 +40,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<State, PerAppProxyCommand>) {
     scope.send(PerAppProxyCommand.RefreshFromStorage)
   }
   AppScreen(
+    scope = scope,
     modifier = Modifier.imePadding(),
     title = null,
     primary =

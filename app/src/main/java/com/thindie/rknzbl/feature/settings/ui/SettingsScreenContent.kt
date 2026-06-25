@@ -38,7 +38,7 @@ import com.thindie.rknzbl.uikit.VSpacer
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
-  AppScreen {
+  AppScreen(scope) {
     val state by scope.state.collectAsState()
     val themeSwitcher = LocalThemeSwitcher.current
     val theme by themeSwitcher.themeFlow.collectAsState(ThemeSwitcher.Choice.Auto)

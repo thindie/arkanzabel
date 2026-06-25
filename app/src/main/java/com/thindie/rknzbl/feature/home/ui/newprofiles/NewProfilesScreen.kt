@@ -39,6 +39,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val st by scope.state.collectAsState()
   val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
+    scope = scope,
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,

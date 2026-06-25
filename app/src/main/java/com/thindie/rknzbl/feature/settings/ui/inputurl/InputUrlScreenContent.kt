@@ -35,6 +35,7 @@ internal fun InputUrlScreenContent(scope: ScreenScope<InputUrlState, InputUrlCom
   val screenState by scope.state.collectAsState()
   val focusRequester = remember { FocusRequester() }
   AppScreen(
+    scope = scope,
     modifier = Modifier.imePadding(),
     primary =
       Action(
