@@ -27,5 +27,5 @@ fun HomeFlow.select(
   initialCommand = { ScreenCommand.FetchAutoSaved },
   stateSink = ::selectStateSink,
   id = "HomeFlow-select",
-  routeContent = { HomeSelectScreen() },
+  routeContent = ::HomeSelectScreen,
 )

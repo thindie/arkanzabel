@@ -25,9 +25,9 @@ import com.thindie.rknzbl.uikit.VSpacer
 import com.thindie.rknzbl.uikit.WSpacer
 
 @Composable
-internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
+internal fun HomeSelectScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
   AppScreen {
-    BackHandler { send(ScreenCommand.Back) }
+    BackHandler { scope.send(ScreenCommand.Back) }
     Column(
       modifier =
         Modifier
@@ -52,7 +52,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
         title = stringResource(R.string.home_select_new_profiles_title),
         subtitle = stringResource(R.string.home_select_new_profiles_subtitle),
         painter = painterResource(R.drawable.ic_internet_24),
-        onClick = { send(ScreenCommand.New) },
+        onClick = { scope.send(ScreenCommand.New) },
         loading = false,
       )
       VSpacer(16.dp)
@@ -61,7 +61,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
         title = stringResource(R.string.home_select_stored_title),
         subtitle = stringResource(R.string.home_select_stored_subtitle),
         painter = painterResource(R.drawable.ic_home_24),
-        onClick = { send(ScreenCommand.Home) },
+        onClick = { scope.send(ScreenCommand.Home) },
         loading = false,
       )
       VSpacer(16.dp)
@@ -70,7 +70,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
         title = stringResource(R.string.home_select_vpn_modes_title),
         subtitle = stringResource(R.string.home_select_vpn_modes_subtitle),
         painter = painterResource(R.drawable.ic_filter_24),
-        onClick = { send(ScreenCommand.PerAppProxy) },
+        onClick = { scope.send(ScreenCommand.PerAppProxy) },
         loading = false,
       )
       VSpacer(16.dp)
@@ -79,10 +79,10 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
         title = stringResource(R.string.home_select_settings_title),
         subtitle = stringResource(R.string.home_select_settings_subtitle),
         painter = painterResource(R.drawable.ic_settings_24),
-        onClick = { send(ScreenCommand.Settings) },
+        onClick = { scope.send(ScreenCommand.Settings) },
         loading = false,
       )
-      val profile = state.collectAsState().value.autoSaved
+      val profile = scope.state.collectAsState().value.autoSaved
       if (profile != null) {
         WSpacer()
         Text(
@@ -103,7 +103,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.HomeSelectScreen() {
           title = profile.remarks + profile.serverPort.orEmpty(),
           subtitle = profile.flow ?: profile.server ?: profile.serviceName ?: "",
           loading = false,
-          onClick = { send(ScreenCommand.DismissAutoSaved) },
+          onClick = { scope.send(ScreenCommand.DismissAutoSaved) },
           onLongClick = null,
         )
       }
