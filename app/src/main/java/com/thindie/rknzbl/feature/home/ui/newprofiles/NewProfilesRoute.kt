@@ -31,7 +31,7 @@ fun HomeFlow.newProfiles() =
       ),
     execute = ::exec,
     stateSink = ::stateSink,
-    routeContent = { NewProfiles() },
+    routeContent = ::NewProfiles,
     id = "Home-main",
     initialCommand =
       RouteFactory.InitialCommand {

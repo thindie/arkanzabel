@@ -35,22 +35,22 @@ import com.thindie.rknzbl.uikit.profileBorder
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
-fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
-  val st by state.collectAsState()
+fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
+  val st by scope.state.collectAsState()
   val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { send(ScreenCommand.Back) },
+        listener = { scope.send(ScreenCommand.Back) },
       ),
   ) {
-    BackHandler { send(ScreenCommand.Back) }
+    BackHandler { scope.send(ScreenCommand.Back) }
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
       isRefreshing = false,
       modifier = Modifier.height(height),
-      onRefresh = { send(ScreenCommand.Refresh) },
+      onRefresh = { scope.send(ScreenCommand.Refresh) },
     ) {
       LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -80,7 +80,7 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
                 stringResource(R.string.home_source_selected_prefix)
               },
             subtitle = st.sourceName,
-            onClick = { send(ScreenCommand.Choose) },
+            onClick = { scope.send(ScreenCommand.Choose) },
             loading = false,
           )
         }
@@ -89,7 +89,7 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
             painter = painterResource(R.drawable.ic_information_24),
             title = stringResource(R.string.per_app_proxy_row_title),
             subtitle = stringResource(R.string.per_app_proxy_row_subtitle),
-            onClick = { send(ScreenCommand.OpenPerAppProxy) },
+            onClick = { scope.send(ScreenCommand.OpenPerAppProxy) },
             loading = false,
           )
         }
@@ -111,11 +111,11 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
             title = item.remarks + item.serverPort.orEmpty(),
             subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
-            onClick = { send(ScreenCommand.Select(item)) },
+            onClick = { scope.send(ScreenCommand.Select(item)) },
             onLongClick =
               if (st.selected == item) {
                 {
-                  sendEvent(
+                  scope.sendEvent(
                     ServiceCommand.UiEvent.Decision(
                       content = {
                         Text(
@@ -126,7 +126,7 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
                       primaryAction =
                         Action(
                           resRef = R.string.source_select_done,
-                          listener = { send(ScreenCommand.Save(item)) },
+                          listener = { scope.send(ScreenCommand.Save(item)) },
                         ),
                     ),
                   )
@@ -148,16 +148,16 @@ fun ScreenScope<ScreenState, ScreenCommand>.NewProfiles() {
         enabled = established || st.links.isEmpty(),
         text =
           when {
-            this@NewProfiles.processing.value == ScreenCommand.Start -> ""
+            scope.processing.value == ScreenCommand.Start -> ""
             st.links.isEmpty() -> stringResource(R.string.home_fetch_profiles)
             established -> stringResource(R.string.home_stop_service)
             else -> stringResource(R.string.home_pick_profile_first)
           },
         onClick = {
           if (established) {
-            send(ScreenCommand.Stop)
+            scope.send(ScreenCommand.Stop)
           } else {
-            send(ScreenCommand.Start)
+            scope.send(ScreenCommand.Start)
           }
         },
       )
