@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.cancellation.CancellationException
 
 @Stable
@@ -146,6 +148,8 @@ object RouteFactory {
           override val error: androidx.compose.runtime.State<ScreenScopeError?>
             get() = _error
 
+          private val commandMutex = Mutex()
+
           @Stable
           private val _event =
             MutableSharedFlow<ServiceCommand.UiEvent>(
@@ -177,32 +181,7 @@ object RouteFactory {
                   _error.value = null
                 }
                 else -> {
-                  if (_error.value == null) {
-                    try {
-                      // non-nervous loading treatment region
-                      val loadingJob =
-                        launch {
-                          delay(200)
-                          _processing.value = command
-                        }
-                      val newState = execute(command, _state.value)
-                      if (_processing.value != null) {
-                        delay(300)
-                      }
-                      loadingJob.cancel()
-                      // end region
-                      _state.value = newState
-                      _processing.value = null
-                    } catch (e: CancellationException) {
-                      dispose()
-                      disposeCommand.tryEmit(command)
-                      throw e
-                    } catch (e: Throwable) {
-                      val error = errorMapper(e)
-                      _error.value = error
-                      _processing.value = null
-                    }
-                  } else {
+                  commandMutex.withLock {
                     try {
                       // non-nervous loading treatment region
                       val loadingJob =
