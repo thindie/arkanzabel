@@ -8,7 +8,7 @@ fun SelectSourceFlow.main() =
   RouteFactory.create(
     initialState = ScreenState(),
     execute = ::exec,
-    routeContent = { SelectSourceScreen() },
+    routeContent = ::SelectSourceScreen,
     id = "Select-main",
     errorMapper = {
       ScreenScopeError(

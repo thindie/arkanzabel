@@ -30,18 +30,18 @@ import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
 
 @Composable
-internal fun ScreenScope<ScreenState, ScreenCommand>.SelectSourceScreen() {
-  val screenState by state.collectAsState()
+internal fun SelectSourceScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
+  val screenState by scope.state.collectAsState()
   val context = LocalContext.current
   AppScreen(
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { send(ScreenCommand.Back) },
+        listener = { scope.send(ScreenCommand.Back) },
       ),
   ) {
     Box {
-      BackHandler { send(ScreenCommand.Back) }
+      BackHandler { scope.send(ScreenCommand.Back) }
       LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -69,7 +69,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SelectSourceScreen() {
             title = title,
             subtitle = description,
             loading = false,
-            onClick = { send(ScreenCommand.Select(sentence)) },
+            onClick = { scope.send(ScreenCommand.Select(sentence)) },
           )
         }
         item { VSpacer(56.dp) }
@@ -96,7 +96,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SelectSourceScreen() {
             title = title,
             subtitle = description,
             loading = false,
-            onClick = { send(ScreenCommand.Select(sentence)) },
+            onClick = { scope.send(ScreenCommand.Select(sentence)) },
           )
         }
         item { VSpacer(72.dp) }
@@ -108,7 +108,7 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.SelectSourceScreen() {
             .padding(16.dp),
         enabled = screenState.selected != SelectSourceFlow.Result.NotSelected,
         text = stringResource(R.string.source_select_done),
-        onClick = { send(ScreenCommand.Back) },
+        onClick = { scope.send(ScreenCommand.Back) },
       )
     }
   }
