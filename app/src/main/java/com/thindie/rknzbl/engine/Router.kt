@@ -113,7 +113,7 @@ object RouteFactory {
       )
     },
     initialCommand: InitialCommand<C>? = null,
-    routeContent: @Composable ScreenScope<S, C>.() -> Unit,
+    routeContent: @Composable (ScreenScope<S, C>) -> Unit,
   ): Route {
     return object : Route {
       @Stable
@@ -227,7 +227,7 @@ object RouteFactory {
         LaunchedEffect(initialState, id) {
           disposeCommand.collect { _ -> screenScope = null }
         }
-        screenScope?.routeContent()
+        screenScope?.let { routeContent(it) }
       }
 
       @Stable
