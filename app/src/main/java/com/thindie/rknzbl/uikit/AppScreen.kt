@@ -31,22 +31,23 @@ import com.thindie.rknzbl.engine.State
 import kotlinx.coroutines.delay
 
 @Composable
-fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
+fun <S : State, C : Command> AppScreen(
+  scope: ScreenScope<S, C>,
   modifier: Modifier = Modifier,
   title: String? = null,
   subtitle: String? = null,
   primary: Action? = null,
   secondary: Action? = null,
-  content: @Composable ScreenScope<S, C>.() -> Unit,
+  content: @Composable (ScreenScope<S, C>) -> Unit,
 ) {
   AnimatedContent(
     modifier =
       modifier
         .background(AppTheme.colors.backgroundPrimary),
-    targetState = this,
+    targetState = scope,
   ) { screenScope ->
-    if (error.value != null) {
-      ErrorMessage()
+    if (screenScope.error.value != null) {
+      ErrorMessage(screenScope)
     } else {
       Box(
         Modifier
@@ -66,7 +67,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
         }
         var showEvent by remember { mutableStateOf<ServiceCommand.UiEvent?>(null) }
         LaunchedEffect(screenScope) {
-          event
+          screenScope.event
             .collect {
               showEvent = null
               showEvent = it
@@ -148,7 +149,7 @@ fun <S : State, C : Command> ScreenScope<S, C>.AppScreen(
             null -> error("Must not be reached")
           }
         }
-        if (this@AppScreen.processing.value != null) {
+        if (screenScope.processing.value != null) {
           Box(
             Modifier
               .fillMaxSize()

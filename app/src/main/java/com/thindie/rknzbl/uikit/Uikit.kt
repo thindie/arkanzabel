@@ -223,8 +223,8 @@ fun Modifier.surface(
   )
 
 @Composable
-fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
-  val error = this@ErrorMessage.error.value ?: return
+fun <S : State, C : Command> ErrorMessage(scope: ScreenScope<S, C>) {
+  val error = scope.error.value ?: return
   Column(
     modifier =
       Modifier
@@ -248,10 +248,10 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
+              else -> scope.send(cmd as C)
             }
           },
-          loading = processing.value == cmd,
+          loading = scope.processing.value == cmd,
         )
       }
     }
