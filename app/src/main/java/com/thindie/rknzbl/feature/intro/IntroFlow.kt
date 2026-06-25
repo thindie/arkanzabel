@@ -11,6 +11,7 @@ class IntroFlow(
   val hasPushPermission: Boolean,
   val appContext: Context,
 ) : ScreenFlow<Route, IntroFlow.Result>(router) {
+
   enum class Result {
     Success,
   }

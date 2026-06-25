@@ -29,10 +29,11 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
             when ((appContext as Application).vpnRuntimeState.value) {
               is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
               WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
-              WorkState.Running -> SpeedtestManager.testConnection(
-                context = appContext,
-                port = SettingsManager.getHttpPort(),
-              )
+              WorkState.Running ->
+                SpeedtestManager.testConnection(
+                  context = appContext,
+                  port = SettingsManager.getHttpPort(),
+                )
             }
           profile to result
         },

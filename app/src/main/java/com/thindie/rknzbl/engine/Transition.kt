@@ -4,7 +4,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
-fun <S : State, C : Command> stateSink(scope: ScreenScope<S, C>, block: (ScreenScope<S, C>) -> Unit) {
+fun <S : State, C : Command> stateSink(
+  scope: ScreenScope<S, C>,
+  block: (ScreenScope<S, C>) -> Unit,
+) {
   block(scope)
 }
 

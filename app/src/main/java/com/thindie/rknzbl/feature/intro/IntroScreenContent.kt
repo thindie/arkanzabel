@@ -184,7 +184,7 @@ internal fun IntroScreenContent(scope: ScreenScope<State, CommandIntro>) {
               Button(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.intro_push_continue_without),
-                onClick = { send(CommandIntro.ConfirmRationale) },
+                onClick = { scope.send(CommandIntro.ConfirmRationale) },
               )
             },
             confirmButton = {

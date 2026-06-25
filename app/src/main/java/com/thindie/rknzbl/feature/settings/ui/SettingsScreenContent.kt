@@ -343,7 +343,10 @@ private fun MuxFaqDialog() {
   }
 }
 
-private fun selectLanguage(scope: ScreenScope<ScreenState, ScreenCommand>, currentLanguage: String) {
+private fun selectLanguage(
+  scope: ScreenScope<ScreenState, ScreenCommand>,
+  currentLanguage: String,
+) {
   scope.sendEvent(
     ServiceCommand.UiEvent.Decision(
       content = {

@@ -8,7 +8,7 @@ fun IntroFlow.main() =
   RouteFactory.create(
     initialState = State(),
     execute = ::exec,
-    routeContent = ::IntroScreenContent,
+    routeContent = { scope -> IntroScreenContent(scope) },
     errorMapper = {
       ScreenScopeError(
         message = appContext.getString(R.string.error_unexpected),
@@ -36,7 +36,7 @@ private suspend fun IntroFlow.exec(
           state.copy(stage = Stage.SoftRequest, current = Permission.Push, hint = null)
 
         else -> {
-          finish(Result.Success)
+          finish(IntroFlow.Result.Success)
           state
         }
       }
@@ -69,7 +69,7 @@ private suspend fun IntroFlow.exec(
         }
 
         Permission.Push -> {
-          finish(Result.Success)
+          finish(IntroFlow.Result.Success)
           state
         }
       }
@@ -94,9 +94,9 @@ private suspend fun IntroFlow.exec(
         Permission.Push ->
           when (state.stage) {
             Stage.Loading -> Unit
-            Stage.Rationale -> finish(Result.Success)
-            Stage.SoftRequest -> finish(Result.Success)
-            Stage.RationaleDismissedOnce -> finish(Result.Success)
+            Stage.Rationale -> finish(IntroFlow.Result.Success)
+            Stage.SoftRequest -> finish(IntroFlow.Result.Success)
+            Stage.RationaleDismissedOnce -> finish(IntroFlow.Result.Success)
           }
       }
       state
