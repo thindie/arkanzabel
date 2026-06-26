@@ -9,35 +9,27 @@ import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 
 class SettingsRepositoryImpl(
   private val storage: KeyValueStorage,
 ) : SettingsRepository {
   override suspend fun getThemeMode(): ThemeSwitcher.Choice? = storage.getThemeMode()?.toChoice()
 
-  private val _themeChoice = MutableStateFlow<ThemeSwitcher.Choice?>(null)
+  private val _themeChoice = MutableStateFlow(storage.getThemeMode()?.toChoice())
 
-  override val themeChoice =
-    _themeChoice
-      .filterNotNull()
-      .onStart { storage.getThemeMode()?.toChoice()?.let { emit(it) } }
-      .onEach {
-        storage.setThemeMode(it.toStorageString())
-      }
+  override val themeChoice = _themeChoice
+    .filterNotNull()
+    .onEach { storage.setThemeMode(it.toStorageString()) }
 
   override fun setThemeMode(mode: ThemeSwitcher.Choice): Boolean {
     _themeChoice.value = mode
     return true
   }
 
-  private val _autosaveEnabled = MutableStateFlow<Boolean?>(null)
+  private val _autosaveEnabled = MutableStateFlow(storage.isAutosaveEnabled())
 
-  override val autosaveEnabled =
-    _autosaveEnabled
-      .filterNotNull()
-      .onStart { emit(storage.isAutosaveEnabled()) }
-      .onEach { storage.setAutosaveMode(it) }
+  override val autosaveEnabled = _autosaveEnabled
+    .onEach { storage.setAutosaveMode(it) }
 
   override suspend fun isAutosaveEnabled(): Boolean = storage.isAutosaveEnabled()
 
@@ -47,15 +39,10 @@ class SettingsRepositoryImpl(
   }
 
   // MUX support
-  private val _muxEnabled = MutableStateFlow<Boolean?>(null)
+  private val _muxEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false))
 
-  override val muxEnabled =
-    _muxEnabled
-      .filterNotNull()
-      .onStart { storage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED)?.let { emit(it) } }
-      .onEach {
-        storage.encodeSettings(AppConfig.PREF_MUX_ENABLED, it)
-      }
+  override val muxEnabled = _muxEnabled
+    .onEach { storage.encodeSettings(AppConfig.PREF_MUX_ENABLED, it) }
 
   override fun language(): String? {
     return storage.decodeSettingsString(AppConfig.PREF_LANGUAGE)
@@ -73,13 +60,10 @@ class SettingsRepositoryImpl(
   }
 
   // Local storage mode support
-  private val _isLocalSave = MutableStateFlow<Boolean?>(null)
+  private val _isLocalSave = MutableStateFlow(storage.isLocalSaveEnabled())
 
-  override val isLocalSave =
-    _isLocalSave
-      .filterNotNull()
-      .onStart { emit(storage.isLocalSaveEnabled()) }
-      .onEach { storage.setLocalSaveMode(it) }
+  override val isLocalSave = _isLocalSave
+    .onEach { storage.setLocalSaveMode(it) }
 
   override suspend fun isLocalSaveEnabled(): Boolean = storage.isLocalSaveEnabled()
 
@@ -89,13 +73,10 @@ class SettingsRepositoryImpl(
   }
 
   // Start with favorite profiles support
-  private val _startWithFavoriteProfiles = MutableStateFlow<Boolean?>(null)
+  private val _startWithFavoriteProfiles = MutableStateFlow(storage.isLocalSaveEnabled())
 
-  override val startWithFavoriteProfiles =
-    _startWithFavoriteProfiles
-      .filterNotNull()
-      .onStart { emit(storage.isLocalSaveEnabled()) }
-      .onEach { storage.setLocalSaveMode(it) }
+  override val startWithFavoriteProfiles = _startWithFavoriteProfiles
+    .onEach { storage.setLocalSaveMode(it) }
 
   override fun isStartWithFavoriteProfilesEnabled(): Boolean = storage.isLocalSaveEnabled()
 
@@ -105,15 +86,10 @@ class SettingsRepositoryImpl(
   }
 
   // Speed notification support
-  private val _speedEnabled = MutableStateFlow<Boolean?>(null)
+  private val _speedEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED, false))
 
-  override val speedEnabled =
-    _speedEnabled
-      .filterNotNull()
-      .onStart { storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)?.let { emit(it) } }
-      .onEach {
-        storage.encodeSettings(AppConfig.PREF_SPEED_ENABLED, it)
-      }
+  override val speedEnabled = _speedEnabled
+    .onEach { storage.encodeSettings(AppConfig.PREF_SPEED_ENABLED, it) }
 
   override fun isSpeedEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED, false)
 
@@ -123,21 +99,16 @@ class SettingsRepositoryImpl(
   }
 
   // Custom source URL support
-  private val _customSourceUrl = MutableStateFlow<String?>(null)
+  private val _customSourceUrl = MutableStateFlow(storage.getCustomSourceUrl())
 
-  override val customSourceUrl =
-    _customSourceUrl
-      .filterNotNull()
-      .onStart { storage.getCustomSourceUrl()?.let { emit(it) } }
-      .onEach(storage::setCustomSourceUrl)
+  override val customSourceUrl = _customSourceUrl
+    .filterNotNull()
+    .onEach(storage::setCustomSourceUrl)
 
-  private val customSourceEnabledInternal = MutableStateFlow<Boolean?>(null)
+  private val customSourceEnabledInternal = MutableStateFlow(storage.isCustomSourceEnabled())
 
-  override val isCustomSourceEnabled =
-    customSourceEnabledInternal
-      .filterNotNull()
-      .onStart { emit(storage.isCustomSourceEnabled()) }
-      .onEach(storage::setCustomSourceEnabled)
+  override val isCustomSourceEnabled = customSourceEnabledInternal
+    .onEach(storage::setCustomSourceEnabled)
 
   override fun setCustomSourceUrl(url: String) {
     _customSourceUrl.value = url
