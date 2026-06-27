@@ -17,9 +17,10 @@ class SettingsRepositoryImpl(
 
   private val _themeChoice = MutableStateFlow(storage.getThemeMode()?.toChoice())
 
-  override val themeChoice = _themeChoice
-    .filterNotNull()
-    .onEach { storage.setThemeMode(it.toStorageString()) }
+  override val themeChoice =
+    _themeChoice
+      .filterNotNull()
+      .onEach { storage.setThemeMode(it.toStorageString()) }
 
   override fun setThemeMode(mode: ThemeSwitcher.Choice): Boolean {
     _themeChoice.value = mode
@@ -28,8 +29,9 @@ class SettingsRepositoryImpl(
 
   private val _autosaveEnabled = MutableStateFlow(storage.isAutosaveEnabled())
 
-  override val autosaveEnabled = _autosaveEnabled
-    .onEach { storage.setAutosaveMode(it) }
+  override val autosaveEnabled =
+    _autosaveEnabled
+      .onEach { storage.setAutosaveMode(it) }
 
   override suspend fun isAutosaveEnabled(): Boolean = storage.isAutosaveEnabled()
 
@@ -41,8 +43,9 @@ class SettingsRepositoryImpl(
   // MUX support
   private val _muxEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false))
 
-  override val muxEnabled = _muxEnabled
-    .onEach { storage.encodeSettings(AppConfig.PREF_MUX_ENABLED, it) }
+  override val muxEnabled =
+    _muxEnabled
+      .onEach { storage.encodeSettings(AppConfig.PREF_MUX_ENABLED, it) }
 
   override fun language(): String? {
     return storage.decodeSettingsString(AppConfig.PREF_LANGUAGE)
@@ -62,8 +65,9 @@ class SettingsRepositoryImpl(
   // Local storage mode support
   private val _isLocalSave = MutableStateFlow(storage.isLocalSaveEnabled())
 
-  override val isLocalSave = _isLocalSave
-    .onEach { storage.setLocalSaveMode(it) }
+  override val isLocalSave =
+    _isLocalSave
+      .onEach { storage.setLocalSaveMode(it) }
 
   override suspend fun isLocalSaveEnabled(): Boolean = storage.isLocalSaveEnabled()
 
@@ -75,8 +79,9 @@ class SettingsRepositoryImpl(
   // Start with favorite profiles support
   private val _startWithFavoriteProfiles = MutableStateFlow(storage.isLocalSaveEnabled())
 
-  override val startWithFavoriteProfiles = _startWithFavoriteProfiles
-    .onEach { storage.setLocalSaveMode(it) }
+  override val startWithFavoriteProfiles =
+    _startWithFavoriteProfiles
+      .onEach { storage.setLocalSaveMode(it) }
 
   override fun isStartWithFavoriteProfilesEnabled(): Boolean = storage.isLocalSaveEnabled()
 
@@ -88,8 +93,9 @@ class SettingsRepositoryImpl(
   // Speed notification support
   private val _speedEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED, false))
 
-  override val speedEnabled = _speedEnabled
-    .onEach { storage.encodeSettings(AppConfig.PREF_SPEED_ENABLED, it) }
+  override val speedEnabled =
+    _speedEnabled
+      .onEach { storage.encodeSettings(AppConfig.PREF_SPEED_ENABLED, it) }
 
   override fun isSpeedEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED, false)
 
@@ -101,14 +107,16 @@ class SettingsRepositoryImpl(
   // Custom source URL support
   private val _customSourceUrl = MutableStateFlow(storage.getCustomSourceUrl())
 
-  override val customSourceUrl = _customSourceUrl
-    .filterNotNull()
-    .onEach(storage::setCustomSourceUrl)
+  override val customSourceUrl =
+    _customSourceUrl
+      .filterNotNull()
+      .onEach(storage::setCustomSourceUrl)
 
   private val customSourceEnabledInternal = MutableStateFlow(storage.isCustomSourceEnabled())
 
-  override val isCustomSourceEnabled = customSourceEnabledInternal
-    .onEach(storage::setCustomSourceEnabled)
+  override val isCustomSourceEnabled =
+    customSourceEnabledInternal
+      .onEach(storage::setCustomSourceEnabled)
 
   override fun setCustomSourceUrl(url: String) {
     _customSourceUrl.value = url

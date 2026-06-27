@@ -137,6 +137,13 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
+        label = stringResource(R.string.home_select_storage_mode_title),
+        subtitle = stringResource(R.string.home_select_storage_mode_subtitle),
+        checked = state.isLocalSave ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleStorageMode) },
+      )
+
+      ToggleRow(
         label = stringResource(R.string.settings_custom_source_title),
         subtitle =
           if (state.isCustomSourceEnabled) {
@@ -256,7 +263,13 @@ private fun ToggleRow(
   onCheckedChange: () -> Unit,
 ) {
   Row(
-    modifier = Modifier.fillMaxWidth().clickable(onClick = onCheckedChange).padding(12.dp),
+    modifier =
+      Modifier.fillMaxWidth().clickable(
+        onClick = onCheckedChange,
+        indication = null,
+        interactionSource = null,
+      )
+        .padding(12.dp),
     horizontalArrangement = Arrangement.SpaceBetween,
     verticalAlignment = Alignment.CenterVertically,
   ) {

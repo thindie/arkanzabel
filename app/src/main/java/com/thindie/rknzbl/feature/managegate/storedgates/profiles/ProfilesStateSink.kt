@@ -80,6 +80,7 @@ internal suspend fun FavoriteProfilesFlow.exec(
 
     ScreenCommand.RequestStoredProfiles -> {
       withContext(Dispatchers.IO) {
+        val mode = settingsRepository.isLocalSave.first()
         val profiles = repository.read()
         val active = repository.activeProfile()
         if (active != null) {
@@ -88,6 +89,7 @@ internal suspend fun FavoriteProfilesFlow.exec(
         s.copy(
           profiles = profiles,
           selected = active,
+          isLocalMode = mode,
         )
       }
     }

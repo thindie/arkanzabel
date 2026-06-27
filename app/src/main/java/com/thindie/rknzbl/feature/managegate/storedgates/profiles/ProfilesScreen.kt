@@ -170,50 +170,81 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
         }
       }
       val selectedCount = st.selectedProfiles.size
-      Button(
+      Column(
         modifier =
           Modifier
             .align(Alignment.BottomCenter)
             .padding(16.dp),
-        enabled = established || st.profiles.isEmpty() || selectedCount > 0,
-        text =
-          when {
-            st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
-            scope.processing.value is ScreenCommand.Activate -> ""
-            st.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
-            established -> stringResource(R.string.home_stop_service)
-            else -> stringResource(R.string.home_pick_profile_first)
-          },
-        onClick = {
-          when {
-            selectedCount > 0 -> {
-              if (st.isLocalMode) {
-                scope.send(ScreenCommand.BatchDelete)
-              } else {
-                scope.sendEvent(
-                  ServiceCommand.UiEvent.Decision(
-                    content = {
-                      Aware(
-                        painter = painterResource(R.drawable.ic_close_16),
-                        title = stringResource(R.string.source_stored_delete),
-                        subtitle = stringResource(R.string.source_stored_delete_subtitle),
-                      )
-                    },
-                    primaryAction =
-                      Action(
-                        resRef = R.string.source_select_done,
-                        listener = { scope.send(ScreenCommand.BatchDelete) },
-                      ),
-                  ),
-                )
-              }
-            }
+      ) {
+        if (st.isLocalMode && st.profiles.isEmpty()) {
+          Unit
+        } else {
+          Button(
+            enabled = established || st.profiles.isEmpty() || selectedCount > 0,
+            text =
+              when {
+                st.selectionMode ->
+                  stringResource(
+                    R.string.source_stored_selected_count,
+                    selectedCount,
+                  )
 
-            established -> scope.send(ScreenCommand.StopService)
+                scope.processing.value is ScreenCommand.Activate -> ""
+                st.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
+                established -> stringResource(R.string.home_stop_service)
+                else -> stringResource(R.string.home_pick_profile_first)
+              },
+            onClick = {
+              when {
+                selectedCount > 0 -> {
+                  if (st.isLocalMode) {
+                    scope.send(ScreenCommand.BatchDelete)
+                  } else {
+                    scope.sendEvent(
+                      ServiceCommand.UiEvent.Decision(
+                        content = {
+                          Aware(
+                            painter = painterResource(R.drawable.ic_close_16),
+                            title = stringResource(R.string.source_stored_delete),
+                            subtitle = stringResource(R.string.source_stored_delete_subtitle),
+                          )
+                        },
+                        primaryAction =
+                          Action(
+                            resRef = R.string.source_select_done,
+                            listener = { scope.send(ScreenCommand.BatchDelete) },
+                          ),
+                      ),
+                    )
+                  }
+                }
+
+                established -> scope.send(ScreenCommand.StopService)
+                st.profiles.isEmpty() && !st.isLocalMode -> {
+                  scope.send(ScreenCommand.RequestStoredProfiles)
+                }
+              }
+            },
+            loading = scope.processing.value is ScreenCommand.Activate,
+          )
+        }
+        val storageLabel =
+          if (st.isLocalMode) {
+            stringResource(R.string.source_stored_local)
+          } else {
+            stringResource(R.string.source_stored_remote)
           }
-        },
-        loading = scope.processing.value is ScreenCommand.Activate,
-      )
+        VSpacer(2.dp)
+
+        val icon = if (st.isLocalMode) R.drawable.ic_home_24 else R.drawable.ic_more_circle_24
+        SentenceRow(
+          modifier = Modifier.align(Alignment.CenterHorizontally),
+          painter = painterResource(icon),
+          title = storageLabel,
+          subtitle = null,
+          loading = false,
+        )
+      }
     }
   }
 }

@@ -113,6 +113,8 @@
 <string name="source_stored_delete_subtitle">пропадут у всех!</string>
 <string name="source_stored_delete_hint">Долгий тап по профилю активирует режим удаления</string>
 <string name="source_stored_selected_count">Удалить их: %d</string>
+<string name="source_stored_local">Локальный</string>
+<string name="source_stored_remote">Удалённый</string>
 <string name="source_subtitle_all_configs">Все конфиги</string>
 <string name="source_subtitle_top150_phone">150 лучших для телефона</string>
 <string name="source_subtitle_top150_phone_1">150 лучших для телефона (1)</string>

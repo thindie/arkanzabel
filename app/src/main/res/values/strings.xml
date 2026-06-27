@@ -113,6 +113,8 @@
     <string name="source_stored_delete_subtitle">they will be removed for everyone!</string>
     <string name="source_stored_delete_hint">Long-tap a profile to activate delete mode</string>
     <string name="source_stored_selected_count">Delete %d items:</string>
+    <string name="source_stored_local">Local</string>
+    <string name="source_stored_remote">Remote</string>
     <string name="source_subtitle_all_configs">All configs</string>
     <string name="source_subtitle_top150_phone">Top 150 for phone</string>
     <string name="source_subtitle_top150_phone_1">Top 150 for phone (1)</string>
