@@ -445,6 +445,22 @@ object KeyValueStorage {
     mainStorage.encode(KEY_SAVED_PROFILES_JSON, profilesJson)
   }
 
+  // === Custom Source URL ===
+  private const val KEY_CUSTOM_SOURCE_URL = "custom_source_url"
+  private const val KEY_CUSTOM_SOURCE_ENABLED = "custom_source_enabled"
+
+  fun getCustomSourceUrl(): String? = decodeSettingsString(KEY_CUSTOM_SOURCE_URL)
+
+  fun setCustomSourceUrl(url: String?): Boolean {
+    return encodeSettings(KEY_CUSTOM_SOURCE_URL, url)
+  }
+
+  fun isCustomSourceEnabled(): Boolean = decodeSettingsBool(KEY_CUSTOM_SOURCE_ENABLED, false)
+
+  fun setCustomSourceEnabled(enabled: Boolean): Boolean {
+    return encodeSettings(KEY_CUSTOM_SOURCE_ENABLED, enabled)
+  }
+
   fun getThemeMode(): String? = decodeSettingsString(KEY_THEME_MODE)
 
   fun setThemeMode(mode: String): Boolean {

@@ -50,6 +50,9 @@
     <string name="intro_push_continue_without">Continue without notifications</string>
 
     <string name="error_unexpected">Something went wrong. Try again.</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="error_connection_failed">Failed to connect</string>
+    <string name="error_http_failed">HTTP error %d</string>
     <string name="btn_close">Close</string>
 
     <string name="home_choose_source">Choose source</string>
@@ -99,6 +102,7 @@
     <string name="error_action_retry">Try again</string>
 
     <string name="source_select_done">Done</string>
+    <string name="settings_custom_source_save">Save</string>
     <string name="source_black_ss_title">Blacklist Shadowsocks+All</string>
     <string name="source_black_vless_title">Blacklist VLESS</string>
     <string name="source_white_cidr_title">Whitelist / CIDR</string>
@@ -109,12 +113,26 @@
     <string name="source_stored_delete_subtitle">they will be removed for everyone!</string>
     <string name="source_stored_delete_hint">Long-tap a profile to activate delete mode</string>
     <string name="source_stored_selected_count">Delete %d items:</string>
+    <string name="source_stored_local">Local</string>
+    <string name="source_stored_remote">Remote</string>
     <string name="source_subtitle_all_configs">All configs</string>
     <string name="source_subtitle_top150_phone">Top 150 for phone</string>
     <string name="source_subtitle_top150_phone_1">Top 150 for phone (1)</string>
     <string name="source_subtitle_top150_phone_2">Top 150 for phone (2)</string>
     <string name="source_subtitle_ru_services">VK, YA, CDN, Beeline configs</string>
     <string name="source_subtitle_stored">Verified</string>
+
+    <!-- Custom source settings -->
+    <string name="settings_custom_source_title">Custom Source URL</string>
+    <string name="settings_custom_source_subtitle_off">Disabled</string>
+    <string name="settings_custom_source_placeholder">Enter profile link URL</string>
+
+    <!-- Custom source validation errors -->
+    <string name="custom_source_error_empty_url">URL cannot be empty</string>
+    <string name="custom_source_error_invalid_url">Must start with http:// or https://</string>
+
+    <string name="source_custom_title">Custom Source URL</string>
+    <string name="source_subtitle_custom">Use your own link for profile delivery</string>
 
     <!-- Theme mode strings -->
     <string name="home_select_settings">Settings</string>
@@ -159,7 +177,7 @@
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
-<string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+<string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
 
     <!-- Local storage mode warning dialog -->
     <string name="storage_mode_warning_title">Warning</string>

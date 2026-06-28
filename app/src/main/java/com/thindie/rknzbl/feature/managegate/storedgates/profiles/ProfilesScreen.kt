@@ -1,9 +1,7 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,17 +18,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
@@ -44,33 +36,33 @@ import com.thindie.rknzbl.uikit.AppScreen
 import com.thindie.rknzbl.uikit.AppTheme
 import com.thindie.rknzbl.uikit.Button
 import com.thindie.rknzbl.uikit.HSpacer
+import com.thindie.rknzbl.uikit.ProfileBorderState
 import com.thindie.rknzbl.uikit.SentenceRow
 import com.thindie.rknzbl.uikit.VSpacer
+import com.thindie.rknzbl.uikit.profileBorder
 import com.v2ray.ang.runtime.SpeedtestManager
-import kotlinx.coroutines.delay
 
 @Composable
-internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
-  val screenState by state.collectAsState()
-  val established =
-    screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
+internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
+  val st by scope.state.collectAsState()
+  val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
+    scope = scope,
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
         listener = {
-          send(command = ScreenCommand.BackRequested)
+          scope.send(command = ScreenCommand.BackRequested)
         },
       ),
   ) {
-    BackHandler { send(ScreenCommand.BackRequested) }
-    val st by state.collectAsState()
+    BackHandler { scope.send(ScreenCommand.BackRequested) }
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
       isRefreshing = false,
       modifier = Modifier.height(height),
       onRefresh = {
-        send(ScreenCommand.RequestStoredProfiles)
+        scope.send(ScreenCommand.RequestStoredProfiles)
       },
     ) {
       LazyColumn(
@@ -106,93 +98,23 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
             }
           }
         }
-        items(
-          items = screenState.profiles,
-        ) { item ->
-          val isPendingDelete = item in screenState.selectedProfiles
-          val profileRunning = screenState.selected?.subscriptionId == item.subscriptionId && established
+        items(items = st.profiles) { item ->
+          val isPendingDelete = item in st.selectedProfiles
+          val profileRunning = st.selected?.subscriptionId == item.subscriptionId && established
           val isFailedSpeedTest =
-            screenState.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
+            st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Err
+          val borderState =
+            when {
+              st.selected != item -> ProfileBorderState.Inactive
+              st.selectedTestConnectionMessage == null -> ProfileBorderState.Testing
+              st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok ->
+                ProfileBorderState.Connected
+              else -> ProfileBorderState.Failed
+            }
           SentenceRow(
             modifier =
               Modifier
-                .then(
-                  if (screenState.selected == item) {
-                    if (st.selectedTestConnectionMessage == null) {
-                      var progress by remember { mutableStateOf(0f) }
-                      var moveRight by remember { mutableStateOf(true) }
-                      LaunchedEffect(Unit) {
-                        while (true) {
-                          if (moveRight) {
-                            if (progress > 1f) {
-                              moveRight = false
-                              progress -= 0.1f
-                            } else {
-                              progress += 0.1f
-                            }
-                          } else {
-                            if (progress < -1f) {
-                              moveRight = true
-                              progress += 0.1f
-                            } else {
-                              progress -= 0.1f
-                            }
-                          }
-                          delay(50)
-                        }
-                      }
-
-                      Modifier
-                        .border(
-                          brush =
-                            Brush.linearGradient(
-                              colors =
-                                listOf(
-                                  AppTheme.colors.contentPrimary,
-                                  AppTheme.colors.contentSecondary,
-                                  AppTheme.colors.backgroundSecondary,
-                                  AppTheme.colors.contentSecondary,
-                                  AppTheme.colors.backgroundPrimary,
-                                ),
-                              start = Offset(progress * 500f, 0f),
-                              end = Offset((progress + 1f) * 500f, 200f),
-                            ),
-                          shape = RoundedCornerShape(20.dp),
-                          width = 1.2.dp,
-                        )
-                    } else {
-                      Modifier
-                        .border(
-                          border =
-                            BorderStroke(
-                              width = 1.2.dp,
-                              color =
-                                when (st.selectedTestConnectionMessage) {
-                                  is SpeedtestManager.SpeedTestResult.Err -> AppTheme.colors.errorPrimary
-                                  is SpeedtestManager.SpeedTestResult.Ok -> AppTheme.colors.accentPrimary
-                                  null -> AppTheme.colors.backgroundSecondary
-                                },
-                            ),
-                          shape = RoundedCornerShape(20.dp),
-                        )
-                    }
-                  } else {
-                    Modifier
-                      .border(
-                        border =
-                          BorderStroke(
-                            width = 1.2.dp,
-                            color =
-                              if (screenState.selected == item && established) {
-                                AppTheme.colors.accentPrimary
-                              } else {
-                                AppTheme.colors.backgroundSecondary
-                              },
-                          ),
-                        shape = RoundedCornerShape(20.dp),
-                      )
-                  },
-                )
+                .profileBorder(borderState)
                 .fillMaxWidth(),
             painter =
               when {
@@ -228,17 +150,17 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
               },
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = {
-              if (screenState.selectionMode) {
-                send(ScreenCommand.TogglePendingDelete(item))
+              if (st.selectionMode) {
+                scope.send(ScreenCommand.TogglePendingDelete(item))
               } else {
-                send(ScreenCommand.Activate(item))
+                scope.send(ScreenCommand.Activate(item))
               }
             },
             onLongClick = {
               if (st.selectionMode) {
-                send(ScreenCommand.ExitMultiDeletionMode)
+                scope.send(ScreenCommand.ExitMultiDeletionMode)
               } else {
-                send(ScreenCommand.EnterMultiDeletionMode(item))
+                scope.send(ScreenCommand.EnterMultiDeletionMode(item))
               }
             },
           )
@@ -247,47 +169,82 @@ internal fun ScreenScope<ScreenState, ScreenCommand>.ProfilesScreen() {
           VSpacer(72.dp)
         }
       }
-      val selectedCount = screenState.selectedProfiles.size
-      Button(
+      val selectedCount = st.selectedProfiles.size
+      Column(
         modifier =
           Modifier
             .align(Alignment.BottomCenter)
             .padding(16.dp),
-        enabled = established || screenState.profiles.isEmpty() || selectedCount > 0,
-        text =
-          when {
-            st.selectionMode -> stringResource(R.string.source_stored_selected_count, selectedCount)
-            this@ProfilesScreen.processing.value is ScreenCommand.Activate -> ""
-            screenState.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
-            established -> stringResource(R.string.home_stop_service)
-            else -> stringResource(R.string.home_pick_profile_first)
-          },
-        onClick = {
-          when {
-            selectedCount > 0 -> {
-              sendEvent(
-                ServiceCommand.UiEvent.Decision(
-                  content = {
-                    Aware(
-                      painter = painterResource(R.drawable.ic_close_16),
-                      title = stringResource(R.string.source_stored_delete),
-                      subtitle = stringResource(R.string.source_stored_delete_subtitle),
-                    )
-                  },
-                  primaryAction =
-                    Action(
-                      resRef = R.string.source_select_done,
-                      listener = { send(ScreenCommand.BatchDelete) },
-                    ),
-                ),
-              )
-            }
+      ) {
+        if (st.isLocalMode && st.profiles.isEmpty()) {
+          Unit
+        } else {
+          Button(
+            enabled = established || st.profiles.isEmpty() || selectedCount > 0,
+            text =
+              when {
+                st.selectionMode ->
+                  stringResource(
+                    R.string.source_stored_selected_count,
+                    selectedCount,
+                  )
 
-            established -> send(ScreenCommand.StopService)
+                scope.processing.value is ScreenCommand.Activate -> ""
+                st.profiles.isEmpty() -> stringResource(R.string.home_fetch_profiles)
+                established -> stringResource(R.string.home_stop_service)
+                else -> stringResource(R.string.home_pick_profile_first)
+              },
+            onClick = {
+              when {
+                selectedCount > 0 -> {
+                  if (st.isLocalMode) {
+                    scope.send(ScreenCommand.BatchDelete)
+                  } else {
+                    scope.sendEvent(
+                      ServiceCommand.UiEvent.Decision(
+                        content = {
+                          Aware(
+                            painter = painterResource(R.drawable.ic_close_16),
+                            title = stringResource(R.string.source_stored_delete),
+                            subtitle = stringResource(R.string.source_stored_delete_subtitle),
+                          )
+                        },
+                        primaryAction =
+                          Action(
+                            resRef = R.string.source_select_done,
+                            listener = { scope.send(ScreenCommand.BatchDelete) },
+                          ),
+                      ),
+                    )
+                  }
+                }
+
+                established -> scope.send(ScreenCommand.StopService)
+                st.profiles.isEmpty() && !st.isLocalMode -> {
+                  scope.send(ScreenCommand.RequestStoredProfiles)
+                }
+              }
+            },
+            loading = scope.processing.value is ScreenCommand.Activate,
+          )
+        }
+        val storageLabel =
+          if (st.isLocalMode) {
+            stringResource(R.string.source_stored_local)
+          } else {
+            stringResource(R.string.source_stored_remote)
           }
-        },
-        loading = this@ProfilesScreen.processing.value is ScreenCommand.Activate,
-      )
+        VSpacer(2.dp)
+
+        val icon = if (st.isLocalMode) R.drawable.ic_home_24 else R.drawable.ic_more_circle_24
+        SentenceRow(
+          modifier = Modifier.align(Alignment.CenterHorizontally),
+          painter = painterResource(icon),
+          title = storageLabel,
+          subtitle = null,
+          loading = false,
+        )
+      }
     }
   }
 }

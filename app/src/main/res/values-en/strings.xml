@@ -50,6 +50,9 @@
 <string name="intro_push_continue_without">Continue without notifications</string>
 
 <string name="error_unexpected">Something went wrong. Try again.</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="error_connection_failed">Failed to connect</string>
+    <string name="error_http_failed">HTTP error %d</string>
 <string name="btn_close">Close</string>
 
 <string name="home_choose_source">Choose source</string>
@@ -109,12 +112,22 @@
 <string name="source_stored_delete_subtitle">they will be removed for everyone!</string>
 <string name="source_stored_delete_hint">Long-tap a profile to activate delete mode</string>
 <string name="source_stored_selected_count">Delete %d items:</string>
+<string name="source_stored_local">Local</string>
+<string name="source_stored_remote">Remote</string>
 <string name="source_subtitle_all_configs">All configs</string>
 <string name="source_subtitle_top150_phone">Top 150 for phone</string>
 <string name="source_subtitle_top150_phone_1">Top 150 for phone (1)</string>
 <string name="source_subtitle_top150_phone_2">Top 150 for phone (2)</string>
 <string name="source_subtitle_ru_services">VK, YA, CDN, Beeline configs</string>
 <string name="source_subtitle_stored">Verified</string>
+
+<!-- Custom source settings -->
+<string name="settings_custom_source_title">Custom Source URL</string>
+<string name="settings_custom_source_subtitle_off">Disabled</string>
+<string name="settings_custom_source_placeholder">Enter profile link URL</string>
+
+<string name="source_custom_title">Custom Source URL</string>
+<string name="source_subtitle_custom">Use your own link for profile delivery</string>
 
 <!-- Theme mode strings -->
 <string name="home_select_settings">Settings</string>

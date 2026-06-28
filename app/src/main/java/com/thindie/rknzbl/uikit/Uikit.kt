@@ -30,11 +30,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
@@ -47,12 +53,81 @@ import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.engine.Command
 import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ScreenScopeError
 import com.thindie.rknzbl.engine.ServiceCommand
 import com.thindie.rknzbl.engine.State
+import com.thindie.rknzbl.engine.ref
+import kotlinx.coroutines.delay
 
 private object ContentAlpha {
   const val DISABLED: Float = 0.3f
+}
+
+enum class ProfileBorderState { Inactive, Testing, Connected, Failed }
+
+@Composable
+fun Modifier.profileBorder(state: ProfileBorderState): Modifier {
+  var progress by remember { mutableStateOf(0f) }
+  var moveRight by remember { mutableStateOf(true) }
+  LaunchedEffect(state) {
+    if (state != ProfileBorderState.Testing) {
+      progress = 0f
+      return@LaunchedEffect
+    }
+    while (true) {
+      if (moveRight) {
+        if (progress > 1f) {
+          moveRight = false
+          progress -= 0.1f
+        } else {
+          progress += 0.1f
+        }
+      } else {
+        if (progress < -1f) {
+          moveRight = true
+          progress += 0.1f
+        } else {
+          progress -= 0.1f
+        }
+      }
+      delay(50)
+    }
+  }
+  val colors = AppTheme.colors
+  return when (state) {
+    ProfileBorderState.Inactive ->
+      border(
+        border = BorderStroke(1.2.dp, colors.backgroundSecondary),
+        shape = RoundedCornerShape(20.dp),
+      )
+    ProfileBorderState.Testing ->
+      border(
+        brush =
+          Brush.linearGradient(
+            colors =
+              listOf(
+                colors.contentPrimary,
+                colors.contentSecondary,
+                colors.backgroundSecondary,
+                colors.contentSecondary,
+                colors.backgroundPrimary,
+              ),
+            start = Offset(progress * 500f, 0f),
+            end = Offset((progress + 1f) * 500f, 200f),
+          ),
+        shape = RoundedCornerShape(20.dp),
+        width = 1.2.dp,
+      )
+    ProfileBorderState.Connected ->
+      border(
+        border = BorderStroke(1.2.dp, colors.accentPrimary),
+        shape = RoundedCornerShape(20.dp),
+      )
+    ProfileBorderState.Failed ->
+      border(
+        border = BorderStroke(1.2.dp, colors.errorPrimary),
+        shape = RoundedCornerShape(20.dp),
+      )
+  }
 }
 
 @Composable
@@ -73,7 +148,11 @@ fun Button(
 
   val backgroundColor by animateColorAsState(
     if (enabled) {
-      AppTheme.colors.accentPrimary
+      if (loading) {
+        AppTheme.colors.onAccentPrimary
+      } else {
+        AppTheme.colors.accentPrimary
+      }
     } else {
       AppTheme.colors.backgroundSecondary
     },
@@ -144,8 +223,8 @@ fun Modifier.surface(
   )
 
 @Composable
-fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
-  val error = this@ErrorMessage.error.value ?: return
+fun <S : State, C : Command> ErrorMessage(scope: ScreenScope<S, C>) {
+  val error = scope.error.value ?: return
   Column(
     modifier =
       Modifier
@@ -159,50 +238,20 @@ fun <S : State, C : Command> ScreenScope<S, C>.ErrorMessage() {
       text = error.message,
       style = AppTheme.typography.titleMedium,
     )
-    Row(
-      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Column(
+      verticalArrangement = Arrangement.spacedBy(8.dp),
       modifier = Modifier.padding(top = 16.dp),
     ) {
-      error.actions[ScreenScopeError.Actions.Common.DismissMain]?.let { cmd ->
+      error.actions.entries.forEach { (a, cmd) ->
         Button(
-          text = stringResource(R.string.btn_close),
+          text = stringResource(a.ref ?: R.string.btn_close),
           onClick = {
             when {
               cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
+              else -> scope.send(cmd as C)
             }
           },
-          loading = processing.value == cmd,
-        )
-      }
-      error.actions[ScreenScopeError.Actions.Common.ButtonSecondaryRetry]?.let { cmd ->
-        val action =
-          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-            .first { it is ScreenScopeError.Actions.Common.ButtonSecondaryRetry }
-        Button(
-          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
-          onClick = {
-            when {
-              cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
-            }
-          },
-          loading = processing.value == cmd,
-        )
-      }
-      error.actions[ScreenScopeError.Actions.Common.ButtonMain]?.let { cmd ->
-        val action =
-          error.actions.keys.filterIsInstance<ScreenScopeError.Actions.Common>()
-            .first { it is ScreenScopeError.Actions.Common.ButtonMain }
-        Button(
-          text = action.titleRes?.let { stringResource(it) }.orEmpty(),
-          onClick = {
-            when {
-              cmd as? ServiceCommand.Prioritized != null -> cmd.execute()
-              else -> send(cmd as C)
-            }
-          },
-          loading = processing.value == cmd,
+          loading = scope.processing.value == cmd,
         )
       }
     }
@@ -444,7 +493,7 @@ fun Dialog(
           Button(
             text = stringResource(secondary.resRef),
             onClick = {
-              secondary.listener
+              secondary.listener()
             },
           )
         }

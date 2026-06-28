@@ -6,6 +6,7 @@ import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 
 internal fun HomeFlow.settingsStateSink(
   screenScope: ScreenScope<ScreenState, ScreenCommand>,
@@ -46,5 +47,15 @@ internal fun HomeFlow.settingsStateSink(
   screenScope.sub(repository.speedEnabled)
     .transition { state, enabled ->
       state.copy(speedEnabled = enabled)
+    }
+
+  screenScope.sub(repository.isCustomSourceEnabled)
+    .transition { state, enabled ->
+      state.copy(isCustomSourceEnabled = enabled)
+    }
+
+  screenScope.sub(repository.customSourceUrl.mapNotNull { it?.ifBlank { null } })
+    .transition { state, source ->
+      state.copy(customSourceUrl = source)
     }
 }
