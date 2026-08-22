@@ -28,7 +28,7 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
               is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Idle -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
               WorkState.Running ->
                 SpeedtestManager.testConnection(
                   context = appContext,
@@ -127,8 +127,8 @@ internal suspend fun FavoriteProfilesFlow.exec(
               config = c.profile,
             ),
         )
-        (appContext as Application).vpnRuntimeState.filter { it is WorkState.NotRunning }.first()
-        appContext.vpnRuntimeState.filterNot { it is WorkState.NotRunning }.first()
+        (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
+        appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
         selected.tryEmit(c.profile)
         s.copy(
           selected = c.profile,
