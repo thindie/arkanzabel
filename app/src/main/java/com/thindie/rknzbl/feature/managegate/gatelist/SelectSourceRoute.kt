@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.RouteFactory
 import com.thindie.engine.core.ScreenScopeError
+import com.thindie.rknzbl.R
 
 fun SelectSourceFlow.main() =
   RouteFactory.create(

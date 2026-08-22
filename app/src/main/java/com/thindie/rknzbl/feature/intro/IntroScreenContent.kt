@@ -25,12 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.rknzbl.R
 
 @Composable
 internal fun IntroScreenContent(scope: ScreenScope<ViewState, CommandIntro>) {

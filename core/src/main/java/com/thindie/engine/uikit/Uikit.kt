@@ -509,18 +509,18 @@ fun Modifier.profileBorder(state: ProfileBorderState): Modifier {
     ProfileBorderState.Testing ->
       border(
         brush =
-            linearGradient(
-              colors =
-                listOf(
-                  colors.contentPrimary,
-                  colors.contentSecondary,
-                  colors.backgroundSecondary,
-                  colors.contentSecondary,
-                  colors.backgroundPrimary,
-                ),
-              start = Offset(progress * 500f, 0f),
-              end = Offset((progress + 1f) * 500f, 200f),
-            ),
+          linearGradient(
+            colors =
+              listOf(
+                colors.contentPrimary,
+                colors.contentSecondary,
+                colors.backgroundSecondary,
+                colors.contentSecondary,
+                colors.backgroundPrimary,
+              ),
+            start = Offset(progress * 500f, 0f),
+            end = Offset((progress + 1f) * 500f, 200f),
+          ),
         shape = RoundedCornerShape(20.dp),
         width = 1.2.dp,
       )

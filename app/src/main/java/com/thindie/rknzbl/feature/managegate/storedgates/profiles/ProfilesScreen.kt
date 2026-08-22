@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.uikit.Action
@@ -40,6 +39,7 @@ import com.thindie.engine.uikit.ProfileBorderState
 import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
+import com.thindie.rknzbl.R
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable

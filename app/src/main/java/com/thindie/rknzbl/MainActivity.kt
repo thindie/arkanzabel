@@ -34,13 +34,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
-import com.thindie.rknzbl.application.Application
 import com.thindie.engine.core.Route
-import com.thindie.rknzbl.feature.home.HomeFlow
-import com.thindie.rknzbl.feature.intro.IntroFlow
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.application.Application
+import com.thindie.rknzbl.feature.home.HomeFlow
+import com.thindie.rknzbl.feature.intro.IntroFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -77,13 +77,14 @@ class MainActivity : ComponentActivity() {
           }
           .start()
       }
-      val themeSwitcher = remember {
-        ThemeSwitcher().apply {
-          lifecycleScope.launch {
-            app.applicationScope.settings.repository.themeChoice.firstOrNull()?.let(this@apply::set )
+      val themeSwitcher =
+        remember {
+          ThemeSwitcher().apply {
+            lifecycleScope.launch {
+              app.applicationScope.settings.repository.themeChoice.firstOrNull()?.let(this@apply::set)
+            }
           }
         }
-      }
       CompositionLocalProvider(
         LocalThemeSwitcher provides themeSwitcher,
       ) {

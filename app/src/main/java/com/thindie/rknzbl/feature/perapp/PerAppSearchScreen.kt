@@ -36,13 +36,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.rknzbl.R
 
 @Composable
 internal fun PerAppSearchScreen(scope: ScreenScope<SearchState, PerAppSearchCommand>) {

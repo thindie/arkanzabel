@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.intro
 
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.RouteFactory
 import com.thindie.engine.core.ScreenScopeError
+import com.thindie.rknzbl.R
 
 fun IntroFlow.main() =
   RouteFactory.create(

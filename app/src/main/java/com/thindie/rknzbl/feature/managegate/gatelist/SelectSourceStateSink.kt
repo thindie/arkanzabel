@@ -1,10 +1,10 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
-import com.thindie.rknzbl.application.Application
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.stateSink
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
+import com.thindie.rknzbl.application.Application
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull

@@ -21,7 +21,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
@@ -29,6 +28,7 @@ import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.WSpacer
+import com.thindie.rknzbl.R
 
 @Composable
 internal fun InputUrlScreenContent(scope: ScreenScope<InputUrlState, InputUrlCommand>) {

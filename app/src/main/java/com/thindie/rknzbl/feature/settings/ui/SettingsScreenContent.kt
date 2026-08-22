@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.thindie.rknzbl.R
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.uikit.Action
@@ -35,6 +34,7 @@ import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.engine.uikit.Toggle
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
+import com.thindie.rknzbl.R
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {

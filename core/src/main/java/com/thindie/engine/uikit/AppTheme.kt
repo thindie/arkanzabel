@@ -36,38 +36,38 @@ class AppColors(
 )
 
 private val LightColorScheme =
-    AppColors(
-        contentPrimary = Color(0xFF1A1A1A),
-        contentSecondary = Color(0xFF757575),
-        contentTertiary = Color(0xFFB3B3B3),
-        backgroundPrimary = Color.White,
-        backgroundSecondary = Color(0xFFF5F7FA),
-        cardPrimary = Color.White,
-        accentPrimary = Color(0xFF4766FF),
-        onAccentPrimary = Color(0xFFF5F7FA),
-        buttonAccent = Color(0xFF4766FF),
-        onButtonAccent = Color(0xFFF5F7FA),
-        successPrimary = Color(0xFF2E7D32),
-        errorPrimary = Color(0xFFD32F2F),
-        buttonContentPrimary = Color(0xFFF5F7FA),
-    )
+  AppColors(
+    contentPrimary = Color(0xFF1A1A1A),
+    contentSecondary = Color(0xFF757575),
+    contentTertiary = Color(0xFFB3B3B3),
+    backgroundPrimary = Color.White,
+    backgroundSecondary = Color(0xFFF5F7FA),
+    cardPrimary = Color.White,
+    accentPrimary = Color(0xFF4766FF),
+    onAccentPrimary = Color(0xFFF5F7FA),
+    buttonAccent = Color(0xFF4766FF),
+    onButtonAccent = Color(0xFFF5F7FA),
+    successPrimary = Color(0xFF2E7D32),
+    errorPrimary = Color(0xFFD32F2F),
+    buttonContentPrimary = Color(0xFFF5F7FA),
+  )
 
 private val DarkColorScheme =
-    AppColors(
-        contentPrimary = Color(0xFFF5F5F5),
-        contentSecondary = Color(0xFF9E9E9E),
-        contentTertiary = Color(0xFF6E6E6E),
-        backgroundPrimary = Color(0xFF121212),
-        backgroundSecondary = Color(0xFF1E1E1E),
-        cardPrimary = Color(0xFF1E1E1E),
-        accentPrimary = Color(0xFF9DADFF),
-        onAccentPrimary = Color(0xFF121212),
-        buttonAccent = Color(0xFF9DADFF),
-        onButtonAccent = Color(0xFF121212),
-        successPrimary = Color(0xFF4CAF50),
-        errorPrimary = Color(0xFFF44336),
-        buttonContentPrimary = Color(0xFF121212),
-    )
+  AppColors(
+    contentPrimary = Color(0xFFF5F5F5),
+    contentSecondary = Color(0xFF9E9E9E),
+    contentTertiary = Color(0xFF6E6E6E),
+    backgroundPrimary = Color(0xFF121212),
+    backgroundSecondary = Color(0xFF1E1E1E),
+    cardPrimary = Color(0xFF1E1E1E),
+    accentPrimary = Color(0xFF9DADFF),
+    onAccentPrimary = Color(0xFF121212),
+    buttonAccent = Color(0xFF9DADFF),
+    onButtonAccent = Color(0xFF121212),
+    successPrimary = Color(0xFF4CAF50),
+    errorPrimary = Color(0xFFF44336),
+    buttonContentPrimary = Color(0xFF121212),
+  )
 
 class ThemeSwitcher {
   private val _themeFlow =
