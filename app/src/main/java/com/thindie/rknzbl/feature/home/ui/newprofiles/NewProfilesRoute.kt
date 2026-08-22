@@ -100,8 +100,8 @@ private suspend fun HomeFlow.exec(
               config = command.profile,
             ),
         )
-        (appContext as Application).vpnRuntimeState.filter { it is WorkState.NotRunning }.first()
-        appContext.vpnRuntimeState.filterNot { it is WorkState.NotRunning }.first()
+        (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
+        appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
         selected.tryEmit(command.profile)
         homeState.copy(
           selected = command.profile,

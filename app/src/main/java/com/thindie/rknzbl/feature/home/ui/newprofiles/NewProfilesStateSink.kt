@@ -76,7 +76,7 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
               is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Idle -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
               WorkState.Running ->
                 SpeedtestManager.testConnection(
                   context = appContext,
