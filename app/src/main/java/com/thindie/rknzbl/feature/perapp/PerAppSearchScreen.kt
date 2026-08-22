@@ -50,7 +50,7 @@ internal fun PerAppSearchScreen(scope: ScreenScope<SearchState, PerAppSearchComm
   val snackText = stringResource(R.string.per_app_proxy_added_snack)
   val focusRequester = remember { FocusRequester() }
   AppScreen(
-    scope = scope,
+    screenScope = scope,
     modifier = Modifier.imePadding(),
     primary =
       Action(
