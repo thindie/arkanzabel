@@ -12,12 +12,12 @@ fun HomeFlow.createInputUrl() =
         InputUrlCommand.Back -> {
           back()
           settingsRepository.setCustomSourceEnabled(false)
-          s
+          null
         }
         InputUrlCommand.Done -> {
           settingsRepository.setCustomSourceUrl(s.url)
           back()
-          s
+          null
         }
       }
     },

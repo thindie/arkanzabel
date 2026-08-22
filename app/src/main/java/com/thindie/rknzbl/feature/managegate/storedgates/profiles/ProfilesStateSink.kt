@@ -66,16 +66,16 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
 internal suspend fun FavoriteProfilesFlow.exec(
   c: ScreenCommand,
   s: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (c) {
     ScreenCommand.BackRequested -> {
       finish(Unit)
-      s
+      null
     }
 
     ScreenCommand.Dismissed -> {
       finish(Unit)
-      s
+      null
     }
 
     ScreenCommand.RequestStoredProfiles -> {

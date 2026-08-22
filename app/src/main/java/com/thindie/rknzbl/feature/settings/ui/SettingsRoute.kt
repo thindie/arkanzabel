@@ -24,7 +24,7 @@ fun HomeFlow.settings(
 
       ScreenCommand.Back -> {
         back()
-        s
+        null
       }
 
       is ScreenCommand.SelectLanguage -> {
@@ -32,7 +32,7 @@ fun HomeFlow.settings(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
           val localeManager = appContext.getSystemService(LocaleManager::class.java)
           localeManager.applicationLocales = LocaleList.forLanguageTags(c.languageCode)
-          s
+          null
         } else {
           s.copy(legacyRestart = true)
         }
@@ -71,7 +71,7 @@ fun HomeFlow.settings(
         } else {
           repository.setCustomSourceEnabled(true)
           go(createInputUrl())
-          s.copy(isCustomSourceEnabled = true)
+          null
         }
       }
 

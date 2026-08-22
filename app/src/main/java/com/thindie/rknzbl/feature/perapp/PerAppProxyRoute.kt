@@ -34,11 +34,11 @@ fun PerAppProxyFlow.main() =
 internal suspend fun PerAppProxyFlow.execMain(
   command: PerAppProxyCommand,
   state: ViewState,
-): ViewState {
+): ViewState? {
   return when (command) {
     PerAppProxyCommand.Back -> {
       finish(Unit)
-      state
+      null
     }
 
     PerAppProxyCommand.LoadApps -> {
@@ -76,7 +76,7 @@ internal suspend fun PerAppProxyFlow.execMain(
 
     PerAppProxyCommand.OpenSearch -> {
       go(search())
-      state
+      null
     }
 
     is PerAppProxyCommand.RemovePackage -> {

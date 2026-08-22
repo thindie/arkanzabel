@@ -14,15 +14,14 @@ fun HomeFlow.select(
   initialState = ScreenState(),
   execute = { c: ScreenCommand, s: ScreenState ->
     when (c) {
-      ScreenCommand.Home -> startStoredProfilesFlow { }
-      ScreenCommand.New -> go(newProfiles())
-      ScreenCommand.Settings -> go(settings(settingsRepository, connectionProfileRepository))
-      ScreenCommand.PerAppProxy -> startPerAppProxyFlow()
-      ScreenCommand.Back -> finish(Unit)
-      ScreenCommand.FetchAutoSaved -> repository.fetchAutoSaved()
-      ScreenCommand.DismissAutoSaved -> repository.markAutoSavedSeen()
+      ScreenCommand.Home -> { startStoredProfilesFlow { }; null }
+      ScreenCommand.New -> { go(newProfiles()); null }
+      ScreenCommand.Settings -> { go(settings(settingsRepository, connectionProfileRepository)); null }
+      ScreenCommand.PerAppProxy -> { startPerAppProxyFlow(); null }
+      ScreenCommand.Back -> { finish(Unit); null }
+      ScreenCommand.FetchAutoSaved -> { repository.fetchAutoSaved(); s }
+      ScreenCommand.DismissAutoSaved -> { repository.markAutoSavedSeen(); s }
     }
-    s
   },
   initialCommand = { ScreenCommand.FetchAutoSaved },
   stateSink = ::selectStateSink,

@@ -25,7 +25,7 @@ fun IntroFlow.main() =
 private suspend fun IntroFlow.exec(
   command: CommandIntro,
   state: ViewState,
-): ViewState {
+): ViewState? {
   return when (command) {
     CommandIntro.Start -> {
       when {
@@ -37,7 +37,7 @@ private suspend fun IntroFlow.exec(
 
         else -> {
           finish(IntroFlow.Result.Success)
-          state
+          null
         }
       }
     }
@@ -70,7 +70,7 @@ private suspend fun IntroFlow.exec(
 
         Permission.Push -> {
           finish(IntroFlow.Result.Success)
-          state
+          null
         }
       }
     }
@@ -99,7 +99,7 @@ private suspend fun IntroFlow.exec(
             Stage.RationaleDismissedOnce -> finish(IntroFlow.Result.Success)
           }
       }
-      state
+      null
     }
   }
 }

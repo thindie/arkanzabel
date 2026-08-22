@@ -83,11 +83,11 @@ private fun HomeFlow.newProfilesErrorMapper(e: Throwable): ScreenScopeError {
 private suspend fun HomeFlow.exec(
   command: ScreenCommand,
   homeState: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (command) {
     is ScreenCommand.Back -> {
       back()
-      homeState
+      null
     }
 
     is ScreenCommand.Select -> {
@@ -130,7 +130,7 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Stop -> {
       V2RayServiceManager.stopVService(appContext)
-      homeState
+      null
     }
 
     ScreenCommand.Refresh -> {
@@ -157,18 +157,18 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Choose -> {
       startSelectSourceFlow()
-      homeState
+      null
     }
 
     is ScreenCommand.Save -> {
       val guid = KeyValueStorage.getSelectServer()
       repository.save(requireNotNull(guid))
-      homeState
+      null
     }
 
     ScreenCommand.OpenPerAppProxy -> {
       startPerAppProxyFlow()
-      homeState
+      null
     }
   }
 }

@@ -29,11 +29,11 @@ fun PerAppProxyFlow.search() =
 internal suspend fun PerAppProxyFlow.execSearch(
   command: PerAppSearchCommand,
   state: SearchState,
-): SearchState {
+): SearchState? {
   return when (command) {
     PerAppSearchCommand.Back -> {
       back()
-      state
+      null
     }
 
     PerAppSearchCommand.LoadApps -> {

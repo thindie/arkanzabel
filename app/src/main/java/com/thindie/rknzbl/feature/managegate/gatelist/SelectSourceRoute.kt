@@ -22,11 +22,11 @@ fun SelectSourceFlow.main() =
 private suspend fun SelectSourceFlow.exec(
   command: ScreenCommand,
   state: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (command) {
     is ScreenCommand.Back -> {
       finish(state.selected)
-      state
+      null
     }
 
     is ScreenCommand.Select -> {
