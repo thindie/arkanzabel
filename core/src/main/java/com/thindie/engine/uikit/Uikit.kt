@@ -30,13 +30,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
@@ -51,6 +55,7 @@ import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ScreenScopeError
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.core.ViewState
+import kotlinx.coroutines.delay
 
 @Immutable
 sealed class ButtonVariant(
@@ -504,18 +509,18 @@ fun Modifier.profileBorder(state: ProfileBorderState): Modifier {
     ProfileBorderState.Testing ->
       border(
         brush =
-          Brush.linearGradient(
-            colors =
-              listOf(
-                colors.contentPrimary,
-                colors.contentSecondary,
-                colors.backgroundSecondary,
-                colors.contentSecondary,
-                colors.backgroundPrimary,
-              ),
-            start = Offset(progress * 500f, 0f),
-            end = Offset((progress + 1f) * 500f, 200f),
-          ),
+            linearGradient(
+              colors =
+                listOf(
+                  colors.contentPrimary,
+                  colors.contentSecondary,
+                  colors.backgroundSecondary,
+                  colors.contentSecondary,
+                  colors.backgroundPrimary,
+                ),
+              start = Offset(progress * 500f, 0f),
+              end = Offset((progress + 1f) * 500f, 200f),
+            ),
         shape = RoundedCornerShape(20.dp),
         width = 1.2.dp,
       )

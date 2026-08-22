@@ -79,12 +79,12 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
 
           AppConfig.MSG_STATE_NOT_RUNNING -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: not running")
-            vpnRuntimeState.value = WorkState.NotRunning
+            vpnRuntimeState.value = WorkState.Idle
           }
           AppConfig.MSG_STATE_STOP_SUCCESS,
           -> {
             Log.i(AppConfig.TAG, "vpnActivityReceiver: stopped")
-            vpnRuntimeState.value = WorkState.NotRunning
+            vpnRuntimeState.value = WorkState.Idle
           }
 
           AppConfig.MSG_STATE_SAVE_PROFILE -> {
@@ -105,7 +105,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       extraBufferCapacity = 3,
       BufferOverflow.DROP_LATEST,
     )
-  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.NotRunning)
+  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.Idle)
 
   override fun onCreate() {
     super.onCreate()
@@ -124,7 +124,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       ContextCompat.RECEIVER_NOT_EXPORTED,
     )
     enqueueActiveProfileAutoSaveWork()
-    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.NotRunning
+    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle
   }
 
   private fun enqueueActiveProfileAutoSaveWork() {

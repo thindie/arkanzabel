@@ -42,6 +42,7 @@ import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -76,7 +77,13 @@ class MainActivity : ComponentActivity() {
           }
           .start()
       }
-      val themeSwitcher = remember { ThemeSwitcher(repository = app.applicationScope.settings.repository) }
+      val themeSwitcher = remember {
+        ThemeSwitcher().apply {
+          lifecycleScope.launch {
+            app.applicationScope.settings.repository.themeChoice.firstOrNull()?.let(this@apply::set )
+          }
+        }
+      }
       CompositionLocalProvider(
         LocalThemeSwitcher provides themeSwitcher,
       ) {
