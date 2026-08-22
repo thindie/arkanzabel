@@ -34,7 +34,7 @@ internal fun SelectSourceScreen(scope: ScreenScope<ScreenState, ScreenCommand>) 
   val screenState by scope.state.collectAsState()
   val context = LocalContext.current
   AppScreen(
-    scope = scope,
+    screenScope = scope,
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
