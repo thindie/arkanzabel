@@ -19,4 +19,4 @@ data class ScreenState(
       SelectSourceFlow.Result.WhiteListAll,
       SelectSourceFlow.Result.WhiteListRussian,
     ),
-) : com.thindie.rknzbl.engine.State
+) : com.thindie.engine.core.ViewState

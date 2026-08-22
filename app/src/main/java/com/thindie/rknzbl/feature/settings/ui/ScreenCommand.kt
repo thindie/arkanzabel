@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.settings.ui
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 internal sealed interface ScreenCommand : Command {
   data object Back : ScreenCommand

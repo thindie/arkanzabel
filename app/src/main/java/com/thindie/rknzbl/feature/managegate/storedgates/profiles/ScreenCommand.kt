@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 import com.v2ray.ang.dto.ConnectionProfile
 
 sealed interface ScreenCommand : Command {

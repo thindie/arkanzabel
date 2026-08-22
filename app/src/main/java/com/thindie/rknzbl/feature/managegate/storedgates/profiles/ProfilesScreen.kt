@@ -29,17 +29,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.uikit.Action
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.Button
-import com.thindie.rknzbl.uikit.HSpacer
-import com.thindie.rknzbl.uikit.ProfileBorderState
-import com.thindie.rknzbl.uikit.SentenceRow
-import com.thindie.rknzbl.uikit.VSpacer
-import com.thindie.rknzbl.uikit.profileBorder
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.uikit.Action
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.Button
+import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.ProfileBorderState
+import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.VSpacer
+import com.thindie.engine.uikit.profileBorder
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable

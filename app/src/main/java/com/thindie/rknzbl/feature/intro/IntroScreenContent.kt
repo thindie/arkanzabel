@@ -26,14 +26,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.Button
-import com.thindie.rknzbl.uikit.SentenceRow
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.Button
+import com.thindie.engine.uikit.SentenceRow
 
 @Composable
-internal fun IntroScreenContent(scope: ScreenScope<State, CommandIntro>) {
+internal fun IntroScreenContent(scope: ScreenScope<ViewState, CommandIntro>) {
   val st by scope.state.collectAsState()
   val activity = LocalActivity.current
   val launcher =

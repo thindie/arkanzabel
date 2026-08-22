@@ -32,6 +32,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -460,4 +462,72 @@ fun Dialog(
         null
       },
   )
+}
+
+enum class ProfileBorderState { Inactive, Testing, Connected, Failed }
+
+@Composable
+fun Modifier.profileBorder(state: ProfileBorderState): Modifier {
+  var progress by remember { mutableStateOf(0f) }
+  var moveRight by remember { mutableStateOf(true) }
+  LaunchedEffect(state) {
+    if (state != ProfileBorderState.Testing) {
+      progress = 0f
+      return@LaunchedEffect
+    }
+    while (true) {
+      if (moveRight) {
+        if (progress > 1f) {
+          moveRight = false
+          progress -= 0.1f
+        } else {
+          progress += 0.1f
+        }
+      } else {
+        if (progress < -1f) {
+          moveRight = true
+          progress += 0.1f
+        } else {
+          progress -= 0.1f
+        }
+      }
+      delay(50)
+    }
+  }
+  val colors = AppTheme.colors
+  return when (state) {
+    ProfileBorderState.Inactive ->
+      border(
+        border = BorderStroke(1.2.dp, colors.backgroundSecondary),
+        shape = RoundedCornerShape(20.dp),
+      )
+    ProfileBorderState.Testing ->
+      border(
+        brush =
+          Brush.linearGradient(
+            colors =
+              listOf(
+                colors.contentPrimary,
+                colors.contentSecondary,
+                colors.backgroundSecondary,
+                colors.contentSecondary,
+                colors.backgroundPrimary,
+              ),
+            start = Offset(progress * 500f, 0f),
+            end = Offset((progress + 1f) * 500f, 200f),
+          ),
+        shape = RoundedCornerShape(20.dp),
+        width = 1.2.dp,
+      )
+    ProfileBorderState.Connected ->
+      border(
+        border = BorderStroke(1.2.dp, colors.accentPrimary),
+        shape = RoundedCornerShape(20.dp),
+      )
+    ProfileBorderState.Failed ->
+      border(
+        border = BorderStroke(1.2.dp, colors.errorPrimary),
+        shape = RoundedCornerShape(20.dp),
+      )
+  }
 }

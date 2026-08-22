@@ -3,7 +3,7 @@ package com.thindie.rknzbl.feature.settings.ui
 import android.app.LocaleManager
 import android.os.Build
 import android.os.LocaleList
-import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository

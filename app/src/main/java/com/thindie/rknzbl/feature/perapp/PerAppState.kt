@@ -9,15 +9,15 @@ data class AppRow(
 )
 
 @Immutable
-data class State(
+data class ViewState(
   val mode: ProxyScopeMode,
   val allApps: List<AppRow>,
   val selectedPackages: Set<String>,
-) : com.thindie.rknzbl.engine.State
+) : com.thindie.engine.core.ViewState
 
 @Immutable
 data class SearchState(
   val searchQuery: String,
   val allApps: List<AppRow>,
   val selectedPackages: Set<String>,
-) : com.thindie.rknzbl.engine.State
+) : com.thindie.engine.core.ViewState

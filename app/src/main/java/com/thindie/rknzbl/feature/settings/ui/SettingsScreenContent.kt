@@ -24,17 +24,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.uikit.Action
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.HSpacer
-import com.thindie.rknzbl.uikit.LocalThemeSwitcher
-import com.thindie.rknzbl.uikit.ThemeSwitcher
-import com.thindie.rknzbl.uikit.Toggle
-import com.thindie.rknzbl.uikit.TopAppBar
-import com.thindie.rknzbl.uikit.VSpacer
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.uikit.Action
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.LocalThemeSwitcher
+import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.engine.uikit.Toggle
+import com.thindie.engine.uikit.TopAppBar
+import com.thindie.engine.uikit.VSpacer
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {

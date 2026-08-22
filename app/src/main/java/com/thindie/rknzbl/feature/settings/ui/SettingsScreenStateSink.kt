@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.settings.ui
 
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import kotlinx.coroutines.flow.flow

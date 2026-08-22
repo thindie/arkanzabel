@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.settings.data.theme
 
-import com.thindie.rknzbl.uikit.ThemeSwitcher
+import com.thindie.engine.uikit.ThemeSwitcher
 
 /**
  * Extension functions for theme conversion.

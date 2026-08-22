@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.settings.ui.inputurl
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 internal sealed interface InputUrlCommand : Command {
   data object Back : InputUrlCommand

@@ -1,9 +1,9 @@
 package com.thindie.rknzbl.feature.home.ui.select
 
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.stateSink
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.stateSink
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 
 internal fun HomeFlow.selectStateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {

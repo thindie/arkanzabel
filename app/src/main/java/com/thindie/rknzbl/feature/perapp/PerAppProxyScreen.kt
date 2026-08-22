@@ -26,15 +26,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.uikit.Action
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.SentenceRow
-import com.thindie.rknzbl.uikit.surface
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.uikit.Action
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.surface
 
 @Composable
-internal fun PerAppProxyScreen(scope: ScreenScope<State, PerAppProxyCommand>) {
+internal fun PerAppProxyScreen(scope: ScreenScope<ViewState, PerAppProxyCommand>) {
   val screenState by scope.state.collectAsState()
   LaunchedEffect(Unit) {
     scope.send(PerAppProxyCommand.RefreshFromStorage)

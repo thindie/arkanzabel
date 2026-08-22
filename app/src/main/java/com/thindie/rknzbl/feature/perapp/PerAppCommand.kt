@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.perapp
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 sealed interface PerAppProxyCommand : Command {
   data object Back : PerAppProxyCommand

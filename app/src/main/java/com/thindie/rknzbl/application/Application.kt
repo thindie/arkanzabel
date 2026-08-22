@@ -17,8 +17,8 @@ import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.di.ApplicationScope
 import com.thindie.rknzbl.application.work.ActiveProfileAutoSaveWorker
 import com.thindie.rknzbl.application.work.RknzblWorkerFactory
-import com.thindie.rknzbl.engine.Router
-import com.thindie.rknzbl.engine.WorkState
+import com.thindie.engine.core.Router
+import com.thindie.engine.core.WorkState
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage

@@ -35,12 +35,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.engine.Route
+import com.thindie.engine.core.Route
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.intro.IntroFlow
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.LocalThemeSwitcher
-import com.thindie.rknzbl.uikit.ThemeSwitcher
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.LocalThemeSwitcher
+import com.thindie.engine.uikit.ThemeSwitcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
