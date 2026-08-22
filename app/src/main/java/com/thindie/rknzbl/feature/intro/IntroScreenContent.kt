@@ -78,7 +78,7 @@ internal fun IntroScreenContent(scope: ScreenScope<ViewState, CommandIntro>) {
   BackHandler { scope.send(CommandIntro.Dismiss) }
 
   AppScreen(
-    scope = scope,
+    screenScope = scope,
     title =
       stringResource(
         when (st.current) {
