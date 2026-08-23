@@ -121,7 +121,10 @@ object RouteFactory {
     errorMapper: (e: Throwable) -> ScreenScopeError = { _ ->
       ScreenScopeError(
         message = "Unexpected Error",
-        actions = mapOf(),
+        actions =
+          mapOf(
+            ScreenScopeError.Actions.Common.DismissMain to ServiceCommand.DismissError,
+          ),
       )
     },
     initialCommand: InitialCommand<C>? = null,

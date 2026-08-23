@@ -117,6 +117,7 @@ fun Button(
     ) {
       CircularProgress(
         modifier = Modifier.size(24.dp),
+        color = contentColor,
       )
     }
 
@@ -357,10 +358,13 @@ fun SentenceRow(
 }
 
 @Composable
-fun CircularProgress(modifier: Modifier = Modifier) {
+fun CircularProgress(
+  modifier: Modifier = Modifier,
+  color: Color = AppTheme.colors.accentPrimary,
+) {
   CircularProgressIndicator(
     modifier = modifier,
-    color = AppTheme.colors.accentPrimary,
+    color = color,
     strokeWidth = 1.2.dp,
     strokeCap = StrokeCap.Round,
   )
