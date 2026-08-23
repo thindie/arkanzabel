@@ -189,4 +189,9 @@
     <string name="settings_speed_notification_subtitle">Display current speed in notification</string>
     <string name="settings_speed_notification_restart_title">Restart service</string>
     <string name="settings_speed_notification_restart_message">restart service from the notification for changes to take effect.</string>
+
+    <!-- New profiles ping -->
+    <string name="home_profile_unreachable">Unreachable</string>
+    <string name="home_profile_ping_ms">%d ms</string>
+    <string name="home_profile_checking">Checking…</string>
 </resources>

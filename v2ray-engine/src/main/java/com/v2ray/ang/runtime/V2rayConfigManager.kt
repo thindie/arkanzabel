@@ -88,6 +88,20 @@ object V2rayConfigManager {
     }
   }
 
+  /**
+   * Builds core JSON for outbound delay measurement from an in-memory [config].
+   *
+   * Only normal protocols are supported — [Protocol.Custom] and [Protocol.PolicyGroup] require a
+   * stored profile (GUID) and are not supported here. Use for unsaved profiles that are not
+   * persisted to the database.
+   */
+  fun getV2rayConfig4Speedtest(
+    context: Context,
+    config: ConnectionProfile,
+  ): V2Ray {
+    return getV2rayNormalConfig4Speedtest(context, "", config)
+  }
+
   private fun getV2rayCustomConfig(
     context: Context,
     guid: String,

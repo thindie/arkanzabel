@@ -46,6 +46,8 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
         },
     )
 
+  val profilePingManager = ProfilePingManager(this)
+
   override val workManagerConfiguration: Configuration
     get() =
       Configuration.Builder()

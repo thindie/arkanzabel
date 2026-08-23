@@ -185,4 +185,9 @@
 <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>
 <string name="storage_mode_warning_ok">Got it</string>
 
+<!-- New profiles ping -->
+<string name="home_profile_unreachable">Unreachable</string>
+<string name="home_profile_ping_ms">%d ms</string>
+<string name="home_profile_checking">Checking…</string>
+
 </resources>

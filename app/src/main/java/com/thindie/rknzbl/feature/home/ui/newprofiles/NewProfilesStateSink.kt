@@ -71,6 +71,18 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     }
 
     s.sub(
+      ((appContext as Application).profilePingManager.results),
+    ).transition { state, results ->
+      state.copy(pingResults = results)
+    }
+
+    s.sub(
+      ((appContext as Application).profilePingManager.inFlight),
+    ).transition { state, inFlight ->
+      state.copy(inFlightProfiles = inFlight)
+    }
+
+    s.sub(
       selected
         .mapLatest { profile ->
           val result =

@@ -92,16 +92,19 @@ private suspend fun HomeFlow.exec(
 
     is ScreenCommand.Select -> {
       withContext(Dispatchers.Default) {
+        val guid =
+          KeyValueStorage.encodeServerConfig(
+            guid = UUID.randomUUID().toString(),
+            config = command.profile,
+          )
         V2RayServiceManager.startVService(
           context = appContext,
-          guid =
-            KeyValueStorage.encodeServerConfig(
-              guid = UUID.randomUUID().toString(),
-              config = command.profile,
-            ),
+          guid = guid,
         )
         (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
         appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
+        // Persist a fresh latency reading for the just-saved profile.
+        (appContext as Application).profilePingManager.pingSaved(guid)
         selected.tryEmit(command.profile)
         homeState.copy(
           selected = command.profile,
@@ -124,7 +127,9 @@ private suspend fun HomeFlow.exec(
             }
             ?.awaitAll()
             ?.mapNotNull { it }
-        homeState.copy(links = parsed.orEmpty())
+        val result = parsed.orEmpty()
+        (appContext as Application).profilePingManager.pingProfiles(result)
+        homeState.copy(links = result)
       }
     }
 
@@ -147,7 +152,9 @@ private suspend fun HomeFlow.exec(
             }
             ?.awaitAll()
             ?.mapNotNull { it }
-        homeState.copy(links = parsed ?: homeState.links)
+        val result = parsed ?: homeState.links
+        (appContext as Application).profilePingManager.pingProfiles(result)
+        homeState.copy(links = result)
       }
     }
 

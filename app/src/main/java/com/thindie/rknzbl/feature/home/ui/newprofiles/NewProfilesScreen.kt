@@ -32,7 +32,9 @@ import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.SpeedtestManager
+import java.util.Comparator
 
 @Composable
 fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -94,7 +96,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
             loading = false,
           )
         }
-        items(items = st.links) { item ->
+        items(items = st.links.sortedWith(pingOrder(st.pingResults))) { item ->
           val borderState =
             when {
               st.selected != item -> ProfileBorderState.Inactive
@@ -103,6 +105,8 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 ProfileBorderState.Connected
               else -> ProfileBorderState.Failed
             }
+          val ping = st.pingResults[item]
+          val checking = item in st.inFlightProfiles
           SentenceRow(
             modifier =
               Modifier
@@ -110,7 +114,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 .fillMaxWidth(),
             painter = painterResource(R.drawable.ic_internet_24),
             title = item.remarks + item.serverPort.orEmpty(),
-            subtitle = item.flow ?: item.server ?: item.serviceName ?: "",
+            subtitle = profileSubtitle(item, ping, checking),
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = { scope.send(ScreenCommand.Select(item)) },
             onLongClick =
@@ -163,5 +167,36 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
         },
       )
     }
+  }
+}
+
+/**
+ * Orders profiles so that those with a known latency come first, sorted ascending by delay
+ * (faster first, unreachable last). Profiles without a ping result keep their relative order.
+ */
+private fun pingOrder(pingResults: Map<ConnectionProfile, Long>): Comparator<ConnectionProfile> =
+  compareBy<ConnectionProfile> { profile ->
+    when (val delay = pingResults[profile]) {
+      null -> Long.MAX_VALUE
+      else -> delay
+    }
+  }
+
+/**
+ * Renders the ping result for a profile: a "checking" label while it is being measured in the
+ * background, the delay in milliseconds once measured, or a fallback label when the profile is
+ * unreachable or has not been measured yet.
+ */
+@Composable
+private fun profileSubtitle(
+  item: ConnectionProfile,
+  ping: Long?,
+  checking: Boolean,
+): String {
+  return when {
+    checking -> stringResource(R.string.home_profile_checking)
+    ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
+    ping < 0 -> stringResource(R.string.home_profile_unreachable)
+    else -> stringResource(R.string.home_profile_ping_ms, ping)
   }
 }
