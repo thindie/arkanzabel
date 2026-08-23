@@ -21,4 +21,6 @@ sealed interface ScreenCommand : Command {
   data object Dismissed : ScreenCommand
 
   data object OpenPerAppProxy : ScreenCommand
+
+  data class Filter(val mode: FilterMode) : ScreenCommand
 }

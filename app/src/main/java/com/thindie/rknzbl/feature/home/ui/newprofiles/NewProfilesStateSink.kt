@@ -73,7 +73,10 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     s.sub(
       ((appContext as Application).profilePingManager.results),
     ).transition { state, results ->
-      state.copy(pingResults = results)
+      state.copy(
+        pingResults = results,
+        availableCount = state.links.count { isAvailable(results[it]) },
+      )
     }
 
     s.sub(

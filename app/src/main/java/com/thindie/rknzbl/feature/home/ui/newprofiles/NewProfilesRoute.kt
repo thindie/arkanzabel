@@ -177,5 +177,9 @@ private suspend fun HomeFlow.exec(
       startPerAppProxyFlow()
       null
     }
+
+    is ScreenCommand.Filter -> {
+      homeState.copy(filter = command.mode)
+    }
   }
 }

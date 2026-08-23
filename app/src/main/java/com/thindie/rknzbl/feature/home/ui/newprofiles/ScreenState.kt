@@ -14,4 +14,6 @@ data class ScreenState(
   val selectedTestConnectionMessage: SpeedtestManager.SpeedTestResult? = null,
   val pingResults: Map<ConnectionProfile, Long> = emptyMap(),
   val inFlightProfiles: Set<ConnectionProfile> = emptySet(),
+  val filter: FilterMode = FilterMode.All,
+  val availableCount: Int = 0,
 ) : ViewState

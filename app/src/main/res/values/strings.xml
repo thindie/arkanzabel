@@ -56,7 +56,10 @@
     <string name="btn_close">Close</string>
 
     <string name="home_choose_source">Choose source</string>
-    <string name="home_source_selected_prefix">Selected:</string>
+    <string name="home_source_selected_prefix">Выбрано: %s</string>
+    <string name="home_filter_all">Все</string>
+    <string name="home_filter_available">Доступные</string>
+    <string name="home_filter_no_available">Нет доступных профилей</string>
     <string name="home_fetch_profiles">Download lists</string>
     <string name="home_stop_service">Stop service</string>
     <string name="home_pick_profile_first">Select a profile first</string>

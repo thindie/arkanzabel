@@ -2,7 +2,10 @@ package com.thindie.rknzbl.feature.home.ui.newprofiles
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -60,7 +64,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
       ) {
         stickyHeader {
-          Row(
+          Column(
             modifier =
               Modifier
                 .fillMaxWidth()
@@ -70,6 +74,12 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
               text = stringResource(R.string.home_downloaded_profiles_header),
               style = AppTheme.typography.headlineLarge,
               color = AppTheme.colors.contentPrimary,
+            )
+            FilterToggle(
+              selected = st.filter,
+              availableCount = st.availableCount,
+              onAll = { scope.send(ScreenCommand.Filter(FilterMode.All)) },
+              onAvailable = { scope.send(ScreenCommand.Filter(FilterMode.Available)) },
             )
           }
         }
@@ -96,7 +106,12 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
             loading = false,
           )
         }
-        items(items = st.links.sortedWith(pingOrder(st.pingResults))) { item ->
+        val visible =
+          when (st.filter) {
+            FilterMode.All -> st.links
+            FilterMode.Available -> st.links.filter { isAvailable(st.pingResults[it]) }
+          }
+        items(items = visible.sortedWith(pingOrder(st.pingResults))) { item ->
           val borderState =
             when {
               st.selected != item -> ProfileBorderState.Inactive
@@ -140,6 +155,15 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 null
               },
           )
+        }
+        if (visible.isEmpty()) {
+          item {
+            Text(
+              text = stringResource(R.string.home_filter_no_available),
+              style = AppTheme.typography.bodyMedium,
+              color = AppTheme.colors.contentSecondary,
+            )
+          }
         }
         item {
           VSpacer(72.dp)
@@ -198,5 +222,71 @@ private fun profileSubtitle(
     ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
     ping < 0 -> stringResource(R.string.home_profile_unreachable)
     else -> stringResource(R.string.home_profile_ping_ms, ping)
+  }
+}
+
+/**
+ * Segmented toggle that switches the profile list between showing all profiles and only the
+ * available ones. [availableCount] is shown next to the "Available" option so the user knows how
+ * many profiles would remain after filtering.
+ */
+@Composable
+private fun FilterToggle(
+  selected: FilterMode,
+  availableCount: Int,
+  onAll: () -> Unit,
+  onAvailable: () -> Unit,
+) {
+  val options = listOf(FilterMode.All, FilterMode.Available)
+  val selectedIndex = options.indexOf(selected)
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .padding(vertical = 12.dp),
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    options.forEachIndexed { index, option ->
+      val isSelected = index == selectedIndex
+      val label =
+        if (option == FilterMode.All) {
+          stringResource(R.string.home_filter_all)
+        } else {
+          stringResource(R.string.home_filter_available)
+        }
+      Box(
+        modifier =
+          Modifier
+            .weight(1f)
+            .clickable(onClick = if (option == FilterMode.All) onAll else onAvailable)
+            .background(
+              color =
+                if (isSelected) {
+                  AppTheme.colors.accentPrimary
+                } else {
+                  AppTheme.colors.backgroundSecondary
+                },
+              shape = RoundedCornerShape(8.dp),
+            )
+            .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+      ) {
+        Text(
+          text = label,
+          style =
+            if (isSelected) {
+              AppTheme.typography.titleSmall
+            } else {
+              AppTheme.typography.bodyMedium
+            },
+          color =
+            if (isSelected) {
+              AppTheme.colors.onAccentPrimary
+            } else {
+              AppTheme.colors.contentSecondary
+            },
+        )
+      }
+    }
   }
 }
