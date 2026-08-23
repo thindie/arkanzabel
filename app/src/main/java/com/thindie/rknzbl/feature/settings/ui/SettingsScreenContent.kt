@@ -3,6 +3,7 @@ package com.thindie.rknzbl.feature.settings.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,17 +12,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
@@ -205,6 +213,40 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       MuxFaqRow { sendMuxFaq(scope) }
+
+      // === Fragment ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_fragment_title))
+      VSpacer(16.dp)
+
+      ToggleRow(
+        label = stringResource(R.string.settings_fragment_title),
+        subtitle =
+          if (state.fragmentEnabled == true) {
+            stringResource(R.string.settings_fragment_subtitle)
+          } else {
+            stringResource(R.string.settings_fragment_subtitle_off)
+          },
+        checked = state.fragmentEnabled ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleFragment) },
+      )
+
+      if (state.fragmentEnabled == true) {
+        VSpacer(8.dp)
+        Text(
+          text = stringResource(R.string.settings_fragment_hint),
+          style = AppTheme.typography.bodySmall,
+          color = AppTheme.colors.contentSecondary,
+        )
+        VSpacer(8.dp)
+        FragmentIntervalField(
+          value = state.fragmentInterval.orEmpty(),
+          placeholder = stringResource(R.string.settings_fragment_interval_placeholder),
+          onValueChange = { scope.send(ScreenCommand.SetFragmentInterval(it)) },
+        )
+      }
     }
   }
 }
@@ -279,6 +321,38 @@ private fun ToggleRow(
       Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
     }
     Toggle(checked = checked)
+  }
+}
+
+@Composable
+private fun FragmentIntervalField(
+  value: String,
+  placeholder: String,
+  onValueChange: (String) -> Unit,
+) {
+  val focusRequester = remember { FocusRequester() }
+  Column(modifier = Modifier.fillMaxWidth()) {
+    BasicTextField(
+      modifier =
+        Modifier
+          .focusRequester(focusRequester)
+          .fillMaxWidth()
+          .background(
+            AppTheme.colors.backgroundSecondary,
+            shape = RoundedCornerShape(16.dp),
+          )
+          .padding(12.dp),
+      textStyle = TextStyle(color = AppTheme.colors.contentPrimary),
+      value = value,
+      onValueChange = onValueChange,
+      singleLine = true,
+    )
+  }
+  LaunchedEffect(Unit) {
+    focusRequester.requestFocus()
+  }
+  DisposableEffect(Unit) {
+    onDispose { focusRequester.freeFocus() }
   }
 }
 

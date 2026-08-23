@@ -175,6 +175,13 @@
 <string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
 <string name="mux_faq_ok">Понятно</string>
 
+<!-- Fragment strings -->
+<string name="settings_fragment_title">Fragment</string>
+<string name="settings_fragment_subtitle">Добавляет случайные пакеты до handshake</string>
+<string name="fragment_faq_title">Что такое Fragment?</string>
+<string name="fragment_faq_body">Fragment добавляет случайные пакеты до TLS-handshake, из-за чего трафик меньше похож на известный VPN. Работает только на протоколах TLS или REALITY — на plain TCP или HTTP ничего не даёт.</string>
+<string name="fragment_faq_ok">Понятно</string>
+
 <!-- Speed notification strings -->
 <string name="settings_speed_notification_title">Показывать скорость</string>
 <string name="settings_speed_notification_subtitle">Отображать текущую скорость в уведомлении</string>

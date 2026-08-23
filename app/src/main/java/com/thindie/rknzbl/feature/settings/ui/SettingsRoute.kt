@@ -19,7 +19,7 @@ fun HomeFlow.settings(
       is ScreenCommand.ToggleAutosave -> {
         val current = s.autosaveEnabled ?: true
         repository.toggleAutosave(!current)
-        s.copy(autosaveEnabled = !current)
+        null
       }
 
       ScreenCommand.Back -> {
@@ -41,33 +41,44 @@ fun HomeFlow.settings(
       ScreenCommand.ToggleMux -> {
         val current = s.muxEnabled ?: false
         repository.toggleMux(!current)
-        s.copy(muxEnabled = !current)
+        null
+      }
+
+      ScreenCommand.ToggleFragment -> {
+        val current = s.fragmentEnabled ?: false
+        repository.toggleFragment(!current)
+        null
+      }
+
+      is ScreenCommand.SetFragmentInterval -> {
+        repository.setFragmentInterval(c.interval)
+        null
       }
 
       ScreenCommand.ToggleStorageMode -> {
         val current = s.isLocalSave ?: false
         repository.toggleLocalSave(!current)
         connectionProfileRepository.invalidateCaches()
-        s.copy(isLocalSave = !current)
+        null
       }
 
       ScreenCommand.StartWithFavoriteProfiles -> {
         val current = s.startWithFavoriteProfiles ?: false
         repository.toggleStartWithFavoriteProfiles(!current)
-        s.copy(startWithFavoriteProfiles = !current)
+        null
       }
 
       ScreenCommand.ToggleSpeed -> {
         val current = s.speedEnabled ?: false
         repository.toggleSpeed(!current)
-        s.copy(speedEnabled = !current)
+        null
       }
 
       ScreenCommand.ToggleCustomSource -> {
         val current = s.isCustomSourceEnabled
         if (current) {
           repository.setCustomSourceEnabled(false)
-          s.copy(isCustomSourceEnabled = false, customSourceUrl = null)
+          s.copy(customSourceUrl = null)
         } else {
           repository.setCustomSourceEnabled(true)
           go(createInputUrl())
@@ -77,7 +88,7 @@ fun HomeFlow.settings(
 
       is ScreenCommand.SetCustomSourceUrl -> {
         repository.setCustomSourceUrl(c.url)
-        s.copy(customSourceUrl = c.url)
+        null
       }
     }
   },

@@ -13,6 +13,12 @@ internal sealed interface ScreenCommand : Command {
   // MUX toggle command
   data object ToggleMux : ScreenCommand
 
+  /** Global fragment toggle (Recommendation #5) */
+  data object ToggleFragment : ScreenCommand
+
+  /** Set global fragment interval string */
+  data class SetFragmentInterval(val interval: String) : ScreenCommand
+
   // Local storage mode toggle command
   data object ToggleStorageMode : ScreenCommand
 

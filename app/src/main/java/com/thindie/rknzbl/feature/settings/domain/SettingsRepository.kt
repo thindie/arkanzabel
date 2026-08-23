@@ -35,6 +35,23 @@ interface SettingsRepository {
   /** Reactive flow for MUX state updates */
   val muxEnabled: Flow<Boolean>
 
+  suspend fun isFragmentEnabled(): Boolean
+
+  /** Enable or disable global packet fragmentation for all TLS/REALITY outbounds */
+  suspend fun toggleFragment(enabled: Boolean): Boolean
+
+  /** Reactive flow for fragment state updates */
+  val fragmentEnabled: Flow<Boolean>
+
+  /** Set the fragment length value (e.g. "10-20", "30") */
+  fun setFragmentLength(length: String)
+
+  /** Set the fragment interval range value (e.g. "10-20") */
+  fun setFragmentInterval(interval: String)
+
+  /** Reactive flow for fragment interval updates */
+  val fragmentInterval: Flow<String?>
+
   /** Check if local storage mode is enabled */
   suspend fun isLocalSaveEnabled(): Boolean
 

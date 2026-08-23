@@ -19,10 +19,14 @@ internal fun HomeFlow.settingsStateSink(
       newState
     }
 
-  // MUX support
-  screenScope.sub(repository.muxEnabled)
+  screenScope.sub(repository.fragmentEnabled)
     .transition { state, enabled ->
-      state.copy(muxEnabled = enabled)
+      state.copy(fragmentEnabled = enabled)
+    }
+
+  screenScope.sub(repository.fragmentInterval.mapNotNull { it?.ifBlank { null } })
+    .transition { state, interval ->
+      state.copy(fragmentInterval = interval)
     }
 
   // Language - read from storage on subscription start

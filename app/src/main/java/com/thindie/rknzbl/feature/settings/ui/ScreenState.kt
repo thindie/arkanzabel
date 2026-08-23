@@ -7,6 +7,8 @@ import com.thindie.engine.core.ViewState
 internal data class ScreenState(
   val autosaveEnabled: Boolean? = null,
   val muxEnabled: Boolean? = null,
+  val fragmentEnabled: Boolean? = null,
+  val fragmentInterval: String? = null,
   val isLocalSave: Boolean? = null,
   val language: String? = null,
   val legacyRestart: Boolean = false,

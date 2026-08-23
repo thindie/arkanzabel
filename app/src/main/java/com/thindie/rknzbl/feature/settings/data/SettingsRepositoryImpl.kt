@@ -8,6 +8,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 
 class SettingsRepositoryImpl(
@@ -60,6 +61,44 @@ class SettingsRepositoryImpl(
   override suspend fun toggleMux(enabled: Boolean): Boolean {
     _muxEnabled.value = enabled
     return true
+  }
+
+  // Fragment support (Recommendation #5 — global packet fragmentation, applied by OutboundConfigStep on TLS/REALITY outbounds)
+  private val _fragmentEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false))
+
+  override val fragmentEnabled =
+    _fragmentEnabled
+      .onEach { storage.encodeSettings(AppConfig.PREF_FRAGMENT_ENABLED, it) }
+
+  override suspend fun isFragmentEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)
+
+  override suspend fun toggleFragment(enabled: Boolean): Boolean {
+    _fragmentEnabled.value = enabled
+    return true
+  }
+
+  private val _fragmentLength =
+    MutableStateFlow(
+      storage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH),
+    )
+
+  override fun setFragmentLength(length: String) {
+    _fragmentLength.value = length
+    storage.encodeSettings(AppConfig.PREF_FRAGMENT_LENGTH, length)
+  }
+
+  private val _fragmentInterval =
+    MutableStateFlow(
+      storage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL),
+    )
+
+  override val fragmentInterval =
+    _fragmentInterval.mapNotNull { it?.ifBlank { null } }
+      .onEach { storage.encodeSettings(AppConfig.PREF_FRAGMENT_INTERVAL, it) }
+
+  override fun setFragmentInterval(interval: String) {
+    _fragmentInterval.value = interval
+    storage.encodeSettings(AppConfig.PREF_FRAGMENT_INTERVAL, interval)
   }
 
   // Local storage mode support
