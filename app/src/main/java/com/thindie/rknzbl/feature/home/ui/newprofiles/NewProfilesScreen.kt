@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -78,6 +80,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
             FilterToggle(
               selected = st.filter,
               availableCount = st.availableCount,
+              loading = st.inFlightProfiles.isNotEmpty() && st.links.isNotEmpty(),
               onAll = { scope.send(ScreenCommand.Filter(FilterMode.All)) },
               onAvailable = { scope.send(ScreenCommand.Filter(FilterMode.Available)) },
             )
@@ -228,17 +231,21 @@ private fun profileSubtitle(
 /**
  * Segmented toggle that switches the profile list between showing all profiles and only the
  * available ones. [availableCount] is shown next to the "Available" option so the user knows how
- * many profiles would remain after filtering.
+ * many profiles would remain after filtering. While [loading] is true a small spinner runs on the
+ * "Available" segment; once loading stops but no available profile was found, that segment is
+ * disabled until more results arrive.
  */
 @Composable
 private fun FilterToggle(
   selected: FilterMode,
   availableCount: Int,
+  loading: Boolean,
   onAll: () -> Unit,
   onAvailable: () -> Unit,
 ) {
   val options = listOf(FilterMode.All, FilterMode.Available)
   val selectedIndex = options.indexOf(selected)
+  val availableDisabled = !loading && availableCount == 0
   Row(
     modifier =
       Modifier
@@ -248,6 +255,8 @@ private fun FilterToggle(
   ) {
     options.forEachIndexed { index, option ->
       val isSelected = index == selectedIndex
+      val onOption = if (option == FilterMode.All) onAll else onAvailable
+      val disabled = option == FilterMode.Available && availableDisabled
       val label =
         if (option == FilterMode.All) {
           stringResource(R.string.home_filter_all)
@@ -258,7 +267,6 @@ private fun FilterToggle(
         modifier =
           Modifier
             .weight(1f)
-            .clickable(onClick = if (option == FilterMode.All) onAll else onAvailable)
             .background(
               color =
                 if (isSelected) {
@@ -268,24 +276,34 @@ private fun FilterToggle(
                 },
               shape = RoundedCornerShape(8.dp),
             )
-            .padding(vertical = 8.dp),
+            .clickable(onClick = onOption, enabled = !disabled)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center,
       ) {
-        Text(
-          text = label,
-          style =
-            if (isSelected) {
-              AppTheme.typography.titleSmall
-            } else {
-              AppTheme.typography.bodyMedium
-            },
-          color =
-            if (isSelected) {
-              AppTheme.colors.onAccentPrimary
-            } else {
-              AppTheme.colors.contentSecondary
-            },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+          if (option == FilterMode.Available && loading) {
+            CircularProgressIndicator(
+              modifier = Modifier.size(14.dp),
+              color = if (isSelected) AppTheme.colors.onAccentPrimary else AppTheme.colors.contentSecondary,
+              strokeWidth = 2.dp,
+            )
+          }
+          Text(
+            text = label,
+            style =
+              if (isSelected) {
+                AppTheme.typography.titleSmall
+              } else {
+                AppTheme.typography.bodyMedium
+              },
+            color =
+              when {
+                disabled -> AppTheme.colors.contentTertiary
+                isSelected -> AppTheme.colors.onAccentPrimary
+                else -> AppTheme.colors.contentSecondary
+              },
+          )
+        }
       }
     }
   }
