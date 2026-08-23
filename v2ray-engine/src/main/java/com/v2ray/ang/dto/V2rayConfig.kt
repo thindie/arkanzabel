@@ -399,6 +399,7 @@ data class V2rayConfig(
     val disableCache: Boolean = false,
     val queryStrategy: String? = null,
     val tag: String? = null,
+    var refreshInterval: Long? = null,
   ) {
     data class Servers(
       var address: String = "",

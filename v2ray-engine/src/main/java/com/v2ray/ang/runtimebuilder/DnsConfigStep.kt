@@ -157,6 +157,14 @@ internal class DnsConfigStep(
           tag = AppConfig.TAG_DNS,
         )
 
+      // DNS refresh interval (seconds) — fight stale-IP after server IP change.
+      // V2Ray core refreshes cached IPs every `refreshInterval` seconds when > 0.
+      val refreshSec =
+        KeyValueStorage.decodeSettingsStringAsInt(AppConfig.PREF_DNS_REFRESH_INTERVAL, 0)
+      if (refreshSec > 0) {
+        v2rayConfig.dns?.refreshInterval = refreshSec.toLong()
+      }
+
       v2rayConfig.routing.rules.add(
         Rules(
           outboundTag = AppConfig.TAG_DIRECT,
