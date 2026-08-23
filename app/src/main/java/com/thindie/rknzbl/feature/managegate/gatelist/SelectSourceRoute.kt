@@ -25,16 +25,13 @@ private suspend fun SelectSourceFlow.exec(
 ): ScreenState? {
   return when (command) {
     is ScreenCommand.Back -> {
-      finish(state.selected)
+      finish(SelectSourceFlow.Result.NotSelected)
       null
     }
 
-    is ScreenCommand.Select -> {
-      if (state.selected == command.type) {
-        state.copy(selected = SelectSourceFlow.Result.NotSelected)
-      } else {
-        state.copy(selected = command.type)
-      }
+    is ScreenCommand.Go -> {
+      finish(command.type)
+      null
     }
   }
 }

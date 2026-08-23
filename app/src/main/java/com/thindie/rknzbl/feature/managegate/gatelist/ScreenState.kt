@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class ScreenState(
-  val selected: SelectSourceFlow.Result = SelectSourceFlow.Result.NotSelected,
   val blackSection: List<SelectSourceFlow.Result> =
     listOf(
       SelectSourceFlow.Result.FullBlackShadowSocks,
