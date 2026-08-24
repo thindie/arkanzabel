@@ -89,4 +89,10 @@ interface SettingsRepository {
   val isCustomSourceEnabled: Flow<Boolean>
 
   fun setCustomSourceEnabled(enabled: Boolean)
+
+  /** Check if Reality masquerade (show) is enabled */
+  fun isRealityShowEnabled(): Boolean
+
+  /** Enable or disable Reality masquerade (show) for all TLS/REALITY outbounds */
+  suspend fun toggleRealityShow(enabled: Boolean): Boolean
 }

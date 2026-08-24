@@ -76,6 +76,7 @@
 <string name="settings_section_general">Общие</string>
 <string name="settings_section_language">Язык</string>
 <string name="settings_section_mux">MUX</string>
+<string name="settings_section_reality">Reality</string>
 <string name="home_downloaded_profiles_header">Скачанные профили</string>
 <string name="home_autosaved_profile">Был сохранен автоматически</string>
 
@@ -181,6 +182,12 @@
 <string name="fragment_faq_title">Что такое Fragment?</string>
 <string name="fragment_faq_body">Fragment добавляет случайные пакеты до TLS-handshake, из-за чего трафик меньше похож на известный VPN. Работает только на протоколах TLS или REALITY — на plain TCP или HTTP ничего не даёт.</string>
 <string name="fragment_faq_ok">Понятно</string>
+
+<!-- Reality strings (Recommendation #4) -->
+<string name="settings_reality_show_title">Reality (маскировка)</string>
+<string name="settings_reality_show_subtitle_off">Отключено</string>
+<string name="settings_reality_show_subtitle_on">Маскировка включена</string>
+<string name="settings_reality_show_hint">Заменяет реальный serverName в TLS-handshake на цепочку сертификатов HTTPS для обхода DPI. Работает только с outbounds REALITY.</string>
 
 <!-- Speed notification strings -->
 <string name="settings_speed_notification_title">Показывать скорость</string>

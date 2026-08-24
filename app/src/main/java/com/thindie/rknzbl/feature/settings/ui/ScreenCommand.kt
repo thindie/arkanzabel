@@ -33,4 +33,7 @@ internal sealed interface ScreenCommand : Command {
 
   // Set custom source URL
   data class SetCustomSourceUrl(val url: String) : ScreenCommand
+
+  // Reality masquerade (show) toggle
+  data object ToggleRealityShow : ScreenCommand
 }

@@ -190,7 +190,14 @@
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
-<string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
+    <string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
+
+    <!-- Reality strings (Recommendation #4) -->
+    <string name="settings_section_reality">Reality</string>
+    <string name="settings_reality_show_title">Reality (masquerade)</string>
+    <string name="settings_reality_show_subtitle_off">Disabled</string>
+    <string name="settings_reality_show_subtitle_on">Masquerade enabled</string>
+    <string name="settings_reality_show_hint">Substitutes the real serverName certificate chain into the TLS handshake to bypass DPI. Only works with REALITY outbounds.</string>
 
     <!-- Local storage mode warning dialog -->
     <string name="storage_mode_warning_title">Warning</string>

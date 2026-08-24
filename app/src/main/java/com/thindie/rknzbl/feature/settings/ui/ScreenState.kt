@@ -16,4 +16,5 @@ internal data class ScreenState(
   val speedEnabled: Boolean? = null,
   val customSourceUrl: String? = null,
   val isCustomSourceEnabled: Boolean = false,
+  val realityShowEnabled: Boolean? = null,
 ) : ViewState

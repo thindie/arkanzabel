@@ -248,12 +248,14 @@ object AppConfig {
   const val REALITY = "reality"
   /**
    * Whether to enable Reality `show` (masquerade) so the core substitutes the real serverName
-   * certificate chain into the TLS ClientHello instead of the self-signed Reality cert.
-   * Defaults to false to avoid breaking users whose serverName is not a valid HTTPS site.
+   * certificate chain into the TLS ClientHello. Kept off by default: turning it on changes the
+   * outbound TLS fingerprint and may break already-working Reality connections.
    */
   const val REALITY_SHOW_ENABLED = false
-  /** Xray Reality fallback handshake masquerade (TLS-trace masquerade). */
-  const val REALITY_FALLBACK = "Xray"
+  /** Default fallback handshake for Reality `realitySettings.fallback`. */
+  const val REALITY_FALLBACK = "n"
+  /** Key for the global Reality masquerade toggle in settings. */
+  const val PREF_REALITY_SHOW_ENABLED = "reality_show_enabled"
   const val HEADER_TYPE_HTTP = "http"
 
   val DNS_ALIDNS_ADDRESSES = arrayListOf("223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1")

@@ -22,6 +22,7 @@ import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.error.StoredRawMissingError
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
+import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtimebuilder.ConfigAssembler
 import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
 import com.v2ray.ang.runtimebuilder.DnsConfigStep
@@ -932,8 +933,8 @@ object V2rayConfigManager {
         shortId = connectionProfile.shortId.nullIfBlank(),
         spiderX = connectionProfile.spiderX.nullIfBlank(),
         mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
-        show = AppConfig.REALITY_SHOW_ENABLED,
-        fallback = "n",
+        show = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED),
+        fallback = AppConfig.REALITY_FALLBACK,
       )
     if (streamSettings.security == AppConfig.TLS) {
       streamSettings.tlsSettings = tlsSetting

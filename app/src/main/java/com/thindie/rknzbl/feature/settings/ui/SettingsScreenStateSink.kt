@@ -62,4 +62,10 @@ internal fun HomeFlow.settingsStateSink(
     .transition { state, source ->
       state.copy(customSourceUrl = source)
     }
+
+  // Reality masquerade (show) support
+  screenScope.sub(flow { emit(repository.isRealityShowEnabled()) })
+    .transition { state, enabled ->
+      state.copy(realityShowEnabled = enabled)
+    }
 }

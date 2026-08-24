@@ -164,4 +164,15 @@ class SettingsRepositoryImpl(
   override fun setCustomSourceEnabled(enabled: Boolean) {
     customSourceEnabledInternal.value = enabled
   }
+
+  // Reality masquerade (show) support — global toggle for TLS/REALITY outbounds
+  private val _realityShowEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED))
+
+  override fun isRealityShowEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED)
+
+  override suspend fun toggleRealityShow(enabled: Boolean): Boolean {
+    _realityShowEnabled.value = enabled
+    storage.encodeSettings(AppConfig.PREF_REALITY_SHOW_ENABLED, enabled)
+    return true
+  }
 }

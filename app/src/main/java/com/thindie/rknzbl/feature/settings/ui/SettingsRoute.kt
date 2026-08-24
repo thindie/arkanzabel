@@ -90,6 +90,12 @@ fun HomeFlow.settings(
         repository.setCustomSourceUrl(c.url)
         null
       }
+
+      ScreenCommand.ToggleRealityShow -> {
+        val current = s.realityShowEnabled ?: false
+        repository.toggleRealityShow(!current)
+        null
+      }
     }
   },
   stateSink = { screenScope -> settingsStateSink(screenScope, repository) },

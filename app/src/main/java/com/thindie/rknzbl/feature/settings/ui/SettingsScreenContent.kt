@@ -247,6 +247,25 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
           onValueChange = { scope.send(ScreenCommand.SetFragmentInterval(it)) },
         )
       }
+
+      // === Reality ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_reality))
+      VSpacer(16.dp)
+
+      ToggleRow(
+        label = stringResource(R.string.settings_reality_show_title),
+        subtitle =
+          if (state.realityShowEnabled == true) {
+            stringResource(R.string.settings_reality_show_subtitle_on)
+          } else {
+            stringResource(R.string.settings_reality_show_subtitle_off)
+          },
+        checked = state.realityShowEnabled ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleRealityShow) },
+      )
     }
   }
 }
