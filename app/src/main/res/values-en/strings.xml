@@ -211,6 +211,9 @@
 <string name="settings_sniffing_port_range_all">All</string>
 <string name="settings_sniffing_port_range_http">HTTP</string>
 <string name="settings_sniffing_port_range_https">HTTPS</string>
+<string name="sniffing_faq_title">What is Sniffing?</string>
+<string name="sniffing_faq_body">Sniffing inspects outbound traffic to detect which protocol is being used (HTTP, TLS, QUIC). The target setting tells V2Ray which types to look for; the port range limits inspection to those ports only. Enable it if you want V2Ray to route based on detected protocols.</string>
+<string name="sniffing_faq_ok">Got it</string>
 
 <!-- Local storage mode warning dialog -->
 <string name="storage_mode_warning_title">Warning</string>

@@ -293,6 +293,8 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         optionLabel = { sniffingPortRange -> stringResource(sniffingPortRange.labelRes) },
         onSelect = { scope.send(ScreenCommand.SetSniffingPortRange(it)) },
       )
+
+      SniffingFaqRow { sendSniffingFaq(scope) }
     }
   }
 }
@@ -517,6 +519,44 @@ private fun MuxFaqDialog() {
     VSpacer(16.dp)
     Text(
       text = stringResource(R.string.mux_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun SniffingFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.sniffing_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendSniffingFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { SniffingFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.sniffing_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun SniffingFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.sniffing_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.sniffing_faq_body),
       style = AppTheme.typography.bodyMedium,
       color = AppTheme.colors.contentPrimary,
     )

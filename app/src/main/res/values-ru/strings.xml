@@ -203,6 +203,9 @@
 <string name="settings_sniffing_port_range_all">Все</string>
 <string name="settings_sniffing_port_range_http">HTTP</string>
 <string name="settings_sniffing_port_range_https">HTTPS</string>
+<string name="sniffing_faq_title">Что такое Sniffing?</string>
+<string name="sniffing_faq_body">Sniffing анализирует исходящий трафик, чтобы определить используемый протокол (HTTP, TLS, QUIC). Цель задаёт, какие типы искать; диапазон портов ограничивает проверку этими портами. Включи, если хочешь маршрутизацию по обнаруженным протоколам.</string>
+<string name="sniffing_faq_ok">Понятно</string>
 
 <!-- Speed notification strings -->
 <string name="settings_speed_notification_title">Показывать скорость</string>
