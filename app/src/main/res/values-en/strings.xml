@@ -197,6 +197,21 @@
 <string name="settings_reality_show_subtitle_on">Masquerade enabled</string>
 <string name="settings_reality_show_hint">Substitutes the real serverName certificate chain into the TLS handshake to bypass DPI. Only works with REALITY outbounds.</string>
 
+<!-- Sniffing strings -->
+<string name="settings_section_sniffing">Sniffing</string>
+<string name="settings_sniffing_target_title">Sniffing target</string>
+<string name="settings_sniffing_target_subtitle">Protocols that Sniffing will detect in outbound traffic</string>
+<string name="settings_sniffing_port_range_title">Port range</string>
+<string name="settings_sniffing_port_range_subtitle">Restrict Sniffing to only these ports (otherwise — all ports)</string>
+<string name="settings_sniffing_target_all">All</string>
+<string name="settings_sniffing_target_http">HTTP</string>
+<string name="settings_sniffing_target_tls">TLS</string>
+<string name="settings_sniffing_target_quic">QUIC</string>
+<string name="settings_sniffing_port_range_common">Common</string>
+<string name="settings_sniffing_port_range_all">All</string>
+<string name="settings_sniffing_port_range_http">HTTP</string>
+<string name="settings_sniffing_port_range_https">HTTPS</string>
+
 <!-- Local storage mode warning dialog -->
 <string name="storage_mode_warning_title">Warning</string>
 <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>

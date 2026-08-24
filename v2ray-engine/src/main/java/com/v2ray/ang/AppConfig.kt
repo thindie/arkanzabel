@@ -246,16 +246,39 @@ object AppConfig {
   const val DEFAULT_NETWORK = "tcp"
   const val TLS = "tls"
   const val REALITY = "reality"
+
   /**
    * Whether to enable Reality `show` (masquerade) so the core substitutes the real serverName
    * certificate chain into the TLS ClientHello. Kept off by default: turning it on changes the
    * outbound TLS fingerprint and may break already-working Reality connections.
    */
   const val REALITY_SHOW_ENABLED = false
+
   /** Default fallback handshake for Reality `realitySettings.fallback`. */
   const val REALITY_FALLBACK = "n"
+
   /** Key for the global Reality masquerade toggle in settings. */
   const val PREF_REALITY_SHOW_ENABLED = "reality_show_enabled"
+
+  /** Sniffing target protocols setting. See SniffingTarget enum. */
+  const val PREF_SNIFFING_TARGET = "sniffing_target"
+  const val DEFAULT_SNIFFING_TARGET = "all"
+
+  /** Storage keys for the Sniffing target protocols (see SniffingTarget enum). */
+  const val SNIFFING_TARGET_ALL = "all"
+  const val SNIFFING_TARGET_HTTP = "http"
+  const val SNIFFING_TARGET_TLS = "tls"
+  const val SNIFFING_TARGET_QUIC = "quic"
+
+  /** Sniffing port-range setting. See SniffingPortRange enum. */
+  const val PREF_SNIFFING_PORT_RANGE = "sniffing_port_range"
+  const val DEFAULT_SNIFFING_PORT_RANGE = "all"
+
+  /** Storage keys for the Sniffing port range (see SniffingPortRange enum). */
+  const val SNIFFING_PORT_RANGE_ALL = "all"
+  const val SNIFFING_PORT_RANGE_COMMON = "common"
+  const val SNIFFING_PORT_RANGE_HTTP = "http"
+  const val SNIFFING_PORT_RANGE_HTTPS = "https"
   const val HEADER_TYPE_HTTP = "http"
 
   val DNS_ALIDNS_ADDRESSES = arrayListOf("223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1")

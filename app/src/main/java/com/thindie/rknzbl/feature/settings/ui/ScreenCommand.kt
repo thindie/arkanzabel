@@ -36,4 +36,10 @@ internal sealed interface ScreenCommand : Command {
 
   // Reality masquerade (show) toggle
   data object ToggleRealityShow : ScreenCommand
+
+  // Sniffing target protocol selection
+  data class SetSniffingTarget(val target: SniffingTarget) : ScreenCommand
+
+  // Sniffing port-range selection
+  data class SetSniffingPortRange(val range: SniffingPortRange) : ScreenCommand
 }

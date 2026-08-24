@@ -1,6 +1,8 @@
 package com.thindie.rknzbl.feature.settings.domain
 
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.feature.settings.ui.SniffingPortRange
+import com.thindie.rknzbl.feature.settings.ui.SniffingTarget
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -95,4 +97,16 @@ interface SettingsRepository {
 
   /** Enable or disable Reality masquerade (show) for all TLS/REALITY outbounds */
   suspend fun toggleRealityShow(enabled: Boolean): Boolean
+
+  /** Get the current Sniffing target protocol */
+  fun sniffingTarget(): Flow<SniffingTarget?>
+
+  /** Set the Sniffing target protocol */
+  fun setSniffingTarget(target: SniffingTarget)
+
+  /** Get the current Sniffing port range */
+  fun sniffingPortRange(): Flow<SniffingPortRange?>
+
+  /** Set the Sniffing port range */
+  fun setSniffingPortRange(range: SniffingPortRange)
 }

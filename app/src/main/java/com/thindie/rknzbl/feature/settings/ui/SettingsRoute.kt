@@ -96,6 +96,16 @@ fun HomeFlow.settings(
         repository.toggleRealityShow(!current)
         null
       }
+
+      is ScreenCommand.SetSniffingTarget -> {
+        repository.setSniffingTarget(c.target)
+        null
+      }
+
+      is ScreenCommand.SetSniffingPortRange -> {
+        repository.setSniffingPortRange(c.range)
+        null
+      }
     }
   },
   stateSink = { screenScope -> settingsStateSink(screenScope, repository) },

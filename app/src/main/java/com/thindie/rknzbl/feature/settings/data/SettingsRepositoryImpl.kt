@@ -4,9 +4,16 @@ import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.feature.settings.data.theme.toChoice
 import com.thindie.rknzbl.feature.settings.data.theme.toStorageString
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
+import com.thindie.rknzbl.feature.settings.ui.SniffingPortRange
+import com.thindie.rknzbl.feature.settings.ui.SniffingTarget
+import com.thindie.rknzbl.feature.settings.ui.toSniffingPortRange
+import com.thindie.rknzbl.feature.settings.ui.toSniffingTarget
+import com.thindie.rknzbl.feature.settings.ui.toStorageString
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
@@ -166,13 +173,50 @@ class SettingsRepositoryImpl(
   }
 
   // Reality masquerade (show) support — global toggle for TLS/REALITY outbounds
-  private val _realityShowEnabled = MutableStateFlow(storage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED))
+  private val _realityShowEnabled =
+    MutableStateFlow(storage
+      .decodeSettingsBool(
+        AppConfig.PREF_REALITY_SHOW_ENABLED,
+        AppConfig.REALITY_SHOW_ENABLED)
+    )
 
-  override fun isRealityShowEnabled(): Boolean = storage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED)
+  override fun isRealityShowEnabled(): Boolean =
+    storage.decodeSettingsBool(
+      AppConfig.PREF_REALITY_SHOW_ENABLED,
+      AppConfig.REALITY_SHOW_ENABLED,
+    )
 
   override suspend fun toggleRealityShow(enabled: Boolean): Boolean {
     _realityShowEnabled.value = enabled
     storage.encodeSettings(AppConfig.PREF_REALITY_SHOW_ENABLED, enabled)
     return true
+  }
+
+  // Sniffing target protocol support
+  private val _sniffingTarget =
+    MutableStateFlow(
+      storage.decodeSettingsString(AppConfig.PREF_SNIFFING_TARGET)
+        ?.let(::toSniffingTarget),
+    )
+
+  override fun sniffingTarget(): Flow<SniffingTarget?> = _sniffingTarget.asStateFlow()
+
+  override fun setSniffingTarget(target: SniffingTarget) {
+    _sniffingTarget.value = target
+    storage.encodeSettings(AppConfig.PREF_SNIFFING_TARGET, target.toStorageString())
+  }
+
+  // Sniffing port-range support
+  private val _sniffingPortRange =
+    MutableStateFlow(
+      storage.decodeSettingsString(AppConfig.PREF_SNIFFING_PORT_RANGE)
+        ?.let(::toSniffingPortRange),
+    )
+
+  override fun sniffingPortRange(): Flow<SniffingPortRange?> = _sniffingPortRange.asStateFlow()
+
+  override fun setSniffingPortRange(range: SniffingPortRange) {
+    _sniffingPortRange.value = range
+    storage.encodeSettings(AppConfig.PREF_SNIFFING_PORT_RANGE, range.toStorageString())
   }
 }

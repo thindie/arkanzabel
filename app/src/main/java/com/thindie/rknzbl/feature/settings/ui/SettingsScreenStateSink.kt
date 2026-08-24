@@ -5,6 +5,7 @@ import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 
@@ -67,5 +68,17 @@ internal fun HomeFlow.settingsStateSink(
   screenScope.sub(flow { emit(repository.isRealityShowEnabled()) })
     .transition { state, enabled ->
       state.copy(realityShowEnabled = enabled)
+    }
+
+  // Sniffing target protocol support
+  screenScope.sub(repository.sniffingTarget().filterNotNull())
+    .transition { state, target ->
+      state.copy(sniffingTarget = target)
+    }
+
+  // Sniffing port-range support
+  screenScope.sub(repository.sniffingPortRange().filterNotNull())
+    .transition { state, range ->
+      state.copy(sniffingPortRange = range)
     }
 }

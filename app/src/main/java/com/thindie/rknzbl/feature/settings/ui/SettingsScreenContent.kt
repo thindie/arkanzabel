@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -266,6 +268,31 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         checked = state.realityShowEnabled ?: false,
         onCheckedChange = { scope.send(ScreenCommand.ToggleRealityShow) },
       )
+
+      // === Sniffing ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_sniffing))
+      VSpacer(16.dp)
+
+      SniffingChipRow(
+        title = stringResource(R.string.settings_sniffing_target_title),
+        subtitle = stringResource(R.string.settings_sniffing_target_subtitle),
+        options = SniffingTarget.entries,
+        selected = state.sniffingTarget ?: SniffingTarget.All,
+        optionLabel = { sniffingTarget -> stringResource(sniffingTarget.labelRes) },
+        onSelect = { scope.send(ScreenCommand.SetSniffingTarget(it)) },
+      )
+
+      SniffingChipRow(
+        title = stringResource(R.string.settings_sniffing_port_range_title),
+        subtitle = stringResource(R.string.settings_sniffing_port_range_subtitle),
+        options = SniffingPortRange.entries,
+        selected = state.sniffingPortRange ?: SniffingPortRange.All,
+        optionLabel = { sniffingPortRange -> stringResource(sniffingPortRange.labelRes) },
+        onSelect = { scope.send(ScreenCommand.SetSniffingPortRange(it)) },
+      )
     }
   }
 }
@@ -340,6 +367,53 @@ private fun ToggleRow(
       Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
     }
     Toggle(checked = checked)
+  }
+}
+
+@Composable
+private fun <T : Enum<T>> SniffingChipRow(
+  title: String,
+  subtitle: String,
+  options: List<T>,
+  selected: T,
+  optionLabel: @Composable (T) -> String,
+  onSelect: (T) -> Unit,
+) {
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Text(text = title, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+    VSpacer(2.dp)
+    Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+    VSpacer(8.dp)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      options.forEach { option ->
+        key(title, subtitle, selected) {
+          val isSelected = option == selected
+          Box(
+            modifier =
+              Modifier
+                .weight(1f)
+                .background(
+                  if (isSelected) AppTheme.colors.accentPrimary else AppTheme.colors.backgroundSecondary,
+                  shape = RoundedCornerShape(8.dp),
+                )
+                .clickable { onSelect(option) }
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(
+              text = optionLabel(option),
+              style = if (isSelected) AppTheme.typography.titleSmall else AppTheme.typography.bodyMedium,
+              color =
+                if (isSelected) AppTheme.colors.onAccentPrimary else AppTheme.colors.contentTertiary,
+            )
+          }
+        }
+      }
+    }
   }
 }
 

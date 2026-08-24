@@ -17,4 +17,6 @@ internal data class ScreenState(
   val customSourceUrl: String? = null,
   val isCustomSourceEnabled: Boolean = false,
   val realityShowEnabled: Boolean? = null,
+  val sniffingTarget: SniffingTarget = SniffingTarget.All,
+  val sniffingPortRange: SniffingPortRange = SniffingPortRange.All,
 ) : ViewState
