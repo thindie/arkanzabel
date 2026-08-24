@@ -498,6 +498,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "leastLoad",
@@ -525,6 +526,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "random",
@@ -539,6 +541,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "roundRobin",
@@ -553,6 +556,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "leastPing",
