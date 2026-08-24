@@ -220,11 +220,32 @@ private fun profileSubtitle(
   ping: Long?,
   checking: Boolean,
 ): String {
-  return when {
-    checking -> stringResource(R.string.home_profile_checking)
-    ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
-    ping < 0 -> stringResource(R.string.home_profile_unreachable)
-    else -> stringResource(R.string.home_profile_ping_ms, ping)
+  val base =
+    when {
+      checking -> stringResource(R.string.home_profile_checking)
+      ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
+      ping < 0 -> stringResource(R.string.home_profile_unreachable)
+      else -> stringResource(R.string.home_profile_ping_ms, ping)
+    }
+  return transportLabel(item.network).let { label -> if (label.isEmpty()) base else "$base · $label" }
+}
+
+/**
+ * Human-readable transport for [ConnectionProfile.network] so the user can see which transport a
+ * profile uses. TCP is omitted because it is the detectable baseline; non-TCP transports are the
+ * meaningful stealth signal, and skipping TCP keeps cards tidy for the common case.
+ */
+private fun transportLabel(network: String?): String {
+  if (network.isNullOrEmpty()) return ""
+  return when (network) {
+    "ws" -> "WebSocket"
+    "httpupgrade" -> "HTTP Upgrade"
+    "xhttp" -> "XHTTP"
+    "h2" -> "HTTP/2"
+    "grpc" -> "gRPC"
+    "kcp" -> "KCP"
+    "http" -> "HTTP"
+    else -> network.uppercase()
   }
 }
 

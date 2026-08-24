@@ -147,6 +147,10 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 else -> {
                   item.flow ?: item.server ?: item.serviceName.orEmpty()
                 }
+              }.let { subtitle ->
+                transportLabel(item.network).let { label ->
+                  if (label.isEmpty() || subtitle.isNullOrEmpty()) "" else "$subtitle · $label"
+                }
               },
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
             onClick = {
@@ -246,6 +250,25 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
         )
       }
     }
+  }
+}
+
+/**
+ * Human-readable transport for [ConnectionProfile.network] so the user can see which transport a
+ * profile uses. TCP is omitted because it is the detectable baseline; non-TCP transports are the
+ * meaningful stealth signal, and skipping TCP keeps cards tidy for the common case.
+ */
+private fun transportLabel(network: String?): String {
+  if (network.isNullOrEmpty()) return ""
+  return when (network) {
+    "ws" -> "WebSocket"
+    "httpupgrade" -> "HTTP Upgrade"
+    "xhttp" -> "XHTTP"
+    "h2" -> "HTTP/2"
+    "grpc" -> "gRPC"
+    "kcp" -> "KCP"
+    "http" -> "HTTP"
+    else -> network.uppercase()
   }
 }
 
