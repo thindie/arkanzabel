@@ -261,6 +261,7 @@ data class V2rayConfig(
         val preferServerCipherSuites: Boolean = false,
         val cipherSuites: String? = null,
         val fingerprint: String? = null,
+        val utls: String? = null,
         val certificates: List<Any>? = null,
         val disableSystemRoot: Boolean = false,
         val enableSessionResumption: Boolean = false,

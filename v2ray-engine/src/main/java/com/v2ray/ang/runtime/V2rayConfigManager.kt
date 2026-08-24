@@ -920,6 +920,7 @@ object V2rayConfigManager {
         allowInsecure = allowInsecure,
         serverName = sni.nullIfBlank(),
         fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
+        utls = connectionProfile.fingerPrint.nullIfBlank(),
         alpn =
           connectionProfile.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
             .takeIf { !it.isNullOrEmpty() },
