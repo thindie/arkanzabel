@@ -277,6 +277,7 @@ data class V2rayConfig(
         var shortId: String? = null,
         var spiderX: String? = null,
         var mldsa65Verify: String? = null,
+        var fallback: String? = "n",
       )
 
       data class QuicSetting(

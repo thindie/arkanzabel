@@ -932,6 +932,8 @@ object V2rayConfigManager {
         shortId = connectionProfile.shortId.nullIfBlank(),
         spiderX = connectionProfile.spiderX.nullIfBlank(),
         mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
+        show = AppConfig.REALITY_SHOW_ENABLED,
+        fallback = "n",
       )
     if (streamSettings.security == AppConfig.TLS) {
       streamSettings.tlsSettings = tlsSetting
