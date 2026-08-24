@@ -122,6 +122,10 @@ internal class OutboundConfigStep(
         outbound.mux?.concurrency = -1
       }
 
+      // Keep the outbound TCP connection alive between packets so idle connections are not
+      // closed by the server / caught by DPI as "dead".
+      outbound.ensureSockopt().tcpKeepAliveIdle = AppConfig.OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS
+
       if (protocol.equals(Protocol.WireGuard.name, true)) {
         var localTunAddr =
           if (outbound.settings?.address == null) {
@@ -142,7 +146,16 @@ internal class OutboundConfigStep(
         val host = outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host
 
         val requestString: String by lazy {
-          """{"version":"1.1","method":"GET","headers":{"User-Agent":["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"],"Accept-Encoding":["gzip, deflate"],"Connection":["keep-alive"],"Pragma":"no-cache"}}"""
+          """
+          {"version":"1.1","method":"GET","headers":
+          {
+          "User-Agent"
+          :["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) 
+          Chrome/126.0.6478.122 Mobile Safari/537.36"],
+          "Accept-Encoding":["gzip, deflate"],
+          "Connection":["keep-alive"],
+          "Pragma":"no-cache"}}
+          """.trimIndent()
         }
         outbound.streamSettings?.tcpSettings?.header?.request =
           JsonUtil.fromJson(
@@ -214,6 +227,7 @@ internal class OutboundConfigStep(
       v2rayConfig.outbounds[0].streamSettings?.sockopt =
         StreamSettings.Sockopt(
           dialerProxy = AppConfig.TAG_FRAGMENT,
+          tcpKeepAliveIdle = AppConfig.OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS,
         )
     } catch (runtime: RuntimeException) {
       Log.e(AppConfig.TAG, "Failed to update outbound fragment", runtime)

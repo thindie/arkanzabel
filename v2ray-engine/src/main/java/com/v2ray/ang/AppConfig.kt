@@ -169,6 +169,14 @@ object AppConfig {
   const val WIREGUARD_LOCAL_ADDRESS_V4 = "172.16.0.2/32"
   const val WIREGUARD_LOCAL_ADDRESS_V6 = "2606:4700:110:8f81:d551:a0:532e:a2b3/128"
   const val WIREGUARD_LOCAL_MTU = "1420"
+
+  /**
+   * [StreamSettings.Sockopt.tcpKeepAliveIdle] (seconds) applied to proxy outbounds so the TCP
+   * connection to the VPN server stays alive between packets. Keeps idle connections from being
+   * closed by the server / caught by DPI as "dead".
+   */
+  const val OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS = 90
+
   const val LOOPBACK = "127.0.0.1"
 
   /** Message constants for communication. */
