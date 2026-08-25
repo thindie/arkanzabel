@@ -250,6 +250,8 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         )
       }
 
+      FragmentFaqRow { sendFragmentFaq(scope) }
+
       // === Reality ===
       VSpacer(24.dp)
       Divider()
@@ -268,6 +270,8 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         checked = state.realityShowEnabled ?: false,
         onCheckedChange = { scope.send(ScreenCommand.ToggleRealityShow) },
       )
+
+      RealityFaqRow { sendRealityFaq(scope) }
 
       // === Sniffing ===
       VSpacer(24.dp)
@@ -557,6 +561,82 @@ private fun SniffingFaqDialog() {
     VSpacer(16.dp)
     Text(
       text = stringResource(R.string.sniffing_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun FragmentFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.fragment_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendFragmentFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { FragmentFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.fragment_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun FragmentFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.fragment_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.fragment_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun RealityFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.reality_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendRealityFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { RealityFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.reality_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun RealityFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.reality_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.reality_faq_body),
       style = AppTheme.typography.bodyMedium,
       color = AppTheme.colors.contentPrimary,
     )

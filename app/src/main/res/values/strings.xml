@@ -186,6 +186,9 @@
     <string name="settings_fragment_interval_subtitle">Random packet interval (ms)</string>
     <string name="settings_fragment_interval_placeholder">e.g. 10-20</string>
     <string name="settings_fragment_interval_error">Enter a range like 10-20</string>
+    <string name="fragment_faq_title">What is Fragment?</string>
+    <string name="fragment_faq_body"><![CDATA[Fragment adds random packets before the TLS handshake, making traffic look less like a known VPN. It only works on TLS or REALITY protocols — on plain TCP or HTTP it does nothing.]]></string>
+    <string name="fragment_faq_ok">Got it</string>
 
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
@@ -198,6 +201,9 @@
     <string name="settings_reality_show_subtitle_off">Disabled</string>
     <string name="settings_reality_show_subtitle_on">Masquerade enabled</string>
     <string name="settings_reality_show_hint">Substitutes the real serverName certificate chain into the TLS handshake to bypass DPI. Only works with REALITY outbounds.</string>
+    <string name="reality_faq_title">What is Reality?</string>
+    <string name="reality_faq_body"><![CDATA[Reality replaces the real server certificate in the TLS handshake with a fake HTTPS certificate chain. This makes your traffic look like normal HTTPS to DPI systems. It only works with REALITY outbounds.]]></string>
+    <string name="reality_faq_ok">Got it</string>
 
     <!-- Sniffing strings -->
     <string name="settings_section_sniffing">Sniffing</string>

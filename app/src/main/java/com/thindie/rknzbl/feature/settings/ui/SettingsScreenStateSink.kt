@@ -6,7 +6,6 @@ import com.thindie.engine.core.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 
 internal fun HomeFlow.settingsStateSink(
@@ -25,13 +24,18 @@ internal fun HomeFlow.settingsStateSink(
       state.copy(fragmentEnabled = enabled)
     }
 
+  screenScope.sub(repository.muxEnabled)
+    .transition { state, enabled ->
+      state.copy(muxEnabled = enabled)
+    }
+
   screenScope.sub(repository.fragmentInterval.mapNotNull { it?.ifBlank { null } })
     .transition { state, interval ->
       state.copy(fragmentInterval = interval)
     }
 
   // Language - read from storage on subscription start
-  screenScope.sub(flow { emit(repository.language()) })
+  screenScope.sub(repository.language)
     .transition { state, lang ->
       state.copy(language = lang)
     }
@@ -65,7 +69,7 @@ internal fun HomeFlow.settingsStateSink(
     }
 
   // Reality masquerade (show) support
-  screenScope.sub(flow { emit(repository.isRealityShowEnabled()) })
+  screenScope.sub(repository.realityShowEnabled)
     .transition { state, enabled ->
       state.copy(realityShowEnabled = enabled)
     }

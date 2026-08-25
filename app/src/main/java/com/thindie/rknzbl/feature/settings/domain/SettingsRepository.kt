@@ -7,83 +7,62 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository interface for Settings feature.
- * Handles theme mode and autosave configuration operations.
+ *
+ * Boolean options expose a reactive [Flow] plus a `toggle*` suspend function (write to the private
+ * MutableStateFlow; the flow's `onEach` persists the value). String/enum options expose either a
+ * single [Flow] with a setter, or a getter-flow + setter, matching how they are consumed.
  */
 interface SettingsRepository {
-  /** Get current theme mode: [ThemeSwitcher.Choice.Auto], [ThemeSwitcher.Choice.Light], or [ThemeSwitcher.Choice.Dark] */
-  suspend fun getThemeMode(): ThemeSwitcher.Choice?
-
-  /** Set theme mode: [ThemeSwitcher.Choice.Auto], [ThemeSwitcher.Choice.Light], or [ThemeSwitcher.Choice.Dark] */
-  fun setThemeMode(mode: ThemeSwitcher.Choice): Boolean
-
-  /** Check if autosave is enabled */
-  suspend fun isAutosaveEnabled(): Boolean
-
-  /** Enable or disable autosave */
-  suspend fun toggleAutosave(enabled: Boolean): Boolean
-
-  /** Flow of current theme choice, emits whenever theme changes */
-  val themeChoice: Flow<ThemeSwitcher.Choice>
-
   /** Reactive flow for autosave state updates */
   val autosaveEnabled: Flow<Boolean>
 
-  /** Get current MUX enabled status */
-  suspend fun isMuxEnabled(): Boolean
+  /** Enable or disable autosave */
+  suspend fun toggleAutosave(enabled: Boolean)
 
-  /** Enable or disable MUX */
-  suspend fun toggleMux(enabled: Boolean): Boolean
+  val themeChoice: Flow<ThemeSwitcher.Choice>
 
-  /** Reactive flow for MUX state updates */
+  // MUX support
   val muxEnabled: Flow<Boolean>
 
-  suspend fun isFragmentEnabled(): Boolean
+  suspend fun toggleMux(enabled: Boolean)
 
-  /** Enable or disable global packet fragmentation for all TLS/REALITY outbounds */
-  suspend fun toggleFragment(enabled: Boolean): Boolean
+  // Fragment support (Recommendation #5 — global packet fragmentation, applied by OutboundConfigStep on TLS/REALITY outbounds)
 
-  /** Reactive flow for fragment state updates */
   val fragmentEnabled: Flow<Boolean>
 
-  /** Set the fragment length value (e.g. "10-20", "30") */
+  suspend fun toggleFragment(enabled: Boolean)
+
   fun setFragmentLength(length: String)
 
-  /** Set the fragment interval range value (e.g. "10-20") */
-  fun setFragmentInterval(interval: String)
-
-  /** Reactive flow for fragment interval updates */
   val fragmentInterval: Flow<String?>
 
-  /** Check if local storage mode is enabled */
-  suspend fun isLocalSaveEnabled(): Boolean
+  fun setFragmentInterval(interval: String)
 
-  /** Enable or disable local storage mode */
-  suspend fun toggleLocalSave(enabled: Boolean): Boolean
+  // Local storage mode support
 
-  /** Reactive flow for local save state updates */
   val isLocalSave: Flow<Boolean>
 
-  fun language(): String?
+  suspend fun toggleLocalSave(enabled: Boolean)
+
+  val startWithFavoriteProfiles: Flow<Boolean>
+
+  suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean)
+
+  // Speed notification
+
+  val speedEnabled: Flow<Boolean?>
+
+  suspend fun toggleSpeed(enabled: Boolean)
+
+  // Language - read from storage on subscription start
+  fun getLanguageSync(): String?
+
+  val language: Flow<String?>
 
   fun setLanguage(code: String)
 
-  /** Check if start with favorite profiles is enabled */
-  fun isStartWithFavoriteProfilesEnabled(): Boolean
-
-  /** Enable or disable start with favorite profiles */
-  suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean): Boolean
-
-  /** Reactive flow for start with favorite profiles state updates */
-  val startWithFavoriteProfiles: Flow<Boolean>
-
-  // Speed notification
-  val speedEnabled: kotlinx.coroutines.flow.Flow<Boolean?>
-
-  fun isSpeedEnabled(): Boolean
-
-  suspend fun toggleSpeed(enabled: Boolean): Boolean
-
   // Custom source URL
+
   val customSourceUrl: Flow<String?>
 
   fun setCustomSourceUrl(url: String)
@@ -92,21 +71,24 @@ interface SettingsRepository {
 
   fun setCustomSourceEnabled(enabled: Boolean)
 
-  /** Check if Reality masquerade (show) is enabled */
-  fun isRealityShowEnabled(): Boolean
+  val forceProfileMeasure: Flow<Boolean>
+  val getForceProfileMeasureSync: Boolean
 
-  /** Enable or disable Reality masquerade (show) for all TLS/REALITY outbounds */
-  suspend fun toggleRealityShow(enabled: Boolean): Boolean
+  fun setForceProfileMeasure(enabled: Boolean)
 
-  /** Get the current Sniffing target protocol */
+  // Reality masquerade (show) support — global toggle for TLS/REALITY outbounds
+
+  val realityShowEnabled: Flow<Boolean>
+
+  suspend fun toggleRealityShow(enabled: Boolean)
+
+  // Sniffing target protocol support
   fun sniffingTarget(): Flow<SniffingTarget?>
 
-  /** Set the Sniffing target protocol */
   fun setSniffingTarget(target: SniffingTarget)
 
-  /** Get the current Sniffing port range */
+  // Sniffing port-range support
   fun sniffingPortRange(): Flow<SniffingPortRange?>
 
-  /** Set the Sniffing port range */
   fun setSniffingPortRange(range: SniffingPortRange)
 }
