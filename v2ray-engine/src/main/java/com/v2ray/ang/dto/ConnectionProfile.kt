@@ -177,3 +177,23 @@ data class ConnectionProfile(
     return result
   }
 }
+
+fun ConnectionProfile.optimizeForRkn(): ConnectionProfile {
+    val targetSni = if (sni.isNullOrEmpty() || sni.contains("cloudflare", true)) {
+        "://google.com"
+    } else {
+        sni
+    }
+
+    val targetFingerprint = if (fingerPrint.isNullOrEmpty() || fingerPrint == "random") {
+        "chrome"
+    } else {
+        fingerPrint
+    }
+
+    return this.copy(
+        insecure = false,
+        fingerPrint = targetFingerprint,
+        sni = targetSni
+    )
+}

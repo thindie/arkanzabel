@@ -25,3 +25,7 @@ gradle/daemon/
 gradle/kotlin-profile/
 gradle/native/
 gradle/notifications/
+/.idea/markdown.xml
+/gradle/wrapper
+/research/core-feature-audit.md
+/.mi_amend.txt

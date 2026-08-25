@@ -31,6 +31,9 @@ internal sealed interface ScreenCommand : Command {
   // Custom source URL toggle
   data object ToggleCustomSource : ScreenCommand
 
+  // Force profile measurement toggle
+  data object ToggleForceProfileMeasure : ScreenCommand
+
   // Set custom source URL
   data class SetCustomSourceUrl(val url: String) : ScreenCommand
 

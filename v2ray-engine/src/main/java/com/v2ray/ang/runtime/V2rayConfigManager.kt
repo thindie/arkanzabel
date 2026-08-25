@@ -22,7 +22,6 @@ import com.v2ray.ang.error.RoutingConfigError
 import com.v2ray.ang.error.StoredRawMissingError
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
-import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtimebuilder.ConfigAssembler
 import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
 import com.v2ray.ang.runtimebuilder.DnsConfigStep
@@ -835,7 +834,11 @@ object V2rayConfigManager {
         sni = host
         xhttpSetting.path = path ?: "/"
         xhttpSetting.mode = xhttpMode
-        xhttpSetting.extra = JsonUtil.parseString(xhttpExtra.orEmpty())
+        xhttpSetting.extra = try {
+            JsonUtil.parseString(xhttpExtra.orEmpty())
+        } catch (e: Throwable) {
+            ""
+        }
         streamSettings.xhttpSettings = xhttpSetting
       }
 

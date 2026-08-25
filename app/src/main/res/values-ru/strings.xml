@@ -219,6 +219,8 @@
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Начинать с сохранённых профилей</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Показывать экран сохранённых профилей при старте приложения</string>
+    <string name="settings_force_profile_measure_title">Принудительное измерение пинга</string>
+    <string name="settings_force_profile_measure_subtitle">Всегда измерять задержку новых профилей, а не использовать кэшированные значения</string>
 <string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
 
 <!-- Local storage mode warning dialog -->

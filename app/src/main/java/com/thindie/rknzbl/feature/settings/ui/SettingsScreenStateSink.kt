@@ -63,6 +63,12 @@ internal fun HomeFlow.settingsStateSink(
       state.copy(isCustomSourceEnabled = enabled)
     }
 
+  // Force profile measurement support
+  screenScope.sub(repository.forceProfileMeasure)
+    .transition { state, enabled ->
+      state.copy(forceProfileMeasure = enabled)
+    }
+
   screenScope.sub(repository.customSourceUrl.mapNotNull { it?.ifBlank { null } })
     .transition { state, source ->
       state.copy(customSourceUrl = source)

@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.core.WorkState
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
@@ -39,6 +40,7 @@ import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.runtime.SpeedtestManager
 import java.util.Comparator
 
@@ -79,8 +81,8 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
             )
             FilterToggle(
               selected = st.filter,
-              availableCount = st.availableCount,
-              loading = st.inFlightProfiles.isNotEmpty() && st.links.isNotEmpty(),
+              enabled = !st.pingResults.isNullOrEmpty(),
+              loading = st.pingState is WorkState.Running,
               onAll = { scope.send(ScreenCommand.Filter(FilterMode.All)) },
               onAvailable = { scope.send(ScreenCommand.Filter(FilterMode.Available)) },
             )
@@ -112,53 +114,68 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
         val visible =
           when (st.filter) {
             FilterMode.All -> st.links
-            FilterMode.Available -> st.links.filter { isAvailable(st.pingResults[it]) }
+            FilterMode.Available -> st.pingResults?.keys?.toList().orEmpty()
           }
-        items(items = visible.sortedWith(pingOrder(st.pingResults))) { item ->
-          val borderState =
-            when {
-              st.selected != item -> ProfileBorderState.Inactive
-              st.selectedTestConnectionMessage == null -> ProfileBorderState.Testing
-              st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok ->
-                ProfileBorderState.Connected
-              else -> ProfileBorderState.Failed
+
+        transportSections(visible)
+          .forEach { section ->
+            stickyHeader {
+              Text(
+                text = section.key.protocolScheme,
+                style = AppTheme.typography.titleSmall,
+                color = AppTheme.colors.contentSecondary,
+                modifier =
+                  Modifier
+                    .fillMaxWidth()
+                    .background(AppTheme.colors.backgroundPrimary)
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+              )
             }
-          val ping = st.pingResults[item]
-          val checking = item in st.inFlightProfiles
-          SentenceRow(
-            modifier =
-              Modifier
-                .profileBorder(borderState)
-                .fillMaxWidth(),
-            painter = painterResource(R.drawable.ic_internet_24),
-            title = item.remarks + item.serverPort.orEmpty(),
-            subtitle = profileSubtitle(item, ping, checking),
-            loading = st.selectedTestConnectionMessage == null && st.selected == item,
-            onClick = { scope.send(ScreenCommand.Select(item)) },
-            onLongClick =
-              if (st.selected == item) {
-                {
-                  scope.sendEvent(
-                    ServiceCommand.UiEvent.Decision(
-                      content = {
-                        Text(
-                          text = stringResource(R.string.source_stored_add),
-                          style = AppTheme.typography.bodyMedium,
-                        )
-                      },
-                      primaryAction =
-                        Action(
-                          resRef = R.string.source_select_done,
-                          listener = { scope.send(ScreenCommand.Save(item)) },
-                        ),
-                    ),
-                  )
+            items(items = section.value) { item ->
+              val borderState =
+                when {
+                  st.selected != item -> ProfileBorderState.Inactive
+                  st.selectedTestConnectionMessage == null -> ProfileBorderState.Testing
+                  st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok ->
+                    ProfileBorderState.Connected
+                  else -> ProfileBorderState.Failed
                 }
-              } else {
-                null
-              },
-          )
-        }
+              val ping = st.pingResults?.get(item)
+              SentenceRow(
+                modifier =
+                  Modifier
+                    .profileBorder(borderState)
+                    .fillMaxWidth(),
+                painter = painterResource(R.drawable.ic_internet_24),
+                title = item.remarks + item.serverPort.orEmpty(),
+                subtitle = profileSubtitle(item, ping),
+                loading = st.selectedTestConnectionMessage == null && st.selected == item,
+                onClick = { scope.send(ScreenCommand.Select(item)) },
+                onLongClick =
+                  if (st.selected == item) {
+                    {
+                      scope.sendEvent(
+                        ServiceCommand.UiEvent.Decision(
+                          content = {
+                            Text(
+                              text = stringResource(R.string.source_stored_add),
+                              style = AppTheme.typography.bodyMedium,
+                            )
+                          },
+                          primaryAction =
+                            Action(
+                              resRef = R.string.source_select_done,
+                              listener = { scope.send(ScreenCommand.Save(item)) },
+                            ),
+                        ),
+                      )
+                    }
+                  } else {
+                    null
+                  },
+              )
+            }
+          }
         if (visible.isEmpty()) {
           item {
             Text(
@@ -218,11 +235,9 @@ private fun pingOrder(pingResults: Map<ConnectionProfile, Long>): Comparator<Con
 private fun profileSubtitle(
   item: ConnectionProfile,
   ping: Long?,
-  checking: Boolean,
 ): String {
   val base =
     when {
-      checking -> stringResource(R.string.home_profile_checking)
       ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
       ping < 0 -> stringResource(R.string.home_profile_unreachable)
       else -> stringResource(R.string.home_profile_ping_ms, ping)
@@ -249,24 +264,20 @@ private fun transportLabel(network: String?): String {
   }
 }
 
-/**
- * Segmented toggle that switches the profile list between showing all profiles and only the
- * available ones. [availableCount] is shown next to the "Available" option so the user knows how
- * many profiles would remain after filtering. While [loading] is true a small spinner runs on the
- * "Available" segment; once loading stops but no available profile was found, that segment is
- * disabled until more results arrive.
- */
+private fun transportSections(profiles: List<ConnectionProfile>): Map<Protocol, List<ConnectionProfile>> {
+  return profiles.groupBy { it.protocol }
+}
+
 @Composable
 private fun FilterToggle(
   selected: FilterMode,
-  availableCount: Int,
+  enabled: Boolean,
   loading: Boolean,
   onAll: () -> Unit,
   onAvailable: () -> Unit,
 ) {
   val options = listOf(FilterMode.All, FilterMode.Available)
   val selectedIndex = options.indexOf(selected)
-  val availableDisabled = !loading && availableCount == 0
   Row(
     modifier =
       Modifier
@@ -277,7 +288,7 @@ private fun FilterToggle(
     options.forEachIndexed { index, option ->
       val isSelected = index == selectedIndex
       val onOption = if (option == FilterMode.All) onAll else onAvailable
-      val disabled = option == FilterMode.Available && availableDisabled
+      val disabled = option == FilterMode.Available && !enabled
       val label =
         if (option == FilterMode.All) {
           stringResource(R.string.home_filter_all)
@@ -301,7 +312,10 @@ private fun FilterToggle(
             .padding(vertical = 8.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center,
       ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+          horizontalArrangement = Arrangement.spacedBy(6.dp),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
           if (option == FilterMode.Available && loading) {
             CircularProgressIndicator(
               modifier = Modifier.size(14.dp),

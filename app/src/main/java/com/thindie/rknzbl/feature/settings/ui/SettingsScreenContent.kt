@@ -166,6 +166,13 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
+        label = stringResource(R.string.settings_force_profile_measure_title),
+        subtitle = stringResource(R.string.settings_force_profile_measure_subtitle),
+        checked = state.forceProfileMeasure ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleForceProfileMeasure) },
+      )
+
+      ToggleRow(
         label = stringResource(R.string.settings_speed_notification_title),
         subtitle = stringResource(R.string.settings_speed_notification_subtitle),
         checked = state.speedEnabled ?: false,

@@ -12,16 +12,22 @@ import com.v2ray.ang.runtime.V2RayNativeManager
 import com.v2ray.ang.runtime.V2rayConfigManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.resumeWithException
 
 /**
  * Measures real outbound latency for connection profiles using the v2ray core.
@@ -35,56 +41,70 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class ProfilePingManager(
   private val context: Context,
+  private val scope: CoroutineScope,
 ) {
   private val cpu = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
   private val dispatcher = Executors.newFixedThreadPool(cpu * 4).asCoroutineDispatcher()
 
-  private val _results = MutableSharedFlow<Map<ConnectionProfile, Long>>(replay = 0, extraBufferCapacity = 12)
-  val results: SharedFlow<Map<ConnectionProfile, Long>> = _results.asSharedFlow()
+  private data class State(
+    val results: Map<ConnectionProfile, Long>? = null,
+    val lastMeasured: Pair<ConnectionProfile, Long>? = null,
+  )
 
-  /** Profiles currently being measured. Emits the live set so the UI can show a "checking" state. */
-  private val _inFlight = MutableSharedFlow<Set<ConnectionProfile>>(replay = 0, extraBufferCapacity = 12)
-  val inFlight: SharedFlow<Set<ConnectionProfile>> = _inFlight.asSharedFlow()
+  private val stateFlow = MutableStateFlow(State())
+
+  val lastMeasured =
+    stateFlow
+      .map { it.lastMeasured }
+      .distinctUntilChanged()
+
+  val measureResults =
+    stateFlow
+      .mapNotNull { it.results }
+      .onEach { stateFlow.update { State() } }
 
   private val savedResults = ConcurrentHashMap<String, Long>()
 
   private var batchJob: Job? = null
 
-  /**
-   * Measures latency for the given in-memory profiles in a batch and emits the combined results.
-   *
-   * Non-normal protocols ([Protocol.Custom], [Protocol.PolicyGroup]) are skipped. A result of
-   * `-1` means the profile is unreachable.
-   *
-   * This is fire-and-forget: a new batch cancels the previous one. Callers must not suspend on it.
-   */
-  fun pingProfiles(profiles: List<ConnectionProfile>) {
+  fun pingProfiles(
+    profiles: List<ConnectionProfile>,
+    force: Boolean,
+  ) {
     val pingable = profiles.filter { it.protocol.isPingable() }
-    if (pingable.isEmpty()) return
-
+    if (pingable.isEmpty()) {
+      return
+    }
     batchJob?.cancel()
-    val job = Job()
-    batchJob = job
+    batchJob = null
+    batchJob =
+      if (force) {
+        scope.launch(Dispatchers.IO) {
+          val ping =
+            pingable.map { profile -> async { profile to measureInMemory(profile, force) } }
+              .awaitAll()
+              .toMap()
 
-    val resultsMap = ConcurrentHashMap<ConnectionProfile, Long>()
-    val remaining = AtomicInteger(pingable.size)
-    val inFlight = pingable.toSet()
-    _inFlight.tryEmit(inFlight)
-
-    CoroutineScope(dispatcher + job).launch {
-      pingable.map { profile ->
-        launch {
-          try {
-            resultsMap[profile] = measureInMemory(profile)
-          } finally {
-            if (remaining.decrementAndGet() == 0) {
-              _results.tryEmit(resultsMap.toMap())
-              _inFlight.tryEmit(emptySet())
-            }
+          stateFlow.update {
+            it.copy(results = ping)
           }
         }
-      }.joinAll()
-    }
+      } else {
+        scope.launch(Dispatchers.Default) {
+          val ping =
+            pingable.associate { profile ->
+              val measured = profile to measureInMemory(profile, force)
+              stateFlow.update {
+                it.copy(lastMeasured = measured)
+              }
+              measured
+            }
+
+          stateFlow.update {
+            it.copy(results = ping)
+          }
+        }
+      }
   }
 
   /**
@@ -112,10 +132,28 @@ class ProfilePingManager(
     return delay
   }
 
-  private fun measureInMemory(profile: ConnectionProfile): Long {
+  private suspend fun measureInMemory(
+    profile: ConnectionProfile,
+    force: Boolean,
+  ): Long {
     return try {
       val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, profile)
-      V2RayNativeManager.measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl())
+      if (force) {
+        V2RayNativeManager.measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl())
+      } else {
+        suspendCancellableCoroutine {
+          try {
+            it.resume(
+              V2RayNativeManager
+                .measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl()),
+            ) { cause, _, _ ->
+              throw cause
+            }
+          } catch (e: Throwable) {
+            it.resumeWithException(e)
+          }
+        }
+      }
     } catch (c: CancellationException) {
       throw c
     } catch (e: AppError) {

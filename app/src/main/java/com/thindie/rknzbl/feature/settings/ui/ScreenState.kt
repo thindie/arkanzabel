@@ -16,6 +16,7 @@ internal data class ScreenState(
   val speedEnabled: Boolean? = null,
   val customSourceUrl: String? = null,
   val isCustomSourceEnabled: Boolean = false,
+  val forceProfileMeasure: Boolean? = null,
   val realityShowEnabled: Boolean? = null,
   val sniffingTarget: SniffingTarget = SniffingTarget.All,
   val sniffingPortRange: SniffingPortRange = SniffingPortRange.All,

@@ -86,6 +86,12 @@ fun HomeFlow.settings(
         }
       }
 
+      ScreenCommand.ToggleForceProfileMeasure -> {
+        val current = s.forceProfileMeasure ?: false
+        repository.setForceProfileMeasure(!current)
+        null
+      }
+
       is ScreenCommand.SetCustomSourceUrl -> {
         repository.setCustomSourceUrl(c.url)
         null

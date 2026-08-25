@@ -193,6 +193,10 @@
     <!-- Start with favorite profiles -->
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
+
+    <!-- Force profile measurement (speedtest) -->
+    <string name="settings_force_profile_measure_title">Force profile measurement</string>
+    <string name="settings_force_profile_measure_subtitle">Always measure latency for new profiles instead of using cached values</string>
     <string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
 
     <!-- Reality strings (Recommendation #4) -->

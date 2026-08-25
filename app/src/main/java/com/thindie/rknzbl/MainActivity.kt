@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun attachBaseContext(newBase: Context?) {
-    val lang = (application as? Application)?.applicationScope?.settings?.repository?.language()
+    val lang = (application as? Application)?.applicationScope?.settings?.repository?.getLanguageSync()
     if (lang != null) {
       val locale = Locale(lang)
       Locale.setDefault(locale)
@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
-    val lang = (application as? Application)?.applicationScope?.settings?.repository?.language()
+    val lang = (application as? Application)?.applicationScope?.settings?.repository?.getLanguageSync()
     if (lang != null) {
       val locale = Locale(lang)
       Locale.setDefault(locale)

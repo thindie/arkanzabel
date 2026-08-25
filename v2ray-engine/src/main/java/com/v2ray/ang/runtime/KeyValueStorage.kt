@@ -478,8 +478,15 @@ object KeyValueStorage {
   fun setAutosaveMode(enabled: Boolean): Boolean {
     return encodeSettings(KEY_AUTOSAVE_ENABLED, enabled)
   }
+
+  fun isStartWithFavouritesEnabled(): Boolean = decodeSettingsBool(KEY_START_WITH_FAVOURITES, false)
+
+  fun setStartWithFavourites(enabled: Boolean): Boolean {
+    return encodeSettings(KEY_START_WITH_FAVOURITES, enabled)
+  }
 }
 
 private const val KEY_STORAGE_MODE_LOCAL = "storage_mode_local"
 private const val KEY_AUTOSAVE_ENABLED = "autosave_enabled"
 private const val KEY_THEME_MODE = "theme_mode"
+private const val KEY_START_WITH_FAVOURITES = "start_with_favourites"

@@ -34,6 +34,8 @@ object AppConfig {
   const val ANG_CONFIG = "ang_config"
 
   /** Keys for [com.v2ray.ang.runtime.KeyValueStorage] (MMKV). */
+
+  const val PREF_FORCE_PROFILE_MEASUREMENT: String = "pref_force_profile_measurement"
   const val PREF_SNIFFING_ENABLED = "pref_sniffing_enabled"
   const val PREF_ROUTE_ONLY_ENABLED = "pref_route_only_enabled"
   const val PREF_PER_APP_PROXY = "pref_per_app_proxy"
@@ -81,6 +83,9 @@ object AppConfig {
   const val PREF_START_SCAN_IMMEDIATE = "pref_start_scan_immediate"
   const val PREF_DOUBLE_COLUMN_DISPLAY = "pref_double_column_display"
   const val PREF_LANGUAGE = "pref_language"
+
+  /** "start with favourite profiles" flag in settings MMKV — its own key so it is independent of local-save mode. */
+  const val PREF_START_WITH_FAVOURITES = "pref_start_with_favourites"
   const val PREF_UI_MODE_NIGHT = "pref_ui_mode_night"
   const val PREF_PREFER_IPV6 = "pref_prefer_ipv6"
   const val PREF_PROXY_SHARING = "pref_proxy_sharing_enabled"

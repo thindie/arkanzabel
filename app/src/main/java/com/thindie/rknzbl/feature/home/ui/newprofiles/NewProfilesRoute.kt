@@ -128,8 +128,14 @@ private suspend fun HomeFlow.exec(
             ?.awaitAll()
             ?.mapNotNull { it }
         val result = parsed.orEmpty()
-        (appContext as Application).profilePingManager.pingProfiles(result)
-        homeState.copy(links = result)
+        (appContext as Application).profilePingManager.pingProfiles(
+          profiles = result,
+          force = settingsRepository.forceProfileMeasure.first(),
+        )
+        homeState.copy(
+          links = result,
+          pingState = WorkState.Running,
+        )
       }
     }
 
@@ -153,8 +159,14 @@ private suspend fun HomeFlow.exec(
             ?.awaitAll()
             ?.mapNotNull { it }
         val result = parsed ?: homeState.links
-        (appContext as Application).profilePingManager.pingProfiles(result)
-        homeState.copy(links = result)
+        (appContext as Application).profilePingManager.pingProfiles(
+          profiles = result,
+          force = settingsRepository.forceProfileMeasure.first(),
+        )
+        homeState.copy(
+          links = result,
+          pingState = WorkState.Running,
+        )
       }
     }
 

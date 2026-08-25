@@ -71,18 +71,30 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     }
 
     s.sub(
-      ((appContext as Application).profilePingManager.results),
+      (
+        (appContext as Application)
+          .profilePingManager
+          .measureResults
+      ),
     ).transition { state, results ->
       state.copy(
         pingResults = results,
-        availableCount = state.links.count { isAvailable(results[it]) },
+        pingState = WorkState.Idle,
       )
     }
 
     s.sub(
-      ((appContext as Application).profilePingManager.inFlight),
-    ).transition { state, inFlight ->
-      state.copy(inFlightProfiles = inFlight)
+      (
+        (appContext as Application)
+          .profilePingManager
+          .lastMeasured
+          .filterNotNull()
+      ),
+    ).transition { state, (profile, ping) ->
+      val available = state.pingResults ?: emptyMap()
+      state.copy(
+        pingResults = available + (profile to ping),
+      )
     }
 
     s.sub(
