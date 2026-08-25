@@ -18,3 +18,10 @@ local.properties
 /docs/tmp
 # Kotlin/IDE tooling (e.g. errors-*.log)
 .kotlin/
+# Hermes tooling working dirs under gradle/ (build caches, daemon, JIT profiles)
+gradle/android/
+gradle/caches/
+gradle/daemon/
+gradle/kotlin-profile/
+gradle/native/
+gradle/notifications/
