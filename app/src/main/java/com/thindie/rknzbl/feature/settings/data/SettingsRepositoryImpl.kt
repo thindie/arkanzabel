@@ -170,7 +170,7 @@ class SettingsRepositoryImpl(
   private val forceProfileMeasureSetting =
     Setting<Boolean>(
       read = { storage.decodeSettingsBool(AppConfig.PREF_FORCE_PROFILE_MEASUREMENT) },
-      write = { storage.decodeSettingsBool(AppConfig.PREF_FORCE_PROFILE_MEASUREMENT) },
+      write = { storage.encodeSettings(AppConfig.PREF_FORCE_PROFILE_MEASUREMENT, it) },
     )
 
   override val forceProfileMeasure: Flow<Boolean> = forceProfileMeasureSetting.flow
