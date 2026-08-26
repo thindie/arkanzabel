@@ -82,6 +82,8 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
 
       // === Appearance ===
       VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
       SectionTitle(stringResource(R.string.settings_section_appearance))
       VSpacer(16.dp)
 
