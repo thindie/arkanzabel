@@ -22,23 +22,23 @@ class Setting<T>(
   private val read: () -> T,
   private val write: (T) -> Unit,
 ) {
-  private val _value = MutableStateFlow(read())
+  private val value = MutableStateFlow(read())
 
   /**
    * The current value, exposed reactively to the UI.
    */
-  val flow: Flow<T> = _value.asStateFlow()
+  val flow: Flow<T> = value.asStateFlow()
 
   /**
    * The current value, read synchronously from memory (no collector needed).
    */
-  fun getSync(): T = _value.value
+  fun getSync(): T = value.value
 
   /**
    * Update the setting in memory and persist it.
    */
   fun set(newValue: T) {
-    _value.value = newValue
+    value.value = newValue
     write(newValue)
   }
 }
