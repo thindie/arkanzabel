@@ -73,13 +73,6 @@ object V2rayConfigManager {
     }
   }
 
-  private fun getV2rayConfig4Speedtest(
-    context: Context,
-    config: ConnectionProfile,
-  ): V2Ray {
-    return getV2rayNormalConfig4Speedtest(context, "", config)
-  }
-
   /**
    * Same as [getV2rayConfig] but tuned for outbound delay measurement.
    */
@@ -841,11 +834,12 @@ object V2rayConfigManager {
         sni = host
         xhttpSetting.path = path ?: "/"
         xhttpSetting.mode = xhttpMode
-        xhttpSetting.extra = try {
+        xhttpSetting.extra =
+          try {
             JsonUtil.parseString(xhttpExtra.orEmpty())
-        } catch (e: Throwable) {
+          } catch (e: Throwable) {
             ""
-        }
+          }
         streamSettings.xhttpSettings = xhttpSetting
       }
 

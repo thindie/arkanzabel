@@ -72,16 +72,6 @@ class SettingsRepositoryImpl(
     fragmentEnabledSetting.set(enabled)
   }
 
-  private val fragmentLengthSetting =
-    Setting<String>(
-      read = { storage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH).orEmpty() },
-      write = { storage.encodeSettings(AppConfig.PREF_FRAGMENT_LENGTH, it) },
-    )
-
-  override fun setFragmentLength(length: String) {
-    fragmentLengthSetting.set(length)
-  }
-
   private val fragmentIntervalSetting =
     Setting<String>(
       read = { storage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL).orEmpty() },
@@ -117,6 +107,8 @@ class SettingsRepositoryImpl(
   override suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean) {
     startWithFavouritesSetting.set(enabled)
   }
+
+  override fun getStartWithFavoriteProfilesSync(): Boolean = startWithFavouritesSetting.getSync()
 
   // --- Speed notification support ---
   private val speedSetting =
@@ -174,9 +166,6 @@ class SettingsRepositoryImpl(
     )
 
   override val forceProfileMeasure: Flow<Boolean> = forceProfileMeasureSetting.flow
-
-  override val getForceProfileMeasureSync: Boolean
-    get() = true
 
   override fun setForceProfileMeasure(enabled: Boolean) {
     forceProfileMeasureSetting.set(enabled)

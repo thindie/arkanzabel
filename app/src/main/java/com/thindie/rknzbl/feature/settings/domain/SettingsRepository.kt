@@ -32,8 +32,6 @@ interface SettingsRepository {
 
   suspend fun toggleFragment(enabled: Boolean)
 
-  fun setFragmentLength(length: String)
-
   val fragmentInterval: Flow<String?>
 
   fun setFragmentInterval(interval: String)
@@ -47,6 +45,9 @@ interface SettingsRepository {
   val startWithFavoriteProfiles: Flow<Boolean>
 
   suspend fun toggleStartWithFavoriteProfiles(enabled: Boolean)
+
+  /** Current value read synchronously from memory (no collector needed). */
+  fun getStartWithFavoriteProfilesSync(): Boolean
 
   // Speed notification
 
@@ -72,7 +73,6 @@ interface SettingsRepository {
   fun setCustomSourceEnabled(enabled: Boolean)
 
   val forceProfileMeasure: Flow<Boolean>
-  val getForceProfileMeasureSync: Boolean
 
   fun setForceProfileMeasure(enabled: Boolean)
 

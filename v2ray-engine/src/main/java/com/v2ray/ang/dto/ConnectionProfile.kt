@@ -179,21 +179,23 @@ data class ConnectionProfile(
 }
 
 fun ConnectionProfile.optimizeForRkn(): ConnectionProfile {
-    val targetSni = if (sni.isNullOrEmpty() || sni.contains("cloudflare", true)) {
-        "://google.com"
+  val targetSni =
+    if (sni.isNullOrEmpty() || sni.contains("cloudflare", true)) {
+      "://google.com"
     } else {
-        sni
+      sni
     }
 
-    val targetFingerprint = if (fingerPrint.isNullOrEmpty() || fingerPrint == "random") {
-        "chrome"
+  val targetFingerprint =
+    if (fingerPrint.isNullOrEmpty() || fingerPrint == "random") {
+      "chrome"
     } else {
-        fingerPrint
+      fingerPrint
     }
 
-    return this.copy(
-        insecure = false,
-        fingerPrint = targetFingerprint,
-        sni = targetSni
-    )
+  return this.copy(
+    insecure = false,
+    fingerPrint = targetFingerprint,
+    sni = targetSni,
+  )
 }

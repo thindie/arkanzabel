@@ -34,7 +34,7 @@ class HomeFlow(
     )
 
   override fun start() {
-    if (settingsRepository.isStartWithFavoriteProfilesEnabled()) {
+    if (settingsRepository.getStartWithFavoriteProfilesSync()) {
       startStoredProfilesFlow {
         go(select(settingsRepository, repository))
       }
