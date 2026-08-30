@@ -13,7 +13,7 @@
 
     <application
         android:name=".application.Application"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:localeConfig="@xml/locales_config"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
