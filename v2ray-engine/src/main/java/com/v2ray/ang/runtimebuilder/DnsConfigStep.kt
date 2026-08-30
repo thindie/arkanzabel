@@ -7,15 +7,14 @@ import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
 import com.v2ray.ang.error.DnsConfigError
 import com.v2ray.ang.extension.isNotNullEmpty
-import com.v2ray.ang.runtime.KeyValueStorage
-import com.v2ray.ang.runtime.SettingsManager
 
 internal class DnsConfigStep(
+  private val settings: SettingsReader,
   private val getUserRule2Domain: (String) -> ArrayList<String>,
 ) {
   fun applyFakeDns(v2rayConfig: V2rayConfig): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED) &&
-      KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)
+    if (settings.getBool(AppConfig.PREF_LOCAL_DNS_ENABLED, false) &&
+      settings.getBool(AppConfig.PREF_FAKE_DNS_ENABLED, false)
     ) {
       v2rayConfig.fakedns = listOf(V2rayConfig.Fakedns())
     }
@@ -24,7 +23,7 @@ internal class DnsConfigStep(
 
   fun applyCustomLocalDns(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
-      if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FAKE_DNS_ENABLED)) {
+      if (settings.getBool(AppConfig.PREF_FAKE_DNS_ENABLED, false)) {
         val geositeCn = arrayListOf(AppConfig.GEOSITE_CN)
         val proxyDomain = getUserRule2Domain(AppConfig.TAG_PROXY)
         val directDomain = getUserRule2Domain(AppConfig.TAG_DIRECT)
@@ -37,8 +36,8 @@ internal class DnsConfigStep(
         )
       }
 
-      if (SettingsManager.isVpnMode()) {
-        if (SettingsManager.isUsingHevTun()) {
+      if (settings.isVpnMode()) {
+        if (settings.isUsingHevTun()) {
           v2rayConfig.routing.rules.add(
             0,
             Rules(
@@ -86,7 +85,7 @@ internal class DnsConfigStep(
       val hosts = mutableMapOf<String, Any>()
       val servers = ArrayList<Any>()
 
-      val remoteDns = SettingsManager.getRemoteDnsServers()
+      val remoteDns = settings.getRemoteDnsServers()
       val proxyDomain = getUserRule2Domain(AppConfig.TAG_PROXY)
       remoteDns.forEach {
         servers.add(it)
@@ -100,7 +99,7 @@ internal class DnsConfigStep(
         )
       }
 
-      val domesticDns = SettingsManager.getDomesticDnsServers()
+      val domesticDns = settings.getDomesticDnsServers()
       val directDomain = getUserRule2Domain(AppConfig.TAG_DIRECT)
       val isCnRoutingMode = directDomain.contains(AppConfig.GEOSITE_CN)
       val geoipCn = arrayListOf(AppConfig.GEOIP_CN)
@@ -132,7 +131,7 @@ internal class DnsConfigStep(
       hosts[AppConfig.DNS_YANDEX_DOMAIN] = AppConfig.DNS_YANDEX_ADDRESSES
 
       try {
-        val userHosts = KeyValueStorage.decodeSettingsString(AppConfig.PREF_DNS_HOSTS)
+        val userHosts = settings.getString(AppConfig.PREF_DNS_HOSTS)
         if (userHosts.isNotNullEmpty()) {
           val userHostsMap =
             userHosts?.split(",")
@@ -159,8 +158,7 @@ internal class DnsConfigStep(
 
       // DNS refresh interval (seconds) — fight stale-IP after server IP change.
       // V2Ray core refreshes cached IPs every `refreshInterval` seconds when > 0.
-      val refreshSec =
-        KeyValueStorage.decodeSettingsStringAsInt(AppConfig.PREF_DNS_REFRESH_INTERVAL, 0)
+      val refreshSec = settings.getInt(AppConfig.PREF_DNS_REFRESH_INTERVAL, 0)
       if (refreshSec > 0) {
         v2rayConfig.dns?.refreshInterval = refreshSec.toLong()
       }

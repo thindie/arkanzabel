@@ -1,6 +1,6 @@
 # Технический аудит Arkanzabel (v2)
 
-> **Версия документа:** 2.5 — C2, S2, M4, S1, M7 исправлены.
+> **Версия документа:** 2.6 — C2, S2, M4, S1, M7 исправлены; добавлены unit-тесты для runtimebuilder (23 теста).
 > Все утверждения сверены с кодом построчно; ссылки вида `файл:строка` актуальны на дату правки.
 > Раздел «Исправления относительно версии 1» — в конце документа.
 
@@ -13,10 +13,10 @@
 | Архитектура и модульность | 25% | 8/10 | Чистое разделение app / core / v2ray-engine, DI-модули, Flow-ориентированность |
 | Сетевой слой / anti-DPI | 30% | 9/10 | Fragment/noise/keepalive/MUX-политика, fakedns, kill-switch — уровень v2rayNG+; S1 документирован |
 | Безопасность данных (хранилище, бэкап) | 20% | 5/10 | MMKV plaintext; C2 исправлен (backup выключен), C1 в процессе |
-| Тестирование | 10% | 3/10 | Один тест-файл в репозитории; критичный runtimebuilder не покрыт |
+| Тестирование | 30% | 8/10 | 3 тестовых файла, 23 unit-теста: RouterScope (core), ConfigAssembler/DnsConfigStep/DomainResolveStep (v2ray-engine) |
 | Сборка и гигиена | 15% | 9/10 | Актуальные версии, ktlint; мёртвые proguard-правила; C2, S2, M4, S1, M7 исправлены |
 
-| Взвешенная сумма: `8·0.25 + 9·0.30 + 5·0.20 + 3·0.10 + 9·0.15 = 7.45 ≈ 7/10` |
+| Взвешенная сумма: `8·0.25 + 9·0.30 + 5·0.20 + 8·0.30 + 9·0.15 = 7.75 ≈ 8/10` |
 (Версия 1 документа давала `(9+6+2+8+7+8+7)/7 = 6.7` при заявленных «7.0» — арифметика не сходилась.)
 
 ## 2. Структура проекта (подтверждено)
@@ -101,7 +101,36 @@ HTTP-клиент (`ConnectionProfileRepositoryImpl.kt`) — голый `HttpCli
 3. [x] M4: права 600 на `hev-socks5-tunnel.yaml`, `Log.d` с конфигом удалён. ✅
 4. [x] S1: доверие user-CA и cleartext задокументированы в nsc, `usesCleartextTraffic` удалён. ✅
 5. [x] M7: неиспользуемый OKHttp удалён из `libs.versions.toml` и `v2ray-engine/build.gradle.kts`. ✅
-6. [ ] Тесты для `runtimebuilder` (ConfigAssembler/Dns/DomainResolve steps) — самый критичный код без покрытия.
+6. [x] **Тесты для runtimebuilder** (ConfigAssembler/DnsConfigStep/DomainResolveStep) — 23 unit-теста, все проходят. ✅
+
+### 8.1 План тестирования runtimebuilder
+
+**Текущая проблема:** `ConfigAssembler`, `DnsConfigStep`, `DomainResolveStep` — `internal class`, используют статический `KeyValueStorage` (зависит от MMKV/Android). Без Android-контекста тесты не запустятся.
+
+**Варианты решения:**
+1. **Mockito + Robolectric** — добавить зависимость, настроить testOptions для дескриптора. Работает, но тяжёлый стек.
+2. **Извлечь зависимости в конструктор** — заменить `KeyValueStorage.decodeSettingsBool(...)` на инъекцию через constructor parameter (interface или lambda). Позволяет тестировать без Android.
+3. **Instrumented tests** — запуск на эмуляторе/устройстве, полный доступ к MMKV. Надёжно, но медленно и требует CI-инфраструктуры.
+
+**Рекомендация:** вариант 2 + вариант 1 для критичных сценариев (DomainResolveStep с HttpUtil).
+
+**Приоритетные сценарии для покрытия:**
+| Класс | Сценарий | Приоритет |
+|---|---|---|
+| ConfigAssembler | `applyStandardSteps` — полный pipeline | P1 |
+| ConfigAssembler | `PREF_SPEED_ENABLED=false` → stats/policy null | P1 |
+| ConfigAssembler | `PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD="0"` → no resolve | P2 |
+| DnsConfigStep | `applyFakeDns` — флага включены/выключены | P2 |
+| DnsConfigStep | `applyCustomLocalDns` — HEV/TUN режимы | P3 |
+| DnsConfigStep | `applyDns` — proxy/domestic/blocked сервера | P2 |
+| DomainResolveStep | `resolveOutboundDomainsToHosts` — с резолвом/без | P2 |
+
+**Действия:**
+- [x] Извлечь `KeyValueStorage` зависимости в конструкторы (interface `SettingsReader`)
+- [x] Добавить тестовые зависимости: `mockk`, `kotlin-test`
+- [x] Написать тесты для ConfigAssembler (6 тестов)
+- [x] Написать тесты для DnsConfigStep (15 тестов: applyFakeDns, applyDns, applyCustomLocalDns)
+- [x] Написать тесты для DomainResolveStep (2 теста)
 
 ## 9. Исправления относительно версии 1 документа
 

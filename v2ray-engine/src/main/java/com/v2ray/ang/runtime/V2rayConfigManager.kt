@@ -27,6 +27,7 @@ import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
 import com.v2ray.ang.runtimebuilder.DnsConfigStep
 import com.v2ray.ang.runtimebuilder.DomainResolveStep
 import com.v2ray.ang.runtimebuilder.InboundConfigStep
+import com.v2ray.ang.runtimebuilder.KeyValueStorageSettingsReader
 import com.v2ray.ang.runtimebuilder.OutboundConfigStep
 import com.v2ray.ang.runtimebuilder.RoutingConfigStep
 import com.v2ray.ang.util.JsonUtil
@@ -38,11 +39,12 @@ object V2rayConfigManager {
   private var initConfigCacheWithTun: String? = null
   private val inboundConfigStep by lazy { InboundConfigStep(::needTun) }
   private val routingConfigStep by lazy { RoutingConfigStep() }
-  private val dnsConfigStep by lazy { DnsConfigStep(::getUserRule2Domain) }
+  private val dnsConfigStep by lazy { DnsConfigStep(KeyValueStorageSettingsReader(), ::getUserRule2Domain) }
   private val outboundConfigStep by lazy { OutboundConfigStep(ConnectionProfileToOutboundMapper::map) }
-  private val domainResolveStep by lazy { DomainResolveStep() }
+  private val domainResolveStep by lazy { DomainResolveStep(KeyValueStorageSettingsReader()) }
   private val configAssembler by lazy {
     ConfigAssembler(
+      settings = KeyValueStorageSettingsReader(),
       applyInbounds = ::getInbounds,
       applyOutbounds = ::getOutbounds,
       applyMoreOutbounds = ::getMoreOutbounds,

@@ -67,4 +67,8 @@ dependencies {
   implementation(libs.google.gson)
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.work.multiprocess)
+
+  testImplementation("junit:junit:4.13.2")
+  testImplementation("io.mockk:mockk:1.13.10")
+  testImplementation("org.jetbrains.kotlin:kotlin-test")
 }
