@@ -49,9 +49,14 @@ class TProxyService(
     val configFile =
       File(context.filesDir, "hev-socks5-tunnel.yaml").apply {
         writeText(configContent)
+        // 600: owner read/write only — config contains network settings
+        setReadable(true, false)
+        setReadable(false, true)
+        setWritable(true, false)
+        setWritable(false, true)
+        setExecutable(false, true)
       }
 //        Log.i(AppConfig.TAG, "Config file created: ${configFile.absolutePath}")
-    Log.d(AppConfig.TAG, "HevSocks5Tunnel Config content:\n$configContent")
 
     try {
 //            Log.i(AppConfig.TAG, "TProxyStartService...")
