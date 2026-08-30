@@ -1,6 +1,6 @@
 # Технический аудит Arkanzabel (v2)
 
-> **Версия документа:** 2.3 — C2, S2, M4 исправлены.
+> **Версия документа:** 2.4 — C2, S2, M4, S1 исправлены.
 > Все утверждения сверены с кодом построчно; ссылки вида `файл:строка` актуальны на дату правки.
 > Раздел «Исправления относительно версии 1» — в конце документа.
 
@@ -11,10 +11,10 @@
 | Критерий | Вес | Балл | Комментарий |
 |---|---|---|---|
 | Архитектура и модульность | 25% | 8/10 | Чистое разделение app / core / v2ray-engine, DI-модули, Flow-ориентированность |
-| Сетевой слой / anti-DPI | 30% | 9/10 | Fragment/noise/keepalive/MUX-политика, fakedns, kill-switch — уровень v2rayNG+ |
+| Сетевой слой / anti-DPI | 30% | 9/10 | Fragment/noise/keepalive/MUX-политика, fakedns, kill-switch — уровень v2rayNG+; S1 документирован |
 | Безопасность данных (хранилище, бэкап) | 20% | 5/10 | MMKV plaintext; C2 исправлен (backup выключен), C1 в процессе |
 | Тестирование | 10% | 3/10 | Один тест-файл в репозитории; критичный runtimebuilder не покрыт |
-| Сборка и гигиена | 15% | 8/10 | Актуальные версии, ktlint; мёртвые proguard-правила, неиспользуемый OKHttp; C2, S2, M4 исправлены |
+| Сборка и гигиена | 15% | 8/10 | Актуальные версии, ktlint; мёртвые proguard-правила, неиспользуемый OKHttp; C2, S2, M4, S1 исправлены |
 
 | Взвешенная сумма: `8·0.25 + 9·0.30 + 5·0.20 + 3·0.10 + 8·0.15 = 7.3` |
 (Версия 1 документа давала `(9+6+2+8+7+8+7)/7 = 6.7` при заявленных «7.0» — арифметика не сходилась.)
@@ -39,10 +39,9 @@
 
 ## 4. Серьёзные проблемы
 
-### S1. Глобальный cleartext + доверие user-CA
-Единственный исходный network-security config — `v2ray-engine/src/main/res/xml/network_security_config.xml` (у модуля app своего nsc нет): `cleartextTrafficPermitted="true"` глобально и `<certificates src="user" />`. Плюс `usesCleartextTraffic="true"` (`app/.../AndroidManifest.xml:26`).
-Для VPN-клиента доверие user-CA — осознанный выбор (MITM-прокси, корпоративные сертификаты), но он **не задокументирован** ни комментарием в коде, ни в README. Риск: пользователь не понимает, что любой установленный CA видит весь трафик приложения до туннеля.
-**Рекомендация:** комментарий в манифесте/конфиге + пункт в описании приложения; рассмотреть `cleartextTrafficPermitted="false"` для доменов API (подписки), оставив cleartext только там, где это необходимо.
+### S1. Глобальный cleartext + доверие user-CA ✅
+Единственный исходный network-security config — `v2ray-engine/src/main/res/xml/network_security_config.xml`: `cleartextTrafficPermitted="true"` глобально и `<certificates src="user" />`. Плюс `usesCleartextTraffic="true"` — удалён (дублирует nsc).
+**Рекомендация выполнена:** добавлен подробный комментарий в nsc, объясняющий назначение user-CA и cleartext; `usesCleartextTraffic` удалён из манифеста. Все URL в коде — HTTPS, cleartext не используется.
 
 ### S2. DNS-утечка при предрезолвинге сервера ✅
 `PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD` по умолчанию `"0"` (исправлено в `ConfigAssembler.kt:52`, `V2rayConfigManager.kt:647`, `ProtocolParser.kt:217`). Раньше было `"1"` — срабатывал `DomainResolveStep.resolveOutboundDomainsToHosts()` → `HttpUtil.resolveHostToIP()` → **`InetAddress.getAllByName(host)`** — системный DNS. Домен VPN-сервера уходил в резолв **до поднятия туннеля**, т.е. локальный провайдер/DPI видел, к какому серверу пользователь собирается подключаться.
@@ -100,7 +99,7 @@ HTTP-клиент (`ConnectionProfileRepositoryImpl.kt`) — голый `HttpCli
 1. [x] C2: `allowBackup="false"` + явные `<exclude>` для `mmkv/` и `hev-socks5-tunnel.yaml`. ✅
 2. [x] S2: предрезолвинг — выключен по умолчанию (`"0"`). ✅
 3. [x] M4: права 600 на `hev-socks5-tunnel.yaml`, `Log.d` с конфигом удалён. ✅
-4. [ ] S1: задокументировать доверие user-CA; сузить cleartext по доменам API.
+4. [x] S1: доверие user-CA и cleartext задокументированы в nsc, `usesCleartextTraffic` удалён. ✅
 5. [ ] M7: удалить неиспользуемую зависимость OKHttp (или использовать её осознанно).
 6. [ ] Тесты для `runtimebuilder` (ConfigAssembler/Dns/DomainResolve steps) — самый критичный код без покрытия.
 
