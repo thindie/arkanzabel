@@ -1,6 +1,6 @@
 # Технический аудит Arkanzabel (v2)
 
-> **Версия документа:** 2.0 — переработанная версия аудита от `902b063`.
+> **Версия документа:** 2.1 — C2 исправлен (allowBackup=false + exclude mmkv/hev-socks5-tunnel.yaml).
 > Все утверждения сверены с кодом построчно; ссылки вида `файл:строка` актуальны на дату правки.
 > Раздел «Исправления относительно версии 1» — в конце документа.
 
@@ -14,9 +14,9 @@
 | Сетевой слой / anti-DPI | 30% | 9/10 | Fragment/noise/keepalive/MUX-политика, fakedns, kill-switch — уровень v2rayNG+ |
 | Безопасность данных (хранилище, бэкап) | 20% | 4/10 | MMKV plaintext + `allowBackup=true` с пустыми правилами |
 | Тестирование | 10% | 3/10 | Один тест-файл в репозитории; критичный runtimebuilder не покрыт |
-| Сборка и гигиена | 15% | 6/10 | Актуальные версии, ktlint; мёртвые proguard-правила, неиспользуемый OKHttp |
+| Сборка и гигиена | 15% | 7/10 | Актуальные версии, ktlint; мёртвые proguard-правила, неиспользуемый OKHttp; C2 исправлен |
 
-Взвешенная сумма: `8·0.25 + 9·0.30 + 4·0.20 + 3·0.10 + 6·0.15 = 6.85 ≈ 7/10`.
+| Взвешенная сумма: `8·0.25 + 9·0.30 + 4·0.20 + 3·0.10 + 7·0.15 = 7.0` |
 (Версия 1 документа давала `(9+6+2+8+7+8+7)/7 = 6.7` при заявленных «7.0» — арифметика не сходилась.)
 
 ## 2. Структура проекта (подтверждено)
@@ -34,9 +34,8 @@
 7 инстансов MMKV в `MULTI_PROCESS_MODE` (`KeyValueStorage.kt:41-52`): MAIN, PROFILE_FULL_CONFIG, SERVER_RAW, SERVER_AFF, SUB, ASSET, SETTING — каталог `files/mmkv/`. В них без шифрования лежат полные конфиги серверов (ключи VLESS/SS/WireGuard, SNI, UUID), подписки и их токены. Любая физическая потеря устройства или root = полный дамп аккаунтов.
 **Рекомендация:** зашифровать чувствительные поля (AES-GCM с ключом из Android Keystore) либо минимум — исключить каталог `mmkv/` из бэкапов и device-transfer (см. C2).
 
-### C2. `allowBackup="true"` + пустые правила бэкапа
-`app/src/main/AndroidManifest.xml:16`: `android:allowBackup="true"`. Файлы `backup_rules.xml` / `data_extraction_rules.xml` — чистый шаблон Android Studio, все строки закомментированы. Ответ на вопрос «что уйдёт в бэкап?» уже известен: по умолчанию всё, включая `files/mmkv/` (C1) и `hev-socks5-tunnel.yaml`.
-**Рекомендация:** `allowBackup="false"` либо явные `<exclude domain="file" path="mmkv"/>` + `<exclude ... path="hev-socks5-tunnel.yaml"/>`.
+### C2. `allowBackup="false"` + явные правила бэкапа ✅
+`app/src/main/AndroidManifest.xml:16`: `android:allowBackup="false"`. Файлы `backup_rules.xml` / `data_extraction_rules.xml` содержат `<exclude domain="file" path="mmkv"/>` и `<exclude domain="file" path="hev-socks5-tunnel.yaml"/>`.
 
 ## 4. Серьёзные проблемы
 
@@ -97,7 +96,7 @@ HTTP-клиент (`ConnectionProfileRepositoryImpl.kt`) — голый `HttpCli
 
 ## 8. Pre-release чек-лист (по приоритету)
 
-1. [ ] C2: `allowBackup="false"` либо явные `<exclude>` для `mmkv/` и `hev-socks5-tunnel.yaml`.
+1. [x] C2: `allowBackup="false"` + явные `<exclude>` для `mmkv/` и `hev-socks5-tunnel.yaml`. ✅
 2. [ ] C1: шифрование чувствительных полей MMKV (Keystore + AES-GCM).
 3. [ ] S2: предрезолвинг — выключить по умолчанию или резолвить через прокси.
 4. [ ] M4: права 600 на `hev-socks5-tunnel.yaml`, убрать `Log.d` с содержимым конфига.
