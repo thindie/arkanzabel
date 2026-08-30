@@ -1,34 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <group android:scaleX="0.69"
-      android:scaleY="0.69"
-      android:translateX="79.36"
-      android:translateY="79.36">
+    <!-- full-bleed dark navy background -->
     <path
-        android:pathData="M100,0L412,0A100,100 0,0 1,512 100L512,412A100,100 0,0 1,412 512L100,512A100,100 0,0 1,0 412L0,100A100,100 0,0 1,100 0z"
-        android:fillColor="#1A73E8"/>
+        android:pathData="M0,0H512V512H0Z"
+        android:fillColor="#1C1F2A"/>
     <path
-        android:pathData="M256,80L120,140V240C120,323.8 177.8,402.2 256,432C334.2,402.2 392,323.8 392,240V140L256,80Z"
-        android:fillColor="#ffffff"
-        android:fillAlpha="0.2"/>
+        android:pathData="M0,256H512V512H0Z"
+        android:fillColor="#0A0F1E"
+        android:fillAlpha="0.4"/>
+    <!-- shield outline (neon) — fits within adaptive-icon safe zone -->
     <path
-        android:pathData="M256,160L160,240V340H220V280H292V340H352V240L256,160Z"
+        android:pathData="M256,128L384,178V296L256,384L128,296V178Z"
+        android:strokeColor="#34407A"
+        android:strokeWidth="22"
         android:strokeLineJoin="round"
-        android:strokeWidth="24"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <!-- shield inner glow fill -->
+    <path
+        android:pathData="M256,154L362,198V290L256,366L150,290V198Z"
+        android:fillColor="#BA9F9F"
+        android:fillAlpha="0.08"/>
+    <!-- signal arcs (3) -->
+    <path
+        android:pathData="M222,252A34,34 0,0 1,290 252"
+        android:strokeColor="#3A688C"
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <path
+        android:pathData="M204,252A52,52 0,0 1,308 252"
+        android:strokeColor="#23739D"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
         android:fillColor="#00000000"
-        android:strokeColor="#ffffff"
-        android:strokeLineCap="round"/>
+        android:fillAlpha="0.55"/>
     <path
-        android:pathData="M256,120m-15,0a15,15 0,1 1,30 0a15,15 0,1 1,-30 0"
-        android:fillColor="#8AB4F8"/>
+        android:pathData="M186,252A70,70 0,0 1,326 252"
+        android:strokeColor="#256CAD"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:fillAlpha="0.3"/>
+    <!-- keyhole -->
     <path
-        android:pathData="M160,340m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"
-        android:fillColor="#8AB4F8"/>
+        android:pathData="M256,244m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0"
+        android:fillColor="#FFFFFF"/>
     <path
-        android:pathData="M352,340m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"
-        android:fillColor="#8AB4F8"/>
-  </group>
+        android:pathData="M245,256L267,256L272,288L240,288Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.95"/>
+    <!-- base dot -->
+    <path
+        android:pathData="M256,340m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0"
+        android:fillColor="#FFFFFF"/>
 </vector>
