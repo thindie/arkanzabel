@@ -65,7 +65,6 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.tencent.mmkv)
   implementation(libs.google.gson)
-  implementation(libs.square.okhttp)
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.work.multiprocess)
 }
