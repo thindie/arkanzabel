@@ -644,7 +644,7 @@ object V2rayConfigManager {
   }
 
   private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "0") == "1") {
       resolveOutboundDomainsToHosts(this)
     }
     return this

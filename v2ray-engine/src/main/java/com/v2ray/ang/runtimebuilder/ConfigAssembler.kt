@@ -49,7 +49,7 @@ internal class ConfigAssembler(
   }
 
   private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "0") == "1") {
       return try {
         applyResolveOutboundDomainsToHosts(this)
       } catch (runtime: RuntimeException) {

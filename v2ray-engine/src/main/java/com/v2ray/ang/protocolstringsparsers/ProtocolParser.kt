@@ -215,7 +215,7 @@ open class ProtocolParser {
     val domain = HttpUtil.toIdnDomain(connectionProfile.server.orEmpty())
     if (KeyValueStorage.decodeSettingsString(
         AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-        "1",
+        "0",
       ) != "2"
     ) {
       return domain
