@@ -41,6 +41,7 @@ import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.feature.intro.IntroFlow
+import com.thindie.rknzbl.feature.home.HomeFlow as LegacyHomeFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -69,11 +70,22 @@ class MainActivity : ComponentActivity() {
           appContext = app,
         )
           .onFinishBuilder {
-            val homeFlow = HomeFlow(router = router, appContext = app)
-            app.applicationScope.inject(homeFlow)
-            homeFlow
-              .onFinishBuilder { router.pop() }
-              .start()
+            if (app.applicationScope.settingsRepository.getUseNewDesignSync()) {
+              val homeFlow = HomeFlow(router = router, appContext = app)
+              app.applicationScope.inject(homeFlow)
+              homeFlow
+                .onFinishBuilder { router.pop() }
+                .start()
+            } else {
+              LegacyHomeFlow(
+                router = router,
+                appContext = app,
+                repository = app.applicationScope.homeModule.repository,
+                settingsRepository = app.applicationScope.settingsRepository,
+              )
+                .onFinishBuilder { router.pop() }
+                .start()
+            }
           }
           .start()
       }
