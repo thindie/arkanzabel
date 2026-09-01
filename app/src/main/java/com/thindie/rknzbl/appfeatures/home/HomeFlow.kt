@@ -18,7 +18,6 @@ import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
  */
 class HomeFlow(
   val router: Router,
-  val appContext: Context,
 ) : ScreenFlow<Route, Unit>(router) {
   lateinit var flowModule: HomeFlowModule
     internal set

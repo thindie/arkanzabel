@@ -21,6 +21,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.engine.core.Route
+import com.thindie.engine.core.Router
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
@@ -55,28 +57,40 @@ class MainActivity : ComponentActivity() {
         ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
           PackageManager.PERMISSION_GRANTED
       } else {
-        null
+        true
       }
-
     enableEdgeToEdge()
     val app = application as Application
     val router = app.requireRouter()
     awaitFinish()
-    setContent {
-      SideEffect {
-        IntroFlow(
-          router,
-          hasPushPermission = if (hasPermission != null) hasPermission else true,
-          appContext = app,
-        )
-          .onFinishBuilder {
-            if (app.applicationScope.settingsRepository.getUseNewDesignSync()) {
-              val homeFlow = HomeFlow(router = router, appContext = app)
+    if (app.applicationScope.settingsRepository.getUseNewDesignSync()) {
+      // Новый дизайн: отдельный setContent, работает иначе
+      setContent {
+        SideEffect {
+          IntroFlow(
+            router,
+            hasPushPermission = hasPermission,
+            appContext = app,
+          )
+            .onFinishBuilder {
+              val homeFlow = HomeFlow(router = router)
               app.applicationScope.inject(homeFlow)
-              homeFlow
-                .onFinishBuilder { router.pop() }
-                .start()
-            } else {
+              homeFlow.onFinishBuilder { router.pop() }.start()
+            }
+            .start()
+        }
+        AppContent(app, router)
+      }
+    } else {
+      // Легаси: setContent как есть
+      setContent {
+        SideEffect {
+          IntroFlow(
+            router,
+            hasPushPermission = hasPermission,
+            appContext = app,
+          )
+            .onFinishBuilder {
               LegacyHomeFlow(
                 router = router,
                 appContext = app,
@@ -86,59 +100,64 @@ class MainActivity : ComponentActivity() {
                 .onFinishBuilder { router.pop() }
                 .start()
             }
-          }
-          .start()
+            .start()
+        }
+        AppContent(app, router)
       }
-      val themeSwitcher =
-        remember {
-          ThemeSwitcher().apply {
-            lifecycleScope.launch {
-              app.applicationScope.settingsRepository.themeChoice.firstOrNull()?.let(this@apply::set)
-            }
+    }
+  }
+
+  @Composable
+  private fun AppContent(app: Application, router: Router) {
+    val themeSwitcher =
+      remember {
+        ThemeSwitcher().apply {
+          lifecycleScope.launch {
+            app.applicationScope.settingsRepository.themeChoice.firstOrNull()?.let(this@apply::set)
           }
         }
-      CompositionLocalProvider(
-        LocalThemeSwitcher provides themeSwitcher,
-      ) {
-        val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
-        val isDark =
-          when (themeColors.value) {
-            null -> isSystemInDarkTheme()
-            ThemeSwitcher.Choice.Dark -> true
-            ThemeSwitcher.Choice.Light -> false
-            ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
-          }
-        val view = LocalView.current
-        if (!view.isInEditMode) {
-          SideEffect {
-            val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
-          }
+      }
+    CompositionLocalProvider(
+      LocalThemeSwitcher provides themeSwitcher,
+    ) {
+      val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
+      val isDark =
+        when (themeColors.value) {
+          null -> isSystemInDarkTheme()
+          ThemeSwitcher.Choice.Dark -> true
+          ThemeSwitcher.Choice.Light -> false
+          ThemeSwitcher.Choice.Auto -> isSystemInDarkTheme()
         }
-        AppTheme(isDark) {
-          BackHandler { }
-          val routes by router.route.collectAsState(null)
-          var prev by remember { mutableStateOf<Pair<Route, Route?>?>(null) }
-          val isPop = routes != null && prev != null && routes!!.first == prev!!.second
-          LaunchedEffect(routes) { prev = routes }
-          if (routes != null) {
-            val tween = tween<IntOffset>(durationMillis = 280)
-            AnimatedContent(
-              modifier = Modifier.background(AppTheme.colors.backgroundPrimary),
-              targetState = routes!!.first,
-              transitionSpec = {
-                if (isPop) {
-                  slideInHorizontally(tween) { -it } + fadeIn(tween()) togetherWith
-                    slideOutHorizontally(tween) { it } + fadeOut(tween())
-                } else {
-                  slideInHorizontally(tween) { it } + fadeIn(tween()) togetherWith
-                    slideOutHorizontally(tween) { -it } + fadeOut(tween())
-                }
-              },
-              label = "route",
-            ) { route -> route.content.invoke() }
-          }
+      val view = LocalView.current
+      if (!view.isInEditMode) {
+        SideEffect {
+          val window = (view.context as Activity).window
+          WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+          WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
+        }
+      }
+      AppTheme(isDark) {
+        BackHandler { }
+        val routes by router.route.collectAsState(null)
+        var prev by remember { mutableStateOf<Pair<Route, Route?>?>(null) }
+        val isPop = routes != null && prev != null && routes!!.first == prev!!.second
+        LaunchedEffect(routes) { prev = routes }
+        if (routes != null) {
+          val tween = tween<IntOffset>(durationMillis = 280)
+          AnimatedContent(
+            modifier = Modifier.background(AppTheme.colors.backgroundPrimary),
+            targetState = routes!!.first,
+            transitionSpec = {
+              if (isPop) {
+                slideInHorizontally(tween) { -it } + fadeIn(tween()) togetherWith
+                  slideOutHorizontally(tween) { it } + fadeOut(tween())
+              } else {
+                slideInHorizontally(tween) { it } + fadeIn(tween()) togetherWith
+                  slideOutHorizontally(tween) { -it } + fadeOut(tween())
+              }
+            },
+            label = "route",
+          ) { route -> route.content.invoke() }
         }
       }
     }
