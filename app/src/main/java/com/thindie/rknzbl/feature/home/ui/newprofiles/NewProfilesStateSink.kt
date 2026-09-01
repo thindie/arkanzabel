@@ -50,15 +50,13 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     s.sub(
       (appContext as Application)
         .applicationScope
-        .settings
-        .repository
+        .settingsRepository
         .isCustomSourceEnabled
         .filter { it }
         .flatMapLatest {
           appContext
             .applicationScope
-            .settings
-            .repository
+            .settingsRepository
             .customSourceUrl
             .filterNotNull()
             .map { SelectSourceFlow.Result.CustomSource(it) }

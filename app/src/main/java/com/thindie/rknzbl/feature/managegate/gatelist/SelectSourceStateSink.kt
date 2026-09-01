@@ -15,15 +15,13 @@ internal fun SelectSourceFlow.selectSourceStateSink(screenScope: ScreenScope<Scr
     s.sub(
       (appContext as Application)
         .applicationScope
-        .settings
-        .repository
+        .settingsRepository
         .isCustomSourceEnabled
         .filter { it }
         .flatMapLatest {
           appContext
             .applicationScope
-            .settings
-            .repository
+            .settingsRepository
             .customSourceUrl
             .filterNotNull()
         }

@@ -38,8 +38,8 @@ import com.thindie.engine.core.Route
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.appfeatures.home.HomeFlow
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -60,7 +60,6 @@ class MainActivity : ComponentActivity() {
     enableEdgeToEdge()
     val app = application as Application
     val router = app.requireRouter()
-    val repository = app.applicationScope.data.repository
     awaitFinish()
     setContent {
       SideEffect {
@@ -70,8 +69,9 @@ class MainActivity : ComponentActivity() {
           appContext = app,
         )
           .onFinishBuilder {
-            val settingsRepository = app.applicationScope.settings.repository
-            HomeFlow(router = router, appContext = app, repository = repository, settingsRepository)
+            val homeFlow = HomeFlow(router = router, appContext = app)
+            app.applicationScope.inject(homeFlow)
+            homeFlow
               .onFinishBuilder { router.pop() }
               .start()
           }
@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
         remember {
           ThemeSwitcher().apply {
             lifecycleScope.launch {
-              app.applicationScope.settings.repository.themeChoice.firstOrNull()?.let(this@apply::set)
+              app.applicationScope.settingsRepository.themeChoice.firstOrNull()?.let(this@apply::set)
             }
           }
         }
@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun attachBaseContext(newBase: Context?) {
-    val lang = (application as? Application)?.applicationScope?.settings?.repository?.getLanguageSync()
+    val lang = (application as? Application)?.applicationScope?.settingsRepository?.getLanguageSync()
     if (lang != null) {
       val locale = Locale(lang)
       Locale.setDefault(locale)
@@ -152,7 +152,7 @@ class MainActivity : ComponentActivity() {
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
-    val lang = (application as? Application)?.applicationScope?.settings?.repository?.getLanguageSync()
+    val lang = (application as? Application)?.applicationScope?.settingsRepository?.getLanguageSync()
     if (lang != null) {
       val locale = Locale(lang)
       Locale.setDefault(locale)

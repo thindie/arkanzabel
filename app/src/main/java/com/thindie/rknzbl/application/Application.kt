@@ -94,7 +94,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
               Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: received message")
               val guid = KeyValueStorage.getSelectServer() ?: return@launch
               Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: selected profile determined")
-              applicationScope.data.repository.save(guid)
+              applicationScope.homeModule.repository.save(guid)
             }
           }
         }
@@ -167,6 +167,6 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     }
 
   override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return applicationScope.data.repository.isSaved(connectionProfile)
+    return applicationScope.homeModule.repository.isSaved(connectionProfile)
   }
 }

@@ -53,5 +53,6 @@ fun BottomNavigationBar(
     }
   }
 }
+
 @Immutable
 data class BottomNavItem(val icon: Painter, val title: String)
