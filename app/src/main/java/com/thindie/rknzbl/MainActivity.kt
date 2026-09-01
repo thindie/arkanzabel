@@ -20,8 +20,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -40,14 +40,15 @@ import com.thindie.engine.core.Router
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.appfeatures.home.AppContent
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.feature.intro.IntroFlow
-import com.thindie.rknzbl.feature.home.HomeFlow as LegacyHomeFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.thindie.rknzbl.feature.home.HomeFlow as LegacyHomeFlow
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,13 +74,18 @@ class MainActivity : ComponentActivity() {
             appContext = app,
           )
             .onFinishBuilder {
-              val homeFlow = HomeFlow(router = router)
-              app.applicationScope.inject(homeFlow)
-              homeFlow.onFinishBuilder { router.pop() }.start()
+              HomeFlow(router = router)
+                .apply { app.applicationScope.inject(this) }
+                .onFinishBuilder { router.pop() }
+                .start()
             }
             .start()
         }
-        AppContent(app, router)
+        AppContent(
+          router,
+          onHomeClick = { },
+          onSettingsClick = { },
+        )
       }
     } else {
       // Легаси: setContent как есть
@@ -102,13 +108,16 @@ class MainActivity : ComponentActivity() {
             }
             .start()
         }
-        AppContent(app, router)
+        LegacyAppContent(app, router)
       }
     }
   }
 
   @Composable
-  private fun AppContent(app: Application, router: Router) {
+  private fun LegacyAppContent(
+    app: Application,
+    router: Router,
+  ) {
     val themeSwitcher =
       remember {
         ThemeSwitcher().apply {

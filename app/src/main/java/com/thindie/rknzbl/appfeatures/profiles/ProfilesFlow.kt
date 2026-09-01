@@ -4,7 +4,6 @@ import com.thindie.engine.core.Route
 import com.thindie.engine.core.Router
 import com.thindie.engine.core.ScreenFlow
 import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
 /**
  * Profiles feature flow.
