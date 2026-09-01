@@ -69,6 +69,12 @@ internal fun HomeFlow.settingsStateSink(
       state.copy(forceProfileMeasure = enabled)
     }
 
+  // Bottom-navigation home design support
+  screenScope.sub(repository.useNewDesign)
+    .transition { state, enabled ->
+      state.copy(useNewDesign = enabled)
+    }
+
   screenScope.sub(repository.customSourceUrl.mapNotNull { it?.ifBlank { null } })
     .transition { state, source ->
       state.copy(customSourceUrl = source)

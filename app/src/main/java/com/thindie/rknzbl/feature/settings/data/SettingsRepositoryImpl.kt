@@ -110,6 +110,20 @@ class SettingsRepositoryImpl(
 
   override fun getStartWithFavoriteProfilesSync(): Boolean = startWithFavouritesSetting.getSync()
 
+  // --- Feature toggle: bottom-navigation home design (default off) ---
+  private val useNewDesignSetting =
+    Setting<Boolean>(
+      read = { storage.decodeSettingsBool(AppConfig.PREF_USE_NEW_DESIGN, false) },
+      write = { storage.encodeSettings(AppConfig.PREF_USE_NEW_DESIGN, it) },
+    )
+  override val useNewDesign: Flow<Boolean> get() = useNewDesignSetting.flow
+
+  override suspend fun toggleUseNewDesign(enabled: Boolean) {
+    useNewDesignSetting.set(enabled)
+  }
+
+  override fun getUseNewDesignSync(): Boolean = useNewDesignSetting.getSync()
+
   // --- Speed notification support ---
   private val speedSetting =
     Setting<Boolean>(

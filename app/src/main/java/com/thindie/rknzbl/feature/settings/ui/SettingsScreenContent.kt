@@ -149,6 +149,13 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
+        label = stringResource(R.string.settings_use_new_design_title),
+        subtitle = stringResource(R.string.settings_use_new_design_subtitle),
+        checked = state.useNewDesign ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleNewDesign) },
+      )
+
+      ToggleRow(
         label = stringResource(R.string.home_select_storage_mode_title),
         subtitle = stringResource(R.string.home_select_storage_mode_subtitle),
         checked = state.isLocalSave ?: false,

@@ -192,6 +192,10 @@
     <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
 
+    <!-- Bottom-navigation home design -->
+    <string name="settings_use_new_design_title">Bottom navigation home</string>
+    <string name="settings_use_new_design_subtitle">Use the new bottom-tab home screen instead of the classic hub</string>
+
     <!-- Force profile measurement (speedtest) -->
     <string name="settings_force_profile_measure_title">Force profile measurement</string>
     <string name="settings_force_profile_measure_subtitle">Always measure latency for new profiles instead of using cached values</string>

@@ -92,6 +92,12 @@ fun HomeFlow.settings(
         null
       }
 
+      ScreenCommand.ToggleNewDesign -> {
+        val current = s.useNewDesign ?: false
+        repository.toggleUseNewDesign(!current)
+        null
+      }
+
       is ScreenCommand.SetCustomSourceUrl -> {
         repository.setCustomSourceUrl(c.url)
         null

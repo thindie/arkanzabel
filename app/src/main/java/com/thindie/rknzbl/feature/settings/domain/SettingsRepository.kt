@@ -49,6 +49,15 @@ interface SettingsRepository {
   /** Current value read synchronously from memory (no collector needed). */
   fun getStartWithFavoriteProfilesSync(): Boolean
 
+  // Feature toggle: bottom-navigation home design (default off — legacy HomeSelect hub)
+
+  val useNewDesign: Flow<Boolean>
+
+  suspend fun toggleUseNewDesign(enabled: Boolean)
+
+  /** Current value read synchronously from memory (no collector needed). */
+  fun getUseNewDesignSync(): Boolean
+
   // Speed notification
 
   val speedEnabled: Flow<Boolean?>
