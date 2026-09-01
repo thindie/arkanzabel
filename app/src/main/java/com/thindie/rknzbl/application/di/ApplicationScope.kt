@@ -2,6 +2,10 @@ package com.thindie.rknzbl.application.di
 
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
 import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
+import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
+import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
+import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
+import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.feature.settings.data.SettingsRepositoryImpl
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -19,6 +23,8 @@ import com.v2ray.ang.runtime.KeyValueStorage
 class ApplicationScope {
   private var homeFlowModule: HomeFlowModule? = null
   private var settingsRepositoryImpl: SettingsRepository? = null
+  private var settingsFlowModule: SettingsFlowModule? = null
+  private var profilesFlowModule: ProfilesFlowModule? = null
   private lateinit var storage: KeyValueStorage
 
   fun inject(homeFlow: HomeFlow) {
@@ -29,6 +35,22 @@ class ApplicationScope {
     homeFlow.settingsRepository = settingsRepositoryImpl
       ?: SettingsRepositoryImpl(storage = storage)
         .also { settingsRepositoryImpl = it }
+  }
+
+  fun inject(settingsFlow: SettingsFlow) {
+    settingsFlow.flowModule = settingsFlowModule
+      ?: SettingsFlowModule(storage = storage)
+        .also { settingsFlowModule = it }
+
+    settingsFlow.settingsRepository = settingsRepositoryImpl
+      ?: SettingsRepositoryImpl(storage = storage)
+        .also { settingsRepositoryImpl = it }
+  }
+
+  fun inject(profilesFlow: ProfilesFlow) {
+    profilesFlow.flowModule = profilesFlowModule
+      ?: ProfilesFlowModule(storage = storage)
+        .also { profilesFlowModule = it }
   }
 
   val homeModule: HomeFlowModule
