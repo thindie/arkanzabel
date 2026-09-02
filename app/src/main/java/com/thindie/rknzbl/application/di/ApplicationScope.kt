@@ -64,11 +64,9 @@ class ApplicationScope private constructor(application: Application) {
     }
   }
 
-  // Flow modules — created once, shared across flow instances.
   val homeFlowModule =
     HomeFlowModule(
       connectionProfileRepository = connectionProfileRepository,
-      settingsRepository = legacySettingsRepositoryImpl,
       appContext = application,
     )
 
@@ -98,10 +96,6 @@ class ApplicationScope private constructor(application: Application) {
 
   fun inject(profilesFlow: ProfilesFlow) {
     profilesFlow.flowModule = profilesFlowModule
-  }
-
-  fun destroy() {
-    coroutineScope.cancel()
   }
 
   companion object {

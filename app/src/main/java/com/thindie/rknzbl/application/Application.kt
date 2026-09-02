@@ -25,10 +25,6 @@ import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.ConnectionProfileSummariser
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,16 +33,8 @@ import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
   private lateinit var applicationScopeInternal: ApplicationScope
-  val applicationScope get() = applicationScopeInternal
-  private val appCoroutineScope =
-    CoroutineScope(
-      SupervisorJob() + Dispatchers.Default +
-        CoroutineExceptionHandler { _, e ->
-          "${e.message}"
-        },
-    )
-
-  val profilePingManager = ProfilePingManager(this, appCoroutineScope)
+  val applicationScope: ApplicationScope
+    get() = applicationScopeInternal
 
   override val workManagerConfiguration: Configuration
     get() =
@@ -90,11 +78,11 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
           }
 
           AppConfig.MSG_STATE_SAVE_PROFILE -> {
-            appCoroutineScope.launch {
+            applicationScope.coroutineScope.launch {
               Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: received message")
               val guid = KeyValueStorage.getSelectServer() ?: return@launch
               Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: selected profile determined")
-              applicationScope.homeModule.repository.save(guid)
+              applicationScope.connectionProfileRepository.save(guid)
             }
           }
         }
@@ -114,7 +102,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
-    applicationScopeInternal = ApplicationScope()
+    applicationScopeInternal = ApplicationScope.configure(this)
     SettingsManager.ensureDefaultSettings()
     SettingsManager.initRoutingRulesets(this)
     SettingsManager.initAssets(this, assets)
@@ -167,6 +155,6 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     }
 
   override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return applicationScope.homeModule.repository.isSaved(connectionProfile)
+    return applicationScope.connectionProfileRepository.isSaved(connectionProfile)
   }
 }

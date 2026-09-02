@@ -42,6 +42,8 @@ import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.appfeatures.home.AppContent
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
+import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
+import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import kotlinx.coroutines.flow.first
@@ -64,27 +66,32 @@ class MainActivity : ComponentActivity() {
     val app = application as Application
     val router = app.requireRouter()
     awaitFinish()
-    if (app.applicationScope.settingsRepository.getUseNewDesignSync()) {
+    if (app.applicationScope.useNewDesignFeature()) {
       // Новый дизайн: отдельный setContent, работает иначе
       setContent {
+        val homeFlow = remember { HomeFlow(router).apply { app.applicationScope.inject(this) } }
+        val profilesFlow = remember { ProfilesFlow(router).apply { app.applicationScope.inject(this) } }
+        val settingsFlow =
+          remember {
+            SettingsFlow(router).apply {
+              app.applicationScope.inject(this)
+              onFinishBuilder { router.pop() }
+            }
+          }
         SideEffect {
           IntroFlow(
             router,
             hasPushPermission = hasPermission,
             appContext = app,
           )
-            .onFinishBuilder {
-              HomeFlow(router = router)
-                .apply { app.applicationScope.inject(this) }
-                .onFinishBuilder { router.pop() }
-                .start()
-            }
+            .onFinishBuilder { homeFlow.start() }
             .start()
         }
         AppContent(
           router,
-          onHomeClick = { },
-          onSettingsClick = { },
+          onHomeClick = { homeFlow.switch() },
+          onProfilesClick = { profilesFlow.switch() },
+          onSettingsClick = { settingsFlow.switch() },
         )
       }
     } else {
@@ -100,8 +107,8 @@ class MainActivity : ComponentActivity() {
               LegacyHomeFlow(
                 router = router,
                 appContext = app,
-                repository = app.applicationScope.homeModule.repository,
-                settingsRepository = app.applicationScope.settingsRepository,
+                repository = app.applicationScope.connectionProfileRepository,
+                settingsRepository = app.applicationScope.settingsRepositoryLegacy,
               )
                 .onFinishBuilder { router.pop() }
                 .start()
@@ -122,7 +129,7 @@ class MainActivity : ComponentActivity() {
       remember {
         ThemeSwitcher().apply {
           lifecycleScope.launch {
-            app.applicationScope.settingsRepository.themeChoice.firstOrNull()?.let(this@apply::set)
+            app.applicationScope.settingsRepositoryLegacy.themeChoice.firstOrNull()?.let(this@apply::set)
           }
         }
       }

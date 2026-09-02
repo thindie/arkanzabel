@@ -2,7 +2,6 @@ package com.thindie.rknzbl.appfeatures.home.di
 
 import android.content.Context
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
-import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 
 /**
  * One flow == one module.
@@ -14,6 +13,5 @@ import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
  */
 class HomeFlowModule(
   val connectionProfileRepository: ConnectionProfileRepository,
-  val settingsRepository: SettingsRepository,
   val appContext: Context,
 )

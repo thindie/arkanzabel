@@ -104,7 +104,7 @@ private suspend fun HomeFlow.exec(
         (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
         appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
         // Persist a fresh latency reading for the just-saved profile.
-        (appContext as Application).profilePingManager.pingSaved(guid)
+        (appContext as Application).applicationScope.pingManager.pingSaved(guid)
         selected.tryEmit(command.profile)
         homeState.copy(
           selected = command.profile,
@@ -128,7 +128,7 @@ private suspend fun HomeFlow.exec(
             ?.awaitAll()
             ?.mapNotNull { it }
         val result = parsed.orEmpty()
-        (appContext as Application).profilePingManager.pingProfiles(
+        (appContext as Application).applicationScope.pingManager.pingProfiles(
           profiles = result,
           force = settingsRepository.forceProfileMeasure.first(),
         )
@@ -159,7 +159,7 @@ private suspend fun HomeFlow.exec(
             ?.awaitAll()
             ?.mapNotNull { it }
         val result = parsed ?: homeState.links
-        (appContext as Application).profilePingManager.pingProfiles(
+        (appContext as Application).applicationScope.pingManager.pingProfiles(
           profiles = result,
           force = settingsRepository.forceProfileMeasure.first(),
         )

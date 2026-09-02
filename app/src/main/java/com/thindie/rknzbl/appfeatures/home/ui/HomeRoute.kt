@@ -7,9 +7,6 @@ import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
 /**
  * Factory: creates the home-tab route for the new bottom-nav design.
- *
- * The Home tab is a hub with three entry points (stored profiles, download new profile,
- * per-app proxy). Each command launches the corresponding legacy flow as a child of [router].
  */
 @Suppress("FunctionName")
 internal fun HomeRoute(repository: ConnectionProfileRepository) =
@@ -18,18 +15,9 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
     initialState = ScreenState(),
     execute = { c: ScreenCommand, s: ScreenState ->
       when (c) {
-        ScreenCommand.Home -> {
-          null
-        }
-
-        ScreenCommand.New -> {
-          null
-        }
-
-        ScreenCommand.PerAppProxy -> {
-          null
-        }
-
+        ScreenCommand.Home -> null
+        ScreenCommand.New -> null
+        ScreenCommand.PerAppProxy -> null
         ScreenCommand.DismissAutoSaved -> {
           repository.markAutoSavedSeen()
           s
