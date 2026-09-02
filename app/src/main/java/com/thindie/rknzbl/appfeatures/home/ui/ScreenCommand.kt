@@ -9,5 +9,5 @@ internal sealed interface ScreenCommand : Command {
 
   data object PerAppProxy : ScreenCommand
 
-  data object DismissAutoSaved : ScreenCommand
+  data object ToggleConnect : ScreenCommand
 }
