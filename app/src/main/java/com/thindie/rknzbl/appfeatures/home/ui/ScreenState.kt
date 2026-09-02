@@ -7,4 +7,6 @@ import com.v2ray.ang.dto.ConnectionProfile
 @Immutable
 internal data class ScreenState(
   val autoSaved: ConnectionProfile? = null,
+  val isConnected: Boolean = false,
+  val serverName: String = "",
 ) : ViewState
