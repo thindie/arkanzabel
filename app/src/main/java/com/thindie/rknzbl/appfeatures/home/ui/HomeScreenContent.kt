@@ -1,11 +1,10 @@
 package com.thindie.rknzbl.appfeatures.home.ui
 
-import androidx.compose.animation.core.InfiniteRepeatableSpec
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,9 +15,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,11 +25,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.WorkState
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.rknzbl.R
+import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.enums.Protocol
 
 /**
  * Simple home screen: one big connect/disconnect button with pulse animation when connected.
@@ -48,15 +52,15 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
       // Status text above button
-      if (state.isConnected) {
+      if (state.workState is WorkState.Running) {
         Text(
-          text = "Connected",
+          text = stringResource(R.string.home_connected),
           style = AppTheme.typography.labelMedium,
-          color = Color(0xFF4CAF50),
+          color = AppTheme.colors.successPrimary,
         )
-        if (state.serverName.isNotEmpty()) {
+        state.connectedProfile?.let { profile ->
           Text(
-            text = state.serverName,
+            text = profile.remarks.ifEmpty { "${profile.server}:${profile.serverPort}" },
             style = AppTheme.typography.bodySmall,
             color = AppTheme.colors.contentSecondary,
           )
@@ -64,12 +68,26 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
       }
 
       // Big pulsing button
-      ConnectButton(isConnected = state.isConnected)
+      ConnectButton(state = state, onClick = { scope.send(ScreenCommand.ToggleConnect) })
+
+      // Error message
+      AnimatedVisibility(
+        visible = state.workState is WorkState.Error,
+        enter = fadeIn(),
+        exit = fadeOut(),
+      ) {
+        val error = state.workState as? WorkState.Error
+        Text(
+          text = error?.message ?: "",
+          style = AppTheme.typography.labelMedium,
+          color = AppTheme.colors.errorPrimary,
+        )
+      }
 
       // Hint below
-      if (!state.isConnected) {
+      if (state.workState is WorkState.Idle) {
         Text(
-          text = "Tap to connect",
+          text = stringResource(R.string.home_tap_to_connect),
           style = AppTheme.typography.labelMedium,
           color = AppTheme.colors.contentSecondary,
         )
@@ -79,43 +97,82 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
 }
 
 @Composable
-private fun ConnectButton(isConnected: Boolean) {
-  val transition = rememberInfiniteTransition(label = "pulse")
-  val scale = transition.animateFloat(
-    initialValue = 1f,
-    targetValue = if (isConnected) 1.05f else 1f,
-    animationSpec = infiniteRepeatable(
-      animation = tween(durationMillis = 800),
-      repeatMode = RepeatMode.Reverse,
-    ),
-    label = "scale",
-  ).value
+internal fun ConnectButton(
+  state: ScreenState,
+  onClick: () -> Unit,
+) {
+  val isConnected = state.workState is WorkState.Running && state.connectedProfile != null
+  val isConnecting = state.workState is WorkState.Running && state.connectedProfile == null
 
-  val borderColor = if (isConnected) Color(0xFF4CAF50) else AppTheme.colors.accentPrimary
-  val bgColor = if (isConnected) Color(0xFF1B3A2A) else AppTheme.colors.backgroundSecondary
+  // Fix: animateFloatAsState properly reacts to state changes unlike infinite transition
+  val targetScale = if (isConnected) 1.05f else 1f
+  val scale =
+    animateFloatAsState(
+      targetValue = targetScale,
+      animationSpec = spring(dampingRatio = 0.6f),
+      label = "scale",
+    ).value
+
+  val borderColor = if (isConnected) AppTheme.colors.successPrimary else AppTheme.colors.accentPrimary
+  val bgColor = if (isConnected) AppTheme.colors.successPrimary.copy(alpha = 0.15f) else AppTheme.colors.backgroundSecondary
 
   Box(
-    modifier = Modifier
-      .size(160.dp)
-      .scale(scale)
-      .border(BorderStroke(2.dp, borderColor), CircleShape)
-      .background(bgColor, CircleShape)
-      .clickable { /* TODO: trigger connect/disconnect */ },
+    modifier =
+      Modifier
+        .size(160.dp)
+        .scale(scale)
+        .border(BorderStroke(2.dp, borderColor), CircleShape)
+        .background(bgColor, CircleShape)
+        .clickable(enabled = !isConnecting) { onClick() },
     contentAlignment = Alignment.Center,
   ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-      Icon(
-        painter = painterResource(id = com.thindie.rknzbl.R.drawable.ic_home_24),
-        contentDescription = null,
-        tint = borderColor,
-        modifier = Modifier.size(48.dp),
-      )
-      Spacer(modifier = Modifier.height(8.dp))
-      Text(
-        text = if (isConnected) "DISCONNECT" else "CONNECT",
-        style = AppTheme.typography.labelLarge,
-        color = borderColor,
-      )
+    if (isConnecting) {
+      CircularProgressIndicator(color = borderColor, modifier = Modifier.size(48.dp))
+    } else {
+      Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+          painter = painterResource(id = R.drawable.ic_home_24),
+          contentDescription = null,
+          tint = borderColor,
+          modifier = Modifier.size(48.dp),
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+          text = if (isConnected) stringResource(R.string.home_btn_disconnect) else stringResource(R.string.home_btn_connect),
+          style = AppTheme.typography.labelLarge,
+          color = borderColor,
+        )
+      }
     }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenDisconnectedPreview() {
+  AppTheme {
+    ConnectButton(state = ScreenState()) {}
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenConnectedPreview() {
+  AppTheme {
+    ConnectButton(
+      state =
+        ScreenState(
+          workState = WorkState.Running,
+          connectedProfile = ConnectionProfile(protocol = Protocol.Vmess, subscriptionId = "test", remarks = "Test Server"),
+        ),
+    ) {}
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenConnectingPreview() {
+  AppTheme {
+    ConnectButton(state = ScreenState(workState = WorkState.Running)) {}
   }
 }

@@ -246,4 +246,12 @@
     <string name="home_profile_unreachable">Unreachable</string>
     <string name="home_profile_ping_ms">%d ms</string>
     <string name="home_profile_checking">Checking…</string>
+
+    <!-- Bottom-nav home screen -->
+    <string name="home_connected">Connected</string>
+    <string name="home_tap_to_connect">Tap to connect</string>
+    <string name="home_btn_connect">CONNECT</string>
+    <string name="home_btn_disconnect">DISCONNECT</string>
+    <string name="home_connecting">Connecting…</string>
+    <string name="home_error_no_server">No server selected</string>
 </resources>

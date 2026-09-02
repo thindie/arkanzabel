@@ -232,4 +232,12 @@
 <string name="storage_mode_warning_message">Если вы включите локальное хранение, вы будете изолированы от выборок других пользователей. Локальные профили не будут участвовать в общем пуле.</string>
 <string name="storage_mode_warning_ok">Понятно</string>
 
+<!-- Bottom-nav home screen -->
+<string name="home_connected">Подключено</string>
+<string name="home_tap_to_connect">Нажмите для подключения</string>
+<string name="home_btn_connect">ПОДКЛЮЧИТЬСЯ</string>
+<string name="home_btn_disconnect">ОТКЛЮЧИТЬСЯ</string>
+<string name="home_connecting">Подключение…</string>
+<string name="home_error_no_server">Сервер не выбран</string>
+
 </resources>
