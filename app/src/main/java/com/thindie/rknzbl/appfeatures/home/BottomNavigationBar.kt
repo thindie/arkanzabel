@@ -30,6 +30,7 @@ import com.thindie.engine.uikit.VSpacer
 fun BottomNavigationBar(
   modifier: Modifier = Modifier,
   onHomeClick: () -> Unit,
+  onProfilesClick: () -> Unit,
   onSettingsClick: () -> Unit,
   selected: HomeSection,
 ) {
@@ -48,6 +49,12 @@ fun BottomNavigationBar(
       icon = painterResource(id = com.thindie.rknzbl.R.drawable.ic_home_24),
       onClick = onHomeClick,
       isSelected = selected == HomeSection.Home,
+    )
+    Section(
+      title = "Profiles",
+      icon = painterResource(id = com.thindie.rknzbl.R.drawable.ic_folder_24),
+      onClick = onProfilesClick,
+      isSelected = selected == HomeSection.Profiles,
     )
     Section(
       title = "Settings",

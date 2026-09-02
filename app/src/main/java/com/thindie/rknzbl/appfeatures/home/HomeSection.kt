@@ -10,5 +10,8 @@ import com.thindie.engine.core.Section
  */
 sealed interface HomeSection : Section {
   data object Home : HomeSection
+
+  data object Profiles : HomeSection
+
   data object Settings : HomeSection
 }

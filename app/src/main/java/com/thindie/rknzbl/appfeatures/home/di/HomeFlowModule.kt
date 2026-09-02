@@ -1,21 +1,19 @@
 package com.thindie.rknzbl.appfeatures.home.di
 
-import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
+import android.content.Context
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
-import com.v2ray.ang.runtime.KeyValueStorage
+import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
 
 /**
  * One flow == one module.
  *
- * Owns the feature-specific repositories for the
- * [com.thindie.rknzbl.appfeatures.home.HomeFlow]. Created lazily by
- * [com.thindie.rknzbl.application.di.ApplicationScope.inject] and injected into the flow,
- * so the flow itself only needs the [com.thindie.engine.core.Router].
- *
- * Global repositories (e.g. [com.thindie.rknzbl.feature.settings.domain.SettingsRepository])
- * live in [com.thindie.rknzbl.application.di.ApplicationScope] and are injected separately.
+ * Owns the feature-specific dependencies for the [com.thindie.rknzbl.appfeatures.home.HomeFlow]:
+ * the shared profile repository, the legacy settings repository (needed to launch stored-profiles)
+ * and the application context (used by the legacy flows it drives).
+ * Created once in [com.thindie.rknzbl.application.di.ApplicationScope] and injected into the flow.
  */
-class HomeFlowModule(storage: KeyValueStorage) {
-  val repository: ConnectionProfileRepository =
-    ConnectionProfileRepositoryImpl(userName = "", password = "", url = "", storage = storage)
-}
+class HomeFlowModule(
+  val connectionProfileRepository: ConnectionProfileRepository,
+  val settingsRepository: SettingsRepository,
+  val appContext: Context,
+)

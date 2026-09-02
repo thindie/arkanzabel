@@ -8,11 +8,8 @@ import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
 /**
  * Profiles feature flow.
  *
- * Takes only the [Router]; the [ProfilesFlowModule] (feature-specific repositories) is injected by
- * [com.thindie.rknzbl.application.di.ApplicationScope.inject], so the flow itself only needs the
- * [com.thindie.engine.core.Router].
- *
- * Full flow logic (routes/screens) is added as the feature is migrated in.
+ * Takes only the [Router]; the [ProfilesFlowModule] is injected by
+ * [com.thindie.rknzbl.application.di.ApplicationScope.inject].
  */
 class ProfilesFlow(
   val router: Router,
@@ -21,4 +18,6 @@ class ProfilesFlow(
     internal set
 
   override fun start() {}
+
+  fun switch() {}
 }

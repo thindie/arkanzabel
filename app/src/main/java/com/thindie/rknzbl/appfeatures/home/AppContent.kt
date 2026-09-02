@@ -43,6 +43,7 @@ import com.thindie.engine.uikit.ThemeSwitcher
 fun AppContent(
   router: Router,
   onHomeClick: () -> Unit,
+  onProfilesClick: () -> Unit,
   onSettingsClick: () -> Unit,
 ) {
   val themeSwitcher =
@@ -94,6 +95,7 @@ fun AppContent(
                 BottomNavigationBar(
                   modifier = Modifier.align(Alignment.BottomCenter),
                   onHomeClick = onHomeClick,
+                  onProfilesClick = onProfilesClick,
                   onSettingsClick = onSettingsClick,
                   selected = route.section as HomeSection,
                 )
