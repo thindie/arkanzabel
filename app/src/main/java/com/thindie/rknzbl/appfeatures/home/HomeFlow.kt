@@ -6,25 +6,15 @@ import com.thindie.engine.core.ScreenFlow
 import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
 import com.thindie.rknzbl.appfeatures.home.ui.HomeRoute
 
-class HomeFlow(
-  val router: Router,
-) : ScreenFlow<Route, Unit>(router) {
+class HomeFlow(val router: Router) : ScreenFlow<Route, Unit>(router) {
   lateinit var flowModule: HomeFlowModule
     internal set
 
   override fun start() {
-    go(
-      HomeRoute(
-        repository = flowModule.connectionProfileRepository,
-      ),
-    )
+    go(HomeRoute(flowModule.connectionProfileRepository))
   }
 
   fun switch() {
-    router.replaceTop(
-      HomeRoute(
-        repository = flowModule.connectionProfileRepository,
-      ),
-    )
+    router.replaceTop(HomeRoute(flowModule.connectionProfileRepository))
   }
 }

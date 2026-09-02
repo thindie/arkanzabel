@@ -23,4 +23,13 @@ interface ConnectionProfileRepository {
   fun isSaved(profile: ConnectionProfile): Boolean
 
   fun invalidateCaches()
+
+  // VPN service operations
+  suspend fun connect(guid: String)
+
+  suspend fun disconnect()
+
+  fun isConnected(): Boolean
+
+  fun getConnectedServerName(): String
 }

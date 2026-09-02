@@ -1,11 +1,13 @@
 package com.thindie.rknzbl.feature.home.data
 
+import android.content.Context
 import android.util.Log
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.JsonUtil
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -34,6 +36,7 @@ import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 class ConnectionProfileRepositoryImpl(
+  private val appContext: Context,
   private val userName: String,
   private val password: String,
   private val url: String,
@@ -173,6 +176,23 @@ class ConnectionProfileRepositoryImpl(
 
   override fun invalidateCaches() {
     invalidateCacheInternal()
+  }
+
+  // VPN service operations
+  override suspend fun connect(guid: String) {
+    V2RayServiceManager.startVService(context = appContext, guid = guid)
+  }
+
+  override suspend fun disconnect() {
+    V2RayServiceManager.stopVService(appContext)
+  }
+
+  override fun isConnected(): Boolean {
+    return V2RayServiceManager.isRunning()
+  }
+
+  override fun getConnectedServerName(): String {
+    return V2RayServiceManager.getRunningServerName()
   }
 
   private fun isSavedInternal(

@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import com.thindie.rknzbl.feature.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository as LegacySettingsRepository
 
@@ -46,6 +45,7 @@ class ApplicationScope private constructor(application: Application) {
 
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
+      appContext = application,
       userName = "",
       password = "",
       url = "",
@@ -67,7 +67,6 @@ class ApplicationScope private constructor(application: Application) {
   val homeFlowModule =
     HomeFlowModule(
       connectionProfileRepository = connectionProfileRepository,
-      appContext = application,
     )
 
   val profilesFlowModule =
