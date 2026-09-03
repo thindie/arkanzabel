@@ -4,6 +4,7 @@ import com.thindie.engine.core.RouteFactory
 import com.thindie.engine.core.WorkState
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
+import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
 private const val CONNECT_TIMEOUT_MS = 15_000L
@@ -58,6 +59,7 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
     initialCommand = {
       ScreenCommand.LoadProfiles as ScreenCommand
     },
+    section = HomeSection.Home,
     stateSink = { screenScope ->
       // Best measured profile — connect target shown while not connected
       screenScope.sub(repository.measured).transition { state, bestProfile ->

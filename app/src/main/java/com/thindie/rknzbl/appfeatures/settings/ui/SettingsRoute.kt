@@ -11,7 +11,7 @@ fun SettingsFlow.settings(
   repository: SettingsRepository,
   connectionProfileRepository: ConnectionProfileRepository,
 ) = RouteFactory.create(
-  initialState = ScreenState(),
+  initialState = ScreenState(section = HomeSection.Settings),
   execute = { c: ScreenCommand, s: ScreenState ->
     when (c) {
       is ScreenCommand.ToggleAutosave -> {
