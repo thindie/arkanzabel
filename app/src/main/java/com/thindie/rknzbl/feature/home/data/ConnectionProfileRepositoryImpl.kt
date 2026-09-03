@@ -2,10 +2,12 @@ package com.thindie.rknzbl.feature.home.data
 
 import android.content.Context
 import android.util.Log
+import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.JsonUtil
@@ -26,17 +28,24 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
 class ConnectionProfileRepositoryImpl(
   private val appContext: Context,
+  private val pingManager: ProfilePingManager,
   private val userName: String,
   private val password: String,
   private val url: String,
@@ -56,6 +65,22 @@ class ConnectionProfileRepositoryImpl(
       extraBufferCapacity = 3,
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
+
+  // Reactive API state
+  private val _profiles = MutableStateFlow<List<ConnectionProfile>>(emptyList())
+  override val profiles: Flow<List<ConnectionProfile>> = _profiles.asSharedFlow()
+
+  private val _measured = MutableStateFlow<ConnectionProfile?>(null)
+  override val measured: Flow<ConnectionProfile?> = _measured.asSharedFlow()
+
+  // Polls V2RayServiceManager every 2 seconds when collected
+  override val connected: Flow<Boolean> =
+    flow {
+      while (true) {
+        emit(V2RayServiceManager.isRunning())
+        delay(2000L)
+      }
+    }
 
   override suspend fun read(): List<ConnectionProfile> {
     if (isLocalSave) {
@@ -179,7 +204,11 @@ class ConnectionProfileRepositoryImpl(
   }
 
   // VPN service operations
-  override suspend fun connect(guid: String) {
+  override suspend fun connect(profile: ConnectionProfile) {
+    val guid = findOrSaveProfileGuid(profile)
+    if (guid == null) {
+      throw IllegalStateException("Cannot store profile: ${profile.subscriptionId}")
+    }
     V2RayServiceManager.startVService(context = appContext, guid = guid)
   }
 
@@ -195,6 +224,61 @@ class ConnectionProfileRepositoryImpl(
     return V2RayServiceManager.getRunningServerName()
   }
 
+  private val fetching = AtomicBoolean(false)
+
+  // Reactive API: connect -> fetch -> measure -> apply flow.
+  // Guarded against concurrent runs (route recreation on tab switch).
+  override suspend fun fetch() {
+    if (!fetching.compareAndSet(false, true)) return
+    try {
+      // Step 1: Load profiles from remote/local storage
+      val loadedProfiles = read()
+      _profiles.value = loadedProfiles
+
+      if (loadedProfiles.isEmpty()) {
+        _measured.value = null
+        return
+      }
+
+      // Check if any profiles are pingable before measuring (Custom/PolicyGroup cannot be pinged)
+      val hasPingable =
+        loadedProfiles.any {
+          it.protocol != Protocol.Custom && it.protocol != Protocol.PolicyGroup
+        }
+      if (!hasPingable) {
+        _measured.value = null
+        return
+      }
+
+      // Step 2: Measure all profiles and find the best one
+      pingManager.pingProfiles(loadedProfiles, force = false)
+
+      // Wait for measurement results via flow with timeout to prevent hanging
+      val resultsMap =
+        withTimeoutOrNull(30_000L) {
+          pingManager.measureResults.first()
+        }
+
+      if (resultsMap == null || resultsMap.isEmpty()) {
+        _measured.value = null
+        return
+      }
+
+      // Select best profile (lowest latency)
+      val bestProfile =
+        loadedProfiles.minByOrNull { profile ->
+          resultsMap[profile] ?: Long.MAX_VALUE
+        }
+
+      _measured.value = bestProfile
+    } catch (e: Exception) {
+      Log.e(AppConfig.TAG, "Failed to fetch and measure profiles", e)
+      _measured.value = null
+    } finally {
+      fetching.set(false)
+    }
+  }
+
   private fun isSavedInternal(
     connectionProfile: ConnectionProfile,
     currentBody: String,
@@ -206,6 +290,23 @@ class ConnectionProfileRepositoryImpl(
       return true
     }
     return false
+  }
+
+  /**
+   * Returns the GUID of [profile] if it is already stored locally (matched by subscriptionId),
+   * otherwise persists it and returns the new GUID. Null when profile cannot be stored.
+   */
+  private suspend fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
+    for (guid in storage.decodeServerList()) {
+      val config = storage.decodeServerConfig(guid)
+      if (config != null && config.subscriptionId == profile.subscriptionId) {
+        return guid
+      }
+    }
+    val guid = UUID.randomUUID().toString()
+    storage.encodeServerConfig(guid, profile)
+    Log.i(AppConfig.TAG, "Connect: profile stored locally as $guid")
+    return guid
   }
 
   private fun activeProfileInternal(): ConnectionProfile? {
