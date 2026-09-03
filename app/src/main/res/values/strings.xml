@@ -201,6 +201,11 @@
     <!-- Force profile measurement (speedtest) -->
     <string name="settings_force_profile_measure_title">Force profile measurement</string>
     <string name="settings_force_profile_measure_subtitle">Always measure latency for new profiles instead of using cached values</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_profiles">Profiles</string>
+    <string name="bottom_nav_settings">Settings</string>
     <string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
 
     <!-- Reality strings (Recommendation #4) -->
