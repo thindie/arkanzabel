@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.Section
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
@@ -49,14 +50,18 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         context?.recreate()
       }
     }
-    TopAppBar(
-      primary =
-        Action(
-          listener = { scope.send(ScreenCommand.Back) },
-          resRef = R.drawable.ic_arrow_back_24,
-        ),
-    )
-
+    val showBack = state.section == Section.Leaf
+    if (showBack) {
+      TopAppBar(
+        primary =
+          Action(
+            listener = { scope.send(ScreenCommand.Back) },
+            resRef = R.drawable.ic_arrow_back_24,
+          ),
+      )
+    } else {
+      Unit
+    }
     Column(
       modifier =
         Modifier
