@@ -1,6 +1,8 @@
 package com.thindie.engine.uikit
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,11 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.thindie.engine.R
 
 private const val CONTENT_ALPHA_DISABLED = 0.3f
 
@@ -41,6 +46,7 @@ fun TextField(
   imeOptions: ImeAction? = null,
   leadingContent: (@Composable () -> Unit)? = null,
   trailingContent: (@Composable () -> Unit)? = null,
+  showClearButton: Boolean = false,
 ) {
   val containerColor =
     when {
@@ -124,6 +130,15 @@ fun TextField(
           } else {
             innerText()
           }
+        }
+        if (showClearButton && textFieldValue.text.isNotEmpty()) {
+          HSpacer(4.dp)
+          Image(
+            painter = painterResource(R.drawable.ic_close_16),
+            contentDescription = null,
+            modifier = Modifier.clickable { onValueChange("") },
+            colorFilter = ColorFilter.tint(AppTheme.colors.contentSecondary),
+          )
         }
         if (trailingContent != null) {
           HSpacer(8.dp)
