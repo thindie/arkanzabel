@@ -46,6 +46,7 @@ class ApplicationScope private constructor(application: Application) {
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
       appContext = application,
+      pingManager = pingManager,
       userName = "",
       password = "",
       url = "",
