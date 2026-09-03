@@ -25,11 +25,20 @@ interface ConnectionProfileRepository {
   fun invalidateCaches()
 
   // VPN service operations
-  suspend fun connect(guid: String)
+  suspend fun connect(profile: ConnectionProfile)
 
   suspend fun disconnect()
 
   fun isConnected(): Boolean
 
   fun getConnectedServerName(): String
+
+  // Reactive API for connect -> fetch -> measure -> apply flow
+  suspend fun fetch()
+
+  val profiles: Flow<List<ConnectionProfile>>
+
+  val measured: Flow<ConnectionProfile?>
+
+  val connected: Flow<Boolean>
 }
