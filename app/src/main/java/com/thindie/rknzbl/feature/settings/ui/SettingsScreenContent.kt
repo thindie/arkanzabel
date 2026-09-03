@@ -142,17 +142,17 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
-        label = stringResource(R.string.settings_start_with_favorite_profiles_title),
-        subtitle = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
-        checked = state.startWithFavoriteProfiles ?: false,
-        onCheckedChange = { scope.send(ScreenCommand.StartWithFavoriteProfiles) },
-      )
-
-      ToggleRow(
         label = stringResource(R.string.settings_use_new_design_title),
         subtitle = stringResource(R.string.settings_use_new_design_subtitle),
         checked = state.useNewDesign ?: false,
         onCheckedChange = { scope.send(ScreenCommand.ToggleNewDesign) },
+      )
+
+      ToggleRow(
+        label = stringResource(R.string.settings_start_with_favorite_profiles_title),
+        subtitle = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
+        checked = state.startWithFavoriteProfiles ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.StartWithFavoriteProfiles) },
       )
 
       ToggleRow(
