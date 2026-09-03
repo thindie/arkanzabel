@@ -225,6 +225,11 @@
     <string name="settings_use_new_design_subtitle">Использовать новый главный экран с вкладками вместо классического хаба</string>
     <string name="settings_force_profile_measure_title">Принудительное измерение пинга</string>
     <string name="settings_force_profile_measure_subtitle">Всегда измерять задержку новых профилей, а не использовать кэшированные значения</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="bottom_nav_home">Главная</string>
+    <string name="bottom_nav_profiles">Профили</string>
+    <string name="bottom_nav_settings">Настройки</string>
 <string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
 
 <!-- Local storage mode warning dialog -->
