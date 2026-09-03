@@ -124,4 +124,8 @@ class SettingsRepositoryImpl(
       write = { storage.setCustomSourceEnabled(it) },
     )
   override val isCustomSourceEnabled: Flow<Boolean> get() = customSourceEnabledSetting.flow
+
+  override fun setCustomSourceEnabled(enabled: Boolean) {
+    customSourceEnabledSetting.set(enabled)
+  }
 }

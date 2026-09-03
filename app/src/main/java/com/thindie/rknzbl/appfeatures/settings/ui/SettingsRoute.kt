@@ -5,6 +5,7 @@ import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.appfeatures.settings.ui.source.source
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
 fun SettingsFlow.settings(
@@ -57,6 +58,11 @@ fun SettingsFlow.settings(
       ScreenCommand.ToggleNewDesign -> {
         val current = s.useNewDesign ?: false
         repository.toggleUseNewDesign(!current)
+        null
+      }
+
+      ScreenCommand.ToggleCustomSource -> {
+        go(source())
         null
       }
     }

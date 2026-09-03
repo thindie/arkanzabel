@@ -3,6 +3,7 @@ package com.thindie.rknzbl.appfeatures.settings.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
@@ -20,6 +22,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -73,6 +77,14 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         text = stringResource(R.string.home_select_settings_title),
         style = AppTheme.typography.headlineLarge,
         color = AppTheme.colors.contentPrimary,
+      )
+
+      VSpacer(24.dp)
+      SourceSelectorRow(
+        label = stringResource(R.string.home_choose_source),
+        subtitle = sourceDisplayName(state.customSourceUrl),
+        selected = state.isCustomSourceEnabled,
+        onClick = { scope.send(ScreenCommand.ToggleCustomSource) },
       )
 
       // === Appearance ===
@@ -442,6 +454,73 @@ private fun LanguageOption(
         style = AppTheme.typography.labelMedium,
         color = AppTheme.colors.accentPrimary,
       )
+    }
+  }
+}
+
+@Composable
+private fun SourceSelectorRow(
+  label: String,
+  subtitle: String,
+  selected: Boolean,
+  onClick: () -> Unit,
+) {
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
+        .background(
+          color = if (selected) AppTheme.colors.buttonAccent else AppTheme.colors.cardPrimary,
+          shape = RoundedCornerShape(20.dp),
+        )
+        .padding(16.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = label,
+        style = AppTheme.typography.titleMedium,
+        color = if (selected) AppTheme.colors.onButtonAccent else AppTheme.colors.contentPrimary,
+      )
+      VSpacer(2.dp)
+      Text(
+        text = subtitle,
+        style = AppTheme.typography.bodySmall,
+        color = if (selected) AppTheme.colors.onButtonAccent.copy(alpha = 0.8f) else AppTheme.colors.contentSecondary,
+      )
+    }
+    Image(
+      painter = painterResource(R.drawable.ic_chevron_right_24),
+      contentDescription = null,
+      colorFilter = ColorFilter.tint(if (selected) AppTheme.colors.onButtonAccent else AppTheme.colors.contentSecondary),
+    )
+  }
+}
+
+@Composable
+private fun sourceDisplayName(url: String?): String {
+  val ctx = LocalContext.current
+  if (url == null) return stringResource(R.string.settings_custom_source_subtitle_off)
+  return when (url) {
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_SS%2BAll_RUS.txt" ->
+      stringResource(R.string.source_black_ss_title)
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_VLESS_RUS.txt" ->
+      stringResource(R.string.source_black_vless_title) + " (" + stringResource(R.string.source_subtitle_all_configs) + ")"
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/BLACK_VLESS_RUS_mobile.txt" ->
+      stringResource(R.string.source_black_vless_title) + " (" + stringResource(R.string.source_subtitle_top150_phone) + ")"
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-all.txt" ->
+      stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_all_configs) + ")"
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile.txt" ->
+      stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_top150_phone_1) + ")"
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt" ->
+      stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_top150_phone_2) + ")"
+    "https://github.com/igareck/vpn-configs-for-russia/blob/main/WHITE-CIDR-RU-checked.txt" ->
+      stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_ru_services) + ")"
+    else -> {
+      // Custom URL - show truncated
+      if (url.length > 40) url.take(37) + "..." else url
     }
   }
 }

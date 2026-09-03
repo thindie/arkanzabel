@@ -13,4 +13,6 @@ internal data class ScreenState(
   val legacyRestart: Boolean = false,
   val speedEnabled: Boolean? = null,
   val useNewDesign: Boolean? = null,
+  val isCustomSourceEnabled: Boolean = false,
+  val customSourceUrl: String? = null,
 ) : ViewState

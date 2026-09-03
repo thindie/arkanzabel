@@ -39,4 +39,13 @@ internal fun settingsStateSink(
     .transition { state, enabled ->
       state.copy(useNewDesign = enabled)
     }
+
+  screenScope.sub(repository.customSourceUrl)
+    .transition { state, url ->
+      val trimmed = url?.trim()
+      state.copy(
+        customSourceUrl = if (trimmed.isNullOrBlank()) null else trimmed,
+        isCustomSourceEnabled = !trimmed.isNullOrBlank(),
+      )
+    }
 }

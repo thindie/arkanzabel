@@ -42,4 +42,6 @@ interface SettingsRepository {
   fun setCustomSourceUrl(url: String)
 
   val isCustomSourceEnabled: Flow<Boolean>
+
+  fun setCustomSourceEnabled(enabled: Boolean)
 }

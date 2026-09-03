@@ -16,4 +16,6 @@ internal sealed interface ScreenCommand : Command {
   data object ToggleSpeed : ScreenCommand
 
   data object ToggleNewDesign : ScreenCommand
+
+  data object ToggleCustomSource : ScreenCommand
 }
