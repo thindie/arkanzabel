@@ -241,6 +241,12 @@
 <string name="home_profile_ping_ms">%d ms</string>
 <string name="home_profile_checking">Checking…</string>
 
+<!-- Profiles tab -->
+<string name="profiles_title">Profiles</string>
+<string name="profiles_tab_main">Main</string>
+<string name="profiles_tab_saved">Saved</string>
+<string name="profiles_empty">No profiles</string>
+
 <!-- Bottom-nav home screen -->
 <string name="home_connected">Connected</string>
 <string name="home_tap_to_connect">Tap to connect</string>

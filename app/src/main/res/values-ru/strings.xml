@@ -245,4 +245,15 @@
 <string name="home_connecting">Подключение…</string>
 <string name="home_error_no_server">Сервер не выбран</string>
 
+<!-- New profiles ping -->
+<string name="home_profile_unreachable">Недоступен</string>
+<string name="home_profile_ping_ms">%d мс</string>
+<string name="home_profile_checking">Проверка…</string>
+
+<!-- Profiles tab -->
+<string name="profiles_title">Профили</string>
+<string name="profiles_tab_main">Основные</string>
+<string name="profiles_tab_saved">Сохраненные</string>
+<string name="profiles_empty">Нет профилей</string>
+
 </resources>
