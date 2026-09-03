@@ -25,19 +25,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.view.WindowCompat
 import com.thindie.engine.core.Route
 import com.thindie.engine.core.Router
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.BottomNavItem
+import com.thindie.engine.uikit.BottomNavigationBar
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.R
 
 /**
- * New-design content: same as [com.thindie.rknzbl.MainActivity.AppContent] but adds the
- * [BottomNavigationBar] for routes tagged with [HomeSection].
- *
- * Legacy design uses [com.thindie.rknzbl.MainActivity.AppContent] directly.
+ * New-design content: same as [com.thindie.rknzbl.MainActivity.LegacyAppContent] but adds the
+ * [BottomNavigationBar] for routes tagged with a [HomeSection].
  */
 @Composable
 fun AppContent(
@@ -46,10 +49,7 @@ fun AppContent(
   onProfilesClick: () -> Unit,
   onSettingsClick: () -> Unit,
 ) {
-  val themeSwitcher =
-    remember {
-      ThemeSwitcher()
-    }
+  val themeSwitcher = remember { ThemeSwitcher() }
   CompositionLocalProvider(LocalThemeSwitcher provides themeSwitcher) {
     val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
     val isDark =
@@ -88,16 +88,21 @@ fun AppContent(
           },
           label = "route",
         ) { route ->
-          when (route.section) {
+          when (val section = route.section) {
             is HomeSection ->
               Box(modifier = Modifier.fillMaxWidth()) {
                 route.content.invoke()
                 BottomNavigationBar(
                   modifier = Modifier.align(Alignment.BottomCenter),
-                  onHomeClick = onHomeClick,
-                  onProfilesClick = onProfilesClick,
-                  onSettingsClick = onSettingsClick,
-                  selected = route.section as HomeSection,
+                  items = rememberNavItems(),
+                  selected = navIndexFor(section),
+                  onItemClicked = { index ->
+                    when (index) {
+                      0 -> onHomeClick()
+                      1 -> onProfilesClick()
+                      else -> onSettingsClick()
+                    }
+                  },
                 )
               }
 
@@ -108,3 +113,34 @@ fun AppContent(
     }
   }
 }
+
+/**
+ * Bottom navigation tabs. Icons and titles are resolved once per composition.
+ */
+@Composable
+private fun rememberNavItems(): List<BottomNavItem> {
+  val homeIcon = painterResource(R.drawable.ic_home_24)
+  val profilesIcon = painterResource(R.drawable.ic_folder_24)
+  val settingsIcon = painterResource(R.drawable.ic_settings_24)
+
+  val homeTitle = stringResource(R.string.bottom_nav_home)
+  val profilesTitle = stringResource(R.string.bottom_nav_profiles)
+  val settingsTitle = stringResource(R.string.bottom_nav_settings)
+
+  return remember(homeIcon, profilesIcon, settingsIcon) {
+    listOf(
+      BottomNavItem(icon = homeIcon, title = homeTitle),
+      BottomNavItem(icon = profilesIcon, title = profilesTitle),
+      BottomNavItem(icon = settingsIcon, title = settingsTitle),
+    )
+  }
+}
+
+/** Maps a [HomeSection] to its index in the bottom navigation bar. */
+@Suppress("MagicNumber")
+private fun navIndexFor(section: HomeSection): Int =
+  when (section) {
+    HomeSection.Home -> 0
+    HomeSection.Profiles -> 1
+    HomeSection.Settings -> 2
+  }
