@@ -9,4 +9,6 @@ import com.v2ray.ang.dto.ConnectionProfile
 internal data class ScreenState(
   val workState: WorkState = WorkState.Idle,
   val connectedProfile: ConnectionProfile? = null,
+  /** Timestamp of the last connect attempt; set while waiting for service confirmation. */
+  val connectingSince: Long? = null,
 ) : ViewState
