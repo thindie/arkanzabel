@@ -271,8 +271,11 @@ class ConnectionProfileRepositoryImpl(
         }
 
       _measured.value = bestProfile
-    } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to fetch and measure profiles", e)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: AppError) {
+      // Expected server/network errors from read()
+      Log.i(AppConfig.TAG, "Failed to fetch and measure profiles", e)
       _measured.value = null
     } finally {
       fetching.set(false)
