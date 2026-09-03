@@ -8,7 +8,6 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
@@ -66,27 +65,39 @@ class MainActivity : ComponentActivity() {
     val app = application as Application
     val router = app.requireRouter()
     awaitFinish()
-    if (app.applicationScope.useNewDesignFeature()) {
-      // Новый дизайн: отдельный setContent, работает иначе
-      setContent {
-        val homeFlow = remember { HomeFlow(router).apply { app.applicationScope.inject(this) } }
-        val profilesFlow = remember { ProfilesFlow(router).apply { app.applicationScope.inject(this) } }
-        val settingsFlow =
-          remember {
-            SettingsFlow(router).apply {
-              app.applicationScope.inject(this)
-              onFinishBuilder { router.pop() }
-            }
-          }
-        SideEffect {
-          IntroFlow(
-            router,
-            hasPushPermission = hasPermission,
-            appContext = app,
-          )
-            .onFinishBuilder { homeFlow.start() }
-            .start()
+
+    // Observe design mode changes and recreate activity when toggled
+    val initialDesignMode = app.applicationScope.useNewDesignFeature()
+    lifecycleScope.launch {
+      app.applicationScope.settingsRepository.useNewDesign.collect { useNew ->
+        if (useNew != initialDesignMode) {
+          recreate()
         }
+      }
+    }
+
+    // Determine initial design mode synchronously for IntroFlow startup
+    val useNewDesignInitially = app.applicationScope.useNewDesignFeature()
+
+    if (useNewDesignInitially) {
+      // New design: separate setContent with bottom nav flows
+      val homeFlow = HomeFlow(router).apply { app.applicationScope.inject(this) }
+      val profilesFlow = ProfilesFlow(router).apply { app.applicationScope.inject(this) }
+      val settingsFlow =
+        SettingsFlow(router).apply {
+          app.applicationScope.inject(this)
+          onFinishBuilder { router.pop() }
+        }
+
+      IntroFlow(
+        router,
+        hasPushPermission = hasPermission,
+        appContext = app,
+      )
+        .onFinishBuilder { homeFlow.start() }
+        .start()
+
+      setContent {
         AppContent(
           router,
           onHomeClick = { homeFlow.switch() },
@@ -95,26 +106,24 @@ class MainActivity : ComponentActivity() {
         )
       }
     } else {
-      // Легаси: setContent как есть
+      // Legacy design: original setContent
+      val legacyHomeFlow =
+        LegacyHomeFlow(
+          router = router,
+          appContext = app,
+          repository = app.applicationScope.connectionProfileRepository,
+          settingsRepository = app.applicationScope.settingsRepositoryLegacy,
+        )
+
+      IntroFlow(
+        router,
+        hasPushPermission = hasPermission,
+        appContext = app,
+      )
+        .onFinishBuilder { legacyHomeFlow.start() }
+        .start()
+
       setContent {
-        SideEffect {
-          IntroFlow(
-            router,
-            hasPushPermission = hasPermission,
-            appContext = app,
-          )
-            .onFinishBuilder {
-              LegacyHomeFlow(
-                router = router,
-                appContext = app,
-                repository = app.applicationScope.connectionProfileRepository,
-                settingsRepository = app.applicationScope.settingsRepositoryLegacy,
-              )
-                .onFinishBuilder { router.pop() }
-                .start()
-            }
-            .start()
-        }
         LegacyAppContent(app, router)
       }
     }
@@ -153,7 +162,6 @@ class MainActivity : ComponentActivity() {
         }
       }
       AppTheme(isDark) {
-        BackHandler { }
         val routes by router.route.collectAsState(null)
         var prev by remember { mutableStateOf<Pair<Route, Route?>?>(null) }
         val isPop = routes != null && prev != null && routes!!.first == prev!!.second
