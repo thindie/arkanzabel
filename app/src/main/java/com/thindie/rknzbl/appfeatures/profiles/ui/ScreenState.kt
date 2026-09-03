@@ -6,7 +6,6 @@ import com.thindie.engine.core.WorkState
 import com.v2ray.ang.dto.ConnectionProfile
 
 @Immutable
-/** Tab index: 0 = Main, 1 = Saved */
 data class ScreenState(
   val selectedTab: Int = 0,
   val profiles: List<ConnectionProfile> = emptyList(),
