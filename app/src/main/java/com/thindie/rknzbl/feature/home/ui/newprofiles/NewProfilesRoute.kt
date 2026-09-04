@@ -10,12 +10,8 @@ import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
 import com.v2ray.ang.runtime.KeyValueStorage
-import com.v2ray.ang.runtime.ProfileUriParser
 import com.v2ray.ang.runtime.V2RayServiceManager
-import com.v2ray.ang.util.HttpUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
@@ -115,25 +111,13 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Start -> {
       withContext(Dispatchers.IO) {
-        val links =
-          HttpUtil.getUrlContent(
-            url = homeState.sourceUrl,
-            timeout = 10_000,
-          )
-        val parsed =
-          links?.split("\n")
-            ?.map { uri ->
-              async { ProfileUriParser.parse(uri) }
-            }
-            ?.awaitAll()
-            ?.mapNotNull { it }
-        val result = parsed.orEmpty()
+        val profiles = repository.readFromSource(homeState.sourceUrl)
         (appContext as Application).applicationScope.pingManager.pingProfiles(
-          profiles = result,
+          profiles = profiles,
           force = settingsRepository.forceProfileMeasure.first(),
         )
         homeState.copy(
-          links = result,
+          links = profiles,
           pingState = WorkState.Running,
         )
       }
@@ -146,25 +130,14 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Refresh -> {
       withContext(Dispatchers.IO) {
-        val links =
-          HttpUtil.getUrlContent(
-            url = homeState.sourceUrl,
-            timeout = 10_000,
-          )
-        val parsed =
-          links?.split("\n")
-            ?.map { uri ->
-              async { ProfileUriParser.parse(uri) }
-            }
-            ?.awaitAll()
-            ?.mapNotNull { it }
-        val result = parsed ?: homeState.links
+        repository.invalidateRemoteCache(homeState.sourceUrl)
+        val profiles = repository.readFromSource(homeState.sourceUrl)
         (appContext as Application).applicationScope.pingManager.pingProfiles(
-          profiles = result,
+          profiles = profiles,
           force = settingsRepository.forceProfileMeasure.first(),
         )
         homeState.copy(
-          links = result,
+          links = profiles,
           pingState = WorkState.Running,
         )
       }

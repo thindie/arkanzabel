@@ -16,4 +16,6 @@ data class ScreenState(
   val pingResults: Map<ConnectionProfile, Long>? = null,
   val filter: FilterMode = FilterMode.All,
   val pingState: WorkState = WorkState.Idle,
+  val refreshing: Boolean = false,
+  val sourceAvailable: Boolean? = null,
 ) : ViewState
