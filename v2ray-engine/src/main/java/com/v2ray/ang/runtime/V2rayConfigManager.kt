@@ -735,7 +735,7 @@ object V2rayConfigManager {
     streamSettings: StreamSettings,
     connectionProfile: ConnectionProfile,
   ): String? {
-    val transport = connectionProfile.network.orEmpty()
+    val transport = connectionProfile.network.type
     val headerType = connectionProfile.headerType
     val host = connectionProfile.host
     val path = connectionProfile.path
@@ -906,8 +906,7 @@ object V2rayConfigManager {
     connectionProfile: ConnectionProfile,
     sniExt: String?,
   ) {
-    val streamSecurity = connectionProfile.security.orEmpty()
-    val allowInsecure = connectionProfile.insecure
+    val streamSecurity = connectionProfile.security?.value.orEmpty()
     val sni =
       if (connectionProfile.sni.isNullOrEmpty()) {
         when {
@@ -924,7 +923,6 @@ object V2rayConfigManager {
     val realityPk = connectionProfile.publicKey.nullIfBlank()
     val tlsSetting =
       StreamSettings.TlsSettings(
-        allowInsecure = allowInsecure,
         serverName = sni.nullIfBlank(),
         fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
         utls = connectionProfile.fingerPrint.nullIfBlank(),

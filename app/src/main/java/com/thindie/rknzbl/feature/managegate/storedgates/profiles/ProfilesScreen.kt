@@ -40,6 +40,7 @@ import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
+import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
@@ -258,17 +259,16 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
  * profile uses. TCP is omitted because it is the detectable baseline; non-TCP transports are the
  * meaningful stealth signal, and skipping TCP keeps cards tidy for the common case.
  */
-private fun transportLabel(network: String?): String {
-  if (network.isNullOrEmpty()) return ""
+private fun transportLabel(network: NetworkType): String {
   return when (network) {
-    "ws" -> "WebSocket"
-    "httpupgrade" -> "HTTP Upgrade"
-    "xhttp" -> "XHTTP"
-    "h2" -> "HTTP/2"
-    "grpc" -> "gRPC"
-    "kcp" -> "KCP"
-    "http" -> "HTTP"
-    else -> network.uppercase()
+    NetworkType.WS -> "WebSocket"
+    NetworkType.HTTP_UPGRADE -> "HTTP Upgrade"
+    NetworkType.XHTTP -> "XHTTP"
+    NetworkType.H2 -> "HTTP/2"
+    NetworkType.GRPC -> "gRPC"
+    NetworkType.KCP -> "KCP"
+    NetworkType.HTTP -> "HTTP"
+    else -> network.type.uppercase()
   }
 }
 

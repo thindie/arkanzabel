@@ -4,6 +4,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -75,7 +76,7 @@ object Vless : ProtocolParser() {
   }
 
   fun toOutbound(connectionProfile: ConnectionProfile): Outbound? {
-    if (connectionProfile.security == AppConfig.REALITY && connectionProfile.publicKey.isNullOrBlank()) {
+    if (connectionProfile.security == Security.REALITY && connectionProfile.publicKey.isNullOrBlank()) {
       return null
     }
     val outbound = V2rayConfigManager.createInitOutbound(Protocol.Vless)

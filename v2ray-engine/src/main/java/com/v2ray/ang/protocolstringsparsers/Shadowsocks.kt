@@ -53,7 +53,7 @@ object Shadowsocks : ProtocolParser() {
         }
         config =
           config.copy(
-            network = NetworkType.TCP.type,
+            network = NetworkType.TCP,
             headerType = "http",
             host = queryPairs["obfs-host"],
             path = queryPairs["path"],

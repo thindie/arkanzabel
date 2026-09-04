@@ -24,6 +24,7 @@ import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.enums.NetworkType
 
 @Composable
 fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -97,16 +98,15 @@ private fun profileSubtitle(
   }
 }
 
-private fun transportLabel(network: String?): String {
-  if (network.isNullOrEmpty()) return ""
+private fun transportLabel(network: NetworkType): String {
   return when (network) {
-    "ws" -> "WebSocket"
-    "httpupgrade" -> "HTTP Upgrade"
-    "xhttp" -> "XHTTP"
-    "h2" -> "HTTP/2"
-    "grpc" -> "gRPC"
-    "kcp" -> "KCP"
-    "http" -> "HTTP"
-    else -> network.uppercase()
+    NetworkType.WS -> "WebSocket"
+    NetworkType.HTTP_UPGRADE -> "HTTP Upgrade"
+    NetworkType.XHTTP -> "XHTTP"
+    NetworkType.H2 -> "HTTP/2"
+    NetworkType.GRPC -> "gRPC"
+    NetworkType.KCP -> "KCP"
+    NetworkType.HTTP -> "HTTP"
+    else -> network.type.uppercase()
   }
 }

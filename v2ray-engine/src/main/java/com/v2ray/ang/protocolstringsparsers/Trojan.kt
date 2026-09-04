@@ -5,6 +5,7 @@ import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.V2rayConfigManager
@@ -28,14 +29,14 @@ object Trojan : ProtocolParser() {
 
     return if (uri.rawQuery.isNullOrEmpty()) {
       base.copy(
-        network = NetworkType.TCP.type,
-        security = AppConfig.TLS,
+        network = NetworkType.TCP,
+        security = Security.TLS,
         insecure = allowInsecure,
       )
     } else {
       val queryParam = getQueryParam(uri)
       getItemFormQuery(base, queryParam, allowInsecure).copy(
-        security = queryParam["security"] ?: AppConfig.TLS,
+        security = Security.fromString(queryParam["security"]) ?: Security.TLS,
       )
     }
   }
