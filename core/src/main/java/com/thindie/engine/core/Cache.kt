@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
  * Reactive cache backed by MutableStateFlow.
  * Provides get/set/clear/invalidate operations with observable state changes.
  */
-class Cache<T>(private val initial: T? = null) {
+class Cache<T>(initial: T?) {
   private val _value = MutableStateFlow(initial)
 
   /** Observable value of the cached item. */
