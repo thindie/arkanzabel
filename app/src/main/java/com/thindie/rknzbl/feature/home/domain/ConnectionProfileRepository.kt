@@ -33,15 +33,6 @@ interface ConnectionProfileRepository {
   /** Read profiles from a specific remote source, using its dedicated cache. */
   suspend fun readFromSource(url: String): List<ConnectionProfile>
 
-  /** Invalidate only the stored (local) profiles cache. */
-  fun invalidateStoredCache()
-
-  /** Invalidate only the remote source cache for a specific URL. */
-  suspend fun invalidateRemoteCache(url: String)
-
-  /** Read profiles from a specific remote source, using its dedicated cache. */
-  suspend fun readFromSource(url: String): List<ConnectionProfile>
-
   // VPN service operations
   suspend fun connect(profile: ConnectionProfile)
 
