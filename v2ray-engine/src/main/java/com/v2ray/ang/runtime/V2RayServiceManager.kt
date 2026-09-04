@@ -30,8 +30,10 @@ import kotlinx.coroutines.launch
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import java.lang.ref.SoftReference
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 object V2RayServiceManager {
   private const val STOP_LOOP_TIMEOUT_SEC = 15L
@@ -39,6 +41,9 @@ object V2RayServiceManager {
   private val coreController: CoreController = V2RayNativeManager.newCoreController(CoreCallback())
   private val mMsgReceive = ReceiveMessageHandler()
   private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val stopLoopExecutor = Executors.newSingleThreadExecutor { r -> Thread(r, "V2RayStopLoop") }
+
+  @Volatile
   private var currentConfig: ConnectionProfile? = null
 
   var serviceControl: SoftReference<ServiceControl>? = null
@@ -262,24 +267,15 @@ object V2RayServiceManager {
     val service = getService() ?: return false
 
     if (isRunningInternal) {
-      val done = CountDownLatch(1)
-      managerScope.launch {
-        try {
-          coreController.stopLoop()
-        } catch (runtime: RuntimeException) {
-          Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", runtime)
-        } finally {
-          done.countDown()
-        }
-      }
       try {
-        val finished = done.await(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
-        if (!finished) {
-          Log.e(AppConfig.TAG, "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s")
-        }
-      } catch (e: InterruptedException) {
+        stopLoopExecutor.submit { coreController.stopLoop() }.get(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
+      } catch (timeout: TimeoutException) {
+        Log.e(AppConfig.TAG, "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s", timeout)
+      } catch (execution: ExecutionException) {
+        Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", execution.cause ?: execution)
+      } catch (interrupted: InterruptedException) {
         Thread.currentThread().interrupt()
-        Log.e(AppConfig.TAG, "Interrupted while waiting for V2Ray stopLoop", e)
+        Log.e(AppConfig.TAG, "Interrupted while waiting for V2Ray stopLoop", interrupted)
       }
     }
 
