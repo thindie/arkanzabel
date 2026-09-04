@@ -79,7 +79,7 @@ class ProfilePingManager(
     batchJob = null
     batchJob =
       if (force) {
-        scope.launch(Dispatchers.IO) {
+        scope.launch(dispatcher) {
           val ping =
             pingable.map { profile -> async { profile to measureInMemory(profile, force) } }
               .awaitAll()
