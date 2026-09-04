@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import java.util.UUID
@@ -223,8 +222,14 @@ class ConnectionProfileRepositoryImpl(
   override suspend fun fetch() {
     if (!fetching.compareAndSet(false, true)) return
     try {
-      // Step 1: Load profiles from remote/local storage
-      val loadedProfiles = read()
+      // Step 1: Go to the network with whichever source is currently selected in settings.
+      val customUrl = storage.getCustomSourceUrl()
+      val loadedProfiles =
+        if (storage.isCustomSourceEnabled() && !customUrl.isNullOrBlank()) {
+          readFromSource(customUrl)
+        } else {
+          read()
+        }
       profilesCacheReactive.set(loadedProfiles)
 
       if (loadedProfiles.isEmpty()) {
@@ -256,11 +261,12 @@ class ConnectionProfileRepositoryImpl(
         return
       }
 
-      // Select best profile (lowest latency)
+      // Select best profile (lowest latency); -1 marks an unreachable profile and must not win.
       val bestProfile =
-        loadedProfiles.minByOrNull { profile ->
-          resultsMap[profile] ?: Long.MAX_VALUE
-        }
+        loadedProfiles
+          .mapNotNull { profile -> resultsMap[profile]?.takeIf { it >= 0 }?.let { profile to it } }
+          .minByOrNull { (_, delay) -> delay }
+          ?.first
 
       if (bestProfile != null) {
         measuredCache.set(bestProfile)
