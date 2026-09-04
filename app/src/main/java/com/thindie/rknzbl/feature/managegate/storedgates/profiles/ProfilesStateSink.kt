@@ -81,6 +81,9 @@ internal suspend fun FavoriteProfilesFlow.exec(
     ScreenCommand.RequestStoredProfiles -> {
       withContext(Dispatchers.IO) {
         val mode = settingsRepository.isLocalSave.first()
+        if (mode) {
+          repository.invalidateStoredCache()
+        }
         val profiles = repository.read()
         val active = repository.activeProfile()
         if (active != null) {

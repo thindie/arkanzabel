@@ -24,6 +24,24 @@ interface ConnectionProfileRepository {
 
   fun invalidateCaches()
 
+  /** Invalidate only the stored (local) profiles cache. */
+  fun invalidateStoredCache()
+
+  /** Invalidate only the remote source cache for a specific URL. */
+  suspend fun invalidateRemoteCache(url: String)
+
+  /** Read profiles from a specific remote source, using its dedicated cache. */
+  suspend fun readFromSource(url: String): List<ConnectionProfile>
+
+  /** Invalidate only the stored (local) profiles cache. */
+  fun invalidateStoredCache()
+
+  /** Invalidate only the remote source cache for a specific URL. */
+  suspend fun invalidateRemoteCache(url: String)
+
+  /** Read profiles from a specific remote source, using its dedicated cache. */
+  suspend fun readFromSource(url: String): List<ConnectionProfile>
+
   // VPN service operations
   suspend fun connect(profile: ConnectionProfile)
 
@@ -37,6 +55,7 @@ interface ConnectionProfileRepository {
   suspend fun fetch()
 
   val profiles: Flow<List<ConnectionProfile>>
+  val stored: Flow<List<ConnectionProfile>>
 
   val measured: Flow<ConnectionProfile?>
 

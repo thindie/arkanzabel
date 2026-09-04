@@ -56,7 +56,9 @@ class ConnectionProfileRepositoryImpl(
 
   private val isLocalSave get() = storage.isLocalSaveEnabled()
 
-  private val profilesCache = Cache<List<ConnectionProfile>>(null)
+  // Separate caches: stored (local) vs remote sources
+  private val storedProfilesCache = Cache<List<ConnectionProfile>>(null)
+  private val remoteSourceCaches = mutableMapOf<String, Cache<List<ConnectionProfile>>>()
   private val activeProfileCache = Cache<ConnectionProfile>(null)
 
   private val autoSavedEvents =
@@ -85,24 +87,17 @@ class ConnectionProfileRepositoryImpl(
     }
 
   override suspend fun read(): List<ConnectionProfile> {
-    val cached = profilesCache.get()
-    if (cached != null) return cached
+    if (isLocalSave) {
+      val cached = storedProfilesCache.get()
+      if (cached != null) return cached
 
-    val body =
-      if (isLocalSave) {
-        storage.getLocalProfiles().orEmpty()
-      } else {
-        readInternal(httpClient, url)
-      }
-
-    val profiles =
-      parseRemote(body)
-        .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
-        .toSet()
-        .toList()
-
-    profilesCache.set(profiles)
-    return profiles
+      val body = storage.getLocalProfiles().orEmpty()
+      val profiles = parseAndDeduplicate(body)
+      storedProfilesCache.set(profiles)
+      return profiles
+    } else {
+      return readFromSource(url)
+    }
   }
 
   override suspend fun save(guid: String): Boolean {
@@ -128,7 +123,8 @@ class ConnectionProfileRepositoryImpl(
       val updatedBody = currentBody + SEPARATOR + profileJson
       storage.setLocalProfiles(updatedBody)
       Log.i(AppConfig.TAG, "Save Profile [LOCAL]: success")
-      invalidateCacheInternal()
+      storedProfilesCache.clear()
+      profilesCacheReactive.clear()
       return true
     } else {
       val currentBody = readInternal(httpClient, url)
@@ -137,7 +133,8 @@ class ConnectionProfileRepositoryImpl(
       val profileJson = JsonUtil.toJson(profilePretty)
       writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
       Log.i(AppConfig.TAG, "Save Profile: success")
-      invalidateCacheInternal()
+      remoteSourceCaches[url]?.clear()
+      profilesCacheReactive.clear()
       return true
     }
   }
@@ -150,14 +147,16 @@ class ConnectionProfileRepositoryImpl(
       val filteredBody = currentBody.replace(oldValue = profileJson, "")
       val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
       writeInternal(client, url, fallbackBody)
-      invalidateCacheInternal()
+      remoteSourceCaches[url]?.clear()
+      profilesCacheReactive.clear()
     } else {
       val profileJson = JsonUtil.toJson(profile)
       val currentBody = storage.getLocalProfiles().orEmpty()
       val filteredBody = currentBody.replace(oldValue = profileJson, "")
       val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
       storage.setLocalProfiles(fallbackBody)
-      invalidateCacheInternal()
+      storedProfilesCache.clear()
+      profilesCacheReactive.clear()
     }
   }
 
@@ -182,8 +181,16 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override fun isSaved(profile: ConnectionProfile): Boolean {
-    val cached = profilesCache.get()
-    return cached?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null
+    val storedCached = storedProfilesCache.get()
+    if (storedCached?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null) return true
+
+    // Check remote caches too
+    for ((_, cache) in remoteSourceCaches) {
+      if (cache.get()?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null) {
+        return true
+      }
+    }
+    return false
   }
 
   override fun invalidateCaches() {
@@ -317,8 +324,30 @@ class ConnectionProfileRepositoryImpl(
     autoSavedEvents.tryEmit("")
   }
 
+  override fun invalidateStoredCache() {
+    storedProfilesCache.clear()
+  }
+
+  override suspend fun invalidateRemoteCache(url: String) {
+    remoteSourceCaches[url]?.clear()
+  }
+
+  override suspend fun readFromSource(sourceUrl: String): List<ConnectionProfile> {
+    val cache =
+      remoteSourceCaches.getOrPut(sourceUrl) { Cache<List<ConnectionProfile>>(null) }
+
+    val cached = cache.get()
+    if (cached != null) return cached
+
+    val body = readInternal(httpClient, sourceUrl)
+    val profiles = parseAndDeduplicate(body)
+    cache.set(profiles)
+    return profiles
+  }
+
   private fun invalidateCacheInternal() {
-    profilesCache.clear()
+    storedProfilesCache.clear()
+    remoteSourceCaches.values.forEach { it.clear() }
     activeProfileCache.clear()
     profilesCacheReactive.clear()
     measuredCache.clear()
@@ -392,6 +421,13 @@ private suspend fun writeInternal(
 }
 
 private const val SEPARATOR = "########"
+
+private fun parseAndDeduplicate(body: String): List<ConnectionProfile> {
+  return parseRemote(body)
+    .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
+    .toSet()
+    .toList()
+}
 
 private fun newAuthenticatedWebdavClient(
   userName: String,

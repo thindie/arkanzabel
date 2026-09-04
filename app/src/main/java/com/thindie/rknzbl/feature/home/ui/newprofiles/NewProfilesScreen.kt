@@ -59,7 +59,7 @@ fun NewProfiles(scope: ScreenScope<ScreenState, ScreenCommand>) {
     BackHandler { scope.send(ScreenCommand.Back) }
     val height = LocalWindowInfo.current.containerSize.height.dp
     PullToRefreshBox(
-      isRefreshing = false,
+      isRefreshing = scope.processing.value == ScreenCommand.Refresh,
       modifier = Modifier.height(height),
       onRefresh = { scope.send(ScreenCommand.Refresh) },
     ) {
