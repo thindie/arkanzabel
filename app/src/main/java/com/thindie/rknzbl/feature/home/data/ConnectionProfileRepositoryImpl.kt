@@ -32,8 +32,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -58,8 +56,8 @@ class ConnectionProfileRepositoryImpl(
 
   private val isLocalSave get() = storage.isLocalSaveEnabled()
 
-  private val profilesCache = Cache<List<ConnectionProfile>>()
-  private val activeProfileCache = Cache<ConnectionProfile>()
+  private val profilesCache = Cache<List<ConnectionProfile>>(null)
+  private val activeProfileCache = Cache<ConnectionProfile>(null)
 
   private val autoSavedEvents =
     MutableSharedFlow<String>(
@@ -68,14 +66,14 @@ class ConnectionProfileRepositoryImpl(
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-  // Reactive API state
-  private val _profiles = MutableStateFlow<List<ConnectionProfile>>(emptyList())
-  override val profiles: Flow<List<ConnectionProfile>> = _profiles.asSharedFlow()
+  // Reactive API state backed by Cache<T>
+  private val profilesCacheReactive = Cache<List<ConnectionProfile>>(emptyList())
+  override val profiles: Flow<List<ConnectionProfile>> = profilesCacheReactive.value.map { it ?: emptyList() }
 
-  override val stored: Flow<List<ConnectionProfile>> = _profiles.asSharedFlow()
+  override val stored: Flow<List<ConnectionProfile>> = profilesCacheReactive.value.map { it ?: emptyList() }
 
-  private val _measured = MutableStateFlow<ConnectionProfile?>(null)
-  override val measured: Flow<ConnectionProfile?> = _measured.asSharedFlow()
+  private val measuredCache = Cache<ConnectionProfile?>(null)
+  override val measured: Flow<ConnectionProfile?> = measuredCache.value
 
   // Polls V2RayServiceManager every 2 seconds when collected
   override val connected: Flow<Boolean> =
@@ -220,10 +218,10 @@ class ConnectionProfileRepositoryImpl(
     try {
       // Step 1: Load profiles from remote/local storage
       val loadedProfiles = read()
-      _profiles.value = loadedProfiles
+      profilesCacheReactive.set(loadedProfiles)
 
       if (loadedProfiles.isEmpty()) {
-        _measured.value = null
+        measuredCache.clear()
         return
       }
 
@@ -233,7 +231,7 @@ class ConnectionProfileRepositoryImpl(
           it.protocol != Protocol.Custom && it.protocol != Protocol.PolicyGroup
         }
       if (!hasPingable) {
-        _measured.value = null
+        measuredCache.clear()
         return
       }
 
@@ -247,7 +245,7 @@ class ConnectionProfileRepositoryImpl(
         }
 
       if (resultsMap == null || resultsMap.isEmpty()) {
-        _measured.value = null
+        measuredCache.clear()
         return
       }
 
@@ -257,13 +255,17 @@ class ConnectionProfileRepositoryImpl(
           resultsMap[profile] ?: Long.MAX_VALUE
         }
 
-      _measured.value = bestProfile
+      if (bestProfile != null) {
+        measuredCache.set(bestProfile)
+      } else {
+        measuredCache.clear()
+      }
     } catch (e: CancellationException) {
       throw e
     } catch (e: AppError) {
       // Expected server/network errors from read()
       Log.i(AppConfig.TAG, "Failed to fetch and measure profiles", e)
-      _measured.value = null
+      measuredCache.clear()
     } finally {
       fetching.set(false)
     }
@@ -318,6 +320,8 @@ class ConnectionProfileRepositoryImpl(
   private fun invalidateCacheInternal() {
     profilesCache.clear()
     activeProfileCache.clear()
+    profilesCacheReactive.clear()
+    measuredCache.clear()
   }
 }
 
