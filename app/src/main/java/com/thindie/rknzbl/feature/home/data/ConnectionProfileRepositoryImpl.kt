@@ -2,6 +2,7 @@ package com.thindie.rknzbl.feature.home.data
 
 import android.content.Context
 import android.util.Log
+import com.thindie.engine.core.Cache
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
@@ -57,7 +58,8 @@ class ConnectionProfileRepositoryImpl(
 
   private val isLocalSave get() = storage.isLocalSaveEnabled()
 
-  private val profilesCache: MutableStateFlow<List<ConnectionProfile>?> = MutableStateFlow(null)
+  private val profilesCache = Cache<List<ConnectionProfile>>()
+  private val activeProfileCache = Cache<ConnectionProfile>()
 
   private val autoSavedEvents =
     MutableSharedFlow<String>(
@@ -69,6 +71,8 @@ class ConnectionProfileRepositoryImpl(
   // Reactive API state
   private val _profiles = MutableStateFlow<List<ConnectionProfile>>(emptyList())
   override val profiles: Flow<List<ConnectionProfile>> = _profiles.asSharedFlow()
+
+  override val stored: Flow<List<ConnectionProfile>> = _profiles.asSharedFlow()
 
   private val _measured = MutableStateFlow<ConnectionProfile?>(null)
   override val measured: Flow<ConnectionProfile?> = _measured.asSharedFlow()
@@ -83,39 +87,24 @@ class ConnectionProfileRepositoryImpl(
     }
 
   override suspend fun read(): List<ConnectionProfile> {
-    if (isLocalSave) {
-      val cache = profilesCache.value
-      if (cache != null) return cache
-      val body = storage.getLocalProfiles().orEmpty()
+    val cached = profilesCache.get()
+    if (cached != null) return cached
 
-      val profiles =
-        parseRemote(body)
-          .mapNotNull {
-            JsonUtil.fromJson(it, ConnectionProfile::class.java)
-          }
-          .toSet()
-          .toList()
+    val body =
+      if (isLocalSave) {
+        storage.getLocalProfiles().orEmpty()
+      } else {
+        readInternal(httpClient, url)
+      }
 
-      profilesCache.updateAndGet { profiles }
-      return requireNotNull(profilesCache.value)
-    } else {
-      val cache = profilesCache.value
-      if (cache != null) return cache
+    val profiles =
+      parseRemote(body)
+        .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
+        .toSet()
+        .toList()
 
-      val client = httpClient
-      val body = readInternal(client, url)
-
-      val profiles =
-        parseRemote(body)
-          .mapNotNull {
-            JsonUtil.fromJson(it, ConnectionProfile::class.java)
-          }
-          .toSet()
-          .toList()
-
-      profilesCache.updateAndGet { profiles }
-      return requireNotNull(profilesCache.value)
-    }
+    profilesCache.set(profiles)
+    return profiles
   }
 
   override suspend fun save(guid: String): Boolean {
@@ -187,16 +176,16 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override suspend fun activeProfile(): ConnectionProfile? {
-    return activeProfileInternal()
+    val cached = activeProfileCache.get()
+    if (cached != null) return cached
+    val profile = activeProfileInternal()
+    if (profile != null) activeProfileCache.set(profile)
+    return profile
   }
 
   override fun isSaved(profile: ConnectionProfile): Boolean {
-    val profilesCache = profilesCache.value
-    return if (profilesCache != null) {
-      profilesCache.firstOrNull { it.subscriptionId == profile.subscriptionId } != null
-    } else {
-      false
-    }
+    val cached = profilesCache.get()
+    return cached?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null
   }
 
   override fun invalidateCaches() {
@@ -226,8 +215,6 @@ class ConnectionProfileRepositoryImpl(
 
   private val fetching = AtomicBoolean(false)
 
-  // Reactive API: connect -> fetch -> measure -> apply flow.
-  // Guarded against concurrent runs (route recreation on tab switch).
   override suspend fun fetch() {
     if (!fetching.compareAndSet(false, true)) return
     try {
@@ -329,7 +316,8 @@ class ConnectionProfileRepositoryImpl(
   }
 
   private fun invalidateCacheInternal() {
-    profilesCache.value = null
+    profilesCache.clear()
+    activeProfileCache.clear()
   }
 }
 
@@ -362,6 +350,17 @@ private suspend fun readInternal(
       throw AppError.WebDav.UploadOpenFailed
     }
   } ?: throw AppError.ServerError.TimeOut
+
+private suspend fun readFromUrl(
+  client: HttpClient,
+  url: String,
+): List<ConnectionProfile> {
+  val body = readInternal(client, url)
+  return parseRemote(body)
+    .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
+    .toSet()
+    .toList()
+}
 
 private suspend fun writeInternal(
   client: HttpClient,
