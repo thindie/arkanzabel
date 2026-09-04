@@ -143,6 +143,8 @@ object RouteFactory {
       @Stable
       var screenScope: ScreenScope<S, C>? =
         object : ScreenScope<S, C> {
+          override val section: Section = section
+
           override var scope: CoroutineScope? =
             CoroutineScope(
               SupervisorJob() + Dispatchers.Default +
