@@ -49,7 +49,7 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
                   connectingSince = System.currentTimeMillis(),
                 )
               } else {
-                s.copy(workState = WorkState.Error("No server selected"))
+                s
               }
             }
           }
@@ -81,7 +81,12 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
 
           !connected && state.workState is WorkState.Running && state.connectingSince == null -> {
             // Service stopped while running and we don't track an active connect: treat as idle
-            state.copy(workState = WorkState.Idle, connectedProfile = null)
+            val target = repository.activeProfile()
+            if (target != null) {
+              state.copy(workState = WorkState.Idle, connectedProfile = target)
+            } else {
+              state.copy(workState = WorkState.Idle, connectedProfile = null)
+            }
           }
 
           !connected && state.workState is WorkState.Running -> {
@@ -99,9 +104,19 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
           else -> {
             // Not running: keep measured target for display, reset work state only
             if (state.workState is WorkState.Idle) {
-              state
+              val target = repository.activeProfile()
+              if (target != null && state.connectedProfile == null) {
+                state.copy(connectedProfile = target)
+              } else {
+                state
+              }
             } else {
-              state.copy(workState = WorkState.Idle)
+              val target = repository.activeProfile()
+              if (target != null) {
+                state.copy(workState = WorkState.Idle, connectedProfile = target)
+              } else {
+                state.copy(workState = WorkState.Idle)
+              }
             }
           }
         }

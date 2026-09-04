@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.core.WorkState
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.rknzbl.R
@@ -67,8 +68,18 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
         }
       }
 
-      // Big pulsing button
-      ConnectButton(state = state, onClick = { scope.send(ScreenCommand.ToggleConnect) })
+      // Big pulsing button - disabled when no source available
+      ConnectButton(
+        state = state,
+        enabled = state.connectedProfile != null || state.workState is WorkState.Running,
+        onClick = {
+          if (state.connectedProfile == null && state.workState !is WorkState.Running) {
+            scope.sendEvent(ServiceCommand.UiEvent.SnackText("Нет выбранного источника"))
+          } else {
+            scope.send(ScreenCommand.ToggleConnect)
+          }
+        },
+      )
 
       // Error message
       AnimatedVisibility(
@@ -99,6 +110,7 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
 @Composable
 internal fun ConnectButton(
   state: ScreenState,
+  enabled: Boolean,
   onClick: () -> Unit,
 ) {
   val isConnected = state.workState is WorkState.Running && state.connectedProfile != null
@@ -123,7 +135,7 @@ internal fun ConnectButton(
         .scale(scale)
         .border(BorderStroke(2.dp, borderColor), CircleShape)
         .background(bgColor, CircleShape)
-        .clickable(enabled = !isConnecting) { onClick() },
+        .clickable(enabled = enabled && !isConnecting) { onClick() },
     contentAlignment = Alignment.Center,
   ) {
     if (isConnecting) {
@@ -151,7 +163,7 @@ internal fun ConnectButton(
 @Composable
 private fun HomeScreenDisconnectedPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState()) {}
+    ConnectButton(state = ScreenState(), enabled = true) {}
   }
 }
 
@@ -165,6 +177,7 @@ private fun HomeScreenConnectedPreview() {
           workState = WorkState.Running,
           connectedProfile = ConnectionProfile(protocol = Protocol.Vmess, subscriptionId = "test", remarks = "Test Server"),
         ),
+      enabled = true,
     ) {}
   }
 }
@@ -173,6 +186,6 @@ private fun HomeScreenConnectedPreview() {
 @Composable
 private fun HomeScreenConnectingPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState(workState = WorkState.Running)) {}
+    ConnectButton(state = ScreenState(workState = WorkState.Running), enabled = true) {}
   }
 }
