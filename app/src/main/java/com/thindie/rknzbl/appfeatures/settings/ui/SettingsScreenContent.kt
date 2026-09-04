@@ -516,7 +516,7 @@ private fun sourceDisplayName(url: String?): String {
       stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_top150_phone_1) + ")"
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/Vless-Reality-White-Lists-Rus-Mobile-2.txt" ->
       stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_top150_phone_2) + ")"
-    "https://github.com/igareck/vpn-configs-for-russia/blob/main/WHITE-CIDR-RU-checked.txt" ->
+    "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt" ->
       stringResource(R.string.source_white_cidr_title) + " (" + stringResource(R.string.source_subtitle_ru_services) + ")"
     else -> {
       // Custom URL - show truncated

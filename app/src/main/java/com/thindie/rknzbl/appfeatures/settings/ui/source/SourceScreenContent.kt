@@ -203,7 +203,7 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
         onClick = {
           scope.send(
             SourceCommand.SelectPreset(
-              "https://github.com/igareck/vpn-configs-for-russia/blob/main/WHITE-CIDR-RU-checked.txt",
+              "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt",
               titleWhiteCidr,
             ),
           )

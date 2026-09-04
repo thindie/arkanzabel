@@ -48,7 +48,7 @@ class SelectSourceFlow(
 
     data object WhiteListRussian : Result {
       override val sourceUrl: String =
-        "https://github.com/igareck/vpn-configs-for-russia/blob/main/WHITE-CIDR-RU-checked.txt"
+        "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt"
     }
 
     data object NotSelected : Result {
