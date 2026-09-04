@@ -1,5 +1,7 @@
 package com.v2ray.ang.runtimebuilder
 
+import com.v2ray.ang.dto.RulesetItem
+
 /**
  * Abstraction over settings storage for runtimebuilder classes.
  * Extracted from static [com.v2ray.ang.runtime.KeyValueStorage] to enable unit testing.
@@ -29,4 +31,6 @@ interface SettingsReader {
   fun isVpnMode(): Boolean
 
   fun isUsingHevTun(): Boolean
+
+  fun getRoutingRulesets(): List<RulesetItem>?
 }

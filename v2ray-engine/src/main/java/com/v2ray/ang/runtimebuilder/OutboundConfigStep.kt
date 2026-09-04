@@ -15,6 +15,7 @@ import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.util.JsonUtil
 
 internal class OutboundConfigStep(
+  private val settings: SettingsReader,
   private val convertProfile2Outbound: (ConnectionProfile) -> Outbound?,
 ) {
   fun applyOutbounds(
@@ -46,7 +47,7 @@ internal class OutboundConfigStep(
     v2rayConfig: V2rayConfig,
     subscriptionId: String,
   ): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+    if (settings.getBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
       return v2rayConfig
     }
     if (subscriptionId.isEmpty()) return v2rayConfig
@@ -90,7 +91,7 @@ internal class OutboundConfigStep(
 
   fun applyGlobalOutboundSettings(outbound: Outbound): Boolean {
     try {
-      var muxEnabled = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false)
+      var muxEnabled = settings.getBool(AppConfig.PREF_MUX_ENABLED, false)
       val protocol = outbound.protocol
       if (protocol.equals(Protocol.ShadowSocks.name, true) ||
         protocol.equals(Protocol.Socks.name, true) ||
@@ -107,11 +108,11 @@ internal class OutboundConfigStep(
       if (muxEnabled) {
         outbound.mux?.enabled = true
         outbound.mux?.concurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
+          settings.getString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
         outbound.mux?.xudpConcurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "16").orEmpty().toInt()
+          settings.getString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "16").orEmpty().toInt()
         outbound.mux?.xudpProxyUDP443 =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
+          settings.getString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
         if (protocol.equals(Protocol.Vless.name, true) &&
           outbound.settings?.vnext?.first()?.users?.first()?.flow?.isNotEmpty() == true
         ) {
@@ -133,7 +134,7 @@ internal class OutboundConfigStep(
           } else {
             outbound.settings?.address as List<*>
           }
-        if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) != true) {
+        if (!settings.getBool(AppConfig.PREF_PREFER_IPV6, false)) {
           localTunAddr = listOf(localTunAddr.first())
         }
         outbound.settings?.address = localTunAddr
@@ -174,7 +175,7 @@ internal class OutboundConfigStep(
 
   fun applyOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
-      if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+      if (!settings.getBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
         return v2rayConfig
       }
       if (v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.TLS &&
@@ -190,7 +191,7 @@ internal class OutboundConfigStep(
           mux = null,
         )
 
-      var packets = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_PACKETS) ?: "tlshello"
+      var packets = settings.getString(AppConfig.PREF_FRAGMENT_PACKETS) ?: "tlshello"
       if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.REALITY && packets == "tlshello") {
         packets = "1-3"
       } else if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.TLS && packets != "tlshello") {
@@ -202,8 +203,8 @@ internal class OutboundConfigStep(
           fragment =
             OutSettings.Fragment(
               packets = packets,
-              length = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH) ?: "50-100",
-              interval = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL) ?: "10-20",
+              length = settings.getString(AppConfig.PREF_FRAGMENT_LENGTH) ?: "50-100",
+              interval = settings.getString(AppConfig.PREF_FRAGMENT_INTERVAL) ?: "10-20",
             ),
           noises =
             listOf(

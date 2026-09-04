@@ -6,17 +6,18 @@ import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.Routing.Rules
 import com.v2ray.ang.error.RoutingConfigError
-import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
 
-internal class RoutingConfigStep {
+internal class RoutingConfigStep(
+  private val settings: SettingsReader,
+) {
   fun applyRouting(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
       v2rayConfig.routing.domainStrategy =
-        KeyValueStorage.decodeSettingsString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
+        settings.getString(AppConfig.PREF_ROUTING_DOMAIN_STRATEGY)
           ?: "AsIs"
 
-      val rulesetItems = KeyValueStorage.decodeRoutingRulesets()
+      val rulesetItems = settings.getRoutingRulesets()
       rulesetItems?.forEach { key ->
         applyRoutingUserRule(key, v2rayConfig)
       }
@@ -34,7 +35,7 @@ internal class RoutingConfigStep {
   fun getUserRule2Domain(tag: String): ArrayList<String> {
     val domain = ArrayList<String>()
 
-    val rulesetItems = KeyValueStorage.decodeRoutingRulesets()
+    val rulesetItems = settings.getRoutingRulesets()
     rulesetItems?.forEach { key ->
       if (key.enabled && key.outboundTag == tag && !key.domain.isNullOrEmpty()) {
         key.domain?.forEach {

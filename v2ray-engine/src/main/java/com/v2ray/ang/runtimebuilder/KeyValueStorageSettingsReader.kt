@@ -1,5 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
+import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
 
@@ -32,4 +33,6 @@ class KeyValueStorageSettingsReader : SettingsReader {
   override fun isVpnMode(): Boolean = SettingsManager.isVpnMode()
 
   override fun isUsingHevTun(): Boolean = SettingsManager.isUsingHevTun()
+
+  override fun getRoutingRulesets(): List<RulesetItem>? = KeyValueStorage.decodeRoutingRulesets()
 }

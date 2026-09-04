@@ -37,10 +37,12 @@ import java.util.regex.PatternSyntaxException
 object V2rayConfigManager {
   private var initConfigCache: String? = null
   private var initConfigCacheWithTun: String? = null
-  private val inboundConfigStep by lazy { InboundConfigStep(::needTun) }
-  private val routingConfigStep by lazy { RoutingConfigStep() }
+  private val inboundConfigStep by lazy { InboundConfigStep(KeyValueStorageSettingsReader(), ::needTun) }
+  private val routingConfigStep by lazy { RoutingConfigStep(KeyValueStorageSettingsReader()) }
   private val dnsConfigStep by lazy { DnsConfigStep(KeyValueStorageSettingsReader(), ::getUserRule2Domain) }
-  private val outboundConfigStep by lazy { OutboundConfigStep(ConnectionProfileToOutboundMapper::map) }
+  private val outboundConfigStep by lazy {
+    OutboundConfigStep(KeyValueStorageSettingsReader(), ConnectionProfileToOutboundMapper::map)
+  }
   private val domainResolveStep by lazy { DomainResolveStep(KeyValueStorageSettingsReader()) }
   private val configAssembler by lazy {
     ConfigAssembler(
