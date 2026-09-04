@@ -255,5 +255,6 @@
 <string name="profiles_tab_main">Основные</string>
 <string name="profiles_tab_saved">Сохраненные</string>
 <string name="profiles_empty">Нет профилей</string>
+<string name="profiles_refresh">Обновить</string>
 
 </resources>

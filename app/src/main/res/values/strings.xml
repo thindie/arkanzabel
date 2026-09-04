@@ -257,6 +257,7 @@
     <string name="profiles_tab_main">Main</string>
     <string name="profiles_tab_saved">Saved</string>
     <string name="profiles_empty">No profiles</string>
+    <string name="profiles_refresh">Refresh</string>
 
     <!-- Bottom-nav home screen -->
     <string name="home_connected">Connected</string>

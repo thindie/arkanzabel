@@ -39,6 +39,12 @@ internal fun ProfilesRoute(repository: ConnectionProfileRepository) =
               s
             }
           }
+
+          is ScreenCommand.RefreshProfiles -> {
+            repository.invalidateCaches()
+            repository.fetch()
+            null
+          }
         }
       },
     initialCommand = { ScreenCommand.LoadProfiles as ScreenCommand },
