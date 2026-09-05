@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +49,7 @@ fun AppContent(
   onHomeClick: () -> Unit,
   onProfilesClick: () -> Unit,
   onSettingsClick: () -> Unit,
+  onLogsClick: () -> Unit,
 ) {
   val themeSwitcher = remember { ThemeSwitcher() }
   CompositionLocalProvider(LocalThemeSwitcher provides themeSwitcher) {
@@ -75,7 +77,10 @@ fun AppContent(
         val currentRoute = routes!!.first
 
         AnimatedContent(
-          modifier = Modifier.fillMaxSize(),
+          modifier =
+            Modifier
+              .background(AppTheme.colors.backgroundPrimary)
+              .fillMaxSize(),
           targetState = currentRoute,
           transitionSpec = {
             // Fade-only for bottom nav sections, slide+fade otherwise
@@ -96,7 +101,11 @@ fun AppContent(
           when (val section = route.section) {
             is HomeSection ->
               Column(
-                modifier = Modifier.fillMaxSize().navigationBarsPadding(),
+                modifier =
+                  Modifier
+                    .fillMaxSize()
+                    .background(color = AppTheme.colors.backgroundPrimary)
+                    .navigationBarsPadding(),
               ) {
                 Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                   route.content.invoke()
@@ -109,6 +118,7 @@ fun AppContent(
                       0 -> onHomeClick()
                       1 -> onProfilesClick()
                       2 -> onSettingsClick()
+                      3 -> onLogsClick()
                     }
                   },
                 )
@@ -130,16 +140,19 @@ private fun rememberNavItems(): List<BottomNavItem> {
   val homeIcon = painterResource(R.drawable.ic_home_24)
   val profilesIcon = painterResource(R.drawable.ic_folder_24)
   val settingsIcon = painterResource(R.drawable.ic_settings_24)
+  val logsIcon = painterResource(R.drawable.ic_attention_24)
 
   val homeTitle = stringResource(R.string.bottom_nav_home)
   val profilesTitle = stringResource(R.string.bottom_nav_profiles)
   val settingsTitle = stringResource(R.string.bottom_nav_settings)
+  val logsTitle = stringResource(R.string.bottom_nav_logs)
 
-  return remember(homeIcon, profilesIcon, settingsIcon) {
+  return remember(homeIcon, profilesIcon, settingsIcon, logsIcon) {
     listOf(
       BottomNavItem(icon = homeIcon, title = homeTitle),
       BottomNavItem(icon = profilesIcon, title = profilesTitle),
       BottomNavItem(icon = settingsIcon, title = settingsTitle),
+      BottomNavItem(icon = logsIcon, title = logsTitle),
     )
   }
 }
@@ -151,4 +164,5 @@ private fun navIndexFor(section: HomeSection): Int =
     HomeSection.Home -> 0
     HomeSection.Profiles -> 1
     HomeSection.Settings -> 2
+    HomeSection.Logs -> 3
   }

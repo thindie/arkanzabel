@@ -14,4 +14,6 @@ sealed interface HomeSection : Section {
   data object Profiles : HomeSection
 
   data object Settings : HomeSection
+
+  data object Logs : HomeSection
 }

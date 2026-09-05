@@ -1,6 +1,7 @@
 package com.thindie.engine.uikit
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ fun BottomNavigationBar(
     modifier =
       modifier
         .fillMaxWidth()
+          .background(color = AppTheme.colors.cardPrimary)
         .heightIn(min = 64.dp),
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -45,7 +46,11 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val state = scope.state.collectAsState().value
 
   Box(
-    modifier = Modifier.fillMaxSize(),
+    modifier =
+      Modifier
+        .background(AppTheme.colors.backgroundPrimary)
+        .systemBarsPadding()
+        .fillMaxSize(),
     contentAlignment = Alignment.Center,
   ) {
     Column(

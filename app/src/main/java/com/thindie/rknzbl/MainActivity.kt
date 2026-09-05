@@ -41,6 +41,7 @@ import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.appfeatures.home.AppContent
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
+import com.thindie.rknzbl.appfeatures.logs.LogsFlow
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.application.Application
@@ -66,6 +67,9 @@ class MainActivity : ComponentActivity() {
     val router = app.requireRouter()
     awaitFinish()
 
+    // Initialize log sink provider for the Log tab
+    com.thindie.rknzbl.application.LogSinkProvider.init()
+
     // Observe design mode changes and recreate activity when toggled
     val initialDesignMode = app.applicationScope.useNewDesignFeature()
     lifecycleScope.launch {
@@ -88,6 +92,7 @@ class MainActivity : ComponentActivity() {
           app.applicationScope.inject(this)
           onFinishBuilder { router.pop() }
         }
+      val logsFlow = LogsFlow(router)
 
       IntroFlow(
         router,
@@ -103,6 +108,7 @@ class MainActivity : ComponentActivity() {
           onHomeClick = { homeFlow.switch() },
           onProfilesClick = { profilesFlow.switch() },
           onSettingsClick = { settingsFlow.switch() },
+          onLogsClick = { logsFlow.switch() },
         )
       }
     } else {
