@@ -10,6 +10,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.ProfileUriParser
 import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.JsonUtil
 import io.ktor.client.HttpClient
@@ -418,10 +419,7 @@ private suspend fun readFromUrl(
   url: String,
 ): List<ConnectionProfile> {
   val body = readInternal(client, url)
-  return parseRemote(body)
-    .mapNotNull { parseChunk(it) }
-    .toSet()
-    .toList()
+  return parseAndDeduplicate(body)
 }
 
 private suspend fun writeInternal(
@@ -455,15 +453,28 @@ private val LOG_TAG = AppConfig.TAG
 
 private fun parseAndDeduplicate(body: String): List<ConnectionProfile> {
   return parseRemote(body)
-    .mapNotNull { parseChunk(it) }
+    .flatMap { parseChunk(it) }
     .toSet()
     .toList()
 }
 
 /**
  * Lenient chunk parsing: a malformed chunk is logged and skipped instead of failing the whole fetch.
+ *
+ * Supports two formats:
+ * - JSON chunks (local-save format, `########`-separated)
+ * - subscription share lines (one URI per line, `#` lines are comments/headers)
  */
-private fun parseChunk(chunk: String): ConnectionProfile? = JsonUtil.fromJsonOrNull(chunk, ConnectionProfile::class.java)
+private fun parseChunk(chunk: String): List<ConnectionProfile> {
+  if (chunk.startsWith("{")) {
+    return listOfNotNull(JsonUtil.fromJsonOrNull(chunk, ConnectionProfile::class.java))
+  }
+  return chunk.lineSequence()
+    .map { it.trim() }
+    .filter { it.isNotEmpty() && !it.startsWith("#") }
+    .mapNotNull { ProfileUriParser.parse(it) }
+    .toList()
+}
 
 private fun newAuthenticatedWebdavClient(
   userName: String,
