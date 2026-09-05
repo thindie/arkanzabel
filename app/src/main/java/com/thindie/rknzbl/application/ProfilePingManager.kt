@@ -12,30 +12,40 @@ import com.v2ray.ang.runtime.V2RayNativeManager
 import com.v2ray.ang.runtime.V2rayConfigManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.withTimeout
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
-import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.resume
 
 /**
  * Measures real outbound latency for connection profiles using the v2ray core.
  *
  * Two scopes are supported:
  *  - In-memory profiles (unsaved, fetched but not stored): measured on demand, never persisted.
- *  - Saved profiles (have a GUID): measured on demand and the result is persisted via
- *    [KeyValueStorage.encodeServerTestDelayMillis].
+ *    The full batch result is published via [batch] (tagged with a monotonically increasing id so
+ *    consumers can ignore stale results); incremental progress is available via [lastMeasured].
+ *  - Saved profiles (have a GUID): measured asynchronously by [pingSaved] and the result is
+ *    persisted via [KeyValueStorage.encodeServerTestDelayMillis].
+ *
+ * Every measurement is bounded by [PER_PROFILE_TIMEOUT_MS]: on timeout the profile gets
+ * [FAILED_DELAY_MS] and the batch continues. The native call itself cannot be interrupted, so a
+ * timed-out measurement keeps occupying a pool thread until it returns — its result is simply
+ * discarded.
+ *
+ * Delay convention: 0 = not measured, [FAILED_DELAY_MS] = unreachable/failed.
  *
  * [Protocol.Custom] and [Protocol.PolicyGroup] require a stored profile and are skipped.
  */
@@ -43,125 +53,157 @@ class ProfilePingManager(
   private val context: Context,
   private val scope: CoroutineScope,
 ) {
-  private val cpu = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
-  private val dispatcher = Executors.newFixedThreadPool(cpu * 4).asCoroutineDispatcher()
+  companion object {
+    /** Marks a failed measurement; storage convention treats < 0 as unreachable. */
+    const val FAILED_DELAY_MS = -1L
 
-  private data class State(
-    val results: Map<ConnectionProfile, Long>? = null,
-    val lastMeasured: Pair<ConnectionProfile, Long>? = null,
+    /** Wall-time bound for one profile's speedtest call. */
+    const val PER_PROFILE_TIMEOUT_MS = 15_000L
+  }
+
+  /** One completed batch: id is monotonically increasing per [pingProfiles] invocation. */
+  data class BatchResult(
+    val id: Long,
+    val results: Map<ConnectionProfile, Long>,
   )
 
-  private val stateFlow = MutableStateFlow(State())
+  private val cpu = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+  private val pool = Executors.newFixedThreadPool(cpu * 4)
+  private val dispatcher = pool.asCoroutineDispatcher()
 
-  val lastMeasured =
-    stateFlow
-      .map { it.lastMeasured }
-      .distinctUntilChanged()
+  /** Last completed batch; null until the first batch finishes. */
+  private val _batch = MutableStateFlow<BatchResult?>(null)
 
-  val measureResults =
-    stateFlow
-      .mapNotNull { it.results }
-      .onEach { stateFlow.update { State() } }
+  val batch: StateFlow<BatchResult?> = _batch
 
-  private val savedResults = ConcurrentHashMap<String, Long>()
+  /** Emits the full result map once per completed batch (no replay — late subscribers get nothing). */
+  private val resultsFlow =
+    MutableSharedFlow<Map<ConnectionProfile, Long>>(
+      replay = 0,
+      extraBufferCapacity = 1,
+      onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+  val measureResults: SharedFlow<Map<ConnectionProfile, Long>> = resultsFlow
+
+  /** Incremental progress: last completed (profile, delay) pair of the running sequential batch. */
+  private val _lastMeasured = MutableStateFlow<Pair<ConnectionProfile, Long>?>(null)
+
+  val lastMeasured: StateFlow<Pair<ConnectionProfile, Long>?> = _lastMeasured
 
   private var batchJob: Job? = null
+  private var nextBatchId = 0L
 
+  /** Starts a measurement batch and returns its id; -1 when nothing is pingable. */
   fun pingProfiles(
     profiles: List<ConnectionProfile>,
     force: Boolean,
-  ) {
+  ): Long {
     val pingable = profiles.filter { it.protocol.isPingable() }
     if (pingable.isEmpty()) {
-      return
+      return FAILED_DELAY_MS
     }
     batchJob?.cancel()
-    batchJob = null
+    _lastMeasured.value = null
+    val batchId = ++nextBatchId
     batchJob =
-      if (force) {
-        scope.launch(dispatcher) {
-          val ping =
-            pingable.map { profile -> async { profile to measureInMemory(profile, force) } }
-              .awaitAll()
-              .toMap()
-
-          stateFlow.update {
-            it.copy(results = ping)
-          }
-        }
-      } else {
-        scope.launch(Dispatchers.Default) {
-          val ping =
-            pingable.associate { profile ->
-              val measured = profile to measureInMemory(profile, force)
-              stateFlow.update {
-                it.copy(lastMeasured = measured)
-              }
-              measured
+      scope.launch(dispatcher) {
+        val results =
+          if (force) {
+            pingable.map { profile -> async { profile to measureInMemory(profile) } }.awaitAll().toMap()
+          } else {
+            val sequential = LinkedHashMap<ConnectionProfile, Long>()
+            for (profile in pingable) {
+              ensureActive()
+              val delay = measureInMemory(profile)
+              _lastMeasured.value = profile to delay
+              sequential[profile] = delay
             }
-
-          stateFlow.update {
-            it.copy(results = ping)
+            sequential
           }
-        }
+        _batch.value = BatchResult(batchId, results)
+        resultsFlow.tryEmit(results)
       }
+    return batchId
   }
 
   /**
    * Measures latency for a saved profile and persists the result.
    *
-   * @return the measured delay in milliseconds, or `-1` on failure.
+   * Fire-and-forget: returns immediately; the measurement runs on the ping pool so callers must
+   * not block UI on it.
    */
-  fun pingSaved(guid: String): Long {
-    if (guid.isBlank()) return -1L
-    val delay =
-      try {
-        val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, guid)
-        V2RayNativeManager.measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl())
-      } catch (c: CancellationException) {
-        throw c
-      } catch (e: AppError) {
-        Log.w(AppConfig.TAG, "Speedtest config failed for $guid: ${e.userReadable}", e)
-        -1L
-      } catch (e: RuntimeException) {
-        Log.w(AppConfig.TAG, "Speedtest config failed for $guid", e)
-        -1L
-      }
-    savedResults[guid] = delay
-    KeyValueStorage.encodeServerTestDelayMillis(guid, delay)
-    return delay
+  fun pingSaved(guid: String) {
+    if (guid.isBlank()) return
+    scope.launch(dispatcher) {
+      val delay = measureSavedDelay(guid)
+      KeyValueStorage.encodeServerTestDelayMillis(guid, delay)
+    }
   }
 
-  private suspend fun measureInMemory(
-    profile: ConnectionProfile,
-    force: Boolean,
-  ): Long {
+  private suspend fun measureInMemory(profile: ConnectionProfile): Long {
+    val json =
+      buildSpeedtestConfig(profile.remarks) { V2rayConfigManager.getV2rayConfig4Speedtest(context, profile).json }
+        ?: return FAILED_DELAY_MS
+    return measureOutboundDelay(json, profile.remarks)
+  }
+
+  private suspend fun measureSavedDelay(guid: String): Long {
+    val json =
+      buildSpeedtestConfig(guid) { V2rayConfigManager.getV2rayConfig4Speedtest(context, guid).json }
+        ?: return FAILED_DELAY_MS
+    return measureOutboundDelay(json, guid)
+  }
+
+  /** Builds the speedtest core JSON; returns null (and logs) when config assembly fails. */
+  private fun <T> buildSpeedtestConfig(
+    label: String,
+    build: () -> T,
+  ): T? {
     return try {
-      val built = V2rayConfigManager.getV2rayConfig4Speedtest(context, profile)
-      if (force) {
-        V2RayNativeManager.measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl())
-      } else {
-        suspendCancellableCoroutine {
-          try {
-            it.resume(
-              V2RayNativeManager
-                .measureOutboundDelay(built.json, SettingsManager.getDelayTestUrl()),
-            ) { cause, _, _ ->
-              throw cause
-            }
-          } catch (e: Throwable) {
-            it.resumeWithException(e)
-          }
-        }
-      }
+      build()
     } catch (c: CancellationException) {
       throw c
     } catch (e: AppError) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for ${profile.remarks}: ${e.userReadable}", e)
-      -1L
+      Log.w(AppConfig.TAG, "Speedtest config failed for $label: ${e.userReadable}", e)
+      null
     } catch (e: RuntimeException) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for ${profile.remarks}", e)
-      -1L
+      Log.w(AppConfig.TAG, "Speedtest config failed for $label", e)
+      null
+    }
+  }
+
+  /**
+   * Runs the blocking native speedtest on [pool] and awaits it with a wall-time bound.
+   * On timeout or task failure returns [FAILED_DELAY_MS]; batch cancellation rethrows.
+   */
+  private suspend fun measureOutboundDelay(
+    builtJson: String,
+    label: String,
+  ): Long {
+    val future =
+      CompletableFuture.supplyAsync(
+        { V2RayNativeManager.measureOutboundDelay(builtJson, SettingsManager.getDelayTestUrl()) },
+        pool,
+      )
+    return try {
+      withTimeout(PER_PROFILE_TIMEOUT_MS) {
+        suspendCancellableCoroutine { cont ->
+          future.whenComplete { value, error ->
+            if (error == null) {
+              cont.resume(value)
+            } else {
+              Log.w(AppConfig.TAG, "Speedtest task failed for $label", error)
+              cont.resume(FAILED_DELAY_MS)
+            }
+          }
+        }
+      }
+    } catch (t: TimeoutCancellationException) {
+      Log.w(AppConfig.TAG, "Speedtest timed out for $label after ${PER_PROFILE_TIMEOUT_MS}ms")
+      FAILED_DELAY_MS
+    } catch (c: CancellationException) {
+      throw c
     }
   }
 

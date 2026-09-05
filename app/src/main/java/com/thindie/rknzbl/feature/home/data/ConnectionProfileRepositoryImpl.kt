@@ -256,15 +256,21 @@ class ConnectionProfileRepositoryImpl(
 
       // Step 2: Measure all profiles and find the best one
       Log.d({ "Fetch profiles: measuring ${loadedProfiles.size} profiles" }, LOG_TAG)
-      pingManager.pingProfiles(loadedProfiles, force = false)
+      val batchId = pingManager.pingProfiles(loadedProfiles, force = false)
 
-      // Wait for measurement results via flow with timeout to prevent hanging
+      // Wait for this specific batch's result with a timeout to prevent hanging.
+      // Per-profile timeouts inside the manager keep the total bounded as well.
       val resultsMap =
-        withTimeoutOrNull(30_000L) {
-          pingManager.measureResults.first()
+        if (batchId < 0) {
+          null
+        } else {
+          withTimeoutOrNull(30_000L) {
+            pingManager.batch.first { it?.id == batchId }
+              ?.results
+          }
         }
 
-      if (resultsMap == null || resultsMap.isEmpty()) {
+      if (resultsMap.isNullOrEmpty()) {
         Log.w({ "Fetch profiles: measurement results not received within 30s" }, LOG_TAG)
         measuredCache.clear()
         return
