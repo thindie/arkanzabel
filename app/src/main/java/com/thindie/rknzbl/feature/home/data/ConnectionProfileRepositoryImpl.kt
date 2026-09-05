@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.home.data
 
 import android.content.Context
-import android.util.Log
 import com.thindie.engine.core.Cache
+import com.thindie.engine.core.Log
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
@@ -103,7 +103,7 @@ class ConnectionProfileRepositoryImpl(
     if (guid.isBlank()) return false
     val profilePretty = storage.decodeServerConfig(guid)
     if (profilePretty == null) {
-      Log.i(AppConfig.TAG, "Save Profile: failure, decodeServerConfig")
+      Log.d({ "Save Profile: failure, decodeServerConfig" }, LOG_TAG)
       return false
     }
     if (isLocalSave) {
@@ -121,7 +121,7 @@ class ConnectionProfileRepositoryImpl(
       val profileJson = JsonUtil.toJson(profilePretty)
       val updatedBody = currentBody + SEPARATOR + profileJson
       storage.setLocalProfiles(updatedBody)
-      Log.i(AppConfig.TAG, "Save Profile [LOCAL]: success")
+      Log.d({ "Save Profile [LOCAL]: success" }, LOG_TAG)
       storedProfilesCache.clear()
       profilesCacheReactive.clear()
       return true
@@ -131,7 +131,7 @@ class ConnectionProfileRepositoryImpl(
       if (isSaved) return false
       val profileJson = JsonUtil.toJson(profilePretty)
       writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
-      Log.i(AppConfig.TAG, "Save Profile: success")
+      Log.d({ "Save Profile: success" }, LOG_TAG)
       remoteSourceCaches[url]?.clear()
       profilesCacheReactive.clear()
       return true
@@ -222,18 +222,23 @@ class ConnectionProfileRepositoryImpl(
   override suspend fun fetch() {
     if (!fetching.compareAndSet(false, true)) return
     try {
+      Log.d({ "Fetch profiles: start" }, LOG_TAG)
       // Step 1: Go to the network with whichever source is currently selected in settings.
+      // Redesigned design: a non-blank URL means the custom source is active.
       val customUrl = storage.getCustomSourceUrl()
       val loadedProfiles =
-        // Redesigned design: a non-blank URL means the custom source is active.
         if (!customUrl.isNullOrBlank()) {
+          Log.d({ "Fetch profiles: using custom source" }, LOG_TAG)
           readFromSource(customUrl)
         } else {
+          Log.d({ "Fetch profiles: using default source" }, LOG_TAG)
           read()
         }
+      Log.d({ "Fetch profiles: loaded ${loadedProfiles.size} profiles" }, LOG_TAG)
       profilesCacheReactive.set(loadedProfiles)
 
       if (loadedProfiles.isEmpty()) {
+        Log.w({ "Fetch profiles: empty list from source, aborting measurement" }, LOG_TAG)
         measuredCache.clear()
         return
       }
@@ -244,11 +249,13 @@ class ConnectionProfileRepositoryImpl(
           it.protocol != Protocol.Custom && it.protocol != Protocol.PolicyGroup
         }
       if (!hasPingable) {
+        Log.d({ "Fetch profiles: no pingable profiles (Custom/PolicyGroup only), skipping measurement" }, LOG_TAG)
         measuredCache.clear()
         return
       }
 
       // Step 2: Measure all profiles and find the best one
+      Log.d({ "Fetch profiles: measuring ${loadedProfiles.size} profiles" }, LOG_TAG)
       pingManager.pingProfiles(loadedProfiles, force = false)
 
       // Wait for measurement results via flow with timeout to prevent hanging
@@ -258,9 +265,11 @@ class ConnectionProfileRepositoryImpl(
         }
 
       if (resultsMap == null || resultsMap.isEmpty()) {
+        Log.w({ "Fetch profiles: measurement results not received within 30s" }, LOG_TAG)
         measuredCache.clear()
         return
       }
+      Log.d({ "Fetch profiles: got ${resultsMap.size} measurement results" }, LOG_TAG)
 
       // Select best profile (lowest latency); -1 marks an unreachable profile and must not win.
       val bestProfile =
@@ -270,15 +279,17 @@ class ConnectionProfileRepositoryImpl(
           ?.first
 
       if (bestProfile != null) {
+        Log.d({ "Fetch profiles: best profile ${bestProfile.subscriptionId}" }, LOG_TAG)
         measuredCache.set(bestProfile)
       } else {
+        Log.w({ "Fetch profiles: no reachable profile found" }, LOG_TAG)
         measuredCache.clear()
       }
     } catch (e: CancellationException) {
       throw e
     } catch (e: AppError) {
       // Expected server/network errors from read()
-      Log.i(AppConfig.TAG, "Failed to fetch and measure profiles", e)
+      Log.e({ "Failed to fetch and measure profiles" }, LOG_TAG, e)
       measuredCache.clear()
     } finally {
       fetching.set(false)
@@ -290,9 +301,9 @@ class ConnectionProfileRepositoryImpl(
     currentBody: String,
   ): Boolean {
     val id = connectionProfile.subscriptionId
-    Log.i(AppConfig.TAG, "Save Profile: check for $id")
+    Log.d({ "Save Profile: check for $id" }, LOG_TAG)
     if (id in currentBody) {
-      Log.i(AppConfig.TAG, "Save Profile: already saved")
+      Log.d({ "Save Profile: already saved" }, LOG_TAG)
       return true
     }
     return false
@@ -311,7 +322,7 @@ class ConnectionProfileRepositoryImpl(
     }
     val guid = UUID.randomUUID().toString()
     storage.encodeServerConfig(guid, profile)
-    Log.i(AppConfig.TAG, "Connect: profile stored locally as $guid")
+    Log.d({ "Connect: profile stored locally as $guid" }, LOG_TAG)
     return guid
   }
 
@@ -344,10 +355,15 @@ class ConnectionProfileRepositoryImpl(
       remoteSourceCaches.getOrPut(sourceUrl) { Cache<List<ConnectionProfile>>(null) }
 
     val cached = cache.get()
-    if (cached != null) return cached
+    if (cached != null) {
+      Log.d({ "Read from source: cache hit (${cached.size} profiles)" }, LOG_TAG)
+      return cached
+    }
 
+    Log.d({ "Read from source: fetching from network" }, LOG_TAG)
     val body = readInternal(httpClient, sourceUrl)
     val profiles = parseAndDeduplicate(body)
+    Log.d({ "Read from source: parsed ${profiles.size} profiles" }, LOG_TAG)
     cache.set(profiles)
     return profiles
   }
@@ -380,7 +396,7 @@ private suspend fun readInternal(
         throw webDavErrorFromStatus(response.status, url)
       }
       val result = response.body<String>().trim()
-      Log.i("readInternal: ", result)
+      Log.d({ "WebDAV GET: status=${response.status}, body length=${result.length}" }, LOG_TAG)
       result
     } catch (e: CancellationException) {
       throw e
@@ -397,7 +413,7 @@ private suspend fun readFromUrl(
 ): List<ConnectionProfile> {
   val body = readInternal(client, url)
   return parseRemote(body)
-    .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
+    .mapNotNull { parseChunk(it) }
     .toSet()
     .toList()
 }
@@ -429,12 +445,19 @@ private suspend fun writeInternal(
 
 private const val SEPARATOR = "########"
 
+private val LOG_TAG = AppConfig.TAG
+
 private fun parseAndDeduplicate(body: String): List<ConnectionProfile> {
   return parseRemote(body)
-    .mapNotNull { JsonUtil.fromJson(it, ConnectionProfile::class.java) }
+    .mapNotNull { parseChunk(it) }
     .toSet()
     .toList()
 }
+
+/**
+ * Lenient chunk parsing: a malformed chunk is logged and skipped instead of failing the whole fetch.
+ */
+private fun parseChunk(chunk: String): ConnectionProfile? = JsonUtil.fromJsonOrNull(chunk, ConnectionProfile::class.java)
 
 private fun newAuthenticatedWebdavClient(
   userName: String,
