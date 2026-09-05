@@ -1,5 +1,6 @@
 package com.thindie.rknzbl.appfeatures.settings.di
 
+import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
 import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
@@ -13,5 +14,6 @@ import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 class SettingsFlowModule(
   val settingsRepository: SettingsRepository,
   val connectionsProfileRepository: ConnectionProfileRepository,
+  val perAppProxyRepository: PerAppProxyRepository,
   val updateLocale: (String) -> Unit,
 )

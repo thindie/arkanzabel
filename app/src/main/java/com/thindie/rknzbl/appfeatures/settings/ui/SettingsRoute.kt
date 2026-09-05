@@ -5,6 +5,7 @@ import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.appfeatures.settings.ui.perapp.perAppMain
 import com.thindie.rknzbl.appfeatures.settings.ui.source.source
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
@@ -63,6 +64,11 @@ fun SettingsFlow.settings(
 
       ScreenCommand.ToggleCustomSource -> {
         go(source())
+        null
+      }
+
+      ScreenCommand.OpenPerAppProxy -> {
+        go(perAppMain())
         null
       }
     }

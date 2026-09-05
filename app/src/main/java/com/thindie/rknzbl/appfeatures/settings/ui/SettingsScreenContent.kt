@@ -87,6 +87,14 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         onClick = { scope.send(ScreenCommand.ToggleCustomSource) },
       )
 
+      VSpacer(8.dp)
+      SourceSelectorRow(
+        label = stringResource(R.string.per_app_proxy_row_title),
+        subtitle = stringResource(R.string.per_app_proxy_row_subtitle),
+        selected = false,
+        onClick = { scope.send(ScreenCommand.OpenPerAppProxy) },
+      )
+
       // === Appearance ===
       VSpacer(24.dp)
       Divider()

@@ -78,8 +78,6 @@ class SettingsRepositoryImpl(
     useNewDesignSetting.set(enabled)
   }
 
-  override fun getUseNewDesignSync(): Boolean = useNewDesignSetting.getSync()
-
   // --- Speed notification support ---
   private val speedSetting =
     Setting<Boolean>(
@@ -103,8 +101,6 @@ class SettingsRepositoryImpl(
   override fun setLanguage(code: String) {
     languageSetting.set(code)
   }
-
-  override fun getLanguageSync(): String = languageSetting.getSync()
 
   // --- Custom source URL support (redesigned design: presence of a non-blank URL means active) ---
   private val customSourceUrlSetting =

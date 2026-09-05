@@ -18,4 +18,6 @@ internal sealed interface ScreenCommand : Command {
   data object ToggleNewDesign : ScreenCommand
 
   data object ToggleCustomSource : ScreenCommand
+
+  data object OpenPerAppProxy : ScreenCommand
 }

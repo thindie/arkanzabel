@@ -2,7 +2,10 @@ package com.thindie.rknzbl.appfeatures.settings.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 
 /**
  * A single persisted setting backed by a [MutableStateFlow] plus a
@@ -19,26 +22,22 @@ import kotlinx.coroutines.flow.asStateFlow
  * needs typed storage (e.g. booleans or ints).
  */
 class Setting<T>(
-  private val read: () -> T,
+  private val read: () -> T?,
   private val write: (T) -> Unit,
 ) {
-  private val value = MutableStateFlow(read())
+  private val value = MutableStateFlow<T?>(null)
 
-  /**
-   * The current value, exposed reactively to the UI.
-   */
-  val flow: Flow<T> = value.asStateFlow()
+  val flow: Flow<T> =
+    value
+      .onStart {
+        if (value.value == null) {
+          value.update { read() }
+        }
+      }
+      .filterNotNull()
+      .onEach { write(it) }
 
-  /**
-   * The current value, read synchronously from memory (no collector needed).
-   */
-  fun getSync(): T = value.value
-
-  /**
-   * Update the setting in memory and persist it.
-   */
   fun set(newValue: T) {
-    value.value = newValue
-    write(newValue)
+    value.update { newValue }
   }
 }

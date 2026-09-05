@@ -22,14 +22,9 @@ interface SettingsRepository {
 
   suspend fun toggleUseNewDesign(enabled: Boolean)
 
-  fun getUseNewDesignSync(): Boolean
-
   val speedEnabled: Flow<Boolean?>
 
   suspend fun toggleSpeed(enabled: Boolean)
-
-  // Language - read from storage on subscription start
-  fun getLanguageSync(): String?
 
   val language: Flow<String?>
 
