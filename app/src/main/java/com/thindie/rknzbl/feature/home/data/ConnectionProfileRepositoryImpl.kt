@@ -225,7 +225,8 @@ class ConnectionProfileRepositoryImpl(
       // Step 1: Go to the network with whichever source is currently selected in settings.
       val customUrl = storage.getCustomSourceUrl()
       val loadedProfiles =
-        if (storage.isCustomSourceEnabled() && !customUrl.isNullOrBlank()) {
+        // Redesigned design: a non-blank URL means the custom source is active.
+        if (!customUrl.isNullOrBlank()) {
           readFromSource(customUrl)
         } else {
           read()
