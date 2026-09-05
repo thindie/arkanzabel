@@ -234,7 +234,10 @@ object NotificationManager {
       } else {
         notificationCompatBuilder?.setSmallIcon(R.drawable.ic_stat_direct)
       }
-      notificationCompatBuilder?.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+      val svc = getService() ?: return
+      val legend = svc.getString(R.string.notification_speed_legend)
+      val fullText = if (contentText.isNullOrBlank()) legend else "$contentText\n$legend"
+      notificationCompatBuilder?.setStyle(NotificationCompat.BigTextStyle().bigText(fullText))
       notificationCompatBuilder?.setContentText(contentText)
       getNotificationManager()?.notify(NOTIFICATION_ID, notificationCompatBuilder?.build())
     }
