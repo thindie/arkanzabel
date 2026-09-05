@@ -841,8 +841,8 @@ object V2rayConfigManager {
         xhttpSetting.extra =
           try {
             JsonUtil.parseString(xhttpExtra.orEmpty())
-          } catch (e: Throwable) {
-            ""
+          } catch (_: Throwable) {
+            null
           }
         streamSettings.xhttpSettings = xhttpSetting
       }
