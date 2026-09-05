@@ -1,260 +1,248 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<string name="app_name">Arkanzabel</string>
-<string name="vpn_mvp_hint">Вставьте одну строку-поделиться (vless://, ss://, hysteria2://, …). Пример списка: github.com/igareck/vpn-configs-for-russia — скопируйте один URI локально, не коммитьте его в git.</string>
-<string name="vpn_import">Сохранить профиль</string>
-<string name="vpn_start">Запустить VPN</string>
-<string name="vpn_stop">Остановить VPN</string>
-<string name="vpn_import_ok">Профиль сохранён</string>
-<string name="vpn_import_fail">Не удалось разобрать URI</string>
-<string name="vpn_import_save_failed_storage">Не удалось сохранить профиль: хранилище не готово. Перезапустите приложение.</string>
-<string name="vpn_import_save_failed_storage_detail">Не удалось сохранить профиль (хранилище): %1$s</string>
-<string name="vpn_import_save_failed_json">Не удалось сохранить профиль: ошибка сериализации. Попробуйте другую ссылку.</string>
-<string name="vpn_import_save_failed_native">Не удалось сохранить профиль: сбой нативного хранилища (MMKV). Переустановите приложение.</string>
-<string name="vpn_import_save_failed_other">Не удалось сохранить профиль (%1$s).</string>
-<string name="vpn_import_save_failed_detail">Не удалось сохранить профиль (%1$s): %2$s</string>
-<string name="vpn_screen_error_generic">Что-то пошло не так (%1$s).</string>
-<string name="vpn_screen_error_detail">Что-то пошло не так (%1$s): %2$s</string>
-<string name="vpn_running">Ядро запущено: %1$s</string>
-<string name="vpn_running_no_remarks">Ядро запущено (без подписи сервера)</string>
-<string name="vpn_idle">Ядро остановлено</string>
-<string name="vpn_need_activity">Нужен контекст Activity для разрешения VPN</string>
-<string name="vpn_permission_denied">Разрешение VPN не выдано (диалог закрыт или отказ).</string>
-<string name="vpn_start_need_profile">Сначала сохраните профиль: вставьте URI, нажмите «Сохранить профиль», затем «Запустить VPN».</string>
-<string name="vpn_core_failure_unspecified">Не удалось запустить VPN (подробности недоступны).</string>
-<string name="profile_probe_tcp_ok">TCP (без VPN): %1$s:%2$d ~%3$d мс</string>
-<string name="profile_probe_tcp_fail">TCP (без VPN): %1$s:%2$d — нет ответа</string>
-<string name="profile_probe_no_server">Проверка TCP: в профиле нет адреса сервера</string>
-<string name="profile_probe_no_port">Проверка TCP: порт отсутствует или неверный</string>
-<string name="profile_probe_bad_port">Проверка TCP: порт вне допустимого диапазона</string>
-<string name="profile_probe_policy_group">Проверка TCP: для групп политик не поддерживается</string>
-<string name="profile_probe_custom_local">Проверка TCP: локальный/кастомный endpoint — пропуск</string>
-<string name="profile_row_probe_tcp_ms">TCP ~%d мс (без VPN)</string>
-<string name="profile_row_probe_tcp_fail">TCP — (без VPN)</string>
-<string name="profile_row_probe_skip">—</string>
-
-<string name="intro_screen_title_vpn">Доступ к VPN</string>
-<string name="intro_screen_title_push">Уведомления</string>
-<string name="intro_soft_title_vpn">Для работы приложения</string>
-<string name="intro_soft_subtitle_vpn">Нужно разрешение на использование VPN в системе — без него соединение не заработает.</string>
-<string name="intro_soft_title_push">Уведомления</string>
-<string name="intro_soft_subtitle_push">Разрешите уведомления — так проще следить за состоянием и управлять приложением.</string>
-<string name="intro_btn_not_now">Не сейчас</string>
-<string name="intro_btn_understood">Понял</string>
-<string name="intro_hint_vpn_decline">Без доступа к VPN продолжить нельзя.</string>
-<string name="intro_hint_push_decline">Без уведомлений управлять приложением будет неудобнее.</string>
-<string name="intro_hint_vpn_not_granted">Разрешение на VPN не выдано.</string>
-<string name="intro_push_denied_title">Уведомления отключены</string>
-<string name="intro_push_denied_subtitle">Система больше не показывает запрос разрешения. Включите уведомления в настройках приложения или продолжите без них.</string>
-<string name="intro_push_open_settings">В настройки</string>
-<string name="intro_push_continue_without">Продолжить без уведомлений</string>
-
-<string name="error_unexpected">Что-то пошло не так. Попробуйте ещё раз.</string>
-    <string name="error_timeout">Превышено время ожидания</string>
-    <string name="error_connection_failed">Не удалось подключиться</string>
-    <string name="error_http_failed">Ошибка HTTP %d</string>
-<string name="btn_close">Закрыть</string>
-
-<string name="home_choose_source">Выбрать источник</string>
-<string name="home_source_selected_prefix">Выбрано:</string>
-<string name="home_fetch_profiles">Загрузить списки</string>
-<string name="home_stop_service">Остановить сервис</string>
-<string name="home_pick_profile_first">Сначала выберите профиль</string>
-<string name="home_starting_vpn">Запуск VPN…</string>
-<string name="home_select_tagline">свободу попугаям!</string>
-<string name="home_select_new_profiles_title">Новые профили</string>
-<string name="home_select_new_profiles_subtitle">скачать</string>
-<string name="home_select_stored_title">Сохраненные профили</string>
-<string name="home_select_stored_subtitle">возможно, еще работают</string>
-<string name="home_select_vpn_modes_title">Режимы VPN</string>
-<string name="home_select_settings_title">Настройки</string>
-<string name="home_select_vpn_modes_subtitle">фильтр приложений</string>
-<string name="home_select_settings_subtitle">всякое</string>
-
-<!-- Settings section titles -->
-<string name="settings_section_appearance">Внешний вид</string>
-<string name="settings_section_general">Общие</string>
-<string name="settings_section_language">Язык</string>
-<string name="settings_section_mux">MUX</string>
-<string name="settings_section_reality">Reality</string>
-<string name="home_downloaded_profiles_header">Скачанные профили</string>
-<string name="home_autosaved_profile">Был сохранен автоматически</string>
-
-<string name="per_app_proxy_title">Режим VPN</string>
-<string name="per_app_proxy_row_title">Прокси по приложениям</string>
-<string name="per_app_proxy_row_subtitle">Для всех или только выбранных</string>
-<string name="per_app_proxy_mode_section">выбери:</string>
-<string name="per_app_proxy_mode_all">Все приложения</string>
-<string name="per_app_proxy_mode_all_subtitle">кроме Arkanzabel</string>
-<string name="per_app_proxy_mode_selected">Только выбранные</string>
-<string name="per_app_proxy_mode_selected_subtitle">в списке ниже</string>
-<string name="per_app_proxy_mode_selected_header_subtitle">только они будут использовать vpn</string>
-<string name="per_app_proxy_applied_section">Выбранные</string>
-<string name="per_app_proxy_none_selected">Пока ни к одному</string>
-<string name="per_app_proxy_search_hint">Поиск приложения</string>
-<string name="per_app_proxy_search_placeholder">Название (английский язык)</string>
-<string name="per_app_proxy_open_search_title">Найти</string>
-<string name="per_app_proxy_open_search_subtitle">добавить в список</string>
-<string name="per_app_proxy_search_screen_title">Поиск приложения</string>
-<string name="per_app_proxy_search_screen_subtitle">пиши транслитом, e.g sber</string>
-<string name="per_app_proxy_added_snack">Добавлено в список:</string>
-
-<string name="error_action_ok">Ок</string>
-<string name="error_action_retry">Попробовать снова</string>
-
-<string name="source_select_done">Готово</string>
-    <string name="settings_custom_source_save">Сохранить</string>
-<string name="source_black_ss_title">Чёрные списки Shadowsocks+All</string>
-<string name="source_black_vless_title">Чёрные списки VLESS</string>
-<string name="source_white_cidr_title">Белые списки / CIDR</string>
-<string name="source_stored">Сохраненные профили</string>
-<string name="source_stored_delete_active">Тапай по профилям, которые нужно удалить</string>
-<string name="source_stored_add">Сохранить профиль?</string>
-<string name="source_stored_delete">Удалить выбранное?</string>
-<string name="source_stored_delete_subtitle">пропадут у всех!</string>
-<string name="source_stored_delete_hint">Долгий тап по профилю активирует режим удаления</string>
-<string name="source_stored_selected_count">Удалить их: %d</string>
-<string name="source_stored_local">Локальный</string>
-<string name="source_stored_remote">Удалённый</string>
-<string name="source_subtitle_all_configs">Все конфиги</string>
-<string name="source_subtitle_top150_phone">150 лучших для телефона</string>
-<string name="source_subtitle_top150_phone_1">150 лучших для телефона (1)</string>
-<string name="source_subtitle_top150_phone_2">150 лучших для телефона (2)</string>
-<string name="source_subtitle_ru_services">Конфиги VK, YA, CDN, Beeline</string>
-<string name="source_subtitle_stored">Проверенные</string>
-
-<!-- Custom source settings -->
-<string name="settings_custom_source_title">Своя ссылка</string>
-<string name="settings_custom_source_subtitle_off">Отключено</string>
-<string name="settings_custom_source_placeholder">Введите URL ссылки на профили</string>
-
-<!-- Custom source validation errors (Russian) -->
-<string name="custom_source_error_empty_url">URL не может быть пустым</string>
-<string name="custom_source_error_invalid_url">Нужно вводить http:// или https://</string>
-
-<string name="source_custom_title">Своя ссылка</string>
-<string name="source_subtitle_custom">Использовать свою ссылку для поставки профилей</string>
-
-<!-- Theme mode strings -->
-<string name="home_select_settings">Настройки</string>
-<string name="home_select_theme_title">Тема</string>
-<string name="home_select_theme_auto_title">Автоматически</string>
-<string name="home_select_theme_auto_subtitle">(следует за системой)</string>
-<string name="home_select_theme_light_subtitle">Светлая тема</string>
-<string name="home_select_theme_dark_subtitle">Тёмная тема</string>
-<string name="home_select_theme_locked_hint">Выбор темы заблокирован при включённой автоматике</string>
-
-    <!-- Local storage mode strings -->
-    <string name="home_select_storage_mode_title">Локальное хранение профилей</string>
-    <string name="home_select_storage_mode_subtitle">Хранить профили локально, а не на сервере WebDAV</string>
-
-<!-- Autosave strings -->
-<string name="home_select_autosave_title">Авто-сохранение</string>
-<string name="home_select_autosave_subtitle">Включить/выключить авто-сохранение профилей</string>
-
-
-
-<string name="webdav_error_unauthorized">Неверный логин или пароль WebDAV.</string>
-<string name="webdav_error_forbidden">Доступ к этой папке запрещён.</string>
-<string name="webdav_error_not_found">Путь на сервере не найден (404).</string>
-<string name="webdav_error_not_found_url">Путь не найден (404):\n%1$s</string>
-<string name="webdav_error_conflict">Операция отклонена сервером (конфликт).</string>
-<string name="webdav_error_invalid_response">Сервер вернул неожиданный ответ WebDAV.</string>
-<string name="webdav_error_upload_open">Не удалось открыть выбранный файл.</string>
-
-<!-- Language strings -->
-<string name="settings_language_title">Язык приложения</string>
-<string name="settings_language_subtitle">Выберите язык интерфейса</string>
-<string name="language_auto">Авто</string>
-<string name="language_en">English</string>
-<string name="language_ru">Русский</string>
-
-<!-- MUX strings -->
-<string name="settings_mux_title">Мультиплексация (MUX)</string>
-<string name="settings_mux_subtitle">Объединяет множество соединений в одно</string>
-<string name="mux_faq_title">Что такое MUX?</string>
-<string name="mux_faq_body">MUX объединяет множество HTTP-запросов в один TCP-канал. Вместо отдельных подключений к YouTube, Google и т.д., он собирает их все в один канал — снижая задержку и нагрузку на сервер.</string>
-<string name="mux_faq_ok">Понятно</string>
-
-<!-- Fragment strings -->
-<string name="settings_fragment_title">Fragment</string>
-<string name="settings_fragment_subtitle">Добавляет случайные пакеты до handshake</string>
-<string name="fragment_faq_title">Что такое Fragment?</string>
-<string name="fragment_faq_body">Fragment добавляет случайные пакеты до TLS-handshake, из-за чего трафик меньше похож на известный VPN. Работает только на протоколах TLS или REALITY — на plain TCP или HTTP ничего не даёт.</string>
-<string name="fragment_faq_ok">Понятно</string>
-<string name="reality_faq_title">Что такое Reality?</string>
-<string name="reality_faq_body">Reality заменяет реальный сертификат сервера в TLS-handshake на поддельную цепочку HTTPS-сертификатов. Это делает трафик похожим на обычный HTTPS для DPI-систем. Работает только с outbounds REALITY.</string>
-<string name="reality_faq_ok">Понятно</string>
-
-<!-- Reality strings (Recommendation #4) -->
-<string name="settings_reality_show_title">Reality (маскировка)</string>
-<string name="settings_reality_show_subtitle_off">Отключено</string>
-<string name="settings_reality_show_subtitle_on">Маскировка включена</string>
-<string name="settings_reality_show_hint">Заменяет реальный serverName в TLS-handshake на цепочку сертификатов HTTPS для обхода DPI. Работает только с outbounds REALITY.</string>
-
-<!-- Sniffing strings -->
-<string name="settings_section_sniffing">Sniffing</string>
-<string name="settings_sniffing_target_title">Цель Sniffing</string>
-<string name="settings_sniffing_target_subtitle">Протоколы, которые Sniffing будет определять в исходящем трафике</string>
-<string name="settings_sniffing_port_range_title">Диапазон портов</string>
-<string name="settings_sniffing_port_range_subtitle">Ограничить Sniffing только этими портами (иначе — все порты)</string>
-<string name="settings_sniffing_target_all">Все</string>
-<string name="settings_sniffing_target_http">HTTP</string>
-<string name="settings_sniffing_target_tls">TLS</string>
-<string name="settings_sniffing_target_quic">QUIC</string>
-<string name="settings_sniffing_port_range_common">Общие</string>
-<string name="settings_sniffing_port_range_all">Все</string>
-<string name="settings_sniffing_port_range_http">HTTP</string>
-<string name="settings_sniffing_port_range_https">HTTPS</string>
-<string name="sniffing_faq_title">Что такое Sniffing?</string>
-<string name="sniffing_faq_body">Sniffing анализирует исходящий трафик, чтобы определить используемый протокол (HTTP, TLS, QUIC). Цель задаёт, какие типы искать; диапазон портов ограничивает проверку этими портами. Включи, если хочешь маршрутизацию по обнаруженным протоколам.</string>
-<string name="sniffing_faq_ok">Понятно</string>
-
-<!-- Speed notification strings -->
-<string name="settings_speed_notification_title">Показывать скорость</string>
-<string name="settings_speed_notification_subtitle">Отображать текущую скорость в уведомлении</string>
-<string name="settings_speed_notification_restart_title">Перезапусти</string>
-<string name="settings_speed_notification_restart_message">перезапусти сервис в шторке уведомлений, чтобы увидеть скорость.</string>
-
-    <!-- Start with favorite profiles -->
-    <string name="settings_start_with_favorite_profiles_title">Начинать с сохранённых профилей</string>
-    <string name="settings_start_with_favorite_profiles_subtitle">Показывать экран сохранённых профилей при старте приложения</string>
-
-    <!-- Bottom-navigation home design -->
-    <string name="settings_use_new_design_title">Главный экран с нижней навигацией</string>
-    <string name="settings_use_new_design_subtitle">Использовать новый главный экран с вкладками вместо классического хаба</string>
-    <string name="settings_force_profile_measure_title">Принудительное измерение пинга</string>
-    <string name="settings_force_profile_measure_subtitle">Всегда измерять задержку новых профилей, а не использовать кэшированные значения</string>
+    <string name="app_name">Arkanzabel</string>
+    <string name="vpn_mvp_hint">Вставьте одну строку-поделиться (vless://, ss://, hysteria2://, …). Пример списка: github.com/igareck/vpn-configs-for-russia — скопируйте один URI локально, не коммитьте его в git.</string>
+    <string name="vpn_import">Сохранить профиль</string>
+    <string name="vpn_start">Запустить VPN</string>
+    <string name="vpn_stop">Остановить VPN</string>
+    <string name="vpn_import_ok">Профиль сохранён</string>
+    <string name="vpn_import_fail">Не удалось разобрать URI</string>
+    <string name="vpn_import_save_failed_storage">Не удалось сохранить профиль: хранилище не готово. Перезапустите приложение.</string>
+    <string name="vpn_import_save_failed_storage_detail">Не удалось сохранить профиль (хранилище): %1$s</string>
+    <string name="vpn_import_save_failed_json">Не удалось сохранить профиль: ошибка сериализации. Попробуйте другую ссылку.</string>
+    <string name="vpn_import_save_failed_native">Не удалось сохранить профиль: сбой нативного хранилища (MMKV). Переустановите приложение.</string>
+    <string name="vpn_import_save_failed_other">Не удалось сохранить профиль (%1$s).</string>
+    <string name="vpn_import_save_failed_detail">Не удалось сохранить профиль (%1$s): %2$s</string>
+    <string name="vpn_screen_error_generic">Что-то пошло не так (%1$s).</string>
+    <string name="vpn_screen_error_detail">Что-то пошло не так (%1$s): %2$s</string>
+    <string name="vpn_running">Ядро запущено: %1$s</string>
+    <string name="vpn_running_no_remarks">Ядро запущено (без подписи сервера)</string>
+    <string name="vpn_idle">Ядро остановлено</string>
+    <string name="vpn_need_activity">Нужен контекст Activity для разрешения VPN</string>
+    <string name="vpn_permission_denied">Разрешение VPN не выдано (диалог закрыт или отказ).</string>
+    <string name="vpn_start_need_profile">Сначала сохраните профиль: вставьте URI, нажмите «Сохранить профиль», затем «Запустить VPN».</string>
+    <string name="vpn_core_failure_unspecified">Не удалось запустить VPN (подробности недоступны).</string>
+    <string name="profile_probe_tcp_ok">TCP (без VPN): %1$s:%2$d ~%3$d мс</string>
+    <string name="profile_probe_tcp_fail">TCP (без VPN): %1$s:%2$d — нет ответа</string>
+    <string name="profile_probe_no_server">Проверка TCP: в профиле нет адреса сервера</string>
+    <string name="profile_probe_no_port">Проверка TCP: порт отсутствует или неверный</string>
+    <string name="profile_probe_bad_port">Проверка TCP: порт вне допустимого диапазона</string>
+    <string name="profile_probe_policy_group">Проверка TCP: для групп политик не поддерживается</string>
+    <string name="profile_probe_custom_local">Проверка TCP: локальный/пользовательский эндпоинт — пропуск</string>
+    <string name="profile_row_probe_tcp_ms">TCP ~%d мс (без VPN)</string>
+    <string name="profile_row_probe_tcp_fail">TCP — (без VPN)</string>
+    <string name="profile_row_probe_skip">—</string>
 
     <!-- Bottom navigation labels -->
     <string name="bottom_nav_home">Главная</string>
     <string name="bottom_nav_profiles">Профили</string>
     <string name="bottom_nav_settings">Настройки</string>
-<string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+    <string name="bottom_nav_logs">Лог</string>
 
-<!-- Local storage mode warning dialog -->
-<string name="storage_mode_warning_title">Внимание!</string>
-<string name="storage_mode_warning_message">Если вы включите локальное хранение, вы будете изолированы от выборок других пользователей. Локальные профили не будут участвовать в общем пуле.</string>
-<string name="storage_mode_warning_ok">Понятно</string>
+    <!-- Log screen strings -->
+    <string name="logs_title">Журнал приложения</string>
+    <string name="logs_clear">Очистить</string>
+    <string name="logs_empty">Записей пока нет</string>
+    <string name="logs_filter_all">Все</string>
+    <string name="logs_filter_error">Ошибка</string>
+    <string name="logs_filter_warn">Предупр.</string>
+    <string name="logs_filter_info">Инфо</string>
+    <string name="logs_filter_debug">Отладка</string>
 
-<!-- Bottom-nav home screen -->
-<string name="home_connected">Подключено</string>
-<string name="home_tap_to_connect">Нажмите для подключения</string>
-<string name="home_btn_connect">ПОДКЛЮЧИТЬСЯ</string>
-<string name="home_btn_disconnect">ОТКЛЮЧИТЬСЯ</string>
-<string name="home_connecting">Подключение…</string>
-<string name="home_error_no_server">Сервер не выбран</string>
+    <!-- Home screen strings -->
+    <string name="home_connected">Подключено</string>
+    <string name="home_connecting">Подключение…</string>
+    <string name="home_disconnected">Отключено</string>
+    <string name="home_select_theme_auto_locked">Выбор тем заблокирован при автотеме</string>
+    <string name="home_tap_to_connect">Нажмите для подключения</string>
+    <string name="home_btn_disconnect">Отключить</string>
+    <string name="home_btn_connect">Подключить</string>
+    <string name="home_profile_unreachable">Недоступен</string>
+    <string name="home_profile_ping_ms">%d мс</string>
+    <string name="home_downloaded_profiles_header">Скачанные профили</string>
+    <string name="home_choose_source">Выберите источник</string>
+    <string name="home_source_selected_prefix">Выбрано:</string>
+    <string name="home_filter_no_available">Нет доступных профилей</string>
+    <string name="home_fetch_profiles">Загрузить профили</string>
+    <string name="home_stop_service">Остановить службу</string>
+    <string name="home_pick_profile_first">Сначала выберите профиль</string>
+    <string name="home_filter_all">Все</string>
+    <string name="home_filter_available">Только доступные</string>
+    <string name="home_select_tagline">Выберите, что делать дальше</string>
+    <string name="home_select_new_profiles_title">Новые профили</string>
+    <string name="home_select_new_profiles_subtitle">Скачать свежие конфигурации серверов</string>
+    <string name="home_select_stored_title">Сохранённые профили</string>
+    <string name="home_select_stored_subtitle">Управление сохранёнными серверами</string>
+    <string name="home_select_vpn_modes_title">Режимы VPN</string>
+    <string name="home_select_vpn_modes_subtitle">Настройка поведения прокси</string>
+    <string name="home_select_settings_title">Настройки</string>
+    <string name="home_select_settings_subtitle">Параметры и опции приложения</string>
+    <string name="home_autosaved_profile">Автосохранённый профиль</string>
 
-<!-- New profiles ping -->
-<string name="home_profile_unreachable">Недоступен</string>
-<string name="home_profile_ping_ms">%d мс</string>
-<string name="home_profile_checking">Проверка…</string>
+    <!-- Profiles screen strings -->
+    <string name="profiles_title">Профили</string>
+    <string name="profiles_tab_main">Основные</string>
+    <string name="profiles_tab_saved">Сохранённые</string>
+    <string name="profiles_refresh">Обновить</string>
+    <string name="profiles_empty">Пока нет профилей</string>
 
-<!-- Profiles tab -->
-<string name="profiles_title">Профили</string>
-<string name="profiles_tab_main">Основные</string>
-<string name="profiles_tab_saved">Сохраненные</string>
-<string name="profiles_empty">Нет профилей</string>
-<string name="profiles_refresh">Обновить</string>
+    <!-- Settings screen strings -->
+    <string name="settings_section_appearance">Внешний вид</string>
+    <string name="home_select_theme_auto_title">Автотема</string>
+    <string name="home_select_theme_auto_subtitle">Следовать системной теме (тёмная/светлая)</string>
+    <string name="home_select_theme_light_subtitle">Всегда использовать светлую тему</string>
+    <string name="home_select_theme_dark_subtitle">Всегда использовать тёмную тему</string>
+    <string name="settings_section_general">Общие</string>
+    <string name="home_select_autosave_title">Автосохранение профиля</string>
+    <string name="home_select_autosave_subtitle">Запоминать последний использованный сервер</string>
+    <string name="settings_use_new_design_title">Новый дизайн</string>
+    <string name="settings_use_new_design_subtitle">Использовать новый главный экран с вкладками вместо классического хаба</string>
+    <string name="settings_start_with_favorite_profiles_title">Запускать с избранными</string>
+    <string name="settings_start_with_favorite_profiles_subtitle">Открывать сохранённые профили при запуске приложения</string>
+    <string name="home_select_storage_mode_title">Режим хранения</string>
+    <string name="home_select_storage_mode_subtitle">Выберите, где хранить профили</string>
+    <string name="settings_custom_source_title">Пользовательский URL источника</string>
+    <string name="settings_custom_source_subtitle_off">Не задан</string>
+    <string name="settings_custom_source_save">Сохранить</string>
+    <string name="settings_custom_source_placeholder">https://example.com/configs.json</string>
+    <string name="settings_speed_notification_title">Уведомление о скорости</string>
+    <string name="settings_speed_notification_subtitle">Показывать скорость загрузки/отправки в строке состояния</string>
+    <string name="btn_close">Закрыть</string>
+    <string name="settings_section_language">Язык</string>
+    <string name="settings_language_title">Язык приложения</string>
+    <string name="language_en">English</string>
+    <string name="language_ru">Русский</string>
+    <string name="settings_speed_notification_restart_title">Требуется перезапуск</string>
+    <string name="settings_speed_notification_restart_message">Для применения изменений необходимо перезапустить службу VPN.</string>
 
+    <!-- Mux settings -->
+    <string name="settings_section_mux">Мультиплексирование (Mux)</string>
+    <string name="settings_mux_title">Включить Mux</string>
+    <string name="settings_mux_subtitle">Общий канал для нескольких потоков</string>
+    <string name="mux_faq_title">Что такое Mux?</string>
+    <string name="mux_faq_body">Мультиплексирование (Mux) позволяет нескольким TCP-соединениям использовать один базовый транспортный канал. Это снижает задержку и улучшает производительность, особенно на сетях с высокой задержкой, таких как спутниковые или мобильные.</string>
+    <string name="mux_faq_ok">Понятно</string>
+
+    <!-- Fragment settings -->
+    <string name="settings_fragment_title">Фрагментация</string>
+    <string name="settings_fragment_subtitle">Разделение пакетов для обхода DPI</string>
+    <string name="settings_fragment_subtitle_off">Отключено</string>
+    <string name="settings_fragment_hint">Интервал между фрагментами в миллисекундах (0 = случайный)</string>
+    <string name="settings_fragment_interval_placeholder">напр. 10–50</string>
+    <string name="fragment_faq_title">Что такое Фрагментация?</string>
+    <string name="fragment_faq_body">Фрагментация пакетов разделяет TCP-пакеты на более мелкие части со случайными интервалами между ними. Это затрудняет распознавание и блокировку трафика VPN системами глубокого анализа пакетов (DPI).</string>
+    <string name="fragment_faq_ok">Понятно</string>
+
+    <!-- Reality settings -->
+    <string name="settings_section_reality">Reality</string>
+    <string name="settings_reality_show_title">Reality (маскировка)</string>
+    <string name="settings_reality_show_subtitle_off">Отключено</string>
+    <string name="settings_reality_show_subtitle_on">Маскировка включена</string>
+    <string name="reality_faq_title">Что такое Reality?</string>
+    <string name="reality_faq_body">Reality — это продвинутый TLS-протокол, который делает ваше VPN-соединение похожим на обычный HTTPS-трафик к популярному сайту. Использует привязку сертификатов и рандомизацию client hello для обхода DPI и блокировок по SNI.</string>
+    <string name="reality_faq_ok">Понятно</string>
+
+    <!-- Sniffing settings -->
+    <string name="settings_section_sniffing">Анализ трафика</string>
+    <string name="settings_sniffing_target_title">Цели анализа</string>
+    <string name="settings_sniffing_target_subtitle">Определять протоколы для умной маршрутизации</string>
+    <string name="settings_sniffing_port_range_title">Диапазон портов для анализа</string>
+    <string name="settings_sniffing_port_range_subtitle">Анализировать трафик только на этих портах</string>
+    <string name="sniffing_faq_title">Что такое Анализ Трафика?</string>
+    <string name="sniffing_faq_body">Анализ трафика проверяет пакеты для определения используемого протокола (HTTP, TLS, QUIC). Это позволяет VPN маршрутизировать трафик более умно на основе содержимого, а не только по IP-адресу назначения.</string>
+    <string name="sniffing_faq_ok">Понятно</string>
+
+    <!-- Sniffing targets -->
+    <string name="settings_sniffing_target_all">Все протоколы</string>
+    <string name="settings_sniffing_target_http">Только HTTP</string>
+    <string name="settings_sniffing_target_tls">Только TLS</string>
+    <string name="settings_sniffing_target_quic">Только QUIC</string>
+
+    <!-- Sniffing port ranges -->
+    <string name="settings_sniffing_port_range_all">Все порты</string>
+    <string name="settings_sniffing_port_range_common">Общие порты (80, 443)</string>
+    <string name="settings_sniffing_port_range_http">Только HTTP (80)</string>
+    <string name="settings_sniffing_port_range_https">Только HTTPS (443)</string>
+
+    <!-- Source selection strings -->
+    <string name="source_black_ss_title">Black SS</string>
+    <string name="source_black_vless_title">Black VLESS</string>
+    <string name="source_white_cidr_title">White CIDR</string>
+    <string name="source_subtitle_all_configs">Все конфигурации</string>
+    <string name="source_subtitle_top150_phone">Топ 150 для телефона</string>
+    <string name="source_subtitle_top150_phone_1">Топ 150 (вариант 1)</string>
+    <string name="source_subtitle_top150_phone_2">Топ 150 (вариант 2)</string>
+    <string name="source_subtitle_ru_services">Только российские сервисы</string>
+    <string name="source_stored">Сохранённые профили</string>
+    <string name="source_subtitle_stored">Ваши сохранённые серверы</string>
+    <string name="source_custom_title">Пользовательский URL</string>
+    <string name="source_subtitle_custom">Введите свою ссылку на источник</string>
+    <string name="source_stored_add">Добавить в сохранённые</string>
+    <string name="source_select_done">Готово</string>
+    <string name="source_stored_delete_active">Нельзя удалить активный профиль</string>
+    <string name="source_stored_delete_hint">Выберите профили для удаления</string>
+    <string name="source_stored_selected_count">%d выбрано</string>
+    <string name="source_stored_delete">Удалить</string>
+    <string name="source_stored_delete_subtitle">Удалить выбранные профили</string>
+    <string name="source_stored_local">Локальное хранилище</string>
+    <string name="source_stored_remote">Удалённое (WebDAV)</string>
+
+    <!-- Per-app proxy strings -->
+    <string name="per_app_proxy_title">Прокси по приложениям</string>
+    <string name="per_app_proxy_mode_section">Режим прокси</string>
+    <string name="per_app_proxy_row_title">Прокси по приложениям</string>
+    <string name="per_app_proxy_row_subtitle">Маршрутизировать определённые приложения через VPN</string>
+    <string name="per_app_proxy_mode_all">Все приложения</string>
+    <string name="per_app_proxy_mode_all_subtitle">Проксировать весь трафик приложений</string>
+    <string name="per_app_proxy_mode_selected">Только выбранные</string>
+    <string name="per_app_proxy_mode_selected_subtitle">Проксировать только выбранные приложения</string>
+    <string name="per_app_proxy_applied_section">Применено к</string>
+    <string name="per_app_proxy_none_selected">Приложения не выбраны</string>
+    <string name="per_app_proxy_mode_selected_header_subtitle">Выберите, какие приложения используют VPN</string>
+    <string name="per_app_proxy_open_search_title">Поиск приложений</string>
+    <string name="per_app_proxy_open_search_subtitle">Найти и добавить приложения в список прокси</string>
+    <string name="per_app_proxy_added_snack">Приложение добавлено в список прокси</string>
+    <string name="per_app_proxy_search_screen_title">Выбор приложений</string>
+    <string name="per_app_proxy_search_screen_subtitle">Выберите приложения для маршрутизации через VPN</string>
+
+    <!-- Error strings -->
+    <string name="error_unexpected">Произошла непредвиденная ошибка</string>
+    <string name="error_timeout">Время ожидания соединения истекло</string>
+    <string name="error_connection_failed">Не удалось подключиться</string>
+    <string name="error_http_failed">HTTP-запрос не удался</string>
+
+    <!-- WebDAV error strings -->
+    <string name="webdav_error_unauthorized">WebDAV: Не авторизован (проверьте учётные данные)</string>
+    <string name="webdav_error_forbidden">WebDAV: Доступ запрещён</string>
+    <string name="webdav_error_not_found_url">WebDAV: URL не найден</string>
+    <string name="webdav_error_not_found">WebDAV: Ресурс не найден</string>
+    <string name="webdav_error_conflict">WebDAV: Конфликт (файл существует)</string>
+    <string name="webdav_error_invalid_response">WebDAV: Неверный ответ сервера</string>
+    <string name="webdav_error_upload_open">WebDAV: Не удалось открыть поток загрузки</string>
+
+    <!-- Storage mode warning -->
+    <string name="storage_mode_warning_title">Внимание!</string>
+    <string name="storage_mode_warning_message">Если вы включите локальное хранение, вы будете изолированы от выборок других пользователей. Локальные профили не будут участвовать в общем пуле.</string>
+    <string name="storage_mode_warning_ok">Понятно</string>
+
+    <!-- Force profile measurement (speedtest) -->
+    <string name="settings_force_profile_measure_title">Принудительное измерение пинга</string>
+    <string name="settings_force_profile_measure_subtitle">Всегда измерять задержку новых профилей, а не использовать кэшированные значения</string>
+
+    <!-- Intro screen strings -->
+    <string name="intro_hint_vpn_decline">Разрешение VPN отклонено. Вы можете выдать его позже в Настройках.</string>
+    <string name="intro_hint_push_decline">Push-уведомления отклонены. Вы не будете получать обновления о подключении.</string>
+    <string name="intro_hint_vpn_not_granted">Разрешение VPN ещё не выдано</string>
+    <string name="intro_screen_title_vpn">Разрешение VPN</string>
+    <string name="intro_screen_title_push">Уведомления</string>
+    <string name="intro_soft_title_vpn">Разрешить доступ к VPN?</string>
+    <string name="intro_soft_title_push">Включить уведомления?</string>
+    <string name="intro_soft_subtitle_vpn">Необходимо для создания виртуального сетевого интерфейса для безопасного туннелирования.</string>
+    <string name="intro_soft_subtitle_push">Получайте оповещения при изменении статуса подключения.</string>
+    <string name="intro_btn_not_now">Пока нет</string>
+    <string name="intro_btn_understood">Понятно</string>
+    <string name="intro_push_denied_title">Уведомления отклонены</string>
+    <string name="intro_push_denied_subtitle">Вы не будете получать обновления о статусе подключения.</string>
+    <string name="intro_push_continue_without">Продолжить без них</string>
+    <string name="intro_push_open_settings">Открыть Настройки</string>
 </resources>

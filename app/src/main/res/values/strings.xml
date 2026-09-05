@@ -33,237 +33,216 @@
     <string name="profile_row_probe_tcp_fail">TCP — (no VPN)</string>
     <string name="profile_row_probe_skip">—</string>
 
-    <string name="intro_screen_title_vpn">VPN Access</string>
-    <string name="intro_screen_title_push">Notifications</string>
-    <string name="intro_soft_title_vpn">For app to work</string>
-    <string name="intro_soft_subtitle_vpn">Permission is needed to use VPN in the system — without it, the connection will not work.</string>
-    <string name="intro_soft_title_push">Notifications</string>
-    <string name="intro_soft_subtitle_push">Allow notifications so you can easily monitor and manage the app.</string>
-    <string name="intro_btn_not_now">Not now</string>
-    <string name="intro_btn_understood">Got it</string>
-    <string name="intro_hint_vpn_decline">You cannot continue without VPN access.</string>
-    <string name="intro_hint_push_decline">Managing the app will be less convenient without notifications.</string>
-    <string name="intro_hint_vpn_not_granted">VPN permission not granted.</string>
-    <string name="intro_push_denied_title">Notifications disabled</string>
-    <string name="intro_push_denied_subtitle">The system no longer shows a permission request. Enable notifications in app settings or continue without them.</string>
-    <string name="intro_push_open_settings">Go to Settings</string>
-    <string name="intro_push_continue_without">Continue without notifications</string>
+    <!-- Bottom navigation labels -->
+    <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_profiles">Profiles</string>
+    <string name="bottom_nav_settings">Settings</string>
+    <string name="bottom_nav_logs">Log</string>
 
-    <string name="error_unexpected">Something went wrong. Try again.</string>
-    <string name="error_timeout">Connection timed out</string>
-    <string name="error_connection_failed">Failed to connect</string>
-    <string name="error_http_failed">HTTP error %d</string>
-    <string name="btn_close">Close</string>
+    <!-- Log screen strings -->
+    <string name="logs_title">Application Log</string>
+    <string name="logs_clear">Clear</string>
+    <string name="logs_empty">No log entries yet</string>
+    <string name="logs_filter_all">All</string>
+    <string name="logs_filter_error">Error</string>
+    <string name="logs_filter_warn">Warn</string>
+    <string name="logs_filter_info">Info</string>
+    <string name="logs_filter_debug">Debug</string>
 
-    <string name="home_choose_source">Choose source</string>
-    <string name="home_source_selected_prefix">Выбрано: %s</string>
-    <string name="home_filter_all">Все</string>
-    <string name="home_filter_available">Доступные</string>
-    <string name="home_filter_no_available">Нет доступных профилей</string>
-    <string name="home_fetch_profiles">Download lists</string>
-    <string name="home_stop_service">Stop service</string>
-    <string name="home_pick_profile_first">Select a profile first</string>
-    <string name="home_starting_vpn">Starting VPN…</string>
-    <string name="home_select_tagline">freedom for parrots!</string>
-    <string name="home_select_new_profiles_title">New profiles</string>
-    <string name="home_select_new_profiles_subtitle">download</string>
-    <string name="home_select_stored_title">Saved profiles</string>
-    <string name="home_select_stored_subtitle">possibly still active</string>
-    <string name="home_select_vpn_modes_title">VPN modes</string>
-    <string name="home_select_settings_title">Settings</string>
-    <string name="home_select_vpn_modes_subtitle">app filter</string>
-    <string name="home_select_settings_subtitle">miscellaneous</string>
-
-    <!-- Settings section titles -->
-    <string name="settings_section_appearance">Appearance</string>
-    <string name="settings_section_general">General</string>
-    <string name="settings_section_language">Language</string>
-    <string name="settings_section_mux">MUX</string>
+    <!-- Home screen strings -->
+    <string name="home_connected">Connected</string>
+    <string name="home_connecting">Connecting…</string>
+    <string name="home_disconnected">Disconnected</string>
+    <string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
+    <string name="home_tap_to_connect">Tap to connect</string>
+    <string name="home_btn_disconnect">Disconnect</string>
+    <string name="home_btn_connect">Connect</string>
+    <string name="home_profile_unreachable">Unreachable</string>
+    <string name="home_profile_ping_ms">%d ms</string>
     <string name="home_downloaded_profiles_header">Downloaded profiles</string>
-    <string name="home_autosaved_profile">Was saved automatically</string>
+    <string name="home_choose_source">Choose source</string>
+    <string name="home_source_selected_prefix">Selected:</string>
+    <string name="home_filter_no_available">No available profiles</string>
+    <string name="home_fetch_profiles">Fetch profiles</string>
+    <string name="home_stop_service">Stop service</string>
+    <string name="home_pick_profile_first">Pick a profile first</string>
+    <string name="home_filter_all">All</string>
+    <string name="home_filter_available">Available only</string>
+    <string name="home_select_tagline">Choose what to do next</string>
+    <string name="home_select_new_profiles_title">New profiles</string>
+    <string name="home_select_new_profiles_subtitle">Download fresh server configs</string>
+    <string name="home_select_stored_title">Stored profiles</string>
+    <string name="home_select_stored_subtitle">Manage your saved servers</string>
+    <string name="home_select_vpn_modes_title">VPN modes</string>
+    <string name="home_select_vpn_modes_subtitle">Configure proxy behavior</string>
+    <string name="home_select_settings_title">Settings</string>
+    <string name="home_select_settings_subtitle">App preferences and options</string>
+    <string name="home_autosaved_profile">Auto-saved profile</string>
 
-    <string name="per_app_proxy_title">VPN mode</string>
-    <string name="per_app_proxy_row_title">Per-app proxy</string>
-    <string name="per_app_proxy_row_subtitle">For all or only selected apps</string>
-    <string name="per_app_proxy_mode_section">choose:</string>
-    <string name="per_app_proxy_mode_all">All apps</string>
-    <string name="per_app_proxy_mode_all_subtitle">except Arkanzabel</string>
-    <string name="per_app_proxy_mode_selected">Only selected</string>
-    <string name="per_app_proxy_mode_selected_subtitle">in the list below</string>
-    <string name="per_app_proxy_mode_selected_header_subtitle">only they will use VPN</string>
-    <string name="per_app_proxy_applied_section">Selected</string>
-    <string name="per_app_proxy_none_selected">None yet</string>
-    <string name="per_app_proxy_search_hint">Search app</string>
-    <string name="per_app_proxy_search_placeholder">Name (English)</string>
-    <string name="per_app_proxy_open_search_title">Find</string>
-    <string name="per_app_proxy_open_search_subtitle">add to list</string>
-    <string name="per_app_proxy_search_screen_title">App search</string>
-    <string name="per_app_proxy_search_screen_subtitle">type in translit, e.g. sber</string>
-    <string name="per_app_proxy_added_snack">Added to list:</string>
+    <!-- Profiles screen strings -->
+    <string name="profiles_title">Profiles</string>
+    <string name="profiles_tab_main">Main</string>
+    <string name="profiles_tab_saved">Saved</string>
+    <string name="profiles_refresh">Refresh</string>
+    <string name="profiles_empty">No profiles yet</string>
 
-    <string name="error_action_ok">OK</string>
-    <string name="error_action_retry">Try again</string>
-
-    <string name="source_select_done">Done</string>
+    <!-- Settings screen strings -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="home_select_theme_auto_title">Auto theme</string>
+    <string name="home_select_theme_auto_subtitle">Follow system dark/light mode</string>
+    <string name="home_select_theme_light_subtitle">Always use light theme</string>
+    <string name="home_select_theme_dark_subtitle">Always use dark theme</string>
+    <string name="settings_section_general">General</string>
+    <string name="home_select_autosave_title">Auto-save profile</string>
+    <string name="home_select_autosave_subtitle">Remember last used server</string>
+    <string name="settings_use_new_design_title">New design</string>
+    <string name="settings_use_new_design_subtitle">Use new tabbed home screen instead of classic hub</string>
+    <string name="settings_start_with_favorite_profiles_title">Start with favorites</string>
+    <string name="settings_start_with_favorite_profiles_subtitle">Open saved profiles on app launch</string>
+    <string name="home_select_storage_mode_title">Storage mode</string>
+    <string name="home_select_storage_mode_subtitle">Choose where to store profiles</string>
+    <string name="settings_custom_source_title">Custom source URL</string>
+    <string name="settings_custom_source_subtitle_off">Not set</string>
     <string name="settings_custom_source_save">Save</string>
-    <string name="source_black_ss_title">Blacklist Shadowsocks+All</string>
-    <string name="source_black_vless_title">Blacklist VLESS</string>
-    <string name="source_white_cidr_title">Whitelist / CIDR</string>
-    <string name="source_stored">Saved profiles</string>
-    <string name="source_stored_delete_active">Tap profiles to delete them</string>
-    <string name="source_stored_add">Save profile?</string>
-    <string name="source_stored_delete">Delete selected?</string>
-    <string name="source_stored_delete_subtitle">they will be removed for everyone!</string>
-    <string name="source_stored_delete_hint">Long-tap a profile to activate delete mode</string>
-    <string name="source_stored_selected_count">Delete %d items:</string>
-    <string name="source_stored_local">Local</string>
-    <string name="source_stored_remote">Remote</string>
-    <string name="source_subtitle_all_configs">All configs</string>
-    <string name="source_subtitle_top150_phone">Top 150 for phone</string>
-    <string name="source_subtitle_top150_phone_1">Top 150 for phone (1)</string>
-    <string name="source_subtitle_top150_phone_2">Top 150 for phone (2)</string>
-    <string name="source_subtitle_ru_services">VK, YA, CDN, Beeline configs</string>
-    <string name="source_subtitle_stored">Verified</string>
-
-    <!-- Custom source settings -->
-    <string name="settings_custom_source_title">Custom Source URL</string>
-    <string name="settings_custom_source_subtitle_off">Disabled</string>
-    <string name="settings_custom_source_placeholder">Enter profile link URL</string>
-
-    <!-- Custom source validation errors -->
-    <string name="custom_source_error_empty_url">URL cannot be empty</string>
-    <string name="custom_source_error_invalid_url">Must start with http:// or https://</string>
-
-    <string name="source_custom_title">Custom Source URL</string>
-    <string name="source_subtitle_custom">Use your own link for profile delivery</string>
-
-    <!-- Theme mode strings -->
-    <string name="home_select_settings">Settings</string>
-    <string name="home_select_theme_title">Theme</string>
-    <string name="home_select_theme_auto_title">Auto</string>
-    <string name="home_select_theme_auto_subtitle">(follows system)</string>
-    <string name="home_select_theme_light_subtitle">Light theme</string>
-    <string name="home_select_theme_dark_subtitle">Dark theme</string>
-    <string name="home_select_theme_locked_hint">Theme selection is locked when Auto is enabled</string>
-
-    <!-- Autosave strings -->
-    <string name="home_select_autosave_title">Auto-save</string>
-    <string name="home_select_autosave_subtitle">Enable/disable auto-saving profiles</string>
-
-    <!-- English translations for local storage mode -->
-    <string name="home_select_storage_mode_title">Local profile storage</string>
-    <string name="home_select_storage_mode_subtitle">Store profiles locally instead of on a WebDAV server</string>
-
-    <string name="webdav_error_unauthorized">Invalid WebDAV username or password.</string>
-    <string name="webdav_error_forbidden">Access to this folder is denied.</string>
-    <string name="webdav_error_not_found">Path not found on server (404).</string>
-    <string name="webdav_error_not_found_url">Path not found (404):
-%1$s</string>
-    <string name="webdav_error_conflict">Operation rejected by server (conflict).</string>
-    <string name="webdav_error_invalid_response">Server returned unexpected WebDAV response.</string>
-    <string name="webdav_error_upload_open">Could not open selected file.</string>
-
-    <!-- Language strings -->
-    <string name="settings_language_title">Language</string>
-    <string name="settings_language_subtitle">Select the app language</string>
-    <string name="language_auto">Auto</string>
+    <string name="settings_custom_source_placeholder">https://example.com/configs.json</string>
+    <string name="settings_speed_notification_title">Speed notification</string>
+    <string name="settings_speed_notification_subtitle">Show download/upload speed in status bar</string>
+    <string name="btn_close">Close</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_title">App language</string>
     <string name="language_en">English</string>
-    <string name="language_ru">Russian</string>
+    <string name="language_ru">Русский</string>
+    <string name="settings_speed_notification_restart_title">Restart required</string>
+    <string name="settings_speed_notification_restart_message">VPN service must be restarted for changes to take effect.</string>
 
-    <!-- MUX strings -->
-        <string name="settings_mux_title">Multiplexing (MUX)</string>
-        <string name="settings_mux_subtitle">Combine multiple connections into one</string>
-        <string name="mux_faq_title">What is MUX?</string>
-    <string name="mux_faq_body">MUX combines many HTTP requests into a single TCP connection. Instead of opening separate connections to YouTube, Google, etc., it collects them all into one channel — reducing latency and server load.</string>
+    <!-- Mux settings -->
+    <string name="settings_section_mux">Multiplexing (Mux)</string>
+    <string name="settings_mux_title">Enable Mux</string>
+    <string name="settings_mux_subtitle">Share single connection across multiple streams</string>
+    <string name="mux_faq_title">What is Mux?</string>
+    <string name="mux_faq_body">Multiplexing (Mux) allows multiple TCP connections to share a single underlying transport connection. This reduces latency and improves performance, especially on high-latency networks like satellite or mobile data.</string>
     <string name="mux_faq_ok">Got it</string>
 
-    <!-- Fragment strings (Recommendation #5) -->
-    <string name="settings_fragment_title">Fragment</string>
-    <string name="settings_fragment_subtitle">Fragment TLS handshake to bypass DPI</string>
+    <!-- Fragment settings -->
+    <string name="settings_fragment_title">Fragmentation</string>
+    <string name="settings_fragment_subtitle">Split packets to bypass DPI inspection</string>
     <string name="settings_fragment_subtitle_off">Disabled</string>
-    <string name="settings_fragment_hint">Only works under TLS or REALITY</string>
-    <string name="settings_fragment_interval_title">Interval</string>
-    <string name="settings_fragment_interval_subtitle">Random packet interval (ms)</string>
-    <string name="settings_fragment_interval_placeholder">e.g. 10-20</string>
-    <string name="settings_fragment_interval_error">Enter a range like 10-20</string>
-    <string name="fragment_faq_title">What is Fragment?</string>
-    <string name="fragment_faq_body"><![CDATA[Fragment adds random packets before the TLS handshake, making traffic look less like a known VPN. It only works on TLS or REALITY protocols — on plain TCP or HTTP it does nothing.]]></string>
+    <string name="settings_fragment_hint">Interval between fragments in milliseconds (0 = random)</string>
+    <string name="settings_fragment_interval_placeholder">e.g. 10-50</string>
+    <string name="fragment_faq_title">What is Fragmentation?</string>
+    <string name="fragment_faq_body">Packet fragmentation splits TCP packets into smaller pieces with random intervals between them. This makes it harder for Deep Packet Inspection (DPI) systems to recognize and block VPN traffic patterns.</string>
     <string name="fragment_faq_ok">Got it</string>
 
-    <!-- Start with favorite profiles -->
-    <string name="settings_start_with_favorite_profiles_title">Start with Favorite Profiles</string>
-    <string name="settings_start_with_favorite_profiles_subtitle">Show saved profiles screen on app start</string>
+    <!-- Reality settings -->
+    <string name="settings_section_reality">Reality</string>
+    <string name="settings_reality_show_title">Reality (masquerade)</string>
+    <string name="settings_reality_show_subtitle_off">Disabled</string>
+    <string name="settings_reality_show_subtitle_on">Masquerade enabled</string>
+    <string name="reality_faq_title">What is Reality?</string>
+    <string name="reality_faq_body">Reality is an advanced TLS protocol that makes your VPN connection look like regular HTTPS traffic to a popular website. It uses certificate pinning and client hello randomization to defeat DPI and SNI-based blocking.</string>
+    <string name="reality_faq_ok">Got it</string>
 
-    <!-- Bottom-navigation home design -->
-    <string name="settings_use_new_design_title">Bottom navigation home</string>
-    <string name="settings_use_new_design_subtitle">Use the new bottom-tab home screen instead of the classic hub</string>
+    <!-- Sniffing settings -->
+    <string name="settings_section_sniffing">Traffic sniffing</string>
+    <string name="settings_sniffing_target_title">Sniff targets</string>
+    <string name="settings_sniffing_target_subtitle">Detect protocols to route intelligently</string>
+    <string name="settings_sniffing_port_range_title">Port range for sniffing</string>
+    <string name="settings_sniffing_port_range_subtitle">Only sniff traffic on these ports</string>
+    <string name="sniffing_faq_title">What is Traffic Sniffing?</string>
+    <string name="sniffing_faq_body">Traffic sniffing inspects packets to detect the actual protocol being used (HTTP, TLS, QUIC). This allows the VPN to route traffic more intelligently based on content rather than just destination IP.</string>
+    <string name="sniffing_faq_ok">Got it</string>
+
+    <!-- Sniffing targets -->
+    <string name="settings_sniffing_target_all">All protocols</string>
+    <string name="settings_sniffing_target_http">HTTP only</string>
+    <string name="settings_sniffing_target_tls">TLS only</string>
+    <string name="settings_sniffing_target_quic">QUIC only</string>
+
+    <!-- Sniffing port ranges -->
+    <string name="settings_sniffing_port_range_all">All ports</string>
+    <string name="settings_sniffing_port_range_common">Common ports (80, 443)</string>
+    <string name="settings_sniffing_port_range_http">HTTP only (80)</string>
+    <string name="settings_sniffing_port_range_https">HTTPS only (443)</string>
+
+    <!-- Source selection strings -->
+    <string name="source_black_ss_title">Black SS</string>
+    <string name="source_black_vless_title">Black VLESS</string>
+    <string name="source_white_cidr_title">White CIDR</string>
+    <string name="source_subtitle_all_configs">All configurations</string>
+    <string name="source_subtitle_top150_phone">Top 150 phone-friendly</string>
+    <string name="source_subtitle_top150_phone_1">Top 150 (variant 1)</string>
+    <string name="source_subtitle_top150_phone_2">Top 150 (variant 2)</string>
+    <string name="source_subtitle_ru_services">Russian services only</string>
+    <string name="source_stored">Stored profiles</string>
+    <string name="source_subtitle_stored">Your saved servers</string>
+    <string name="source_custom_title">Custom URL</string>
+    <string name="source_subtitle_custom">Enter your own source link</string>
+    <string name="source_stored_add">Add to stored</string>
+    <string name="source_select_done">Done</string>
+    <string name="source_stored_delete_active">Cannot delete active profile</string>
+    <string name="source_stored_delete_hint">Select profiles to remove</string>
+    <string name="source_stored_selected_count">%d selected</string>
+    <string name="source_stored_delete">Delete</string>
+    <string name="source_stored_delete_subtitle">Remove selected profiles</string>
+    <string name="source_stored_local">Local storage</string>
+    <string name="source_stored_remote">Remote (WebDAV)</string>
+
+    <!-- Per-app proxy strings -->
+    <string name="per_app_proxy_title">Per-App Proxy</string>
+    <string name="per_app_proxy_mode_section">Proxy mode</string>
+    <string name="per_app_proxy_row_title">Per-app proxy</string>
+    <string name="per_app_proxy_row_subtitle">Route specific apps through VPN</string>
+    <string name="per_app_proxy_mode_all">All apps</string>
+    <string name="per_app_proxy_mode_all_subtitle">Proxy all application traffic</string>
+    <string name="per_app_proxy_mode_selected">Selected apps only</string>
+    <string name="per_app_proxy_mode_selected_subtitle">Only proxy chosen applications</string>
+    <string name="per_app_proxy_applied_section">Applied to</string>
+    <string name="per_app_proxy_none_selected">No apps selected</string>
+    <string name="per_app_proxy_mode_selected_header_subtitle">Choose which apps use VPN</string>
+    <string name="per_app_proxy_open_search_title">Search apps</string>
+    <string name="per_app_proxy_open_search_subtitle">Find and add applications to proxy list</string>
+    <string name="per_app_proxy_added_snack">App added to proxy list</string>
+    <string name="per_app_proxy_search_screen_title">Select Apps</string>
+    <string name="per_app_proxy_search_screen_subtitle">Choose apps to route through VPN</string>
+
+    <!-- Error strings -->
+    <string name="error_unexpected">Unexpected error occurred</string>
+    <string name="error_timeout">Connection timed out</string>
+    <string name="error_connection_failed">Failed to connect</string>
+    <string name="error_http_failed">HTTP request failed</string>
+
+    <!-- WebDAV error strings -->
+    <string name="webdav_error_unauthorized">WebDAV: Unauthorized (check credentials)</string>
+    <string name="webdav_error_forbidden">WebDAV: Access forbidden</string>
+    <string name="webdav_error_not_found_url">WebDAV: URL not found</string>
+    <string name="webdav_error_not_found">WebDAV: Resource not found</string>
+    <string name="webdav_error_conflict">WebDAV: Conflict (file exists)</string>
+    <string name="webdav_error_invalid_response">WebDAV: Invalid server response</string>
+    <string name="webdav_error_upload_open">WebDAV: Failed to open upload stream</string>
+
+    <!-- Storage mode warning -->
+    <string name="storage_mode_warning_title">Warning!</string>
+    <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users\' samples. Local profiles will not participate in the shared pool.</string>
+    <string name="storage_mode_warning_ok">Understood</string>
 
     <!-- Force profile measurement (speedtest) -->
     <string name="settings_force_profile_measure_title">Force profile measurement</string>
     <string name="settings_force_profile_measure_subtitle">Always measure latency for new profiles instead of using cached values</string>
 
-    <!-- Bottom navigation labels -->
-    <string name="bottom_nav_home">Home</string>
-    <string name="bottom_nav_profiles">Profiles</string>
-    <string name="bottom_nav_settings">Settings</string>
-    <string name="home_select_theme_auto_locked">Theme selection unavailable with auto theme</string>
-
-    <!-- Reality strings (Recommendation #4) -->
-    <string name="settings_section_reality">Reality</string>
-    <string name="settings_reality_show_title">Reality (masquerade)</string>
-    <string name="settings_reality_show_subtitle_off">Disabled</string>
-    <string name="settings_reality_show_subtitle_on">Masquerade enabled</string>
-    <string name="settings_reality_show_hint">Substitutes the real serverName certificate chain into the TLS handshake to bypass DPI. Only works with REALITY outbounds.</string>
-    <string name="reality_faq_title">What is Reality?</string>
-    <string name="reality_faq_body"><![CDATA[Reality replaces the real server certificate in the TLS handshake with a fake HTTPS certificate chain. This makes your traffic look like normal HTTPS to DPI systems. It only works with REALITY outbounds.]]></string>
-    <string name="reality_faq_ok">Got it</string>
-
-    <!-- Sniffing strings -->
-    <string name="settings_section_sniffing">Sniffing</string>
-    <string name="settings_sniffing_target_title">Цель Sniffing</string>
-    <string name="settings_sniffing_target_subtitle">Протоколы, которые Sniffing будет определять в исходящем трафике</string>
-    <string name="settings_sniffing_port_range_title">Диапазон портов</string>
-    <string name="settings_sniffing_port_range_subtitle">Ограничить Sniffing только этими портами (иначе — все порты)</string>
-    <string name="settings_sniffing_target_all">Все</string>
-    <string name="settings_sniffing_target_http">HTTP</string>
-    <string name="settings_sniffing_target_tls">TLS</string>
-    <string name="settings_sniffing_target_quic">QUIC</string>
-    <string name="settings_sniffing_port_range_common">Общие</string>
-    <string name="settings_sniffing_port_range_all">Все</string>
-    <string name="settings_sniffing_port_range_http">HTTP</string>
-    <string name="settings_sniffing_port_range_https">HTTPS</string>
-    <string name="sniffing_faq_title">What is Sniffing?</string>
-    <string name="sniffing_faq_body">Sniffing inspects outbound traffic to detect which protocol is being used (HTTP, TLS, QUIC). The target setting tells V2Ray which types to look for; the port range limits inspection to those ports only. Enable it if you want V2Ray to route based on detected protocols.</string>
-    <string name="sniffing_faq_ok">Got it</string>
-
-    <!-- Local storage mode warning dialog -->
-    <string name="storage_mode_warning_title">Warning</string>
-    <string name="storage_mode_warning_message">If you enable local storage, you will be isolated from other users selections. Local profiles will not participate in the shared pool.</string>
-    <string name="storage_mode_warning_ok">Got it</string>
-
-    <!-- Speed notification strings -->
-    <string name="settings_speed_notification_title">Show speed</string>
-    <string name="settings_speed_notification_subtitle">Display current speed in notification</string>
-    <string name="settings_speed_notification_restart_title">Restart service</string>
-    <string name="settings_speed_notification_restart_message">restart service from the notification for changes to take effect.</string>
-
-    <!-- New profiles ping -->
-    <string name="home_profile_unreachable">Unreachable</string>
-    <string name="home_profile_ping_ms">%d ms</string>
-    <string name="home_profile_checking">Checking…</string>
-
-    <!-- Profiles tab -->
-    <string name="profiles_title">Profiles</string>
-    <string name="profiles_tab_main">Main</string>
-    <string name="profiles_tab_saved">Saved</string>
-    <string name="profiles_empty">No profiles</string>
-    <string name="profiles_refresh">Refresh</string>
-
-    <!-- Bottom-nav home screen -->
-    <string name="home_connected">Connected</string>
-    <string name="home_tap_to_connect">Tap to connect</string>
-    <string name="home_btn_connect">CONNECT</string>
-    <string name="home_btn_disconnect">DISCONNECT</string>
-    <string name="home_connecting">Connecting…</string>
-    <string name="home_error_no_server">No server selected</string>
+    <!-- Intro screen strings -->
+    <string name="intro_hint_vpn_decline">VPN permission declined. You can grant it later in Settings.</string>
+    <string name="intro_hint_push_decline">Push notifications declined. You\'ll miss connection updates.</string>
+    <string name="intro_hint_vpn_not_granted">VPN permission not granted yet</string>
+    <string name="intro_screen_title_vpn">VPN Permission</string>
+    <string name="intro_screen_title_push">Notifications</string>
+    <string name="intro_soft_title_vpn">Allow VPN access?</string>
+    <string name="intro_soft_title_push">Enable notifications?</string>
+    <string name="intro_soft_subtitle_vpn">Required to create a virtual network interface for secure tunneling.</string>
+    <string name="intro_soft_subtitle_push">Get alerts when your connection status changes.</string>
+    <string name="intro_btn_not_now">Not now</string>
+    <string name="intro_btn_understood">Understood</string>
+    <string name="intro_push_denied_title">Notifications denied</string>
+    <string name="intro_push_denied_subtitle">You won\'t receive connection status updates.</string>
+    <string name="intro_push_continue_without">Continue without</string>
+    <string name="intro_push_open_settings">Open Settings</string>
 </resources>
