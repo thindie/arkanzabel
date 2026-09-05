@@ -50,7 +50,11 @@ object Log {
     }
   }
 
-  private fun dispatch(level: Level, tag: String, message: String) {
+  private fun dispatch(
+    level: Level,
+    tag: String,
+    message: String,
+  ) {
     val entry = LogEntry(Date(), level, tag, message)
     synchronized(sinks) {
       for (sink in sinks) {
@@ -59,41 +63,61 @@ object Log {
     }
   }
 
+  /**
+   * Logs a VERBOSE-level entry.
+   * @param throwable Optional exception; its full stack trace is appended to the message.
+   */
   @JvmStatic
   fun v(
     message: () -> String,
     tag: String = LOG_TAG,
+    throwable: Throwable? = null,
   ) {
-    val msg = message.invoke()
-    println("$tag ${Level.VERBOSE.tag} $msg")
-    dispatch(Level.VERBOSE, tag, msg)
+    log(Level.VERBOSE, tag, message, throwable)
   }
 
+  /**
+   * Logs a DEBUG-level entry.
+   * @param throwable Optional exception; its full stack trace is appended to the message.
+   */
   @JvmStatic
   fun d(
     message: () -> String,
     tag: String = LOG_TAG,
+    throwable: Throwable? = null,
   ) {
-    val msg = message.invoke()
-    println("$tag ${Level.DEBUG.tag} $msg")
-    dispatch(Level.DEBUG, tag, msg)
+    log(Level.DEBUG, tag, message, throwable)
   }
 
+  /**
+   * Logs an INFO-level entry.
+   * @param throwable Optional exception; its full stack trace is appended to the message.
+   */
   @JvmStatic
   fun i(
     message: () -> String,
     tag: String = LOG_TAG,
+    throwable: Throwable? = null,
   ) {
-    val msg = message.invoke()
-    println("$tag ${Level.INFO.tag} $msg")
-    dispatch(Level.INFO, tag, msg)
+    log(Level.INFO, tag, message, throwable)
   }
 
   /**
-   * Logs an error message at the ERROR level, printing it to logcat.
-   * @param tag The log tag.
-   * @param message The error message content to log.
-   * @param throwable Optional exception associated with the error; its full stack trace is printed.
+   * Logs a WARN-level entry.
+   * @param throwable Optional exception; its full stack trace is appended to the message.
+   */
+  @JvmStatic
+  fun w(
+    message: () -> String,
+    tag: String = LOG_TAG,
+    throwable: Throwable? = null,
+  ) {
+    log(Level.WARN, tag, message, throwable)
+  }
+
+  /**
+   * Logs an ERROR-level entry.
+   * @param throwable Optional exception; its full stack trace is appended to the message.
    */
   @JvmStatic
   fun e(
@@ -101,23 +125,22 @@ object Log {
     tag: String = LOG_TAG,
     throwable: Throwable? = null,
   ) {
-    val msg = message.invoke()
-    if (throwable != null) {
-      println("$tag ${Level.ERROR.tag} $msg\n" + throwable.stackTraceToString())
-      dispatch(Level.ERROR, tag, "$msg\n${throwable.stackTraceToString()}")
-    } else {
-      println("$tag ${Level.ERROR.tag} $msg")
-      dispatch(Level.ERROR, tag, msg)
-    }
+    log(Level.ERROR, tag, message, throwable)
   }
 
-  @JvmStatic
-  fun w(
+  private fun log(
+    level: Level,
+    tag: String,
     message: () -> String,
-    tag: String = LOG_TAG,
+    throwable: Throwable?,
   ) {
     val msg = message.invoke()
-    println("$tag ${Level.WARN.tag} $msg")
-    dispatch(Level.WARN, tag, msg)
+    if (throwable != null) {
+      println("$tag ${level.tag} $msg\n" + throwable.stackTraceToString())
+      dispatch(level, tag, "$msg\n${throwable.stackTraceToString()}")
+    } else {
+      println("$tag ${level.tag} $msg")
+      dispatch(level, tag, msg)
+    }
   }
 }
