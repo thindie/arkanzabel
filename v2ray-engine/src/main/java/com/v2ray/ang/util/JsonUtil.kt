@@ -23,6 +23,18 @@ object JsonUtil {
     cls: Class<T>,
   ): T? = gson.fromJson(src, cls)
 
+  /** Lenient variant: malformed JSON is logged and returns null instead of throwing. */
+  fun <T> fromJsonOrNull(
+    src: String,
+    cls: Class<T>,
+  ): T? =
+    try {
+      gson.fromJson(src, cls)
+    } catch (e: RuntimeException) {
+      Log.e(AppConfig.TAG, "Failed to parse JSON (${src.take(120)}...): ${e.message}", e)
+      null
+    }
+
   /**
    * Pretty JSON for configs; [Double] serialized via [Double.toInt] so core does not see fractional numbers where ints are required.
    * Nullable values: `x?.let { toJsonPretty(it) }`.
