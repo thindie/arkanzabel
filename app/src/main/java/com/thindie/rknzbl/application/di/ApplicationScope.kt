@@ -8,10 +8,13 @@ import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
+import com.thindie.rknzbl.appfeatures.settings.data.PerAppProxyRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
+import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
 import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.application.Application
+import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
@@ -20,6 +23,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
 import com.thindie.rknzbl.feature.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository as LegacySettingsRepository
 
@@ -75,15 +79,19 @@ class ApplicationScope private constructor(application: Application) {
       connectionProfileRepository = connectionProfileRepository,
     )
 
+  private val perAppProxyRepository: PerAppProxyRepository =
+    PerAppProxyRepositoryImpl(appContext = application, storage = KeyValueStorage)
+
   val settingsFlowModule =
     SettingsFlowModule(
       settingsRepository = settingsRepository,
       connectionsProfileRepository = connectionProfileRepository,
+      perAppProxyRepository = perAppProxyRepository,
       updateLocale = updateLocaleFn,
     )
 
-  fun useNewDesignFeature(): Boolean {
-    return (settingsRepository as SettingsRepositoryImpl).getUseNewDesignSync()
+  fun useNewDesignFeature(): Flow<Boolean> {
+    return (settingsRepository as SettingsRepositoryImpl).useNewDesign
   }
 
   fun inject(homeFlow: HomeFlow) {
@@ -100,6 +108,7 @@ class ApplicationScope private constructor(application: Application) {
 
   companion object {
     fun configure(application: Application): ApplicationScope {
+      LogSinkProvider.init()
       return ApplicationScope(application)
     }
   }
