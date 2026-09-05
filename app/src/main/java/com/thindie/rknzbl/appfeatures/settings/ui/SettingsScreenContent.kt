@@ -83,7 +83,7 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       SourceSelectorRow(
         label = stringResource(R.string.home_choose_source),
         subtitle = sourceDisplayName(state.customSourceUrl),
-        selected = state.isCustomSourceEnabled,
+        selected = state.customSourceUrl != null,
         onClick = { scope.send(ScreenCommand.ToggleCustomSource) },
       )
 

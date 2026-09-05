@@ -35,13 +35,10 @@ interface SettingsRepository {
 
   fun setLanguage(code: String)
 
-  // Custom source URL
+  // Custom source URL (redesigned design): presence of a non-blank URL means the source is active.
 
   val customSourceUrl: Flow<String?>
 
-  fun setCustomSourceUrl(url: String)
-
-  val isCustomSourceEnabled: Flow<Boolean>
-
-  fun setCustomSourceEnabled(enabled: Boolean)
+  /** Persists [url]; null/blank clears it and disables the custom source. */
+  fun setCustomSourceUrl(url: String?)
 }

@@ -14,8 +14,8 @@ fun SettingsFlow.source() =
         }
 
         is SourceCommand.SelectPreset -> {
+          // Presence of the URL itself marks the custom source as active
           flowModule.settingsRepository.setCustomSourceUrl(c.url)
-          flowModule.settingsRepository.setCustomSourceEnabled(true)
           back()
           null
         }
@@ -23,7 +23,8 @@ fun SettingsFlow.source() =
         is SourceCommand.SetCustomUrl -> s.copy(customUrlInput = c.url)
 
         SourceCommand.ClearSource -> {
-          flowModule.settingsRepository.setCustomSourceEnabled(false)
+          // Clearing the URL disables the custom source
+          flowModule.settingsRepository.setCustomSourceUrl(null)
           back()
           null
         }

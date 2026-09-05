@@ -106,26 +106,16 @@ class SettingsRepositoryImpl(
 
   override fun getLanguageSync(): String = languageSetting.getSync()
 
-  // --- Custom source URL support ---
+  // --- Custom source URL support (redesigned design: presence of a non-blank URL means active) ---
   private val customSourceUrlSetting =
-    Setting<String>(
-      read = { storage.getCustomSourceUrl().orEmpty() },
+    Setting<String?>(
+      read = { storage.getCustomSourceUrl() },
       write = { storage.setCustomSourceUrl(it) },
     )
   override val customSourceUrl: Flow<String?> get() = customSourceUrlSetting.flow
 
-  override fun setCustomSourceUrl(url: String) {
+  /** Persists [url]; null/blank clears the key and disables the custom source. */
+  override fun setCustomSourceUrl(url: String?) {
     customSourceUrlSetting.set(url)
-  }
-
-  private val customSourceEnabledSetting =
-    Setting<Boolean>(
-      read = { storage.isCustomSourceEnabled() },
-      write = { storage.setCustomSourceEnabled(it) },
-    )
-  override val isCustomSourceEnabled: Flow<Boolean> get() = customSourceEnabledSetting.flow
-
-  override fun setCustomSourceEnabled(enabled: Boolean) {
-    customSourceEnabledSetting.set(enabled)
   }
 }
