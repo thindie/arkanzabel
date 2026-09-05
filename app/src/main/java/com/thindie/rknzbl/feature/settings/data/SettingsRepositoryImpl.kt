@@ -150,11 +150,12 @@ class SettingsRepositoryImpl(
 
   override fun getLanguageSync(): String = languageSetting.getSync()
 
-  // --- Custom source URL support ---
+  // --- Custom source URL support (legacy design: URL + separate enabled flag) ---
+  @Suppress("DEPRECATION")
   private val customSourceUrlSetting =
     Setting<String>(
-      read = { storage.getCustomSourceUrl().orEmpty() },
-      write = { storage.setCustomSourceUrl(it) },
+      read = { storage.getLegacyCustomSourceUrl().orEmpty() },
+      write = { storage.setLegacyCustomSourceUrl(it) },
     )
   override val customSourceUrl: Flow<String?> get() = customSourceUrlSetting.flow
 
@@ -162,10 +163,11 @@ class SettingsRepositoryImpl(
     customSourceUrlSetting.set(url)
   }
 
+  @Suppress("DEPRECATION")
   private val customSourceEnabledSetting =
     Setting<Boolean>(
-      read = { storage.isCustomSourceEnabled() },
-      write = { storage.setCustomSourceEnabled(it) },
+      read = { storage.isLegacyCustomSourceEnabled() },
+      write = { storage.setLegacyCustomSourceEnabled(it) },
     )
   override val isCustomSourceEnabled: Flow<Boolean> get() = customSourceEnabledSetting.flow
 
