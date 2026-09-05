@@ -24,10 +24,6 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
           null
         }
 
-        ScreenCommand.Home -> null
-        ScreenCommand.New -> null
-        ScreenCommand.PerAppProxy -> null
-
         ScreenCommand.ToggleConnect -> {
           when (s.workState) {
             is WorkState.Running -> {
@@ -80,7 +76,7 @@ internal fun HomeRoute(repository: ConnectionProfileRepository) =
             )
 
           !connected && state.workState is WorkState.Running && state.connectingSince == null -> {
-            // Service stopped while running and we don't track an active connect: treat as idle
+            // Service stopped while running, and we don't track an active connect: treat as idle
             val target = repository.activeProfile()
             if (target != null) {
               state.copy(workState = WorkState.Idle, connectedProfile = target)
