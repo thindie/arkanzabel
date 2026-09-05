@@ -1,7 +1,7 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import android.text.TextUtils
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
@@ -28,7 +28,7 @@ object Vmess : ProtocolParser() {
     var result = str.replace(Protocol.Vmess.protocolScheme, "")
     result = Utils.decode(result)
     if (TextUtils.isEmpty(result)) {
-      Log.w(AppConfig.TAG, "Toast decoding failed")
+      Log.w({ "Toast decoding failed" }, AppConfig.TAG)
       return null
     }
     val vmessQRCode = JsonUtil.fromJson(result, VmessQRCode::class.java) ?: return null
@@ -37,7 +37,7 @@ object Vmess : ProtocolParser() {
       TextUtils.isEmpty(vmessQRCode.id) ||
       TextUtils.isEmpty(vmessQRCode.net)
     ) {
-      Log.w(AppConfig.TAG, "Toast incorrect protocol")
+      Log.w({ "Toast incorrect protocol" }, AppConfig.TAG)
       return null
     }
 

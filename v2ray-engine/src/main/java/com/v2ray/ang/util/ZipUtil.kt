@@ -1,6 +1,6 @@
 package com.v2ray.ang.util
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import java.io.BufferedOutputStream
 import java.io.File
@@ -44,7 +44,7 @@ object ZipUtil {
       }
       true
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "Failed to zip folder", e)
+      Log.e({ "Failed to zip folder" }, AppConfig.TAG, e)
       false
     }
   }
@@ -71,7 +71,7 @@ object ZipUtil {
       }
       true
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "Failed to unzip file", e)
+      Log.e({ "Failed to unzip file" }, AppConfig.TAG, e)
       false
     }
   }

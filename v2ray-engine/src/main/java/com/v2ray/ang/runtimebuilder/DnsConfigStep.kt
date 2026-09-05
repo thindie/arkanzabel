@@ -1,6 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.Outbound
@@ -70,7 +70,7 @@ internal class DnsConfigStep(
         )
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure custom local DNS", runtime)
+      Log.e({ "Failed to configure custom local DNS" }, AppConfig.TAG, runtime)
       throw DnsConfigError(
         message = "Failed to configure custom local DNS",
         source = "DnsConfigStep.applyCustomLocalDns",
@@ -141,7 +141,7 @@ internal class DnsConfigStep(
           if (userHostsMap != null) hosts.putAll(userHostsMap)
         }
       } catch (runtime: RuntimeException) {
-        Log.e(AppConfig.TAG, "Failed to configure user DNS hosts", runtime)
+        Log.e({ "Failed to configure user DNS hosts" }, AppConfig.TAG, runtime)
         throw DnsConfigError(
           message = "Failed to parse user DNS hosts",
           source = "DnsConfigStep.applyDns.userHosts",
@@ -178,7 +178,7 @@ internal class DnsConfigStep(
         ),
       )
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure DNS", runtime)
+      Log.e({ "Failed to configure DNS" }, AppConfig.TAG, runtime)
       throw DnsConfigError(
         message = "Failed to configure DNS",
         source = "DnsConfigStep.applyDns",

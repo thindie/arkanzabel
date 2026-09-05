@@ -2,8 +2,8 @@ package com.v2ray.ang.runtime
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
 import com.google.errorprone.annotations.Immutable
+import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.IPAPIInfo
@@ -60,17 +60,17 @@ object SpeedtestManager {
         socket.connect(InetSocketAddress(url, port), 3000)
         System.currentTimeMillis() - start
       } catch (e: UnknownHostException) {
-        Log.e(AppConfig.TAG, "Unknown host: $url", e)
+        Log.e({ "Unknown host: $url" }, AppConfig.TAG, e)
         -1L
       } catch (e: IOException) {
-        Log.e(AppConfig.TAG, "socketConnectTime IOException", e)
+        Log.e({ "socketConnectTime IOException" }, AppConfig.TAG, e)
         -1L
       } finally {
         tcpTestingSockets.update { sockets -> sockets - socket }
         try {
           socket.close()
         } catch (e: IOException) {
-          Log.e(AppConfig.TAG, "Failed to close test socket", e)
+          Log.e({ "Failed to close test socket" }, AppConfig.TAG, e)
         }
       }
     }
@@ -84,7 +84,7 @@ object SpeedtestManager {
       try {
         socket.close()
       } catch (e: IOException) {
-        Log.e(AppConfig.TAG, "Failed to close test socket", e)
+        Log.e({ "Failed to close test socket" }, AppConfig.TAG, e)
       }
     }
     tcpTestingSockets.value = emptyList()
@@ -135,7 +135,7 @@ object SpeedtestManager {
             else -> return@withContext null
           }
       } catch (e: IOException) {
-        Log.e(AppConfig.TAG, "Connection test IOException", e)
+        Log.e({ "Connection test IOException" }, AppConfig.TAG, e)
         error =
           IOException(
             context.getString(R.string.connection_test_error, e.message),

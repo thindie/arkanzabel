@@ -11,11 +11,11 @@ import android.os.LocaleList
 import android.provider.Settings
 import android.text.Editable
 import android.util.Base64
-import android.util.Log
 import android.util.Patterns
 import android.webkit.URLUtil
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import java.net.InetAddress
@@ -80,7 +80,7 @@ object Utils {
       val cmb = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
       cmb.primaryClip?.getItemAt(0)?.text.toString()
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to get clipboard content", e)
+      Log.e({ "Failed to get clipboard content" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -100,7 +100,7 @@ object Utils {
       val clipData = ClipData.newPlainText(null, content)
       cmb.setPrimaryClip(clipData)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to set clipboard content", e)
+      Log.e({ "Failed to set clipboard content" }, AppConfig.TAG, e)
     }
   }
 
@@ -126,12 +126,12 @@ object Utils {
     try {
       return Base64.decode(text, Base64.NO_WRAP).toString(Charsets.UTF_8)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to decode standard base64", e)
+      Log.e({ "Failed to decode standard base64" }, AppConfig.TAG, e)
     }
     try {
       return Base64.decode(text, Base64.NO_WRAP.or(Base64.URL_SAFE)).toString(Charsets.UTF_8)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to decode URL-safe base64", e)
+      Log.e({ "Failed to decode URL-safe base64" }, AppConfig.TAG, e)
     }
     return null
   }
@@ -154,7 +154,7 @@ object Utils {
       }
       encoded
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to encode text to base64", e)
+      Log.e({ "Failed to encode text to base64" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -197,7 +197,7 @@ object Utils {
 
       return isIpv6Address(addr)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to validate IP address", e)
+      Log.e({ "Failed to validate IP address" }, AppConfig.TAG, e)
       return false
     }
   }
@@ -278,7 +278,7 @@ object Utils {
         Patterns.DOMAIN_NAME.matcher(value).matches() ||
         URLUtil.isValidUrl(value)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to validate URL", e)
+      Log.e({ "Failed to validate URL" }, AppConfig.TAG, e)
       false
     }
   }
@@ -297,7 +297,7 @@ object Utils {
       val uri = uriString.toUri()
       context.startActivity(Intent(Intent.ACTION_VIEW, uri))
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to open URI", e)
+      Log.e({ "Failed to open URI" }, AppConfig.TAG, e)
     }
   }
 
@@ -310,7 +310,7 @@ object Utils {
     return try {
       UUID.randomUUID().toString().replace("-", "")
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to generate UUID", e)
+      Log.e({ "Failed to generate UUID" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -325,7 +325,7 @@ object Utils {
     return try {
       URLDecoder.decode(url, Charsets.UTF_8.toString())
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to decode URL", e)
+      Log.e({ "Failed to decode URL" }, AppConfig.TAG, e)
       url
     }
   }
@@ -340,7 +340,7 @@ object Utils {
     return try {
       URLEncoder.encode(url, Charsets.UTF_8.toString())
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to encode URL", e)
+      Log.e({ "Failed to encode URL" }, AppConfig.TAG, e)
       url
     }
   }
@@ -359,7 +359,7 @@ object Utils {
       // to avoid cross-language interoperability issues.
       URLDecoder.decode(url.replace("+", "%2B"), Charsets.UTF_8.toString())
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to decode encodeURIComponent", e)
+      Log.e({ "Failed to decode encodeURIComponent" }, AppConfig.TAG, e)
       url
     }
   }
@@ -375,7 +375,7 @@ object Utils {
       // Replace '+' with '%20' to conform to encodeURIComponent semantics.
       URLEncoder.encode(url, Charsets.UTF_8.toString()).replace("+", "%20")
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to encode encodeURIComponent", e)
+      Log.e({ "Failed to encode encodeURIComponent" }, AppConfig.TAG, e)
       url
     }
   }
@@ -400,7 +400,7 @@ object Utils {
         }
       }
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to read asset file: $fileName", e)
+      Log.e({ "Failed to read asset file: $fileName" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -418,7 +418,7 @@ object Utils {
       context.getExternalFilesDir(AppConfig.DIR_ASSETS)?.absolutePath
         ?: context.getDir(AppConfig.DIR_ASSETS, 0).absolutePath
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to get user asset path", e)
+      Log.e({ "Failed to get user asset path" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -433,7 +433,7 @@ object Utils {
       val androidId = Settings.Secure.ANDROID_ID.toByteArray(Charsets.UTF_8)
       Base64.encodeToString(androidId.copyOf(32), Base64.NO_PADDING.or(Base64.URL_SAFE))
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to generate device ID", e)
+      Log.e({ "Failed to generate device ID" }, AppConfig.TAG, e)
       ""
     }
   }
@@ -505,7 +505,7 @@ object Utils {
         }
       }
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to validate subscription URL", e)
+      Log.e({ "Failed to validate subscription URL" }, AppConfig.TAG, e)
     }
     return false
   }
@@ -579,7 +579,7 @@ object Utils {
       // Check if they're in the same subnet
       return (ipLong and mask) == (cidrIpLong and mask)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to check if IP is in CIDR", e)
+      Log.e({ "Failed to check if IP is in CIDR" }, AppConfig.TAG, e)
       return false
     }
   }
@@ -600,7 +600,7 @@ object Utils {
       val sdf = SimpleDateFormat(pattern, locale)
       sdf.format(Date(ts))
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to format timestamp", e)
+      Log.e({ "Failed to format timestamp" }, AppConfig.TAG, e)
       ""
     }
   }

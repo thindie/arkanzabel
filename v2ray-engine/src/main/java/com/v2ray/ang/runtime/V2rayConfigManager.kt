@@ -2,8 +2,8 @@ package com.v2ray.ang.runtime
 
 import android.content.Context
 import android.text.TextUtils
-import android.util.Log
 import com.google.gson.JsonArray
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2Ray
@@ -595,7 +595,7 @@ object V2rayConfigManager {
         )
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure balance", runtime)
+      Log.e({ "Failed to configure balance" }, AppConfig.TAG, runtime)
       throw RoutingConfigError(
         message = "Failed to configure balance for policy group",
         source = "V2rayConfigManager.getBalance",

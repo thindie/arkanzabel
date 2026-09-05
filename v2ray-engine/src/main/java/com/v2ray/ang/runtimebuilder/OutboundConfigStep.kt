@@ -1,6 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig
@@ -79,7 +79,7 @@ internal class OutboundConfigStep(
         }
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure more outbounds", runtime)
+      Log.e({ "Failed to configure more outbounds" }, AppConfig.TAG, runtime)
       throw OutboundConfigError(
         message = "Failed to configure more outbounds",
         source = "OutboundConfigStep.applyMoreOutbounds",
@@ -167,7 +167,7 @@ internal class OutboundConfigStep(
         outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host = host
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to update outbound with global settings", runtime)
+      Log.e({ "Failed to update outbound with global settings" }, AppConfig.TAG, runtime)
       return false
     }
     return true
@@ -231,7 +231,7 @@ internal class OutboundConfigStep(
           tcpKeepAliveIdle = AppConfig.OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS,
         )
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to update outbound fragment", runtime)
+      Log.e({ "Failed to update outbound fragment" }, AppConfig.TAG, runtime)
       throw OutboundConfigError(
         message = "Failed to update outbound fragment",
         source = "OutboundConfigStep.applyOutboundFragment",

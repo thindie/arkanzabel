@@ -1,6 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.enums.Protocol
@@ -54,7 +54,7 @@ internal class InboundConfigStep(
         inboundTun?.sniffing = inbound1.sniffing
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure inbounds", runtime)
+      Log.e({ "Failed to configure inbounds" }, AppConfig.TAG, runtime)
       throw IncomingConfigError(
         message = "Failed to configure inbounds",
         source = "InboundConfigStep.applyInbounds",

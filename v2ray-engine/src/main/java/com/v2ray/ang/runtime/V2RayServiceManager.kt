@@ -9,8 +9,8 @@ import android.content.IntentFilter
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
-import android.util.Log
 import androidx.core.content.ContextCompat
+import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
@@ -59,7 +59,7 @@ object V2RayServiceManager {
    */
   fun startVServiceFromToggle(context: Context): Boolean {
     if (KeyValueStorage.getSelectServer().isNullOrEmpty()) {
-      Log.i(AppConfig.TAG, context.getString(R.string.app_tile_first_use))
+      Log.i({ context.getString(R.string.app_tile_first_use) }, AppConfig.TAG)
       return false
     }
     startContextService(context)
@@ -82,7 +82,7 @@ object V2RayServiceManager {
       KeyValueStorage.setSelectServer(guid)
     }
     if (isRunningInternal) {
-      Log.i(AppConfig.TAG, "startVService: core running -> restart for new profile")
+      Log.i({ "startVService: core running -> restart for new profile" }, AppConfig.TAG)
       MessageUtil.sendMsg2Service(context, AppConfig.MSG_STATE_RESTART, "")
       return
     }
@@ -118,10 +118,7 @@ object V2RayServiceManager {
    */
   private fun startContextService(context: Context) {
     if (isRunningInternal) {
-      Log.w(
-        AppConfig.TAG,
-        "startContextService skipped: core still reports running (wait for stop to finish)",
-      )
+      Log.w({ "startContextService skipped: core still reports running (wait for stop to finish)" }, AppConfig.TAG)
       return
     }
     val guid = KeyValueStorage.getSelectServer() ?: return
@@ -135,9 +132,9 @@ object V2RayServiceManager {
     }
 
     if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PROXY_SHARING)) {
-      Log.i(AppConfig.TAG, context.getString(R.string.toast_warning_pref_proxysharing_short))
+      Log.i({ context.getString(R.string.toast_warning_pref_proxysharing_short) }, AppConfig.TAG)
     } else {
-      Log.i(AppConfig.TAG, context.getString(R.string.toast_services_start))
+      Log.i({ context.getString(R.string.toast_services_start) }, AppConfig.TAG)
     }
     val intent =
       if (SettingsManager.isVpnMode()) {
@@ -170,7 +167,7 @@ object V2RayServiceManager {
       } catch (cancel: CancellationException) {
         throw cancel
       } catch (appError: AppError) {
-        Log.e(AppConfig.TAG, "Failed to get V2ray config: ${appError.message}", appError)
+        Log.e({ "Failed to get V2ray config: ${appError.message}" }, AppConfig.TAG, appError)
         MessageUtil.sendMsg2UI(
           service,
           AppConfig.MSG_STATE_START_FAILURE,
@@ -178,7 +175,7 @@ object V2RayServiceManager {
         )
         return false
       } catch (runtime: RuntimeException) {
-        Log.e(AppConfig.TAG, "Failed to get V2ray config", runtime)
+        Log.e({ "Failed to get V2ray config" }, AppConfig.TAG, runtime)
         val payload =
           runtime.message?.trim()?.takeIf { it.isNotEmpty() }
             ?: service.getString(R.string.vpn_core_config_build_failed)
@@ -193,7 +190,7 @@ object V2RayServiceManager {
       mFilter.addAction(Intent.ACTION_USER_PRESENT)
       ContextCompat.registerReceiver(service, mMsgReceive, mFilter, Utils.receiverFlags())
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to register broadcast receiver", runtime)
+      Log.e({ "Failed to register broadcast receiver" }, AppConfig.TAG, runtime)
       MessageUtil.sendMsg2UI(
         service,
         AppConfig.MSG_STATE_START_FAILURE,
@@ -213,7 +210,7 @@ object V2RayServiceManager {
       NotificationManager.showNotification(config, isFavorite)
       coreController.startLoop(result.json, tunFd)
     } catch (runtime: Exception) {
-      Log.e(AppConfig.TAG, "Failed to start Core loop", runtime)
+      Log.e({ "Failed to start Core loop" }, AppConfig.TAG, runtime)
       NotificationManager.cancelNotification()
       val detail = runtime.message?.trim()
       val payload =
@@ -244,7 +241,7 @@ object V2RayServiceManager {
       KeyValueStorage.setVpnSessionStartEpochMs(System.currentTimeMillis())
       KeyValueStorage.setVpnSessionGuid(guid)
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to startup service", runtime)
+      Log.e({ "Failed to startup service" }, AppConfig.TAG, runtime)
       val detail = runtime.message?.trim()
       val payload =
         if (!detail.isNullOrEmpty()) {
@@ -270,12 +267,12 @@ object V2RayServiceManager {
       try {
         stopLoopExecutor.submit { coreController.stopLoop() }.get(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
       } catch (timeout: TimeoutException) {
-        Log.e(AppConfig.TAG, "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s", timeout)
+        Log.e({ "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s" }, AppConfig.TAG, timeout)
       } catch (execution: ExecutionException) {
-        Log.e(AppConfig.TAG, "Failed to stop V2Ray loop", execution.cause ?: execution)
+        Log.e({ "Failed to stop V2Ray loop" }, AppConfig.TAG, execution.cause ?: execution)
       } catch (interrupted: InterruptedException) {
         Thread.currentThread().interrupt()
-        Log.e(AppConfig.TAG, "Interrupted while waiting for V2Ray stopLoop", interrupted)
+        Log.e({ "Interrupted while waiting for V2Ray stopLoop" }, AppConfig.TAG, interrupted)
       }
     }
 
@@ -288,7 +285,7 @@ object V2RayServiceManager {
     try {
       service.unregisterReceiver(mMsgReceive)
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to unregister broadcast receiver", runtime)
+      Log.e({ "Failed to unregister broadcast receiver" }, AppConfig.TAG, runtime)
     }
 
     return true
@@ -325,14 +322,14 @@ object V2RayServiceManager {
       try {
         time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
       } catch (runtime: RuntimeException) {
-        Log.e(AppConfig.TAG, "Failed to measure delay with primary URL", runtime)
+        Log.e({ "Failed to measure delay with primary URL" }, AppConfig.TAG, runtime)
         errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
       }
       if (time == -1L) {
         try {
           time = coreController.measureDelay(SettingsManager.getDelayTestUrl(true))
         } catch (runtime: RuntimeException) {
-          Log.e(AppConfig.TAG, "Failed to measure delay with alternative URL", runtime)
+          Log.e({ "Failed to measure delay with alternative URL" }, AppConfig.TAG, runtime)
           errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
         }
       }
@@ -381,7 +378,7 @@ object V2RayServiceManager {
         serviceControl.stopService()
         SUCCESS
       } catch (runtime: RuntimeException) {
-        Log.e(AppConfig.TAG, "Failed to stop service in callback", runtime)
+        Log.e({ "Failed to stop service in callback" }, AppConfig.TAG, runtime)
         FAILURE
       }
     }
@@ -434,12 +431,12 @@ object V2RayServiceManager {
         }
 
         AppConfig.MSG_STATE_STOP -> {
-          Log.i(AppConfig.TAG, "Stop Service")
+          Log.i({ "Stop Service" }, AppConfig.TAG)
           serviceControl.stopService()
         }
 
         AppConfig.MSG_STATE_RESTART -> {
-          Log.i(AppConfig.TAG, "Restart Service")
+          Log.i({ "Restart Service" }, AppConfig.TAG)
           serviceControl.stopService()
           val ctx = serviceControl.getService()
           Handler(Looper.getMainLooper()).postDelayed(
@@ -449,7 +446,7 @@ object V2RayServiceManager {
         }
 
         AppConfig.MSG_STATE_SAVE_PROFILE -> {
-          Log.i(AppConfig.TAG, "Save Profile")
+          Log.i({ "Save Profile" }, AppConfig.TAG)
           MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_SAVE_PROFILE, "")
         }
 
@@ -460,12 +457,12 @@ object V2RayServiceManager {
 
       when (intent?.action) {
         Intent.ACTION_SCREEN_OFF -> {
-          Log.i(AppConfig.TAG, "SCREEN_OFF, stop querying stats")
+          Log.i({ "SCREEN_OFF, stop querying stats" }, AppConfig.TAG)
           NotificationManager.stopSpeedNotification(currentConfig)
         }
 
         Intent.ACTION_SCREEN_ON -> {
-          Log.i(AppConfig.TAG, "SCREEN_ON, start querying stats")
+          Log.i({ "SCREEN_ON, start querying stats" }, AppConfig.TAG)
           NotificationManager.startSpeedNotification(currentConfig)
         }
       }

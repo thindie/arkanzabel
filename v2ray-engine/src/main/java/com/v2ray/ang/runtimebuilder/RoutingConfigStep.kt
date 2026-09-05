@@ -1,6 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.RulesetItem
 import com.v2ray.ang.dto.V2rayConfig
@@ -22,7 +22,7 @@ internal class RoutingConfigStep(
         applyRoutingUserRule(key, v2rayConfig)
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure routing", runtime)
+      Log.e({ "Failed to configure routing" }, AppConfig.TAG, runtime)
       throw RoutingConfigError(
         message = "Failed to configure routing",
         source = "RoutingConfigStep.applyRouting",
@@ -63,7 +63,7 @@ internal class RoutingConfigStep(
       val rule = JsonUtil.fromJson(JsonUtil.toJson(item), Rules::class.java) ?: return
       v2rayConfig.routing.rules.add(rule)
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to apply routing user rule", runtime)
+      Log.e({ "Failed to apply routing user rule" }, AppConfig.TAG, runtime)
       throw RoutingConfigError(
         message = "Failed to apply routing user rule",
         source = "RoutingConfigStep.applyRoutingUserRule",

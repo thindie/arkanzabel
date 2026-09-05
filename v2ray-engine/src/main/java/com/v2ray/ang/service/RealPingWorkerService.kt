@@ -1,7 +1,7 @@
 package com.v2ray.ang.service
 
 import android.content.Context
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.error.AppError
 import com.v2ray.ang.runtime.SettingsManager
@@ -94,10 +94,10 @@ class RealPingWorkerService(
     } catch (cancel: CancellationException) {
       throw cancel
     } catch (appError: AppError) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for $guid: ${appError.userReadable}", appError)
+      Log.w({ "Speedtest config failed for $guid: ${appError.userReadable}" }, AppConfig.TAG, appError)
       -1L
     } catch (runtime: RuntimeException) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for $guid", runtime)
+      Log.w({ "Speedtest config failed for $guid" }, AppConfig.TAG, runtime)
       -1L
     }
   }

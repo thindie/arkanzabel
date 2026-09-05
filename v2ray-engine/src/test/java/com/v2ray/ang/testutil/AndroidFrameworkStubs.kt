@@ -2,7 +2,6 @@ package com.v2ray.ang.testutil
 
 import android.text.TextUtils
 import android.util.Base64
-import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
 import java.util.Base64 as JavaBase64
@@ -14,14 +13,7 @@ import java.util.Base64 as JavaBase64
  * characterized without pulling in an instrumented test runner.
  */
 fun mockAndroidFrameworkStatics() {
-  mockkStatic(Log::class)
-  every { Log.d(any(), any<String>()) } returns 0
-  every { Log.i(any(), any<String>()) } returns 0
-  every { Log.w(any(), any<String>()) } returns 0
-  every { Log.w(any(), any<String>(), any()) } returns 0
-  every { Log.e(any(), any<String>()) } returns 0
-  every { Log.e(any(), any<String>(), any()) } returns 0
-
+  // com.thindie.engine.core.Log is JVM-safe (println + sinks), no stub needed.
   mockkStatic(TextUtils::class)
   every { TextUtils.isEmpty(any()) } answers { firstArg<CharSequence?>().isNullOrEmpty() }
 

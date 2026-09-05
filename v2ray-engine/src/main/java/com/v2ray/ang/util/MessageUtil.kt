@@ -3,7 +3,7 @@ package com.v2ray.ang.util
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.service.V2RayTestService
 import java.io.Serializable
@@ -58,7 +58,7 @@ object MessageUtil {
       intent.putExtra("content", content)
       ctx.startService(intent)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to send message to test service", e)
+      Log.e({ "Failed to send message to test service" }, AppConfig.TAG, e)
     }
   }
 
@@ -84,7 +84,7 @@ object MessageUtil {
       intent.putExtra("content", content)
       ctx.sendBroadcast(intent)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to send message with action: $action", e)
+      Log.e({ "Failed to send message with action: $action" }, AppConfig.TAG, e)
     }
   }
 }

@@ -7,8 +7,8 @@ import android.content.IntentFilter
 import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import android.util.Log
 import androidx.core.content.ContextCompat
+import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.V2RayServiceManager
@@ -71,7 +71,7 @@ class QSTileService : TileService() {
     try {
       applicationContext.unregisterReceiver(tileStateReceiver)
     } catch (e: IllegalArgumentException) {
-      Log.w(AppConfig.TAG, "QS tile receiver not registered", e)
+      Log.w({ "QS tile receiver not registered" }, AppConfig.TAG, e)
     }
   }
 

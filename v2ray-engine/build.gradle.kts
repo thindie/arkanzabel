@@ -59,6 +59,7 @@ kotlin {
 dependencies {
   // Drop `libv2ray` AAR (and optional JARs) into `v2ray-engine/libs/` — see `libs/README.md`.
   implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+  implementation(project(":core"))
   implementation(libs.androidx.appcompat)
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.lifecycle.runtime.ktx)

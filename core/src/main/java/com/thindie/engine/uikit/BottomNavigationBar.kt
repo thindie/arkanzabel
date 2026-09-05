@@ -29,7 +29,7 @@ fun BottomNavigationBar(
     modifier =
       modifier
         .fillMaxWidth()
-          .background(color = AppTheme.colors.cardPrimary)
+        .background(color = AppTheme.colors.cardPrimary)
         .heightIn(min = 64.dp),
     horizontalArrangement = Arrangement.SpaceEvenly,
     verticalAlignment = Alignment.CenterVertically,

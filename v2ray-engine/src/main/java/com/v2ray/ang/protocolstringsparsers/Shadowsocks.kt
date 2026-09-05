@@ -1,6 +1,6 @@
 package com.v2ray.ang.protocolstringsparsers
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
@@ -74,7 +74,7 @@ object Shadowsocks : ProtocolParser() {
         try {
           Utils.decodeURIComponent(rawRemark)
         } catch (illegal: IllegalArgumentException) {
-          Log.e(AppConfig.TAG, "Failed to decode remarks in SS legacy URL", illegal)
+          Log.e({ "Failed to decode remarks in SS legacy URL" }, AppConfig.TAG, illegal)
           rawRemark
         }
       } else {
