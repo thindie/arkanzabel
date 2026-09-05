@@ -104,7 +104,7 @@ class ConnectionProfileRepositoryImpl(
     if (guid.isBlank()) return false
     val profilePretty = storage.decodeServerConfig(guid)
     if (profilePretty == null) {
-      Log.d({ "Save Profile: failure, decodeServerConfig" }, LOG_TAG)
+      Log.w({ "Save Profile: failure, decodeServerConfig" }, LOG_TAG)
       return false
     }
     if (isLocalSave) {
@@ -122,7 +122,7 @@ class ConnectionProfileRepositoryImpl(
       val profileJson = JsonUtil.toJson(profilePretty)
       val updatedBody = currentBody + SEPARATOR + profileJson
       storage.setLocalProfiles(updatedBody)
-      Log.d({ "Save Profile [LOCAL]: success" }, LOG_TAG)
+      Log.i({ "Save Profile [LOCAL]: success" }, LOG_TAG)
       storedProfilesCache.clear()
       profilesCacheReactive.clear()
       return true
@@ -132,7 +132,7 @@ class ConnectionProfileRepositoryImpl(
       if (isSaved) return false
       val profileJson = JsonUtil.toJson(profilePretty)
       writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
-      Log.d({ "Save Profile: success" }, LOG_TAG)
+      Log.i({ "Save Profile: success" }, LOG_TAG)
       remoteSourceCaches[url]?.clear()
       profilesCacheReactive.clear()
       return true
@@ -286,7 +286,7 @@ class ConnectionProfileRepositoryImpl(
           ?.first
 
       if (bestProfile != null) {
-        Log.d({ "Fetch profiles: best profile ${bestProfile.subscriptionId}" }, LOG_TAG)
+        Log.i({ "Fetch profiles: best profile ${bestProfile.subscriptionId}" }, LOG_TAG)
         measuredCache.set(bestProfile)
       } else {
         Log.w({ "Fetch profiles: no reachable profile found" }, LOG_TAG)
@@ -308,7 +308,7 @@ class ConnectionProfileRepositoryImpl(
     currentBody: String,
   ): Boolean {
     val id = connectionProfile.subscriptionId
-    Log.d({ "Save Profile: check for $id" }, LOG_TAG)
+    Log.v({ "Save Profile: check for $id" }, LOG_TAG)
     if (id in currentBody) {
       Log.d({ "Save Profile: already saved" }, LOG_TAG)
       return true
@@ -329,7 +329,7 @@ class ConnectionProfileRepositoryImpl(
     }
     val guid = UUID.randomUUID().toString()
     storage.encodeServerConfig(guid, profile)
-    Log.d({ "Connect: profile stored locally as $guid" }, LOG_TAG)
+    Log.i({ "Connect: profile stored locally as $guid" }, LOG_TAG)
     return guid
   }
 
