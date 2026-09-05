@@ -75,3 +75,25 @@ handshakes. `dns = null` в speedtest-конфиге означает, что р
 - `force = true` → параллельный замер всех профилей на пуле `cpu * 4`;
   `force = false` → последовательно, с промежуточным обновлением `lastMeasured`.
 - `Protocol.Custom` и `Protocol.PolicyGroup` не пингуются (`isPingable()`).
+
+### Семантика замеров (после рефакторинга)
+
+- **Per-profile таймаут** — `PER_PROFILE_TIMEOUT_MS = 15s`. Блокирующий JNI-вызов нельзя
+  прервать, поэтому замер выполняется в `CompletableFuture` на пуле, а корутина ожидает его
+  через `withTimeout`: по таймауту профиль получает `-1`, батч продолжается; «зависший» вызов
+  доживает на своём потоке, результат отбрасывается.
+- **Отмена** — новый `pingProfiles` отменяет предыдущий батч (`batchJob?.cancel()` +
+  `ensureActive()` в последовательной ветке); незавершённые нативные вызовы доживают и
+  игнорируются.
+- **Результаты**:
+  - `batch: StateFlow<BatchResult?>` — последний завершённый батч с монотонным `id`; потребитель
+    (`ConnectionProfileRepositoryImpl.fetch`) ждёт именно свой id через
+    `pingManager.batch.first { it?.id == batchId }`, защищаясь от stale-данных.
+  - `measureResults: SharedFlow<Map>` (без replay) — разовая эмиссия для UI; поздние подписчики
+    ничего не получают, что корректно для «свежего» списка.
+  - `lastMeasured: StateFlow<Pair?>` — прогресс последовательного батча, сбрасывается при старте
+    нового.
+- **`pingSaved`** — fire-and-forget (`scope.launch(dispatcher)`), не блокирует UI; результат
+  персистится в `KeyValueStorage.encodeServerTestDelayMillis`.
+- **Конвенция задержек**: `0` = не замеряно, `-1` (`FAILED_DELAY_MS`) = недостижим/ошибка;
+  `< 0` трактуется как «невалидный» в `removeInvalidServer`.
