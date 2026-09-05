@@ -149,7 +149,7 @@ object RouteFactory {
             CoroutineScope(
               SupervisorJob() + Dispatchers.Default +
                 CoroutineExceptionHandler { _, e ->
-                  Log.e({ "${e.cause} + ${e.message}" })
+                  Log.e({ "ScreenScope unhandled exception (route=$id)" }, throwable = e)
                 },
             )
             private set
@@ -228,7 +228,7 @@ object RouteFactory {
                       disposeCommand.tryEmit(command)
                       throw e
                     } catch (e: Throwable) {
-                      Log.e({ "ScreenScope error" }, throwable = e)
+                      Log.e({ "ScreenScope error (route=$id, command=$command)" }, throwable = e)
                       val error = errorMapper(e)
                       _error.value = error
                       _processing.value = null
