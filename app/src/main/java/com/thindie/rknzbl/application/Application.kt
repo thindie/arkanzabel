@@ -6,12 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.thindie.engine.core.Log
 import com.thindie.engine.core.Router
 import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.BuildConfig
@@ -53,7 +53,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
         if (intent?.action != AppConfig.BROADCAST_ACTION_ACTIVITY) return
         when (intent.getIntExtra("key", -1)) {
           AppConfig.MSG_STATE_START_FAILURE -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: start == failure")
+            Log.w({ "vpnActivityReceiver: start == failure" }, AppConfig.TAG)
             val fallback = this@Application.getString(R.string.vpn_core_failure_unspecified)
             val broadcastString = readBroadcastString(intent, "content")
             val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
@@ -63,25 +63,25 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
           AppConfig.MSG_STATE_RUNNING,
           AppConfig.MSG_STATE_START_SUCCESS,
           -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: running or started")
+            Log.i({ "vpnActivityReceiver: running or started" }, AppConfig.TAG)
             vpnRuntimeState.value = WorkState.Running
           }
 
           AppConfig.MSG_STATE_NOT_RUNNING -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: not running")
+            Log.i({ "vpnActivityReceiver: not running" }, AppConfig.TAG)
             vpnRuntimeState.value = WorkState.Idle
           }
           AppConfig.MSG_STATE_STOP_SUCCESS,
           -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: stopped")
+            Log.i({ "vpnActivityReceiver: stopped" }, AppConfig.TAG)
             vpnRuntimeState.value = WorkState.Idle
           }
 
           AppConfig.MSG_STATE_SAVE_PROFILE -> {
             applicationScope.coroutineScope.launch {
-              Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: received message")
+              Log.d({ "vpnActivityReceiver: Save Profile: received message" }, AppConfig.TAG)
               val guid = KeyValueStorage.getSelectServer() ?: return@launch
-              Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: selected profile determined")
+              Log.d({ "vpnActivityReceiver: Save Profile: selected profile determined" }, AppConfig.TAG)
               applicationScope.connectionProfileRepository.save(guid)
             }
           }

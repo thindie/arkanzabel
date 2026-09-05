@@ -1,7 +1,7 @@
 package com.thindie.rknzbl.application
 
 import android.content.Context
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
@@ -165,10 +165,10 @@ class ProfilePingManager(
     } catch (c: CancellationException) {
       throw c
     } catch (e: AppError) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for $label: ${e.userReadable}", e)
+      Log.w({ "Speedtest config failed for $label: ${e.userReadable}" }, AppConfig.TAG, e)
       null
     } catch (e: RuntimeException) {
-      Log.w(AppConfig.TAG, "Speedtest config failed for $label", e)
+      Log.w({ "Speedtest config failed for $label" }, AppConfig.TAG, e)
       null
     }
   }
@@ -193,14 +193,14 @@ class ProfilePingManager(
             if (error == null) {
               cont.resume(value)
             } else {
-              Log.w(AppConfig.TAG, "Speedtest task failed for $label", error)
+              Log.w({ "Speedtest task failed for $label" }, AppConfig.TAG, error)
               cont.resume(FAILED_DELAY_MS)
             }
           }
         }
       }
     } catch (t: TimeoutCancellationException) {
-      Log.w(AppConfig.TAG, "Speedtest timed out for $label after ${PER_PROFILE_TIMEOUT_MS}ms")
+      Log.w({ "Speedtest timed out for $label after ${PER_PROFILE_TIMEOUT_MS}ms" }, AppConfig.TAG)
       FAILED_DELAY_MS
     } catch (c: CancellationException) {
       throw c
