@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_speed_legend">White dot — data is flowing, grey — idle for now.\nName • upload↑ download↓ — how much data left / arrived through this route (VPN or direct).</string>
+</resources>
