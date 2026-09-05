@@ -1,8 +1,7 @@
 package com.thindie.engine.core
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 fun <S : ViewState, C : Command> stateSink(
   scope: ScreenScope<S, C>,
@@ -18,19 +17,14 @@ fun <S : ViewState, C : Command, R : Any?> ScreenScope<S, C>.sub(flow: Flow<R>):
 fun <S : ViewState, C : Command, R : Any?> Pair<ScreenScope<S, C>, Flow<R>>.transition(
   action: suspend (S, S, R) -> Unit = { _, _, _ -> },
   block: suspend (S, R) -> S = { s, _ -> s },
-): ScreenScope<S, C> {
+) {
   val (screenScope, flow) = this
-  screenScope.scope?.let { scope ->
-    flow
-      .onEach { any ->
-        val current = screenScope.state.value
-        val newState = block(current, any)
-        if (newState != current) {
-          action(current, newState, any)
-          screenScope.update(newState)
-        }
+  screenScope.scope?.launch {
+    flow.collect { any ->
+      val (current, newState) = screenScope.updateState { state -> block(state, any) }
+      if (newState != current) {
+        action(current, newState, any)
       }
-      .launchIn(scope)
+    }
   }
-  return screenScope
 }

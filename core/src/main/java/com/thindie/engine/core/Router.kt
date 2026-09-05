@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -155,6 +156,8 @@ object RouteFactory {
             private set
 
           private val _state = MutableStateFlow(initialState)
+          private val stateMutex = Mutex()
+
           override val state: StateFlow<S>
             get() = _state.asStateFlow()
 
@@ -183,9 +186,12 @@ object RouteFactory {
             _event.send(event)
           }
 
-          override fun update(s: S) {
-            _state.update { s }
-          }
+          override suspend fun updateState(transform: suspend (S) -> S): Pair<S, S> =
+            stateMutex.withLock {
+              val current = _state.value
+              val newState = transform(current)
+              current to _state.updateAndGet { newState }
+            }
 
           override fun send(command: C) {
             Log.d({ "Received command: $command" })
@@ -219,7 +225,7 @@ object RouteFactory {
                       loadingJob.cancel()
                       // end region
                       if (newState != null) {
-                        _state.value = newState
+                        _state.update { newState }
                       }
                       _error.value = null
                       _processing.value = null

@@ -18,7 +18,7 @@ interface ScreenScope<S : ViewState, C : Command> {
 
   val scope: CoroutineScope?
 
-  fun update(s: S)
+  suspend fun updateState(transform: suspend (S) -> S): Pair<S, S>
 
   val event: SharedFlow<ServiceCommand.UiEvent>
 
