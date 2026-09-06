@@ -48,8 +48,6 @@ import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.Locale
 import com.thindie.rknzbl.feature.home.HomeFlow as LegacyHomeFlow
@@ -69,60 +67,52 @@ class MainActivity : ComponentActivity() {
     val router = app.requireRouter()
     awaitFinish()
 
-    app.applicationScope.useNewDesignFeature()
-      .onEach { useNewDesignInitially ->
-        if (useNewDesignInitially) {
-          // New design: separate setContent with bottom nav flows
-          val homeFlow = HomeFlow(router).apply { app.applicationScope.inject(this) }
-          val profilesFlow = ProfilesFlow(router).apply { app.applicationScope.inject(this) }
-          val settingsFlow =
-            SettingsFlow(router).apply {
-              app.applicationScope.inject(this)
-              onFinishBuilder { router.pop() }
-            }
-          val logsFlow = LogsFlow(router)
-
-          IntroFlow(
-            router,
-            hasPushPermission = hasPermission,
-            appContext = app,
-          )
-            .onFinishBuilder { homeFlow.start() }
-            .start()
-
-          setContent {
-            AppContent(
-              router,
-              onHomeClick = { homeFlow.switch() },
-              onProfilesClick = { profilesFlow.switch() },
-              onSettingsClick = { settingsFlow.switch() },
-              onLogsClick = { logsFlow.switch() },
-            )
+    setContent {
+      val useNewDesign by app.applicationScope.useNewDesignFeature().collectAsState(false)
+      if (useNewDesign) {
+        val homeFlow = HomeFlow(router).apply { app.applicationScope.inject(this) }
+        val profilesFlow = ProfilesFlow(router).apply { app.applicationScope.inject(this) }
+        val settingsFlow =
+          SettingsFlow(router).apply {
+            app.applicationScope.inject(this)
+            onFinishBuilder { router.pop() }
           }
-        } else {
-          // Legacy design: original setContent
-          val legacyHomeFlow =
-            LegacyHomeFlow(
-              router = router,
-              appContext = app,
-              repository = app.applicationScope.connectionProfileRepository,
-              settingsRepository = app.applicationScope.settingsRepositoryLegacy,
-            )
+        val logsFlow = LogsFlow(router)
 
-          IntroFlow(
-            router,
-            hasPushPermission = hasPermission,
+        IntroFlow(
+          router,
+          hasPushPermission = hasPermission,
+          appContext = app,
+        )
+          .onFinishBuilder { homeFlow.start() }
+          .start()
+
+        AppContent(
+          router,
+          onHomeClick = { homeFlow.switch() },
+          onProfilesClick = { profilesFlow.switch() },
+          onSettingsClick = { settingsFlow.switch() },
+          onLogsClick = { logsFlow.switch() },
+        )
+      } else {
+        val legacyHomeFlow =
+          LegacyHomeFlow(
+            router = router,
             appContext = app,
+            repository = app.applicationScope.connectionProfileRepository,
+            settingsRepository = app.applicationScope.settingsRepositoryLegacy,
           )
-            .onFinishBuilder { legacyHomeFlow.start() }
-            .start()
 
-          setContent {
-            LegacyAppContent(app, router)
-          }
-        }
+        IntroFlow(
+          router,
+          hasPushPermission = hasPermission,
+          appContext = app,
+        )
+          .onFinishBuilder { legacyHomeFlow.start() }
+          .start()
+        LegacyAppContent(app, router)
       }
-      .launchIn(app.applicationScope.coroutineScope)
+    }
   }
 
   @Composable
