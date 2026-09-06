@@ -2,7 +2,6 @@ package com.thindie.rknzbl.appfeatures.profiles.ui
 
 import androidx.compose.runtime.Immutable
 import com.thindie.engine.core.ViewState
-import com.thindie.engine.core.WorkState
 import com.v2ray.ang.dto.ConnectionProfile
 
 @Immutable
@@ -12,6 +11,6 @@ data class ScreenState(
   val savedProfiles: List<ConnectionProfile> = emptyList(),
   val pingResults: Map<String, Long> = emptyMap(),
   val connectedProfile: ConnectionProfile? = null,
-  val workState: WorkState = WorkState.Idle,
-  val connectingSince: Long? = null,
+  val profilesLoading: Boolean = false,
+  val serviceConnection: Boolean = false,
 ) : ViewState

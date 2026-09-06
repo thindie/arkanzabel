@@ -2,9 +2,11 @@ package com.thindie.rknzbl.application.work
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
@@ -12,7 +14,10 @@ import org.jetbrains.annotations.TestOnly
 class GlobalJobManager(private val coroutineScope: CoroutineScope) {
   private val jobs = MutableStateFlow<Map<Any, Job>>(mutableMapOf())
 
-  fun isRunning(key: Any): Flow<Boolean> = jobs.map { it[key] != null }
+  fun isRunning(key: Any): SharedFlow<Boolean> =
+    jobs
+      .map { it[key] != null }
+      .shareIn(coroutineScope, started = SharingStarted.Lazily)
 
   @TestOnly
   fun isRunningSync(key: Any) = jobs.value[key] != null
@@ -42,5 +47,11 @@ class GlobalJobManager(private val coroutineScope: CoroutineScope) {
     jobs.update { current ->
       if (current[key] === job) current - key else current
     }
+  }
+
+  companion object {
+    const val FETCH_KEY = "profiles-fetch"
+    const val FETCH_KEY_HOME = "profiles-fetch-home"
+    const val CONNECT_KEY = "vpn-connect"
   }
 }

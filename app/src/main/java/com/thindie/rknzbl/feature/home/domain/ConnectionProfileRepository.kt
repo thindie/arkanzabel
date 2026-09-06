@@ -48,7 +48,7 @@ interface ConnectionProfileRepository {
   val profiles: Flow<List<ConnectionProfile>>
   val stored: Flow<List<ConnectionProfile>>
 
-  val measured: Flow<ConnectionProfile?>
+  val lastMeasured: Flow<ConnectionProfile?>
 
-  val connected: Flow<Boolean>
+  val connected: Flow<ConnectionProfile?>
 }

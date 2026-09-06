@@ -30,11 +30,9 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
@@ -75,16 +73,10 @@ class ConnectionProfileRepositoryImpl(
   override val stored: Flow<List<ConnectionProfile>> = profilesCacheReactive.value.map { it ?: emptyList() }
 
   private val measuredCache = Cache<ConnectionProfile?>(null)
-  override val measured: Flow<ConnectionProfile?> = measuredCache.value
+  override val lastMeasured: Flow<ConnectionProfile?> = measuredCache.value
 
-  // Polls V2RayServiceManager every 2 seconds when collected
-  override val connected: Flow<Boolean> =
-    flow {
-      while (true) {
-        emit(V2RayServiceManager.isRunning())
-        delay(2000L)
-      }
-    }
+  // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
+  override val connected: Flow<ConnectionProfile?> = activeProfileCache.value
 
   override suspend fun read(): List<ConnectionProfile> {
     if (isLocalSave) {
@@ -203,10 +195,12 @@ class ConnectionProfileRepositoryImpl(
     if (guid == null) {
       throw IllegalStateException("Cannot store profile: ${profile.subscriptionId}")
     }
+    activeProfileCache.set(profile)
     V2RayServiceManager.startVService(context = appContext, guid = guid)
   }
 
   override suspend fun disconnect() {
+    activeProfileCache.clear()
     V2RayServiceManager.stopVService(appContext)
   }
 

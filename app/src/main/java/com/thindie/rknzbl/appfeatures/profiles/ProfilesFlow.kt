@@ -19,10 +19,12 @@ class ProfilesFlow(
     internal set
 
   override fun start() {
-    go(ProfilesRoute(flowModule.connectionProfileRepository))
+    go(ProfilesRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager))
   }
 
   fun switch() {
-    router.replaceTop(ProfilesRoute(flowModule.connectionProfileRepository))
+    router.replaceTop(
+      ProfilesRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager),
+    )
   }
 }

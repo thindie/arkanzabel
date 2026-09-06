@@ -16,6 +16,7 @@ import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
+import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -47,6 +48,9 @@ class ApplicationScope private constructor(application: Application) {
 
   val pingManager = ProfilePingManager(application, coroutineScope)
 
+  // App-level job manager: long-running work (measure/connect) survives screen navigation.
+  val globalJobManager = GlobalJobManager(coroutineScope)
+
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
       appContext = application,
@@ -72,11 +76,13 @@ class ApplicationScope private constructor(application: Application) {
   val homeFlowModule =
     HomeFlowModule(
       connectionProfileRepository = connectionProfileRepository,
+      globalJobManager = globalJobManager,
     )
 
   val profilesFlowModule =
     ProfilesFlowModule(
       connectionProfileRepository = connectionProfileRepository,
+      globalJobManager = globalJobManager,
     )
 
   private val perAppProxyRepository: PerAppProxyRepository =
