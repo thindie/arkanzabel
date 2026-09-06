@@ -47,8 +47,10 @@ import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.feature.intro.IntroFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.util.Locale
 import com.thindie.rknzbl.feature.home.HomeFlow as LegacyHomeFlow
 
