@@ -1,20 +1,13 @@
 package com.thindie.rknzbl.appfeatures.home.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -31,9 +24,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
-import com.thindie.engine.core.ServiceCommand
-import com.thindie.engine.core.WorkState
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.VSpacer
+import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
@@ -57,57 +50,25 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      // Status text above button
-      if (state.workState is WorkState.Running) {
+      if (state.connectedProfile != null) {
         Text(
           text = stringResource(R.string.home_connected),
           style = AppTheme.typography.labelMedium,
           color = AppTheme.colors.successPrimary,
         )
-        state.connectedProfile?.let { profile ->
-          Text(
-            text = profile.remarks.ifEmpty { "${profile.server}:${profile.serverPort}" },
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
-          )
-        }
-      }
-
-      // Big pulsing button - disabled when no source available
-      ConnectButton(
-        state = state,
-        enabled = state.connectedProfile != null || state.workState is WorkState.Running,
-        onClick = {
-          if (state.connectedProfile == null && state.workState !is WorkState.Running) {
-            scope.sendEvent(ServiceCommand.UiEvent.SnackText("Нет выбранного источника"))
-          } else {
-            scope.send(ScreenCommand.ToggleConnect)
-          }
-        },
-      )
-
-      // Error message
-      AnimatedVisibility(
-        visible = state.workState is WorkState.Error,
-        enter = fadeIn(),
-        exit = fadeOut(),
-      ) {
-        val error = state.workState as? WorkState.Error
         Text(
-          text = error?.message ?: "",
-          style = AppTheme.typography.labelMedium,
-          color = AppTheme.colors.errorPrimary,
-        )
-      }
-
-      // Hint below
-      if (state.workState is WorkState.Idle) {
-        Text(
-          text = stringResource(R.string.home_tap_to_connect),
-          style = AppTheme.typography.labelMedium,
+          text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
+          style = AppTheme.typography.bodySmall,
           color = AppTheme.colors.contentSecondary,
         )
       }
+
+      ConnectButton(
+        state = state,
+        onClick = {
+          scope.send(ScreenCommand.ToggleConnect)
+        },
+      )
     }
   }
 }
@@ -115,12 +76,10 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
 @Composable
 internal fun ConnectButton(
   state: ScreenState,
-  enabled: Boolean,
   onClick: () -> Unit,
 ) {
-  val isConnected = state.workState is WorkState.Running && state.connectedProfile != null
-  val isConnecting = state.workState is WorkState.Running && state.connectedProfile == null
-
+  val isConnected = state.connectedProfile != null
+  val isConnecting = state.serviceConnection
   // Fix: animateFloatAsState properly reacts to state changes unlike infinite transition
   val targetScale = if (isConnected) 1.05f else 1f
   val scale =
@@ -138,9 +97,12 @@ internal fun ConnectButton(
       Modifier
         .size(160.dp)
         .scale(scale)
-        .border(BorderStroke(2.dp, borderColor), CircleShape)
-        .background(bgColor, CircleShape)
-        .clickable(enabled = enabled && !isConnecting) { onClick() },
+        .surface(
+          border = BorderStroke(2.dp, borderColor),
+          shape = CircleShape,
+          onClick = onClick.takeIf { !isConnecting },
+          backgroundColor = bgColor,
+        ),
     contentAlignment = Alignment.Center,
   ) {
     if (isConnecting) {
@@ -153,7 +115,7 @@ internal fun ConnectButton(
           tint = borderColor,
           modifier = Modifier.size(48.dp),
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        VSpacer(8.dp)
         Text(
           text = if (isConnected) stringResource(R.string.home_btn_disconnect) else stringResource(R.string.home_btn_connect),
           style = AppTheme.typography.labelLarge,
@@ -168,7 +130,7 @@ internal fun ConnectButton(
 @Composable
 private fun HomeScreenDisconnectedPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState(), enabled = true) {}
+    ConnectButton(state = ScreenState()) {}
   }
 }
 
@@ -179,10 +141,8 @@ private fun HomeScreenConnectedPreview() {
     ConnectButton(
       state =
         ScreenState(
-          workState = WorkState.Running,
           connectedProfile = ConnectionProfile(protocol = Protocol.Vmess, subscriptionId = "test", remarks = "Test Server"),
         ),
-      enabled = true,
     ) {}
   }
 }
@@ -191,6 +151,6 @@ private fun HomeScreenConnectedPreview() {
 @Composable
 private fun HomeScreenConnectingPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState(workState = WorkState.Running), enabled = true) {}
+    ConnectButton(state = ScreenState()) {}
   }
 }
