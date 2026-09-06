@@ -1,11 +1,14 @@
 *.iml
 .gradle
 /local.properties
+.idea
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/compiler.xml
+.idea\compiler.xml
+.idea\misc.xml
 /.idea/misc.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
