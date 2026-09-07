@@ -73,7 +73,9 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
           )
         } else {
           LazyColumn {
-            items(profilesToShow, key = { it.subscriptionId }) { profile ->
+            // No custom keys: subscriptionId is not unique across parsed profiles,
+            // which would crash LazyColumn with duplicate keys.
+            items(profilesToShow) { profile ->
               val borderState =
                 when {
                   st.connectedProfile == profile -> ProfileBorderState.Connected
