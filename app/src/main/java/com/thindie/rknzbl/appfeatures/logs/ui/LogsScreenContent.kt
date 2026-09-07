@@ -1,20 +1,30 @@
 package com.thindie.rknzbl.appfeatures.logs.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.Log
 import com.thindie.engine.core.LogEntry
@@ -24,67 +34,79 @@ import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.TabItem
 import com.thindie.engine.uikit.TabRow
 import com.thindie.engine.uikit.VSpacer
+import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
 internal fun LogsScreenContent(scope: ScreenScope<LogsScreenState, LogsScreenCommand>) {
   val st by scope.state.collectAsState()
+  val listState = rememberLazyListState()
+  val coroutineScope = rememberCoroutineScope()
+  val filteredEntries = filterEntries(st.entries, st.filterLevel)
 
   AppScreen(scope) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(
-        text = stringResource(R.string.logs_title),
-        style = AppTheme.typography.headlineLarge,
-        color = AppTheme.colors.contentPrimary,
-      )
-      VSpacer(8.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+      Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+          text = stringResource(R.string.logs_title),
+          style = AppTheme.typography.headlineLarge,
+          color = AppTheme.colors.contentPrimary,
+        )
+        VSpacer(8.dp)
 
-      // Filter tabs
-      TabRow(
-        items = filterTabs(),
-        selected = st.filterLevel?.ordinal ?: 0,
-        onTabSelected = { index ->
-          val filters = LogFilter.entries
-          if (index < filters.size) {
-            scope.send(LogsScreenCommand.SetFilter(filters[index]))
+        // Filter tabs
+        TabRow(
+          items = filterTabs(),
+          selected = st.filterLevel?.ordinal ?: 0,
+          onTabSelected = { index ->
+            val filters = LogFilter.entries
+            if (index < filters.size) {
+              scope.send(LogsScreenCommand.SetFilter(filters[index]))
+            } else {
+              scope.send(LogsScreenCommand.SetFilter(null))
+            }
+          },
+        ) { _ ->
+          VSpacer(8.dp)
+
+          // Log entries list
+          if (filteredEntries.isEmpty()) {
+            Text(
+              text = stringResource(R.string.logs_empty),
+              modifier = Modifier.fillMaxWidth(),
+              color = AppTheme.colors.contentSecondary,
+            )
           } else {
-            scope.send(LogsScreenCommand.SetFilter(null))
-          }
-        },
-      ) { _ ->
-        VSpacer(8.dp)
-
-        // Clear button
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End) {
-          Button(onClick = { scope.send(LogsScreenCommand.ClearLogs) }) {
-            Text(stringResource(R.string.logs_clear))
-          }
-        }
-
-        VSpacer(8.dp)
-
-        // Log entries list
-        val filteredEntries = filterEntries(st.entries, st.filterLevel)
-
-        if (filteredEntries.isEmpty()) {
-          Text(
-            text = stringResource(R.string.logs_empty),
-            modifier = Modifier.fillMaxWidth(),
-            color = AppTheme.colors.contentSecondary,
-          )
-        } else {
-          LazyColumn {
-            itemsIndexed(filteredEntries) { index, entry ->
-              LogEntryRow(entry)
-              if (index < filteredEntries.size - 1) {
-                VSpacer(4.dp)
+            LazyColumn(state = listState) {
+              itemsIndexed(filteredEntries) { index, entry ->
+                LogEntryRow(entry)
+                if (index < filteredEntries.size - 1) {
+                  VSpacer(4.dp)
+                }
               }
             }
           }
         }
       }
+
+      LogsFab(
+        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        scrollEnabled = filteredEntries.size > 1,
+        onClear = { scope.send(LogsScreenCommand.ClearLogs(st.filterLevel)) },
+        onScrollUp = {
+          if (filteredEntries.size > 1) {
+            coroutineScope.launch { listState.animateScrollToItem(0) }
+          }
+        },
+        onScrollDown = {
+          if (filteredEntries.size > 1) {
+            coroutineScope.launch { listState.animateScrollToItem(filteredEntries.size - 1) }
+          }
+        },
+      )
     }
   }
 }
@@ -98,14 +120,8 @@ private fun filterEntries(
   entries: List<LogEntry>,
   filter: LogFilter?,
 ): List<LogEntry> {
-  if (filter == null) return entries
-  return when (filter) {
-    LogFilter.ALL -> entries
-    LogFilter.ERROR -> entries.filter { it.level == Log.Level.ERROR }
-    LogFilter.WARN -> entries.filter { it.level == Log.Level.WARN }
-    LogFilter.INFO -> entries.filter { it.level == Log.Level.INFO }
-    LogFilter.DEBUG -> entries.filter { it.level == Log.Level.DEBUG }
-  }
+  val level = filter?.level ?: return entries
+  return entries.filter { it.level == level }
 }
 
 @Composable
@@ -154,5 +170,84 @@ private fun levelColor(level: Log.Level): androidx.compose.ui.graphics.Color {
     Log.Level.WARN -> AppTheme.colors.accentPrimary
     Log.Level.INFO -> AppTheme.colors.successPrimary
     else -> AppTheme.colors.contentSecondary
+  }
+}
+
+@Composable
+internal fun LogsFab(
+  modifier: Modifier = Modifier,
+  onClear: () -> Unit,
+  onScrollUp: () -> Unit,
+  onScrollDown: () -> Unit,
+  scrollEnabled: Boolean = true,
+) {
+  Column(
+    modifier = modifier,
+    horizontalAlignment = Alignment.End,
+    verticalArrangement = Arrangement.spacedBy(12.dp),
+  ) {
+    FabIconButton(
+      iconRes = R.drawable.ic_erase_24,
+      contentDescription = stringResource(R.string.logs_clear),
+      onClick = onClear,
+    )
+    FabIconButton(
+      iconRes = R.drawable.ic_chevron_up_24,
+      contentDescription = stringResource(R.string.logs_scroll_up),
+      enabled = scrollEnabled,
+      onClick = onScrollUp,
+    )
+    FabIconButton(
+      iconRes = R.drawable.ic_chevron_down_24,
+      contentDescription = stringResource(R.string.logs_scroll_down),
+      enabled = scrollEnabled,
+      onClick = onScrollDown,
+    )
+  }
+}
+
+@Composable
+private fun FabIconButton(
+  iconRes: Int,
+  contentDescription: String?,
+  onClick: () -> Unit,
+  enabled: Boolean = true,
+) {
+  val backgroundColor by animateColorAsState(
+    targetValue = if (enabled) AppTheme.colors.accentPrimary else AppTheme.colors.backgroundSecondary,
+    label = "fab-bg",
+  )
+  Box(
+    modifier =
+      Modifier
+        .size(52.dp)
+        .surface(
+          shape = RoundedCornerShape(16.dp),
+          backgroundColor = backgroundColor,
+          enabled = enabled,
+          onClick = onClick,
+        ),
+    contentAlignment = Alignment.Center,
+  ) {
+    Icon(
+      painter = painterResource(iconRes),
+      contentDescription = contentDescription,
+      tint = if (enabled) AppTheme.colors.onAccentPrimary else AppTheme.colors.contentSecondary,
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LogsFabPreview() {
+  AppTheme {
+    Box(modifier = Modifier.fillMaxSize()) {
+      LogsFab(
+        modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        onClear = {},
+        onScrollUp = {},
+        onScrollDown = {},
+      )
+    }
   }
 }

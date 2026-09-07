@@ -17,8 +17,11 @@ internal fun LogsRoute() =
     execute = { c: LogsScreenCommand, s: LogsScreenState ->
       when (c) {
         is LogsScreenCommand.ClearLogs -> {
-          LogSinkProvider.clear()
-          s.copy(entries = emptyList())
+          val level = c.filter?.level
+          LogSinkProvider.clearByLevel(level)
+          s.copy(
+            entries = if (level == null) emptyList() else s.entries.filterNot { it.level == level },
+          )
         }
 
         is LogsScreenCommand.SetFilter -> s.copy(filterLevel = c.filter)
@@ -26,15 +29,10 @@ internal fun LogsRoute() =
     },
     section = HomeSection.Logs,
     stateSink = { screenScope ->
-      // Receive log entries from the sink provider
-      screenScope.sub(LogSinkProvider.entries).transition { state, newEntries ->
-        val combined = state.entries + newEntries
-        // Keep last 500 entries
-        if (combined.size > 500) {
-          state.copy(entries = combined.takeLast(500))
-        } else {
-          state.copy(entries = combined)
-        }
+      // Mirror the provider's full history into screen state on each emission
+      screenScope.sub(LogSinkProvider.entries).transition { state, providerEntries ->
+        val trimmed = if (providerEntries.size > 500) providerEntries.takeLast(500) else providerEntries
+        state.copy(entries = trimmed)
       }
     },
     routeContent = { LogsScreenContent(it) },

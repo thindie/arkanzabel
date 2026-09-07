@@ -39,9 +39,13 @@ object LogSinkProvider {
   }
 
   /**
-   * Clear all collected log entries.
+   * Clears all collected log entries of the given level, or everything when [level] is null.
    */
-  fun clear() {
-    _entries.value = emptyList()
+  fun clearByLevel(level: Log.Level?) {
+    if (level == null) {
+      _entries.value = emptyList()
+    } else {
+      _entries.update { current -> current.filterNot { it.level == level } }
+    }
   }
 }
