@@ -365,6 +365,7 @@ object V2RayServiceManager {
    */
   private class CoreCallback : CoreCallbackHandler {
     override fun startup(): Long {
+      Log.i({ "Core callback: startup" }, AppConfig.TAG_KERNEL)
       return SUCCESS
     }
 
@@ -373,12 +374,13 @@ object V2RayServiceManager {
      * @SUCCESS for success, any other value for failure.
      */
     override fun shutdown(): Long {
+      Log.i({ "Core callback: shutdown" }, AppConfig.TAG_KERNEL)
       val serviceControl = serviceControl?.get() ?: return -1
       return try {
         serviceControl.stopService()
         SUCCESS
       } catch (runtime: RuntimeException) {
-        Log.e({ "Failed to stop service in callback" }, AppConfig.TAG, runtime)
+        Log.e({ "Failed to stop service in callback" }, AppConfig.TAG_KERNEL, runtime)
         FAILURE
       }
     }
@@ -393,6 +395,7 @@ object V2RayServiceManager {
       l: Long,
       s: String?,
     ): Long {
+      Log.i({ "Core callback: onEmitStatus code=$l msg=${s ?: "null"}" }, AppConfig.TAG_KERNEL)
       return SUCCESS
     }
   }
@@ -413,6 +416,9 @@ object V2RayServiceManager {
       intent: Intent?,
     ) {
       val serviceControl = serviceControl?.get() ?: return
+      val key = intent?.getIntExtra("key", 0)
+      val action = intent?.action
+      Log.i({ "Service broadcast key=$key action=$action" }, AppConfig.TAG_KERNEL)
       when (intent?.getIntExtra("key", 0)) {
         AppConfig.MSG_REGISTER_CLIENT -> {
           if (isRunningInternal) {

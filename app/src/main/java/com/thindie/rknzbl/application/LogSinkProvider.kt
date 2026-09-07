@@ -30,7 +30,7 @@ object LogSinkProvider {
     initialized = true
 
     Log.addSink { entry ->
-      if (entry.tag == AppConfig.TAG) {
+      if (entry.tag == AppConfig.TAG_KERNEL) {
         // Kernel log — route to kernel flow
         _kernelEntries.update { current ->
           val combined = current + entry

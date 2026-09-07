@@ -13,6 +13,7 @@ object AppConfig {
 
   val ANG_PACKAGE: String get() = hostApplicationId
   val TAG: String get() = hostApplicationId
+  val TAG_KERNEL: String get() = "$TAG${"_KERNEL"}"
 
   val httpUserAgent: String get() = "$hostApplicationId/$hostVersionName"
 
