@@ -45,7 +45,8 @@ internal fun LogsScreenContent(scope: ScreenScope<LogsScreenState, LogsScreenCom
   val st by scope.state.collectAsState()
   val listState = rememberLazyListState()
   val coroutineScope = rememberCoroutineScope()
-  val filteredEntries = filterEntries(st.entries, st.filterLevel)
+  val activeEntries = if (st.rootTab == LogsRootTab.KERNEL) st.kernelEntries else st.debugEntries
+  val filteredEntries = filterEntries(activeEntries, st.filterLevel)
 
   AppScreen(scope) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -57,34 +58,48 @@ internal fun LogsScreenContent(scope: ScreenScope<LogsScreenState, LogsScreenCom
         )
         VSpacer(8.dp)
 
-        // Filter tabs
+        // Root tabs (kernel / debug)
         TabRow(
-          items = filterTabs(),
-          selected = st.filterLevel?.ordinal ?: 0,
+          items = rootTabs(),
+          selected = st.rootTab.ordinal,
           onTabSelected = { index ->
-            val filters = LogFilter.entries
-            if (index < filters.size) {
-              scope.send(LogsScreenCommand.SetFilter(filters[index]))
-            } else {
-              scope.send(LogsScreenCommand.SetFilter(null))
+            val tabs = LogsRootTab.entries
+            if (index < tabs.size) {
+              scope.send(LogsScreenCommand.SetRootTab(tabs[index]))
             }
           },
         ) { _ ->
           VSpacer(8.dp)
 
-          // Log entries list
-          if (filteredEntries.isEmpty()) {
-            Text(
-              text = stringResource(R.string.logs_empty),
-              modifier = Modifier.fillMaxWidth(),
-              color = AppTheme.colors.contentSecondary,
-            )
-          } else {
-            LazyColumn(state = listState) {
-              itemsIndexed(filteredEntries) { index, entry ->
-                LogEntryRow(entry)
-                if (index < filteredEntries.size - 1) {
-                  VSpacer(4.dp)
+          // Filter tabs
+          TabRow(
+            items = filterTabs(),
+            selected = st.filterLevel?.ordinal ?: 0,
+            onTabSelected = { index ->
+              val filters = LogFilter.entries
+              if (index < filters.size) {
+                scope.send(LogsScreenCommand.SetFilter(filters[index]))
+              } else {
+                scope.send(LogsScreenCommand.SetFilter(null))
+              }
+            },
+          ) { _ ->
+            VSpacer(8.dp)
+
+            // Log entries list
+            if (filteredEntries.isEmpty()) {
+              Text(
+                text = stringResource(R.string.logs_empty),
+                modifier = Modifier.fillMaxWidth(),
+                color = AppTheme.colors.contentSecondary,
+              )
+            } else {
+              LazyColumn(state = listState) {
+                itemsIndexed(filteredEntries) { index, entry ->
+                  LogEntryRow(entry)
+                  if (index < filteredEntries.size - 1) {
+                    VSpacer(4.dp)
+                  }
                 }
               }
             }
@@ -109,6 +124,11 @@ internal fun LogsScreenContent(scope: ScreenScope<LogsScreenState, LogsScreenCom
       )
     }
   }
+}
+
+@Composable
+private fun rootTabs(): List<TabItem> {
+  return LogsRootTab.entries.map { tab -> TabItem(stringResource(tab.labelRes)) }
 }
 
 @Composable

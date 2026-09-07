@@ -6,4 +6,6 @@ sealed interface LogsScreenCommand : Command {
   data class ClearLogs(val filter: LogFilter? = null) : LogsScreenCommand
 
   data class SetFilter(val filter: LogFilter?) : LogsScreenCommand
+
+  data class SetRootTab(val tab: LogsRootTab) : LogsScreenCommand
 }

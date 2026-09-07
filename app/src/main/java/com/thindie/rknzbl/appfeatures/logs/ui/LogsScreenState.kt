@@ -7,9 +7,16 @@ import com.thindie.engine.core.ViewState
 
 @Immutable
 internal data class LogsScreenState(
-  val entries: List<LogEntry> = emptyList(),
+  val kernelEntries: List<LogEntry> = emptyList(),
+  val debugEntries: List<LogEntry> = emptyList(),
+  val rootTab: LogsRootTab = LogsRootTab.KERNEL,
   val filterLevel: LogFilter? = null,
 ) : ViewState
+
+enum class LogsRootTab(val labelRes: Int) {
+  KERNEL(com.thindie.rknzbl.R.string.logs_tab_kernel),
+  DEBUG(com.thindie.rknzbl.R.string.logs_tab_debug),
+}
 
 enum class LogFilter(val labelRes: Int) {
   ALL(com.thindie.rknzbl.R.string.logs_filter_all),

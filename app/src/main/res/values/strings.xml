@@ -41,6 +41,8 @@
 
     <!-- Log screen strings -->
     <string name="logs_title">Application Log</string>
+    <string name="logs_tab_kernel">Kernel</string>
+    <string name="logs_tab_debug">Debug</string>
     <string name="logs_clear">Clear</string>
     <string name="logs_scroll_up">Scroll up</string>
     <string name="logs_scroll_down">Scroll down</string>

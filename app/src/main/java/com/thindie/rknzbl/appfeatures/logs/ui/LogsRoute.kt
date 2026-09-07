@@ -18,21 +18,34 @@ internal fun LogsRoute() =
       when (c) {
         is LogsScreenCommand.ClearLogs -> {
           val level = c.filter?.level
-          LogSinkProvider.clearByLevel(level)
-          s.copy(
-            entries = if (level == null) emptyList() else s.entries.filterNot { it.level == level },
-          )
+          if (s.rootTab == LogsRootTab.KERNEL) {
+            LogSinkProvider.clearKernelByLevel(level)
+            s.copy(
+              kernelEntries =
+                if (level == null) emptyList() else s.kernelEntries.filterNot { it.level == level },
+            )
+          } else {
+            LogSinkProvider.clearByLevel(level)
+            s.copy(
+              debugEntries =
+                if (level == null) emptyList() else s.debugEntries.filterNot { it.level == level },
+            )
+          }
         }
 
         is LogsScreenCommand.SetFilter -> s.copy(filterLevel = c.filter)
+
+        is LogsScreenCommand.SetRootTab -> s.copy(rootTab = c.tab)
       }
     },
     section = HomeSection.Logs,
     stateSink = { screenScope ->
-      // Mirror the provider's full history into screen state on each emission
-      screenScope.sub(LogSinkProvider.entries).transition { state, providerEntries ->
-        val trimmed = if (providerEntries.size > 500) providerEntries.takeLast(500) else providerEntries
-        state.copy(entries = trimmed)
+      screenScope.sub(LogSinkProvider.kernelEntries).transition { state, kernelEntries ->
+        state.copy(kernelEntries = kernelEntries)
+      }
+
+      screenScope.sub(LogSinkProvider.entries).transition { state, debugEntries ->
+        state.copy(debugEntries = debugEntries)
       }
     },
     routeContent = { LogsScreenContent(it) },

@@ -41,6 +41,8 @@
 
     <!-- Log screen strings -->
     <string name="logs_title">Журнал приложения</string>
+    <string name="logs_tab_kernel">Ядро</string>
+    <string name="logs_tab_debug">Отладка</string>
     <string name="logs_clear">Очистить</string>
     <string name="logs_empty">Записей пока нет</string>
     <string name="logs_filter_all">Все</string>
