@@ -166,8 +166,8 @@ class GlobalJobManagerTest {
       val emissions = mutableListOf<Boolean>()
       val done = CompletableDeferred<Unit>()
 
-      launch(UnconfinedTestDispatcher(testScheduler)) {
-        manager.isRunning("key").take(3).collect { emissions.add(it) }
+      backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        manager.isRunningCold("key").take(3).collect { emissions.add(it) }
       }
 
       advanceUntilIdle()

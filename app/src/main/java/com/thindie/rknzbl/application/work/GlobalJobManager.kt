@@ -20,6 +20,9 @@ class GlobalJobManager(private val coroutineScope: CoroutineScope) {
       .shareIn(coroutineScope, started = SharingStarted.Lazily)
 
   @TestOnly
+  fun isRunningCold(key: Any) = jobs.map { it[key] != null }
+
+  @TestOnly
   fun isRunningSync(key: Any) = jobs.value[key] != null
 
   fun launchGlobal(
