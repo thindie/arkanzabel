@@ -18,6 +18,9 @@ import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
+import com.thindie.rknzbl.feature.home.data.ProfileHttpGateway
+import com.thindie.rknzbl.feature.home.data.ProfileHttpGatewayImpl
+import com.thindie.rknzbl.feature.home.data.V2RayVpnServiceGateway
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -51,14 +54,18 @@ class ApplicationScope private constructor(application: Application) {
   // App-level job manager: long-running work (measure/connect) survives screen navigation.
   val globalJobManager = GlobalJobManager(coroutineScope)
 
+  private val profileHttpGateway: ProfileHttpGateway =
+    ProfileHttpGatewayImpl(webDavUrl = "", userName = "", password = "")
+
+  private val vpnServiceGateway = V2RayVpnServiceGateway()
+
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
       appContext = application,
       pingManager = pingManager,
-      userName = "",
-      password = "",
-      url = "",
       storage = KeyValueStorage,
+      httpGateway = profileHttpGateway,
+      vpnGateway = vpnServiceGateway,
     )
 
   val settingsRepository: SettingsRepository = SettingsRepositoryImpl(storage = KeyValueStorage)

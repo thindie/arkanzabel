@@ -111,7 +111,7 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Start -> {
       withContext(Dispatchers.IO) {
-        val profiles = repository.readFromSource(homeState.sourceUrl)
+        val profiles = repository.fetchFromSource(homeState.sourceUrl)
         (appContext as Application).applicationScope.pingManager.pingProfiles(
           profiles = profiles,
           force = settingsRepository.forceProfileMeasure.first(),
@@ -131,7 +131,7 @@ private suspend fun HomeFlow.exec(
     ScreenCommand.Refresh -> {
       withContext(Dispatchers.IO) {
         repository.invalidateRemoteCache(homeState.sourceUrl)
-        val profiles = repository.readFromSource(homeState.sourceUrl)
+        val profiles = repository.fetchFromSource(homeState.sourceUrl)
         (appContext as Application).applicationScope.pingManager.pingProfiles(
           profiles = profiles,
           force = settingsRepository.forceProfileMeasure.first(),

@@ -22,8 +22,7 @@ internal fun HomeRoute(
   execute = { c: ScreenCommand, s: ScreenState ->
     when (c) {
       ScreenCommand.ToggleConnect -> {
-        val target = s.connectedProfile ?: return@let null
-        globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(target) }
+        globalJobManager.launchGlobal(FETCH_KEY_HOME) { repository.fetch(false) }
         null
       }
     }
@@ -31,13 +30,12 @@ internal fun HomeRoute(
   section = HomeSection.Home,
   stateSink = { screenScope ->
     // Best measured profile — connect target shown while not connected
-    screenScope.sub(repository.lastMeasured).transition { state, bestProfile ->
-      if (bestProfile != null && state.connectedProfile == null) {
-        state.copy(connectedProfile = bestProfile)
-      } else {
-        state
-      }
-    }
+    screenScope.sub(repository.lastMeasured).transition(
+      action = { _, _, profile ->
+        if (profile == null) return@transition
+        globalJobManager.launchGlobal(CONNECT_KEY, { repository.connect(profile) })
+      },
+    )
 
     screenScope.sub(repository.connected).transition { state, connected ->
       state.copy(connectedProfile = connected)

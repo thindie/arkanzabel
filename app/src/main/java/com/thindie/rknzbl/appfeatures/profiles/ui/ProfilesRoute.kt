@@ -8,6 +8,7 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * Factory: creates the profiles-tab route for the new bottom-nav design.
@@ -23,7 +24,7 @@ internal fun ProfilesRoute(
     suspend { c: ScreenCommand, s: ScreenState ->
       when (c) {
         is ScreenCommand.LoadProfiles -> {
-          globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch() }
+          globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(false) }
           null
         }
 
@@ -38,7 +39,7 @@ internal fun ProfilesRoute(
           repository.invalidateCaches()
           // Restart the fetch/measure job without waiting for the previous one to finish.
           globalJobManager.cancel(FETCH_KEY)
-          globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch() }
+          globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(true) }
           null
         }
       }
@@ -47,10 +48,12 @@ internal fun ProfilesRoute(
   section = HomeSection.Profiles,
   stateSink = { screenScope ->
     // All profiles after fetch + ping
-    screenScope.sub(repository.profiles).transition { state, allProfiles ->
-      val saved = allProfiles.filter { repository.isSaved(it) }
-      val main = allProfiles - saved.toSet()
-      state.copy(profiles = main, savedProfiles = saved)
+    screenScope.sub(repository.received.filterNotNull()).transition { state, allProfiles ->
+      state.copy(profiles = allProfiles)
+    }
+
+    screenScope.sub(repository.stored.filterNotNull()).transition { state, saved ->
+      state.copy(savedProfiles = saved)
     }
 
     // Best measured profile — connect target shown while not connected

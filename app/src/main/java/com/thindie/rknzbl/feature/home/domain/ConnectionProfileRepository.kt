@@ -31,7 +31,7 @@ interface ConnectionProfileRepository {
   suspend fun invalidateRemoteCache(url: String)
 
   /** Read profiles from a specific remote source, using its dedicated cache. */
-  suspend fun readFromSource(url: String): List<ConnectionProfile>
+  suspend fun fetchFromSource(url: String): List<ConnectionProfile>
 
   // VPN service operations
   suspend fun connect(profile: ConnectionProfile)
@@ -43,10 +43,10 @@ interface ConnectionProfileRepository {
   fun getConnectedServerName(): String
 
   // Reactive API for connect -> fetch -> measure -> apply flow
-  suspend fun fetch()
+  suspend fun fetch(force: Boolean)
 
-  val profiles: Flow<List<ConnectionProfile>>
-  val stored: Flow<List<ConnectionProfile>>
+  val received: Flow<List<ConnectionProfile>?>
+  val stored: Flow<List<ConnectionProfile>?>
 
   val lastMeasured: Flow<ConnectionProfile?>
 
