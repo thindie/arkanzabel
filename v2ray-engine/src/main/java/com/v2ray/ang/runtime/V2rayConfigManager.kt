@@ -301,7 +301,7 @@ object V2rayConfigManager {
       config.server ?: throw ConfigValidationError(
         message = "Server address is missing",
         userReadable = "Server address is missing",
-        extras = mapOf("guid" to guid),
+        extras = mapOf("guid" to config.toString()),
       )
     if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
       throw ConfigValidationError(
