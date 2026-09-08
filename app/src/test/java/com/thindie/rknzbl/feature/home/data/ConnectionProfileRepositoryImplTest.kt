@@ -1,6 +1,5 @@
 package com.thindie.rknzbl.feature.home.data
 
-import android.content.Context
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
@@ -32,7 +31,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ConnectionProfileRepositoryImplTest {
-  private val appContext = mockk<Context>(relaxed = true)
   private val pingManager = mockk<ProfilePingManager>(relaxed = true)
   private val httpGateway = mockk<ProfileHttpGateway>()
   private val vpnGateway = mockk<VpnServiceGateway>(relaxed = true)
@@ -60,7 +58,6 @@ class ConnectionProfileRepositoryImplTest {
     every { KeyValueStorage.isLocalSaveEnabled() } returns localSave
     every { KeyValueStorage.getCustomSourceUrl() } returns sourceUrl
     return ConnectionProfileRepositoryImpl(
-      appContext = appContext,
       pingManager = pingManager,
       storage = KeyValueStorage,
       httpGateway = httpGateway,
@@ -462,7 +459,7 @@ class ConnectionProfileRepositoryImplTest {
 
       repository.connect(p)
 
-      verify(exactly = 1) { vpnGateway.startVService(appContext, guidSlot.captured) }
+      verify(exactly = 1) { vpnGateway.startVService(guidSlot.captured) }
       assertEquals(p, repository.connected.first())
     }
 
@@ -476,7 +473,7 @@ class ConnectionProfileRepositoryImplTest {
 
       repository.connect(p)
 
-      verify(exactly = 1) { vpnGateway.startVService(appContext, "guid-exists") }
+      verify(exactly = 1) { vpnGateway.startVService("guid-exists") }
       verify(exactly = 0) { KeyValueStorage.encodeServerConfig(any(), any()) }
     }
 
@@ -491,7 +488,7 @@ class ConnectionProfileRepositoryImplTest {
 
       repository.disconnect()
 
-      verify(exactly = 1) { vpnGateway.stopVService(appContext) }
+      verify(exactly = 1) { vpnGateway.stopVService() }
       assertNull(repository.connected.first())
     }
 

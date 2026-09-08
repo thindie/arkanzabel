@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.home.data
 
-import android.content.Context
 import com.thindie.engine.core.Cache
 import com.thindie.engine.core.Log
+import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 class ConnectionProfileRepositoryImpl(
-  private val appContext: Context,
   private val pingManager: ProfilePingManager,
   private val storage: KeyValueStorage,
   private val httpGateway: ProfileHttpGateway,
@@ -96,6 +95,7 @@ class ConnectionProfileRepositoryImpl(
 
   // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
   private val activeProfileCache = Cache<ConnectionProfile?>(null)
+
   override val connected: Flow<ConnectionProfile?> = activeProfileCache.value
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
@@ -212,12 +212,12 @@ class ConnectionProfileRepositoryImpl(
       findOrSaveProfileGuid(profile)
         ?: error("Cannot store profile: ${profile.subscriptionId}")
     activeProfileCache.set(profile)
-    vpnGateway.startVService(context = appContext, guid = guid)
+    vpnGateway.startVService(guid = guid)
   }
 
   override suspend fun disconnect() {
     activeProfileCache.clear()
-    vpnGateway.stopVService(appContext)
+    vpnGateway.stopVService()
   }
 
   override fun isConnected(): Boolean {
@@ -227,6 +227,8 @@ class ConnectionProfileRepositoryImpl(
   override fun getConnectedServerName(): String {
     return vpnGateway.getRunningServerName()
   }
+
+  override val vpnState: Flow<WorkState> = vpnGateway.serviceState
 
   override suspend fun fetch(force: Boolean) {
     val url = storage.getCustomSourceUrl()

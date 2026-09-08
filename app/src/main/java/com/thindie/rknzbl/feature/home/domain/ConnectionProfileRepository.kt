@@ -1,5 +1,6 @@
 package com.thindie.rknzbl.feature.home.domain
 
+import com.thindie.engine.core.WorkState
 import com.v2ray.ang.dto.ConnectionProfile
 import kotlinx.coroutines.flow.Flow
 
@@ -41,6 +42,8 @@ interface ConnectionProfileRepository {
   fun isConnected(): Boolean
 
   fun getConnectedServerName(): String
+
+  val vpnState: Flow<WorkState>
 
   // Reactive API for connect -> fetch -> measure -> apply flow
   suspend fun fetch(force: Boolean)
