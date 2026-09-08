@@ -48,6 +48,16 @@ interface ConnectionProfileRepository {
   // Reactive API for connect -> fetch -> measure -> apply flow
   suspend fun fetch(force: Boolean)
 
+  /**
+   * Marks a pending connect intent so the reactive measurement path auto-connects once it yields
+   * a best profile. Survives route recreation on purpose: a pending intent completes when the
+   * user returns to Home.
+   */
+  fun requestConnect()
+
+  /** Atomically reads and clears the pending connect intent. */
+  fun takeConnectIntent(): Boolean
+
   val received: Flow<List<ConnectionProfile>?>
   val stored: Flow<List<ConnectionProfile>?>
 

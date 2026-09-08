@@ -61,6 +61,8 @@
     <string name="home_tap_to_connect">Tap to connect</string>
     <string name="home_btn_disconnect">Disconnect</string>
     <string name="home_btn_connect">Connect</string>
+    <string name="home_no_profiles_cache">No profiles in cache</string>
+    <string name="home_vpn_connection_error">Connection failed</string>
     <string name="home_profile_unreachable">Unreachable</string>
     <string name="home_profile_ping_ms">%d ms</string>
     <string name="home_downloaded_profiles_header">Downloaded profiles</string>

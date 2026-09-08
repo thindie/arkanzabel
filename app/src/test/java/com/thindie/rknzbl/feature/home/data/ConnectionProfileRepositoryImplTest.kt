@@ -1,5 +1,6 @@
 package com.thindie.rknzbl.feature.home.data
 
+import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
@@ -35,6 +36,10 @@ class ConnectionProfileRepositoryImplTest {
   private val httpGateway = mockk<ProfileHttpGateway>()
   private val vpnGateway = mockk<VpnServiceGateway>(relaxed = true)
 
+  // The relaxed mock's chained StateFlow would never emit, so [connected] (which combines with it)
+  // needs a real controllable flow.
+  private val serviceState = MutableStateFlow<WorkState>(WorkState.Idle)
+
   @BeforeTest
   fun setUp() {
     // mockkObject spies the singleton: unstubbed calls fall through to the real implementation,
@@ -46,6 +51,7 @@ class ConnectionProfileRepositoryImplTest {
     every { KeyValueStorage.setLastAutoSaveProfilesJson(any()) } just Runs
     every { KeyValueStorage.decodeSettingsBool(any(), any()) } returns false
     coEvery { httpGateway.writeWebDav(any()) } just Runs
+    every { vpnGateway.serviceState } returns serviceState
   }
 
   @AfterTest
@@ -490,6 +496,40 @@ class ConnectionProfileRepositoryImplTest {
 
       verify(exactly = 1) { vpnGateway.stopVService() }
       assertNull(repository.connected.first())
+    }
+
+  @Test
+  fun `connected emits null while the vpn service reports an error`() =
+    runTest {
+      val repository = createRepository(localSave = true)
+      val p = profile("e1")
+      every { KeyValueStorage.encodeServerConfig(any(), p) } answers { firstArg<String>() }
+      repository.connect(p)
+      assertEquals(p, repository.connected.first())
+
+      serviceState.value = WorkState.Error(message = "boom")
+      assertNull(repository.connected.first())
+
+      serviceState.value = WorkState.Running
+      assertEquals(p, repository.connected.first())
+    }
+
+  @Test
+  fun `connect intent is set by requestConnect, consumed once and cleared on disconnect`() =
+    runTest {
+      val repository = createRepository(localSave = true)
+      assertFalse(repository.takeConnectIntent())
+
+      repository.requestConnect()
+      assertTrue(repository.takeConnectIntent())
+      assertFalse(repository.takeConnectIntent())
+
+      repository.requestConnect()
+      val p = profile("f1")
+      every { KeyValueStorage.encodeServerConfig(any(), p) } answers { firstArg<String>() }
+      repository.connect(p)
+      repository.disconnect()
+      assertFalse(repository.takeConnectIntent())
     }
 
   @Test

@@ -56,5 +56,6 @@ class GlobalJobManager(private val coroutineScope: CoroutineScope) {
     const val FETCH_KEY = "profiles-fetch"
     const val FETCH_KEY_HOME = "profiles-fetch-home"
     const val CONNECT_KEY = "vpn-connect"
+    const val DISCONNECT_KEY = "vpn-disconnect"
   }
 }

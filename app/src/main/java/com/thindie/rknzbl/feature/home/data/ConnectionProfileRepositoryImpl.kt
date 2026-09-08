@@ -14,9 +14,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ConnectionProfileRepositoryImpl(
   private val pingManager: ProfilePingManager,
@@ -96,7 +98,22 @@ class ConnectionProfileRepositoryImpl(
   // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
   private val activeProfileCache = Cache<ConnectionProfile?>(null)
 
-  override val connected: Flow<ConnectionProfile?> = activeProfileCache.value
+  // Emits null while the VPN service reports an error, so a failed start does not look connected.
+  override val connected: Flow<ConnectionProfile?> =
+    combine(activeProfileCache.value, vpnGateway.serviceState) { profile, state ->
+      if (state is WorkState.Error) null else profile
+    }
+
+  // Pending connect intent: set by [requestConnect], consumed when the reactive path launches a
+  // connect, cleared on disconnect. Intentionally survives route recreation so a pending intent
+  // completes once the user returns to Home.
+  private val connectRequested = AtomicBoolean(false)
+
+  override fun requestConnect() {
+    connectRequested.set(true)
+  }
+
+  override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
   override val received: Flow<List<ConnectionProfile>?> =
@@ -216,6 +233,7 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override suspend fun disconnect() {
+    connectRequested.set(false)
     activeProfileCache.clear()
     vpnGateway.stopVService()
   }

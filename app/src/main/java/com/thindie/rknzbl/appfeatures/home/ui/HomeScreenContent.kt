@@ -78,9 +78,13 @@ internal fun ConnectButton(
   state: ScreenState,
   onClick: () -> Unit,
 ) {
-  val isConnected = state.connectedProfile != null
-  val isConnecting = state.serviceConnection
-  // Fix: animateFloatAsState properly reacts to state changes unlike infinite transition
+  val isConnected = state.connectedProfile != null || state.screenVpnState == ScreenVpnState.Running
+  val isWorking =
+    state.profilesLoading ||
+      state.screenVpnState == ScreenVpnState.TurningOn ||
+      state.screenVpnState == ScreenVpnState.TurningOff
+  val hasError = state.screenVpnState == ScreenVpnState.Error
+  val showEmpty = !isConnected && !isWorking && !hasError && !state.hasProfiles
   val targetScale = if (isConnected) 1.05f else 1f
   val scale =
     animateFloatAsState(
@@ -89,7 +93,13 @@ internal fun ConnectButton(
       label = "scale",
     ).value
 
-  val borderColor = if (isConnected) AppTheme.colors.successPrimary else AppTheme.colors.accentPrimary
+  val borderColor =
+    when {
+      isConnected -> AppTheme.colors.successPrimary
+      hasError -> AppTheme.colors.errorPrimary
+      showEmpty -> AppTheme.colors.contentSecondary
+      else -> AppTheme.colors.accentPrimary
+    }
   val bgColor = if (isConnected) AppTheme.colors.successPrimary.copy(alpha = 0.15f) else AppTheme.colors.backgroundSecondary
 
   Box(
@@ -100,12 +110,13 @@ internal fun ConnectButton(
         .surface(
           border = BorderStroke(2.dp, borderColor),
           shape = CircleShape,
-          onClick = onClick.takeIf { !isConnecting },
+          // Tappable in Error state: a tap retries the connect.
+          onClick = onClick.takeIf { !isWorking },
           backgroundColor = bgColor,
         ),
     contentAlignment = Alignment.Center,
   ) {
-    if (isConnecting) {
+    if (isWorking) {
       CircularProgressIndicator(color = borderColor, modifier = Modifier.size(48.dp))
     } else {
       Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -117,7 +128,13 @@ internal fun ConnectButton(
         )
         VSpacer(8.dp)
         Text(
-          text = if (isConnected) stringResource(R.string.home_btn_disconnect) else stringResource(R.string.home_btn_connect),
+          text =
+            when {
+              isConnected -> stringResource(R.string.home_btn_disconnect)
+              hasError -> state.vpnError ?: stringResource(R.string.home_vpn_connection_error)
+              showEmpty -> stringResource(R.string.home_no_profiles_cache)
+              else -> stringResource(R.string.home_btn_connect)
+            },
           style = AppTheme.typography.labelLarge,
           color = borderColor,
         )
@@ -128,9 +145,17 @@ internal fun ConnectButton(
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeScreenDisconnectedPreview() {
+private fun HomeScreenNoProfilesPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState()) {}
+    ConnectButton(state = ScreenState(hasProfiles = false)) {}
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenConnectPreview() {
+  AppTheme {
+    ConnectButton(state = ScreenState(hasProfiles = true)) {}
   }
 }
 
@@ -149,8 +174,24 @@ private fun HomeScreenConnectedPreview() {
 
 @Preview(showBackground = true)
 @Composable
+private fun HomeScreenMeasuringPreview() {
+  AppTheme {
+    ConnectButton(state = ScreenState(profilesLoading = true)) {}
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
 private fun HomeScreenConnectingPreview() {
   AppTheme {
-    ConnectButton(state = ScreenState()) {}
+    ConnectButton(state = ScreenState(screenVpnState = ScreenVpnState.TurningOn)) {}
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenErrorPreview() {
+  AppTheme {
+    ConnectButton(state = ScreenState(screenVpnState = ScreenVpnState.Error, vpnError = "Connection failed")) {}
   }
 }
