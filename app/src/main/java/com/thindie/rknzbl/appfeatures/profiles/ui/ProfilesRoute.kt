@@ -8,7 +8,9 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.withContext
 
 /**
  * Factory: creates the profiles-tab route for the new bottom-nav design.
@@ -28,18 +30,24 @@ internal fun ProfilesRoute(
           null
         }
 
-        is ScreenCommand.SelectTab -> s.copy(selectedTab = c.index)
+        is ScreenCommand.SelectTab -> {
+          val next = s.copy(selectedTab = c.index)
+          if (c.index == 1) {
+            // Load stored profiles on demand: the reactive `stored` flow only emits
+            // after the local-storage cache has been populated by a read.
+            val stored =
+              withContext(Dispatchers.IO) {
+                repository.invalidateStoredCache()
+                repository.read()
+              }
+            next.copy(savedProfiles = stored)
+          } else {
+            next
+          }
+        }
 
         is ScreenCommand.ConnectProfile -> {
           globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(c.profile) }
-          null
-        }
-
-        is ScreenCommand.RefreshProfiles -> {
-          repository.invalidateCaches()
-          // Restart the fetch/measure job without waiting for the previous one to finish.
-          globalJobManager.cancel(FETCH_KEY)
-          globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(true) }
           null
         }
       }

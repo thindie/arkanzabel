@@ -89,7 +89,6 @@
     <string name="profiles_title">Profiles</string>
     <string name="profiles_tab_main">Main</string>
     <string name="profiles_tab_saved">Saved</string>
-    <string name="profiles_refresh">Refresh</string>
     <string name="profiles_empty">No profiles yet</string>
 
     <!-- Settings screen strings -->

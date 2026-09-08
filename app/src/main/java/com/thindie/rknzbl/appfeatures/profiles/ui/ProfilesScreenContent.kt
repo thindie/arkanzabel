@@ -1,12 +1,10 @@
 package com.thindie.rknzbl.appfeatures.profiles.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,20 +49,6 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
         val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
 
         VSpacer(16.dp)
-
-        // Refresh profiles on saved tab
-        if (it == 1) {
-          Row(
-            modifier = Modifier.padding(bottom = 8.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-          ) {
-            Button(
-              onClick = { scope.send(ScreenCommand.RefreshProfiles) },
-            ) {
-              Text(stringResource(R.string.profiles_refresh))
-            }
-          }
-        }
 
         if (profilesToShow.isEmpty()) {
           Text(

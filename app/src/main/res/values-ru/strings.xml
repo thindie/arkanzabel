@@ -85,7 +85,6 @@
     <string name="profiles_title">Профили</string>
     <string name="profiles_tab_main">Основные</string>
     <string name="profiles_tab_saved">Сохранённые</string>
-    <string name="profiles_refresh">Обновить</string>
     <string name="profiles_empty">Пока нет профилей</string>
 
     <!-- Settings screen strings -->
