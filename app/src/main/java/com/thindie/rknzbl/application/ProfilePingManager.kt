@@ -18,6 +18,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -205,6 +206,23 @@ class ProfilePingManager(
     } catch (c: CancellationException) {
       throw c
     }
+  }
+
+  /**
+   * Measures all pingable [profiles] in parallel and returns the one with the lowest delay, or
+   * null when none is reachable. The result is published as a completed batch so consumers of
+   * [batch]/[measureResults] (best-profile reconnect, fresh delay lists) see it like any other run.
+   */
+  suspend fun measure(profiles: List<ConnectionProfile>): ConnectionProfile? {
+    val pingable = profiles.filter { it.protocol.isPingable() }
+    if (pingable.isEmpty()) return null
+    val results =
+      coroutineScope {
+        pingable.map { profile -> async(dispatcher) { profile to measureInMemory(profile) } }.awaitAll().toMap()
+      }
+    _batch.value = BatchResult(++nextBatchId, results)
+    resultsFlow.tryEmit(results)
+    return results.filterValues { it >= 0 }.minByOrNull { it.value }?.key
   }
 
   private fun Protocol.isPingable(): Boolean =

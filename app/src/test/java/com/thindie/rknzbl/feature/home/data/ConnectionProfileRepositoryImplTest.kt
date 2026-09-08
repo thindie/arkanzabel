@@ -351,6 +351,39 @@ class ConnectionProfileRepositoryImplTest {
       assertNull(repository.lastMeasured.first())
     }
 
+  // measureInMemory()
+
+  @Test
+  fun `measureInMemory returns null and skips ping when no profiles are cached`() =
+    runTest {
+      val repository = createRepository(localSave = true, sourceUrl = "https://example.com/sub")
+      every { KeyValueStorage.getLocalProfiles() } returns null
+
+      assertNull(repository.measureInMemory())
+      coVerify(exactly = 0) { pingManager.measure(any()) }
+    }
+
+  @Test
+  fun `measureInMemory measures the deduplicated union of stored and received profiles`() =
+    runTest {
+      val url = "https://example.com/sub"
+      val repository = createRepository(localSave = true, sourceUrl = url)
+      val p1 = profile("a")
+      every { KeyValueStorage.getLocalProfiles() } returns json(p1)
+      repository.read()
+
+      // p1 is present on both sides: it must be measured only once.
+      val p2 = profile("b")
+      val body = listOf(p1, p2).joinToString(separator = "\n") { JsonUtil.toJson(it) }
+      coEvery { httpGateway.fetchSource(url) } returns body
+      repository.fetchFromSource(url)
+
+      coEvery { pingManager.measure(any()) } returns p1
+
+      assertEquals(p1, repository.measureInMemory())
+      coVerify(exactly = 1) { pingManager.measure(listOf(p1, p2)) }
+    }
+
   @Test
   fun `invalidateCaches forces a re-read from storage`() =
     runTest {

@@ -115,6 +115,13 @@ class ConnectionProfileRepositoryImpl(
 
   override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
 
+  override suspend fun measureInMemory(): ConnectionProfile? {
+    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
+    val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
+    if (profiles.isEmpty()) return null
+    return pingManager.measure(profiles)
+  }
+
   // Profiles received from remote sources: view of the active source URL's cache entry.
   override val received: Flow<List<ConnectionProfile>?> =
     cacheVersion.map { storage.getCustomSourceUrl()?.let { url -> cacheValueSyncInternal(url) } }

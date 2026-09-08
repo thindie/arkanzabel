@@ -58,6 +58,9 @@ interface ConnectionProfileRepository {
   /** Atomically reads and clears the pending connect intent. */
   fun takeConnectIntent(): Boolean
 
+  /** Measures all cached in-memory profiles and returns the fastest reachable one. */
+  suspend fun measureInMemory(): ConnectionProfile?
+
   val received: Flow<List<ConnectionProfile>?>
   val stored: Flow<List<ConnectionProfile>?>
 
