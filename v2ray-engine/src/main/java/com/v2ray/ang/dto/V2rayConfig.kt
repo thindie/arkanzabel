@@ -7,7 +7,7 @@ import com.v2ray.ang.enums.Protocol
 data class V2rayConfig(
   var remarks: String? = null,
   var stats: Any? = null,
-  val log: Log,
+  var log: Log,
   var policy: Policy? = null,
   val inbounds: ArrayList<Inbound>,
   var outbounds: ArrayList<Outbound>,

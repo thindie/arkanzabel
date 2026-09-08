@@ -208,6 +208,11 @@ object V2rayConfigManager {
     val v2rayConfig = initV2rayConfig(context)
     v2rayConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
+    v2rayConfig.log =
+      v2rayConfig.log.copy(
+        access = CoreLogFiles.accessFile(context).absolutePath,
+        error = CoreLogFiles.errorFile(context).absolutePath,
+      )
     v2rayConfig.remarks = config.remarks
 
     val assembled = configAssembler.applyStandardSteps(v2rayConfig, config)
@@ -245,6 +250,11 @@ object V2rayConfigManager {
     val initialConfig = initV2rayConfig(context)
     initialConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
+    initialConfig.log =
+      initialConfig.log.copy(
+        access = CoreLogFiles.accessFile(context).absolutePath,
+        error = CoreLogFiles.errorFile(context).absolutePath,
+      )
     initialConfig.remarks = config.remarks
 
     val configWithInbounds = getInbounds(initialConfig)

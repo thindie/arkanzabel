@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
             app.applicationScope.inject(this)
             onFinishBuilder { router.pop() }
           }
-        val logsFlow = LogsFlow(router)
+        val logsFlow = LogsFlow(router, app)
 
         IntroFlow(
           router,
