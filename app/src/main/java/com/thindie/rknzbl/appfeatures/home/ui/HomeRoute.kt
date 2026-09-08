@@ -22,17 +22,23 @@ internal fun HomeRoute(
   execute = { c: ScreenCommand, s: ScreenState ->
     when (c) {
       ScreenCommand.ToggleConnect -> {
-        val isConnected = s.connectedProfile != null || s.screenVpnState == ScreenVpnState.Running
-        if (isConnected) {
-          globalJobManager.launchGlobal(DISCONNECT_KEY) { repository.disconnect() }
-        } else if (s.lastBestProfile != null) {
-          // Fast path: a measured best profile is already known, reconnect without re-measuring.
-          val profile = s.lastBestProfile
-          globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(profile) }
-        } else {
-          // Slow path: measure first and auto-connect once the batch yields a best profile.
-          repository.requestConnect()
-          globalJobManager.launchGlobal(FETCH_KEY_HOME) { repository.fetch(false) }
+        when (s.screenVpnState) {
+          // Error counts as disconnected: a tap retries the connect.
+          ScreenVpnState.NotStarted, ScreenVpnState.Error -> {
+            val best = s.lastBestProfile
+            if (best != null) {
+              // Fast path: a measured best profile is already known, reconnect without re-measuring.
+              globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(best) }
+            } else if (s.hasProfiles) {
+              // Slow path: measure cached profiles and connect to the fastest reachable one.
+              globalJobManager.launchGlobal(CONNECT_KEY) {
+                val measured = repository.measureInMemory() ?: return@launchGlobal
+                repository.connect(measured)
+              }
+            }
+          }
+          ScreenVpnState.TurningOff, ScreenVpnState.TurningOn -> null // busy: ignore taps
+          ScreenVpnState.Running -> globalJobManager.launchGlobal(DISCONNECT_KEY) { repository.disconnect() }
         }
         null
       }
