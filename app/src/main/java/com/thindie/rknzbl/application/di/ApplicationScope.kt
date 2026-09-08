@@ -23,6 +23,7 @@ import com.thindie.rknzbl.feature.home.data.ProfileHttpGatewayImpl
 import com.thindie.rknzbl.feature.home.data.V2RayVpnServiceGateway
 import com.thindie.rknzbl.feature.home.data.VpnServiceGateway
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -54,8 +55,15 @@ class ApplicationScope private constructor(application: Application) {
   val globalJobManager = GlobalJobManager(coroutineScope)
   val vpnStateTracker: VpnServiceGateway = V2RayVpnServiceGateway.instance(application)
 
+  // WebDAV endpoint for remote (non-local) profile storage; null when not configured.
+  private val webDavConfig: WebDavConfig? = KeyValueStorage.decodeWebDavConfig()
+
   private val profileHttpGateway: ProfileHttpGateway =
-    ProfileHttpGatewayImpl(webDavUrl = "", userName = "", password = "")
+    ProfileHttpGatewayImpl(
+      webDavUrl = webDavConfig?.baseUrl.orEmpty(),
+      userName = webDavConfig?.username.orEmpty(),
+      password = webDavConfig?.password.orEmpty(),
+    )
 
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(

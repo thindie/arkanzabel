@@ -3,6 +3,7 @@ package com.thindie.rknzbl.feature.home.data
 import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.JsonUtil
@@ -50,6 +51,7 @@ class ConnectionProfileRepositoryImplTest {
     every { KeyValueStorage.setLocalProfiles(any()) } just Runs
     every { KeyValueStorage.setLastAutoSaveProfilesJson(any()) } just Runs
     every { KeyValueStorage.decodeSettingsBool(any(), any()) } returns false
+    every { KeyValueStorage.decodeWebDavConfig() } returns null
     coEvery { httpGateway.writeWebDav(any()) } just Runs
     every { vpnGateway.serviceState } returns serviceState
   }
@@ -101,25 +103,29 @@ class ConnectionProfileRepositoryImplTest {
     }
 
   @Test
-  fun `read remote without source url returns empty list and skips network`() =
+  fun `read remote without webdav config returns empty list and skips network`() =
     runTest {
-      val repository = createRepository(localSave = false, sourceUrl = null)
+      val repository = createRepository(localSave = false)
 
       assertTrue(repository.read().isEmpty())
+      coVerify(exactly = 0) { httpGateway.readWebDav() }
       coVerify(exactly = 0) { httpGateway.fetchSource(any()) }
     }
 
   @Test
-  fun `read remote fetches and parses the custom source`() =
+  fun `read remote reads the webdav body and caches it in the stored view`() =
     runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = false, sourceUrl = url)
+      val repository = createRepository(localSave = false)
+      every { KeyValueStorage.decodeWebDavConfig() } returns WebDavConfig(baseUrl = "https://example.com/dav")
       val p1 = profile("a")
       val p2 = profile("b")
-      coEvery { httpGateway.fetchSource(url) } returns "${json(p1)}\n${json(p2)}"
+      coEvery { httpGateway.readWebDav() } returns json(p1, p2)
 
       assertEquals(listOf(p1, p2), repository.read())
-      coVerify(exactly = 1) { httpGateway.fetchSource(url) }
+      // Second read is served from the in-memory cache.
+      assertEquals(listOf(p1, p2), repository.read())
+      coVerify(exactly = 1) { httpGateway.readWebDav() }
+      assertEquals(listOf(p1, p2), repository.stored.first())
     }
 
   // save()

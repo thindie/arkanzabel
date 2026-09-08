@@ -124,18 +124,21 @@ class ConnectionProfileRepositoryImpl(
     cacheVersion.map { storageCacheInternal() }
 
   override suspend fun read(): List<ConnectionProfile> {
-    if (isLocalSave) {
-      val cached = storageCacheInternal()
-      if (cached != null) return cached
+    val cached = storageCacheInternal()
+    if (cached != null) return cached
 
-      val body = storage.getLocalProfiles().orEmpty()
-      val profiles = parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR)
-      setStorageCacheInternal(profiles)
-      return profiles
-    } else {
-      val sourceUrl = storage.getCustomSourceUrl() ?: return emptyList()
-      return fetchFromSource(sourceUrl)
-    }
+    // Stored profiles live in local prefs or on WebDAV depending on the active storage mode.
+    val body =
+      if (isLocalSave) {
+        storage.getLocalProfiles().orEmpty()
+      } else {
+        // No WebDAV endpoint configured: nothing is stored remotely.
+        if (storage.decodeWebDavConfig() == null) return emptyList()
+        httpGateway.readWebDav()
+      }
+    val profiles = parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR)
+    setStorageCacheInternal(profiles)
+    return profiles
   }
 
   override suspend fun save(guid: String): Boolean {
