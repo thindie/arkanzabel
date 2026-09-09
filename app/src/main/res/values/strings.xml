@@ -289,4 +289,6 @@
         <!-- Updates -->
         <string name="faq_updates_title">Where do updates come from?</string>
         <string name="faq_updates_body">New builds and the full source code are published at:</string>
+
+        <string name="app_version_update_snack">Update available</string>
 </resources>

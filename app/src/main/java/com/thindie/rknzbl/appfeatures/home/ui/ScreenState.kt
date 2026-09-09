@@ -13,6 +13,8 @@ internal data class ScreenState(
   val hasProfiles: Boolean = false,
   val screenVpnState: ScreenVpnState = ScreenVpnState.NotStarted,
   val vpnError: String? = null,
+  // Flips true once the update snack has been shown, so it appears at most once per session.
+  val updateShown: Boolean = false,
 ) : ViewState
 
 enum class ScreenVpnState {

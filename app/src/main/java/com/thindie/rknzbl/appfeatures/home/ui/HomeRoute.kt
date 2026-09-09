@@ -1,21 +1,33 @@
 package com.thindie.rknzbl.appfeatures.home.ui
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.thindie.engine.core.RouteFactory
+import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.core.WorkState
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
+import com.thindie.engine.uikit.Action
+import com.thindie.rknzbl.R
 import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.DISCONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY_HOME
+import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
+
+/** Where a tap on the update prompt lands: the project's release page in the browser. */
+private const val RELEASE_URL = "https://github.com/thindie/arkanzabel"
 
 @Suppress("FunctionName", "MagicNumber")
 internal fun HomeRoute(
   repository: ConnectionProfileRepository,
   globalJobManager: GlobalJobManager,
+  context: Context,
+  appVersionResolver: AppVersionResolver,
 ) = RouteFactory.create(
   id = "HomeFlow-home",
   initialState = ScreenState(),
@@ -95,6 +107,37 @@ internal fun HomeRoute(
     ).transition { state, hasProfiles ->
       state.copy(hasProfiles = hasProfiles)
     }
+
+    // Offer an update once a strictly newer remote version is known. The engine fires the action
+    // only when state changes, so the updateShown flag makes the snack appear exactly once; its
+    // tap opens the release page in the browser and it auto-dismisses on its own.
+    screenScope.sub(appVersionResolver.remoteVersion).transition(
+      block = { state, remote ->
+        if (!state.updateShown && appVersionResolver.isUpdateAvailable(remote)) {
+          state.copy(updateShown = true)
+        } else {
+          state
+        }
+      },
+      action = { _, _, _ ->
+        screenScope.sendEvent(
+          ServiceCommand.UiEvent.Snack(
+            Action(
+              listener = { openReleaseInBrowser(context) },
+              resRef = R.string.app_version_update_snack,
+            ),
+          ),
+        )
+      },
+    )
   },
   routeContent = ::HomeScreenContent,
 )
+
+/** Opens [RELEASE_URL] in the default browser. Application context is enough with NEW_TASK. */
+private fun openReleaseInBrowser(context: Context) {
+  context.startActivity(
+    Intent(Intent.ACTION_VIEW, Uri.parse(RELEASE_URL))
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+  )
+}

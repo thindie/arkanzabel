@@ -3,6 +3,7 @@ package com.thindie.rknzbl.application.di
 import android.app.LocaleManager
 import android.os.Build
 import android.os.LocaleList
+import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
 import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
@@ -17,6 +18,10 @@ import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.application.work.GlobalJobManager
+import com.thindie.rknzbl.appversion.AppVersion
+import com.thindie.rknzbl.appversion.AppVersionResolver
+import com.thindie.rknzbl.appversion.AppVersionResolverImpl
+import com.thindie.rknzbl.appversion.REMOTE_VERSION_URL
 import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
 import com.thindie.rknzbl.feature.home.data.ProfileHttpGateway
 import com.thindie.rknzbl.feature.home.data.ProfileHttpGatewayImpl
@@ -65,6 +70,14 @@ class ApplicationScope private constructor(application: Application) {
       password = webDavConfig?.password.orEmpty(),
     )
 
+  // Resolves the remote version once at app start and exposes it so screens can offer an update.
+  private val appVersionResolver: AppVersionResolver =
+    AppVersionResolverImpl(
+      gateway = profileHttpGateway,
+      versionUrl = REMOTE_VERSION_URL,
+      localVersion = AppVersion.parse(BuildConfig.VERSION_NAME) ?: AppVersion(0),
+    ).also { it.start(coroutineScope) }
+
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
       pingManager = pingManager,
@@ -89,6 +102,8 @@ class ApplicationScope private constructor(application: Application) {
     HomeFlowModule(
       connectionProfileRepository = connectionProfileRepository,
       globalJobManager = globalJobManager,
+      context = application,
+      appVersionResolver = appVersionResolver,
     )
 
   val profilesFlowModule =

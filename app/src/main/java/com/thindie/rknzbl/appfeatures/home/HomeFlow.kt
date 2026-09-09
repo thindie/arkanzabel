@@ -11,12 +11,24 @@ class HomeFlow(val router: Router) : ScreenFlow<Route, Unit>(router) {
     internal set
 
   override fun start() {
-    go(HomeRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager))
+    go(
+      HomeRoute(
+        flowModule.connectionProfileRepository,
+        flowModule.globalJobManager,
+        flowModule.context,
+        flowModule.appVersionResolver,
+      ),
+    )
   }
 
   fun switch() {
     router.replaceTop(
-      HomeRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager),
+      HomeRoute(
+        flowModule.connectionProfileRepository,
+        flowModule.globalJobManager,
+        flowModule.context,
+        flowModule.appVersionResolver,
+      ),
     )
   }
 }

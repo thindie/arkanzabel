@@ -285,4 +285,6 @@
         <!-- Обновления -->
         <string name="faq_updates_title">Откуда берутся обновления?</string>
         <string name="faq_updates_body">Новые сборки и исходный код публикуются по адресу:</string>
+
+        <string name="app_version_update_snack">Доступно обновление</string>
 </resources>
