@@ -1,43 +1,62 @@
 <notices>
     <notice>
-        <name>Android Compatibility Library v4</name>
-        <url>http://source.android.com</url>
-        <copyright>Copyright(C) 2008-2011 The Android Open Source Project</copyright>
+        <name>AndroidX AppCompat</name>
+        <url>https://developer.android.com/reference/androidx/appcompat/package-summary</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
         <license>Apache Software License 2.0</license>
     </notice>
     <notice>
-        <name>Android Compatibility Library v7</name>
-        <url>http://source.android.com</url>
-        <copyright>Copyright(C) 2008-2011 The Android Open Source Project</copyright>
+        <name>AndroidX Core KTX</name>
+        <url>https://developer.android.com/google/extras.html</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
         <license>Apache Software License 2.0</license>
     </notice>
     <notice>
-        <name>Android Design Library</name>
-        <url>http://source.android.com</url>
-        <copyright>Copyright(C) 2008-2011 The Android Open Source Project</copyright>
+        <name>AndroidX Activity</name>
+        <url>https://developer.android.com/reference/androidx/activity/package-summary</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
         <license>Apache Software License 2.0</license>
     </notice>
     <notice>
-        <name>Google Gson</name>
+        <name>AndroidX Lifecycle</name>
+        <url>https://developer.android.com/topic/libraries/architecture/lifecycle</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
+        <license>Apache Software License 2.0</license>
+    </notice>
+    <notice>
+        <name>AndroidX Work Manager</name>
+        <url>https://developer.android.com/topic/libraries/workmanager</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
+        <license>Apache Software License 2.0</license>
+    </notice>
+    <notice>
+        <name>AndroidX Compose</name>
+        <url>https://developer.android.com/jetpack/compose</url>
+        <copyright>Copyright (C) The Android Open Source Project</copyright>
+        <license>Apache Software License 2.0</license>
+    </notice>
+    <notice>
+        <name>Kotlin Coroutines</name>
+        <url>https://www.kotlin.org/docs/coroutines-guide.html</url>
+        <copyright>Copyright (c) 2015-2024 JetBrains s.r.o. and the Kotlin Project</copyright>
+        <license>Apache Software License 2.0</license>
+    </notice>
+    <notice>
+        <name>MMKV</name>
+        <url>https://github.com/tencent/MMKV</url>
+        <copyright>Copyright (C) Tencent Inc.</copyright>
+        <license>Apache Software License 2.0</license>
+    </notice>
+    <notice>
+        <name>Gson</name>
         <url>https://github.com/google/gson</url>
-        <copyright>Copyright 2008-2011 Google Inc.</copyright>
+        <copyright>Copyright (c) 2008-2011 Google Inc.</copyright>
         <license>Apache Software License 2.0</license>
     </notice>
     <notice>
-        <name>kotlin</name>
-        <url>http://kotlinlang.org/</url>
-        <copyright>Copyright 2010-2016 JetBrains s.r.o.</copyright>
-        <license>Apache Software License 2.0</license>
-    </notice>
-    <notice>
-        <name>LeakCanary</name>
-        <url>https://github.com/square/leakcanary</url>
-        <copyright>Copyright 2015 Square, Inc.</copyright>
-        <license>Apache Software License 2.0</license>
-    </notice>
-    <notice>
-        <name>RxPermissions</name>
-        <url>https://github.com/tbruyelle/RxPermissions</url>
+        <name>Ktor Client</name>
+        <url>https://ktor.io</url>
+        <copyright>Copyright (c) 2015-2024 JetBrains s.r.o.</copyright>
         <license>Apache Software License 2.0</license>
     </notice>
 </notices>
