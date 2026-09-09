@@ -246,4 +246,30 @@
     <string name="intro_push_denied_subtitle">Вы не будете получать обновления о статусе подключения.</string>
     <string name="intro_push_continue_without">Продолжить без них</string>
     <string name="intro_push_open_settings">Открыть Настройки</string>
+
+    <!-- FAQ -->
+    <string name="settings_section_help">Помощь</string>
+    <string name="faq_row_title">Частые вопросы</string>
+    <string name="faq_row_subtitle">WebDAV, прокси по приложениям, легенда уведомлений и логи</string>
+    <string name="faq_screen_title">Частые вопросы</string>
+
+    <string name="faq_storage_title">Где хранятся мои профили?</string>
+    <string name="faq_storage_body_1">По умолчанию Arkanzabel синхронизирует профили подключения через WebDAV — общий пул сообщества. Профили, которые вы добавляете или редактируете, становятся доступны другим пользователям приложения, а новые из пула появляются у вас.</string>
+    <string name="faq_storage_body_2">Если хотите хранить профили только у себя, переключите «Режим хранения» в Настройки → Общие на локальный. Тогда профили останутся только на этом устройстве и не будут участвовать в общем пуле.</string>
+    <string name="faq_storage_diagram_remote">Удалённый: профили → сервер WebDAV → общий пул</string>
+    <string name="faq_storage_diagram_local">Локальный: профили → только это устройство</string>
+
+    <string name="faq_perapp_title">Как пропускать конкретные приложения через VPN?</string>
+    <string name="faq_perapp_body_1">По умолчанию весь трафик приложений идёт через туннель. Если нужно, чтобы только определённые приложения — например мессенджер или браузер — использовали прокси, а остальное оставалось прямым, откройте «Прокси по приложениям».</string>
+    <string name="faq_perapp_steps">Настройки › Прокси по приложениям › Только выбранные › добавьте свои приложения</string>
+
+    <string name="faq_legend_title">Что значат иконки в уведомлении?</string>
+    <string name="faq_legend_body">Во время подключения маленькая иконка на панели состояния показывает, какой маршрут сейчас несёт трафик:</string>
+    <string name="faq_legend_proxy">Стрелка вверх — трафик идёт через VPN</string>
+    <string name="faq_legend_direct">Точка — трафик идёт напрямую, без туннеля</string>
+    <string name="faq_legend_idle">Кольцо — сейчас тишина (нет трафика)</string>
+    <string name="faq_legend_format">Под иконкой показывается скорость: Название • отправка↑ приём↓.</string>
+
+    <string name="faq_logs_title">Можно ли посмотреть, что происходит внутри?</string>
+    <string name="faq_logs_body">Да. Откройте вкладку «Лог» внизу экрана — там выводятся логи ядра и отладки с фильтрами по уровням: удобно проверять, почему профиль не подключился, или разбираться в деталях трафика.</string>
 </resources>

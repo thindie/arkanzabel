@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.Section
@@ -220,6 +221,19 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       MuxFaqRow { sendMuxFaq(scope) }
+
+      // === Help ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_help))
+      VSpacer(16.dp)
+
+      FaqPortalRow(
+        label = stringResource(R.string.faq_row_title),
+        subtitle = stringResource(R.string.faq_row_subtitle),
+        onClick = { scope.send(ScreenCommand.OpenFaq) },
+      )
     }
   }
 }
@@ -463,6 +477,55 @@ private fun LanguageOption(
         color = AppTheme.colors.accentPrimary,
       )
     }
+  }
+}
+
+@Composable
+private fun FaqPortalRow(
+  label: String,
+  subtitle: String,
+  onClick: () -> Unit,
+) {
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
+        .background(color = AppTheme.colors.cardPrimary, shape = RoundedCornerShape(20.dp))
+        .padding(16.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = label,
+        style = AppTheme.typography.titleMedium,
+        color = AppTheme.colors.contentPrimary,
+      )
+      VSpacer(2.dp)
+      Text(
+        text = subtitle,
+        style = AppTheme.typography.bodySmall,
+        color = AppTheme.colors.contentSecondary,
+      )
+    }
+    Image(
+      painter = painterResource(R.drawable.ic_chevron_right_24),
+      contentDescription = null,
+      colorFilter = ColorFilter.tint(AppTheme.colors.contentSecondary),
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FaqPortalRowPreview() {
+  AppTheme {
+    FaqPortalRow(
+      label = "FAQ",
+      subtitle = "WebDAV, per-app proxy, notification legend and logs",
+      onClick = {},
+    )
   }
 }
 

@@ -250,4 +250,30 @@
     <string name="intro_push_denied_subtitle">You won\'t receive connection status updates.</string>
     <string name="intro_push_continue_without">Continue without</string>
     <string name="intro_push_open_settings">Open Settings</string>
+
+    <!-- FAQ -->
+    <string name="settings_section_help">Help</string>
+    <string name="faq_row_title">FAQ</string>
+    <string name="faq_row_subtitle">WebDAV, per-app proxy, notification legend and logs</string>
+    <string name="faq_screen_title">FAQ</string>
+
+    <string name="faq_storage_title">Where are my profiles stored?</string>
+    <string name="faq_storage_body_1">By default, Arkanzabel syncs your connection profiles over WebDAV — a shared community pool. Profiles you add or edit become available to other users of the app, and new ones from the pool appear for you.</string>
+    <string name="faq_storage_body_2">If you prefer to keep your profiles private, switch Storage mode in Settings → General to local. Your profiles will then live only on this device and won\'t participate in the shared pool.</string>
+    <string name="faq_storage_diagram_remote">Remote: Profiles → WebDAV server → shared pool</string>
+    <string name="faq_storage_diagram_local">Local: Profiles → this device only</string>
+
+    <string name="faq_perapp_title">How to route specific apps through the VPN?</string>
+    <string name="faq_perapp_body_1">By default, all app traffic goes through the tunnel. If you want only certain apps — for example a messenger or a browser — to use the proxy while everything else stays direct, open per-app proxy.</string>
+    <string name="faq_perapp_steps">Settings › Per-app proxy › Selected apps only › add your apps</string>
+
+    <string name="faq_legend_title">What do the icons in the notification mean?</string>
+    <string name="faq_legend_body">While connected, a small icon in the status bar shows which route is carrying traffic right now:</string>
+    <string name="faq_legend_proxy">Up arrow — traffic goes through the VPN</string>
+    <string name="faq_legend_direct">Dot — traffic goes direct, without the tunnel</string>
+    <string name="faq_legend_idle">Ring — no traffic for now (idle)</string>
+    <string name="faq_legend_format">The text under the icon shows speeds: Name • upload↑ download↓.</string>
+
+    <string name="faq_logs_title">Can I see what\'s happening inside?</string>
+    <string name="faq_logs_body">Yes. Open the Log tab at the bottom of the screen — it shows kernel and debug logs with level filters, so you can check why a profile didn\'t connect or inspect traffic details.</string>
 </resources>
