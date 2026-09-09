@@ -253,6 +253,15 @@
     <string name="faq_row_subtitle">WebDAV, per-app proxy, notification legend and logs</string>
     <string name="faq_screen_title">FAQ</string>
 
+    <!-- Open source licenses -->
+    <string name="licenses_row_title">Open source licenses</string>
+    <string name="licenses_row_subtitle">GPLv3, license notices and source</string>
+    <string name="licenses_screen_title">Open source licenses</string>
+    <string name="licenses_section_license">License</string>
+    <string name="licenses_notice_warranty">Arkanzabel is distributed under the terms of the GNU General Public License version 3 (GPLv3). This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</string>
+    <string name="licenses_section_source">Source code</string>
+    <string name="licenses_source_repo">The source code is available in the public repository.</string>
+
     <string name="faq_storage_title">Where are my profiles stored?</string>
     <string name="faq_storage_body_1">By default, Arkanzabel syncs your connection profiles over WebDAV — a shared community pool. Profiles you add or edit become available to other users of the app, and new ones from the pool appear for you.</string>
     <string name="faq_storage_body_2">If you prefer to keep your profiles private, switch Storage mode in Settings → General to local. Your profiles will then live only on this device and won\'t participate in the shared pool.</string>

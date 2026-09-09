@@ -234,6 +234,12 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         subtitle = stringResource(R.string.faq_row_subtitle),
         onClick = { scope.send(ScreenCommand.OpenFaq) },
       )
+
+      FaqPortalRow(
+        label = stringResource(R.string.licenses_row_title),
+        subtitle = stringResource(R.string.licenses_row_subtitle),
+        onClick = { scope.send(ScreenCommand.OpenLicenses) },
+      )
     }
   }
 }

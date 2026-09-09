@@ -6,6 +6,7 @@ import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.appfeatures.settings.ui.faq.faq
+import com.thindie.rknzbl.appfeatures.settings.ui.licenses.licenses
 import com.thindie.rknzbl.appfeatures.settings.ui.perapp.perAppMain
 import com.thindie.rknzbl.appfeatures.settings.ui.source.source
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
@@ -75,6 +76,11 @@ fun SettingsFlow.settings(
 
       ScreenCommand.OpenFaq -> {
         go(faq())
+        null
+      }
+
+      ScreenCommand.OpenLicenses -> {
+        go(licenses())
         null
       }
     }

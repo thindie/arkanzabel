@@ -253,6 +253,15 @@
     <string name="faq_row_subtitle">WebDAV, прокси по приложениям, легенда уведомлений и логи</string>
     <string name="faq_screen_title">Частые вопросы</string>
 
+    <!-- Лицензии открытого ПО -->
+    <string name="licenses_row_title">Лицензии открытого ПО</string>
+    <string name="licenses_row_subtitle">GPLv3, лицензионные уведомления и исходники</string>
+    <string name="licenses_screen_title">Лицензии открытого ПО</string>
+    <string name="licenses_section_license">Лицензия</string>
+    <string name="licenses_notice_warranty">Arkanzabel распространяется по условиям Общего лицензионного соглашения GNU Public License версии 3 (GPLv3). Эта программа предоставляется БЕЗ ЛЮБОЙ ГАРАНТИИ в пределах, разрешённых действующим законодательством.</string>
+    <string name="licenses_section_source">Исходный код</string>
+    <string name="licenses_source_repo">Исходный код доступен в публичном репозитории.</string>
+
     <string name="faq_storage_title">Где хранятся мои профили?</string>
     <string name="faq_storage_body_1">По умолчанию Arkanzabel синхронизирует профили подключения через WebDAV — общий пул сообщества. Профили, которые вы добавляете или редактируете, становятся доступны другим пользователям приложения, а новые из пула появляются у вас.</string>
     <string name="faq_storage_body_2">Если хотите хранить профили только у себя, переключите «Режим хранения» в Настройки → Общие на локальный. Тогда профили останутся только на этом устройстве и не будут участвовать в общем пуле.</string>

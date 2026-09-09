@@ -22,4 +22,6 @@ internal sealed interface ScreenCommand : Command {
   data object OpenPerAppProxy : ScreenCommand
 
   data object OpenFaq : ScreenCommand
+
+  data object OpenLicenses : ScreenCommand
 }
