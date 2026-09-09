@@ -4,7 +4,7 @@ import com.thindie.engine.core.Route
 import com.thindie.engine.core.Router
 import com.thindie.engine.core.ScreenFlow
 import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
-import com.thindie.rknzbl.appfeatures.profiles.ui.ProfilesRoute
+import com.thindie.rknzbl.appfeatures.profiles.ui.profiles
 
 /**
  * Profiles feature flow.
@@ -19,12 +19,10 @@ class ProfilesFlow(
     internal set
 
   override fun start() {
-    go(ProfilesRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager))
+    go(profiles())
   }
 
   fun switch() {
-    router.replaceTop(
-      ProfilesRoute(flowModule.connectionProfileRepository, flowModule.globalJobManager),
-    )
+    router.replaceTop(profiles())
   }
 }

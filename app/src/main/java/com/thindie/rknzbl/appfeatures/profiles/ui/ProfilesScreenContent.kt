@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.appfeatures.profiles.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.ProfileBorderState
 import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.TabItem
@@ -30,55 +32,63 @@ import com.v2ray.ang.enums.NetworkType
 fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val st by scope.state.collectAsState()
   AppScreen(scope) {
-    Column(modifier = Modifier.padding(16.dp)) {
-      Text(
-        text = stringResource(R.string.profiles_title),
-        style = AppTheme.typography.headlineLarge,
-        color = AppTheme.colors.contentPrimary,
-      )
-      VSpacer(24.dp)
-      TabRow(
-        items =
-          listOf(
-            TabItem(stringResource(R.string.profiles_tab_main)),
-            TabItem(stringResource(R.string.profiles_tab_saved)),
-          ),
-        selected = st.selectedTab,
-        onTabSelected = { scope.send(ScreenCommand.SelectTab(it)) },
-      ) {
-        val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
+    Column(modifier = Modifier.fillMaxHeight().padding(16.dp)) {
+      Column(modifier = Modifier.weight(1f)) {
+        Text(
+          text = stringResource(R.string.profiles_title),
+          style = AppTheme.typography.headlineLarge,
+          color = AppTheme.colors.contentPrimary,
+        )
+        VSpacer(24.dp)
+        TabRow(
+          items =
+            listOf(
+              TabItem(stringResource(R.string.profiles_tab_main)),
+              TabItem(stringResource(R.string.profiles_tab_saved)),
+            ),
+          selected = st.selectedTab,
+          onTabSelected = { scope.send(ScreenCommand.SelectTab(it)) },
+        ) {
+          val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
 
-        VSpacer(16.dp)
+          VSpacer(16.dp)
 
-        if (profilesToShow.isEmpty()) {
-          Text(
-            text = stringResource(R.string.profiles_empty),
-            modifier = Modifier.fillMaxWidth(),
-          )
-        } else {
-          LazyColumn {
-            // No custom keys: subscriptionId is not unique across parsed profiles,
-            // which would crash LazyColumn with duplicate keys.
-            items(profilesToShow) { profile ->
-              val borderState =
-                when {
-                  st.connectedProfile == profile -> ProfileBorderState.Connected
-                  else -> ProfileBorderState.Inactive
-                }
+          if (profilesToShow.isEmpty()) {
+            Text(
+              text = stringResource(R.string.profiles_empty),
+              modifier = Modifier.fillMaxWidth(),
+            )
+          } else {
+            LazyColumn(modifier = Modifier.fillMaxHeight()) {
+              items(profilesToShow) { profile ->
+                val borderState =
+                  when {
+                    st.connectedProfile == profile -> ProfileBorderState.Connected
+                    else -> ProfileBorderState.Inactive
+                  }
 
-              SentenceRow(
-                modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
-                painter = painterResource(R.drawable.ic_internet_24),
-                title = profile.remarks,
-                subtitle = profileSubtitle(profile, st.pingResults[profile.subscriptionId]),
-                loading = false,
-                onClick = { scope.send(ScreenCommand.ConnectProfile(profile)) },
-              )
+                SentenceRow(
+                  modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
+                  painter = painterResource(R.drawable.ic_internet_24),
+                  title = profile.remarks,
+                  subtitle = profileSubtitle(profile, st.pingResults[profile.subscriptionId]),
+                  loading = false,
+                  onClick = { scope.send(ScreenCommand.ConnectProfile(profile)) },
+                )
 
-              VSpacer(8.dp)
+                VSpacer(8.dp)
+              }
             }
           }
         }
+      }
+
+      if (st.selectedTab == 1 && st.savedProfiles.isNotEmpty()) {
+        VSpacer(24.dp)
+        Button(
+          text = stringResource(R.string.profiles_open_delete),
+          onClick = { scope.send(ScreenCommand.OpenDeleteSavedProfiles) },
+        )
       }
     }
   }

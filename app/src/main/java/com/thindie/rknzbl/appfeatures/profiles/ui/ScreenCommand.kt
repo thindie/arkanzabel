@@ -9,4 +9,6 @@ sealed interface ScreenCommand : Command {
   data class SelectTab(val index: Int) : ScreenCommand
 
   data class ConnectProfile(val profile: ConnectionProfile) : ScreenCommand
+
+  data object OpenDeleteSavedProfiles : ScreenCommand
 }
