@@ -268,6 +268,9 @@
     <string name="licenses_notice_warranty">Arkanzabel is distributed under the terms of the GNU General Public License version 3 (GPLv3). This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</string>
     <string name="licenses_section_source">Source code</string>
     <string name="licenses_source_repo">The source code is available in the public repository.</string>
+    <string name="licenses_section_full">Full license texts</string>
+    <string name="licenses_notice_full">Open the full dependency list and their license texts.</string>
+    <string name="licenses_button_full_license">Full license</string>
 
     <string name="faq_storage_title">Where are my profiles stored?</string>
     <string name="faq_storage_body_1">By default, Arkanzabel syncs your connection profiles over WebDAV — a shared community pool. Profiles you add or edit become available to other users of the app, and new ones from the pool appear for you.</string>
