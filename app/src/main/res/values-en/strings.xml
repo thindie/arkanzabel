@@ -281,4 +281,8 @@
 
     <string name="faq_logs_title">Can I see what\'s happening inside?</string>
     <string name="faq_logs_body">Yes. Open the Log tab at the bottom of the screen — it shows kernel and debug logs with level filters, so you can check why a profile didn\'t connect or inspect traffic details.</string>
+
+        <!-- Updates -->
+        <string name="faq_updates_title">Where do updates come from?</string>
+        <string name="faq_updates_body">New builds and the full source code are published at https://github.com/thindie/arkanzabel. You can download new versions from there.</string>
 </resources>

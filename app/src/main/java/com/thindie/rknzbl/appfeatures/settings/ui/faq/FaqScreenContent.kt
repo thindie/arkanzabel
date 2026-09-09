@@ -102,6 +102,14 @@ internal fun FaqScreenContent(scope: ScreenScope<FaqState, FaqCommand>) {
       VSpacer(8.dp)
       FaqParagraph(stringResource(R.string.faq_logs_body))
 
+      // === Updates ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.faq_updates_title))
+      VSpacer(8.dp)
+      FaqParagraph(stringResource(R.string.faq_updates_body))
+
       VSpacer(32.dp)
     }
   }

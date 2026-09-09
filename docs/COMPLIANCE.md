@@ -8,6 +8,7 @@ The in-app **Open source licenses** screen is implemented (`appfeatures/settings
 
 - **Done:** in-app license screen + Settings gate; localized strings (en, en-US, ru).
 - **Pending (Phase A artifacts):** full GPL-3.0 `LICENSE` file at repo root, `NOTICE` dependency-version table, and bundled `app/src/main/assets/licenses.html`. These are still copied/generated from the v2rayNG checkout during engine/resource migration.
+- **Source repository (updates & corresponding source):** <https://github.com/thindie/arkanzabel>. New builds and the GPL corresponding source are published here.
 
 ## Planned upstream components
 
