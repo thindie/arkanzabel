@@ -15,6 +15,9 @@
 .DS_Store
 # Build outputs (root and all Gradle modules)
 **/build/
+# Signing keystore - never commit
+*.keystore
+release.keystore
 /captures
 .externalNativeBuild
 .cxx
