@@ -1,7 +1,11 @@
 package com.thindie.rknzbl.appfeatures.settings.ui.faq
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -109,6 +113,7 @@ internal fun FaqScreenContent(scope: ScreenScope<FaqState, FaqCommand>) {
       SectionTitle(stringResource(R.string.faq_updates_title))
       VSpacer(8.dp)
       FaqParagraph(stringResource(R.string.faq_updates_body))
+      FaqRepoLink(REPO_URL)
 
       VSpacer(32.dp)
     }
@@ -132,6 +137,32 @@ private fun FaqParagraph(text: String) {
     style = AppTheme.typography.bodyMedium,
     color = AppTheme.colors.contentPrimary,
   )
+}
+
+private const val REPO_URL = "https://github.com/thindie/arkanzabel"
+
+@Composable
+private fun FaqRepoLink(url: String) {
+  val activity = LocalActivity.current
+  Text(
+    text = url,
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .clickable {
+          activity?.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        },
+    style = AppTheme.typography.bodyMedium,
+    color = AppTheme.colors.accentPrimary,
+  )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun FaqRepoLinkPreview() {
+  AppTheme {
+    FaqRepoLink(REPO_URL)
+  }
 }
 
 @Composable
