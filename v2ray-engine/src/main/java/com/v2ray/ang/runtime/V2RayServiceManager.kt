@@ -38,10 +38,12 @@ import java.util.concurrent.TimeoutException
 object V2RayServiceManager {
   private const val STOP_LOOP_TIMEOUT_SEC = 15L
 
-  private val coreController: CoreController = V2RayNativeManager.newCoreController(CoreCallback())
+  private val coreController: CoreController =
+    V2RayNativeManager.newCoreController(CoreCallback())
   private val mMsgReceive = ReceiveMessageHandler()
   private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-  private val stopLoopExecutor = Executors.newSingleThreadExecutor { r -> Thread(r, "V2RayStopLoop") }
+  private val stopLoopExecutor =
+    Executors.newSingleThreadExecutor { r -> Thread(r, "V2RayStopLoop") }
 
   @Volatile
   private var currentConfig: ConnectionProfile? = null
@@ -118,7 +120,10 @@ object V2RayServiceManager {
    */
   private fun startContextService(context: Context) {
     if (isRunningInternal) {
-      Log.w({ "startContextService skipped: core still reports running (wait for stop to finish)" }, AppConfig.TAG)
+      Log.w(
+        { "startContextService skipped: core still reports running (wait for stop to finish)" },
+        AppConfig.TAG,
+      )
       return
     }
     val guid = KeyValueStorage.getSelectServer() ?: return
@@ -132,7 +137,10 @@ object V2RayServiceManager {
     }
 
     if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PROXY_SHARING)) {
-      Log.i({ context.getString(R.string.toast_warning_pref_proxysharing_short) }, AppConfig.TAG)
+      Log.i(
+        { context.getString(R.string.toast_warning_pref_proxysharing_short) },
+        AppConfig.TAG,
+      )
     } else {
       Log.i({ context.getString(R.string.toast_services_start) }, AppConfig.TAG)
     }
@@ -167,7 +175,11 @@ object V2RayServiceManager {
       } catch (cancel: CancellationException) {
         throw cancel
       } catch (appError: AppError) {
-        Log.e({ "Failed to get V2ray config: ${appError.message}" }, AppConfig.TAG, appError)
+        Log.e(
+          { "Failed to get V2ray config: ${appError.message}" },
+          AppConfig.TAG,
+          appError,
+        )
         MessageUtil.sendMsg2UI(
           service,
           AppConfig.MSG_STATE_START_FAILURE,
@@ -266,14 +278,23 @@ object V2RayServiceManager {
 
     if (isRunningInternal) {
       try {
-        stopLoopExecutor.submit { coreController.stopLoop() }.get(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
+        stopLoopExecutor.submit { coreController.stopLoop() }
+          .get(STOP_LOOP_TIMEOUT_SEC, TimeUnit.SECONDS)
       } catch (timeout: TimeoutException) {
-        Log.e({ "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s" }, AppConfig.TAG, timeout)
+        Log.e(
+          { "V2Ray stopLoop timed out after ${STOP_LOOP_TIMEOUT_SEC}s" },
+          AppConfig.TAG,
+          timeout,
+        )
       } catch (execution: ExecutionException) {
         Log.e({ "Failed to stop V2Ray loop" }, AppConfig.TAG, execution.cause ?: execution)
       } catch (interrupted: InterruptedException) {
         Thread.currentThread().interrupt()
-        Log.e({ "Interrupted while waiting for V2Ray stopLoop" }, AppConfig.TAG, interrupted)
+        Log.e(
+          { "Interrupted while waiting for V2Ray stopLoop" },
+          AppConfig.TAG,
+          interrupted,
+        )
       }
     }
 
@@ -292,17 +313,51 @@ object V2RayServiceManager {
     return true
   }
 
-  /**
-   * Queries the statistics for a given tag and link.
-   * @param tag The tag to query.
-   * @param link The link to query.
-   * @return The statistics value.
-   */
-  fun queryStats(
-    tag: String,
-    link: String,
-  ): Long {
-    return coreController.queryStats(tag, link)
+  fun queryStats(): List<TrafficStats> {
+    // "proxy,uplink,1986;proxy,downlink,4120;" -> tag,direction,value
+    val stats = coreController.queryAllOutboundTrafficStats().lowercase().split(";")
+    return stats.map { raw ->
+      if (raw.isBlank()) {
+        TrafficStats.NotReceived
+      } else {
+        val parts = raw.split(",")
+        val direction =
+          when (parts.getOrNull(1)) {
+            AppConfig.UPLINK -> TrafficStats.Direction.Up
+            AppConfig.DOWNLINK -> TrafficStats.Direction.Down
+            else -> TrafficStats.Direction.Empty
+          }
+        val bytes = parts.getOrNull(2).orEmpty()
+        when (parts.getOrNull(0).orEmpty()) {
+          AppConfig.TAG_PROXY -> TrafficStats.Proxy(direction, bytes)
+          AppConfig.TAG_DIRECT -> TrafficStats.Direct(direction, bytes)
+          else -> TrafficStats.Other(raw)
+        }
+      }
+    }
+  }
+
+  sealed interface TrafficStats {
+    data class Proxy(
+      val direction: Direction,
+      val bytes: String,
+    ) : TrafficStats
+
+    data class Direct(
+      val direction: Direction,
+      val bytes: String,
+    ) : TrafficStats
+
+    @JvmInline
+    value class Other(val value: String) : TrafficStats
+
+    data object NotReceived : TrafficStats
+
+    enum class Direction {
+      Up,
+      Down,
+      Empty,
+    }
   }
 
   /**
@@ -330,7 +385,11 @@ object V2RayServiceManager {
         try {
           time = coreController.measureDelay(SettingsManager.getDelayTestUrl(true))
         } catch (runtime: RuntimeException) {
-          Log.e({ "Failed to measure delay with alternative URL" }, AppConfig.TAG, runtime)
+          Log.e(
+            { "Failed to measure delay with alternative URL" },
+            AppConfig.TAG,
+            runtime,
+          )
           errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
         }
       }
@@ -346,7 +405,11 @@ object V2RayServiceManager {
       // Only fetch IP info if the delay test was successful
       if (time >= 0) {
         SpeedtestManager.getRemoteIPInfo()?.let { ip ->
-          MessageUtil.sendMsg2UI(service, AppConfig.MSG_MEASURE_DELAY_SUCCESS, "$result\n$ip")
+          MessageUtil.sendMsg2UI(
+            service,
+            AppConfig.MSG_MEASURE_DELAY_SUCCESS,
+            "$result\n$ip",
+          )
         }
       }
     }
@@ -396,7 +459,10 @@ object V2RayServiceManager {
       l: Long,
       s: String?,
     ): Long {
-      Log.i({ "Core callback: onEmitStatus code=$l msg=${s ?: "null"}" }, AppConfig.TAG_KERNEL)
+      Log.i(
+        { "Core callback: onEmitStatus code=$l msg=${s ?: "null"}" },
+        AppConfig.TAG_KERNEL,
+      )
       return SUCCESS
     }
   }
@@ -423,9 +489,17 @@ object V2RayServiceManager {
       when (intent?.getIntExtra("key", 0)) {
         AppConfig.MSG_REGISTER_CLIENT -> {
           if (isRunningInternal) {
-            MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_RUNNING, "")
+            MessageUtil.sendMsg2UI(
+              serviceControl.getService(),
+              AppConfig.MSG_STATE_RUNNING,
+              "",
+            )
           } else {
-            MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_NOT_RUNNING, "")
+            MessageUtil.sendMsg2UI(
+              serviceControl.getService(),
+              AppConfig.MSG_STATE_NOT_RUNNING,
+              "",
+            )
           }
         }
 
@@ -454,7 +528,11 @@ object V2RayServiceManager {
 
         AppConfig.MSG_STATE_SAVE_PROFILE -> {
           Log.i({ "Save Profile" }, AppConfig.TAG)
-          MessageUtil.sendMsg2UI(serviceControl.getService(), AppConfig.MSG_STATE_SAVE_PROFILE, "")
+          MessageUtil.sendMsg2UI(
+            serviceControl.getService(),
+            AppConfig.MSG_STATE_SAVE_PROFILE,
+            "",
+          )
         }
 
         AppConfig.MSG_MEASURE_DELAY -> {
