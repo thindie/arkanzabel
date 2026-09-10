@@ -37,3 +37,4 @@ gradle/notifications/
 /gradle/wrapper
 /research/core-feature-audit.md
 /.mi_amend.txt
+/make-release-keystore.ps1
