@@ -266,6 +266,32 @@
     <string name="licenses_notice_full">Открыть полный список зависимостей и их лицензионные тексты.</string>
     <string name="licenses_button_full_license">Полная лицензия</string>
 
+    <!-- Инструкция по настройке ВПН -->
+    <string name="vpnsetup_row_title">Как настроить ВПН</string>
+    <string name="vpnsetup_row_subtitle">Пошаговая инструкция для Android</string>
+    <string name="vpnsetup_screen_title">Как настроить ВПН</string>
+    <string name="vpnsetup_steps_title">Шаги</string>
+    <string name="vpnsetup_intro">Выполните эти шаги, чтобы подключиться через встроенный ВПН-туннель на вашем устройстве Android.</string>
+    <string name="vpnsetup_step_source">Добавьте источник и профили или выберите уже имеющийся.</string>
+    <string name="vpnsetup_step_profile">Выберите профиль, который хотите использовать.</string>
+    <string name="vpnsetup_step_connect">Нажмите «Подключить» на главном экране.</string>
+    <string name="vpnsetup_step_confirm">Разрешите доступ к ВПН, когда Android запросит, чтобы туннель мог работать.</string>
+    <string name="vpnsetup_step_keep">Оставьте подключение — в уведомлении отображается, что ВПН активен.</string>
+    <string name="vpnsetup_permission_title">Про разрешение на ВПН</string>
+    <string name="vpnsetup_permission_body">Приложение использует системную службу ВПН для маршрутизации вашего трафика. Оно не читает и не сохраняет ваши данные. Оставьте разрешение включённым, чтобы подключение сохранялось.</string>
+    <string name="vpnsetup_keep_title">Чтобы ВПН не отключался</string>
+    <string name="vpnsetup_keep_body">Если не задавать это приложение ВПНом по умолчанию, система управления питанием Android может разорвать подключение сама — особенно при выключенном экране. Туннель отключится, а приложение может быть убито на уровне системы.</string>
+    <string name="vpnsetup_default_step_settings">Откройте настройки Android.</string>
+    <string name="vpnsetup_default_step_network">Перейдите в «Сеть и интернет» или «Подключения».</string>
+    <string name="vpnsetup_default_step_always">Откройте «Постоянный ВПН» (на некоторых устройствах раздел называется иначе).</string>
+    <string name="vpnsetup_default_step_toggle">Включите это приложение в списке «Постоянный ВПН».</string>
+    <string name="vpnsetup_battery_title">Оптимизация батареи</string>
+    <string name="vpnsetup_battery_body">Даже как «Постоянный ВПН» приложение могут замедлять в фоне, если Android оптимизирует расход батареи. Исключите его из оптимизации, чтобы подключение не рвалось.</string>
+    <string name="vpnsetup_battery_step_settings">Откройте настройки Android.</string>
+    <string name="vpnsetup_battery_step_apps">Перейдите в «Приложения» (или «Приложения и уведомления») → откройте страницу этого приложения.</string>
+    <string name="vpnsetup_battery_step_optimize">Откройте «Батарея» (или «Управление питанием приложений» / «Оптимизация батареи»).</string>
+    <string name="vpnsetup_battery_step_unrestricted">Выберите «Не ограничивать» (или «Не оптимизировать»).</string>
+
     <string name="faq_storage_title">Где хранятся мои профили?</string>
     <string name="faq_storage_body_1">По умолчанию Arkanzabel синхронизирует профили подключения через WebDAV — общий пул сообщества. Профили, которые вы добавляете или редактируете, становятся доступны другим пользователям приложения, а новые из пула появляются у вас.</string>
     <string name="faq_storage_body_2">Если хотите хранить профили только у себя, переключите «Режим хранения» в Настройки → Общие на локальный. Тогда профили останутся только на этом устройстве и не будут участвовать в общем пуле.</string>

@@ -24,4 +24,6 @@ internal sealed interface ScreenCommand : Command {
   data object OpenFaq : ScreenCommand
 
   data object OpenLicenses : ScreenCommand
+
+  data object OpenVpnSetup : ScreenCommand
 }

@@ -266,6 +266,32 @@
     <string name="licenses_notice_full">Open the full dependency list and their license texts.</string>
     <string name="licenses_button_full_license">Full license</string>
 
+    <!-- VPN setup guide -->
+    <string name="vpnsetup_row_title">How to set up the VPN</string>
+    <string name="vpnsetup_row_subtitle">Step-by-step guide for Android</string>
+    <string name="vpnsetup_screen_title">How to set up the VPN</string>
+    <string name="vpnsetup_steps_title">Steps</string>
+    <string name="vpnsetup_intro">Follow these steps to connect using the built-in VPN tunnel on your Android device.</string>
+    <string name="vpnsetup_step_source">Add a source and profiles, or pick one you already have.</string>
+    <string name="vpnsetup_step_profile">Choose the profile you want to use.</string>
+    <string name="vpnsetup_step_connect">Tap Connect on the home screen.</string>
+    <string name="vpnsetup_step_confirm">Grant VPN permission when Android asks, so the tunnel can run.</string>
+    <string name="vpnsetup_step_keep">Leave it connected — the notification shows the VPN is active.</string>
+    <string name="vpnsetup_permission_title">About the VPN permission</string>
+    <string name="vpnsetup_permission_body">The app uses the system VPN service to route your traffic. It never reads or stores your data. Keep the permission granted for the connection to stay up.</string>
+    <string name="vpnsetup_keep_title">Keep the VPN alive</string>
+    <string name="vpnsetup_keep_body">If you do not set this app as the default (always-on) VPN, Android\'s power management can drop the connection on its own — especially with the screen off. The tunnel will disconnect and the app may be killed at the system level.</string>
+    <string name="vpnsetup_default_step_settings">Open your Android Settings.</string>
+    <string name="vpnsetup_default_step_network">Go to Network and internet (or Connections).</string>
+    <string name="vpnsetup_default_step_always">Open Always-on VPN (the exact name varies by device).</string>
+    <string name="vpnsetup_default_step_toggle">Turn on this app in the Always-on VPN list.</string>
+    <string name="vpnsetup_battery_title">Battery optimization</string>
+    <string name="vpnsetup_battery_body">Even as always-on VPN, the app can be throttled in the background if Android optimizes its battery use. Exclude it from optimization so the connection stays up.</string>
+    <string name="vpnsetup_battery_step_settings">Open your Android Settings.</string>
+    <string name="vpnsetup_battery_step_apps">Go to Apps (or Apps &amp; notifications) and open the page for this app.</string>
+    <string name="vpnsetup_battery_step_optimize">Open Battery (or App power management, or Battery optimization).</string>
+    <string name="vpnsetup_battery_step_unrestricted">Set it to Unrestricted / Not optimized.</string>
+
     <string name="faq_storage_title">Where are my profiles stored?</string>
     <string name="faq_storage_body_1">By default, Arkanzabel syncs your connection profiles over WebDAV — a shared community pool. Profiles you add or edit become available to other users of the app, and new ones from the pool appear for you.</string>
     <string name="faq_storage_body_2">If you prefer to keep your profiles private, switch Storage mode in Settings → General to local. Your profiles will then live only on this device and won\'t participate in the shared pool.</string>

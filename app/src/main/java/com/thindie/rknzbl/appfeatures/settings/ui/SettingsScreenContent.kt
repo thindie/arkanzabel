@@ -240,6 +240,12 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         subtitle = stringResource(R.string.licenses_row_subtitle),
         onClick = { scope.send(ScreenCommand.OpenLicenses) },
       )
+
+      FaqPortalRow(
+        label = stringResource(R.string.vpnsetup_row_title),
+        subtitle = stringResource(R.string.vpnsetup_row_subtitle),
+        onClick = { scope.send(ScreenCommand.OpenVpnSetup) },
+      )
     }
   }
 }

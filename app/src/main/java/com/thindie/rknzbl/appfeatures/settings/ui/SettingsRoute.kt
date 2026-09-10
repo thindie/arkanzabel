@@ -9,6 +9,7 @@ import com.thindie.rknzbl.appfeatures.settings.ui.faq.faq
 import com.thindie.rknzbl.appfeatures.settings.ui.licenses.licenses
 import com.thindie.rknzbl.appfeatures.settings.ui.perapp.perAppMain
 import com.thindie.rknzbl.appfeatures.settings.ui.source.source
+import com.thindie.rknzbl.appfeatures.settings.ui.vpnsetup.vpnSetup
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 
 fun SettingsFlow.settings(
@@ -81,6 +82,11 @@ fun SettingsFlow.settings(
 
       ScreenCommand.OpenLicenses -> {
         go(licenses())
+        null
+      }
+
+      ScreenCommand.OpenVpnSetup -> {
+        go(vpnSetup())
         null
       }
     }
