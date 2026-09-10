@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.appversion
 
-import com.thindie.rknzbl.feature.home.data.ProfileHttpGateway
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
 import com.v2ray.ang.extension.runSuspendCatching
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow

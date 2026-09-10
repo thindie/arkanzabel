@@ -3,7 +3,7 @@ package com.thindie.rknzbl.appfeatures.settings.data
 import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.Flow

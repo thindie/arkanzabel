@@ -3,7 +3,7 @@ package com.thindie.rknzbl.appfeatures.profiles.deletesaved
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.filterNotNull
 
 internal fun stateSink(

@@ -16,7 +16,7 @@ import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KE
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.DISCONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY_HOME
 import com.thindie.rknzbl.appversion.AppVersionResolver
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
 
 /** Where a tap on the update prompt lands: the project's release page in the browser. */

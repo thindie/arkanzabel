@@ -5,6 +5,11 @@ import android.os.Build
 import android.os.LocaleList
 import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
+import com.thindie.rknzbl.appfeatures.home.data.ConnectionProfileRepositoryImpl
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGatewayImpl
+import com.thindie.rknzbl.appfeatures.home.data.V2RayVpnServiceGateway
+import com.thindie.rknzbl.appfeatures.home.data.VpnServiceGateway
 import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
@@ -13,7 +18,6 @@ import com.thindie.rknzbl.appfeatures.settings.data.PerAppProxyRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
@@ -22,12 +26,8 @@ import com.thindie.rknzbl.appversion.AppVersion
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.appversion.AppVersionResolverImpl
 import com.thindie.rknzbl.appversion.REMOTE_VERSION_URL
-import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
-import com.thindie.rknzbl.feature.home.data.ProfileHttpGateway
-import com.thindie.rknzbl.feature.home.data.ProfileHttpGatewayImpl
-import com.thindie.rknzbl.feature.home.data.V2RayVpnServiceGateway
-import com.thindie.rknzbl.feature.home.data.VpnServiceGateway
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.CoroutineExceptionHandler

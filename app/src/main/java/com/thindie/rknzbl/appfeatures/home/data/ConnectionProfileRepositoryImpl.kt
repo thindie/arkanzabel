@@ -1,10 +1,10 @@
-package com.thindie.rknzbl.feature.home.data
+package com.thindie.rknzbl.appfeatures.home.data
 
 import com.thindie.engine.core.Cache
 import com.thindie.engine.core.Log
 import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.ProfilePingManager
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage

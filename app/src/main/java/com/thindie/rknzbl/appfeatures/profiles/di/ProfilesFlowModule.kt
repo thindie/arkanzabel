@@ -1,7 +1,7 @@
 package com.thindie.rknzbl.appfeatures.profiles.di
 
 import com.thindie.rknzbl.application.work.GlobalJobManager
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 
 /**
  * One flow == one module.

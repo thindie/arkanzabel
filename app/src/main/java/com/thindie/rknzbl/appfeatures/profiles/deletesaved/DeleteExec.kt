@@ -2,7 +2,7 @@ package com.thindie.rknzbl.appfeatures.profiles.deletesaved
 
 import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.DISCONNECT_KEY
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

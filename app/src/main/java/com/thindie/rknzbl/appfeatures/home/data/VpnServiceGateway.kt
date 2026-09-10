@@ -1,4 +1,4 @@
-package com.thindie.rknzbl.feature.home.data
+package com.thindie.rknzbl.appfeatures.home.data
 
 import android.content.BroadcastReceiver
 import android.content.Context

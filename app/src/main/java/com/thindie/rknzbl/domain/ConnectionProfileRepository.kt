@@ -1,4 +1,4 @@
-package com.thindie.rknzbl.feature.home.domain
+package com.thindie.rknzbl.domain
 
 import com.thindie.engine.core.WorkState
 import com.v2ray.ang.dto.ConnectionProfile

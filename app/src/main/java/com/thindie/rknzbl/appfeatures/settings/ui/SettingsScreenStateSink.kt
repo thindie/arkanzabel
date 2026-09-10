@@ -3,7 +3,7 @@ package com.thindie.rknzbl.appfeatures.settings.ui
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 
 internal fun settingsStateSink(
   screenScope: ScreenScope<ScreenState, ScreenCommand>,

@@ -1,4 +1,4 @@
-package com.thindie.rknzbl.appfeatures.settings.domain
+package com.thindie.rknzbl.domain
 
 import com.thindie.engine.uikit.ThemeSwitcher
 import kotlinx.coroutines.flow.Flow

@@ -1,4 +1,4 @@
-package com.thindie.rknzbl.feature.home.data
+package com.thindie.rknzbl.appfeatures.home.data
 
 import com.thindie.engine.core.Log
 import com.thindie.rknzbl.error.AppError
