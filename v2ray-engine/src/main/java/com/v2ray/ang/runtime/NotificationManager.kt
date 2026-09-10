@@ -17,6 +17,7 @@ import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.extension.toSpeedString
+import com.v2ray.ang.runtime.V2RayServiceManager.TrafficStats
 import java.lang.ref.WeakReference
 import kotlin.math.min
 
@@ -39,12 +40,13 @@ object NotificationManager {
   private var mNotificationManager: SysNotificationManager? = null
 
   fun startSpeedNotification(connectionProfile: ConnectionProfile?) {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED) != true) return
+    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) return
     if (speedTickRunnable != null || !V2RayServiceManager.isRunning()) return
 
     lastQueryTime = System.currentTimeMillis()
     var lastZeroSpeed = false
-    val outboundTags = connectionProfile?.getAllOutboundTags()?.filterNot { it == AppConfig.TAG_DIRECT }
+    val outboundTags =
+      connectionProfile?.getAllOutboundTags()?.filterNot { it == AppConfig.TAG_DIRECT } ?: emptyList()
 
     val tick =
       object : Runnable {
@@ -56,22 +58,31 @@ object NotificationManager {
           }
           val queryTime = System.currentTimeMillis()
           val sinceLastQueryInSeconds = (queryTime - lastQueryTime) / 1000.0
-          var proxyTotal = 0L
-          val text = StringBuilder()
-          outboundTags?.forEach {
-            val up = V2RayServiceManager.queryStats(it, AppConfig.UPLINK)
-            val down = V2RayServiceManager.queryStats(it, AppConfig.DOWNLINK)
-            if (up + down > 0) {
-              appendSpeedString(text, it, up / sinceLastQueryInSeconds, down / sinceLastQueryInSeconds)
-              proxyTotal += up + down
+          val stats = V2RayServiceManager.queryStats()
+          val proxyTotal =
+            outboundTags.sumOf { tag ->
+              trafficBytes(stats, tag, TrafficStats.Direction.Up) +
+                trafficBytes(stats, tag, TrafficStats.Direction.Down)
             }
-          }
-          val directUplink = V2RayServiceManager.queryStats(AppConfig.TAG_DIRECT, AppConfig.UPLINK)
-          val directDownlink = V2RayServiceManager.queryStats(AppConfig.TAG_DIRECT, AppConfig.DOWNLINK)
+          val directUplink = trafficBytes(stats, AppConfig.TAG_DIRECT, TrafficStats.Direction.Up)
+          val directDownlink = trafficBytes(stats, AppConfig.TAG_DIRECT, TrafficStats.Direction.Down)
           val zeroSpeed = proxyTotal == 0L && directUplink == 0L && directDownlink == 0L
           if (!zeroSpeed || !lastZeroSpeed) {
+            val text = StringBuilder()
             if (proxyTotal == 0L) {
-              appendSpeedString(text, outboundTags?.firstOrNull(), 0.0, 0.0)
+              outboundTags.firstOrNull()?.let { appendSpeedString(text, it, 0.0, 0.0) }
+            }
+            outboundTags.forEach { tag ->
+              val up = trafficBytes(stats, tag, TrafficStats.Direction.Up)
+              val down = trafficBytes(stats, tag, TrafficStats.Direction.Down)
+              if (up + down > 0) {
+                appendSpeedString(
+                  text,
+                  tag,
+                  up / sinceLastQueryInSeconds,
+                  down / sinceLastQueryInSeconds,
+                )
+              }
             }
             appendSpeedString(
               text,
@@ -264,6 +275,37 @@ object NotificationManager {
       text.append("\t")
     }
     text.append("\u2022  ${up.toLong().toSpeedString()}\u2191  ${down.toLong().toSpeedString()}\u2193\n")
+  }
+
+  private fun trafficBytes(
+    stats: List<TrafficStats>,
+    tag: String,
+    direction: TrafficStats.Direction,
+  ): Long {
+    val raw =
+      when (tag) {
+        AppConfig.TAG_DIRECT ->
+          stats
+            .filterIsInstance<TrafficStats.Direct>()
+            .firstOrNull { it.direction == direction }
+            ?.bytes
+        AppConfig.TAG_PROXY ->
+          stats
+            .filterIsInstance<TrafficStats.Proxy>()
+            .firstOrNull { it.direction == direction }
+            ?.bytes
+        else ->
+          stats
+            .filterIsInstance<TrafficStats.Other>()
+            .firstOrNull {
+              it.value.contains(tag) &&
+                it.value.contains(if (direction == TrafficStats.Direction.Up) AppConfig.UPLINK else AppConfig.DOWNLINK)
+            }
+            ?.value
+            ?.split(",")
+            ?.getOrNull(2)
+      }
+    return raw?.toLongOrNull() ?: 0L
   }
 
   private fun getService(): Service? = V2RayServiceManager.serviceControl?.get()?.getService()
