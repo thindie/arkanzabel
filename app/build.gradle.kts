@@ -16,6 +16,35 @@ ktlint {
   )
 }
 
+// Версия из тега: приоритет -PreleaseTag (из CI, напр. v1.0.0), иначе последний локальный тег.
+// Снимаем ведущую "v". Фолбэк "1.0.0", если git недоступен (чистая распаковка без .git).
+fun latestGitTag(): String? =
+  try {
+    val p =
+      ProcessBuilder("git", "describe", "--tags", "--abbrev=0")
+        .directory(projectDir)
+        .redirectErrorStream(true)
+        .start()
+    val out = p.inputStream.bufferedReader().readText().trim()
+    if (p.waitFor() == 0 && out.isNotEmpty()) out else null
+  } catch (e: Exception) {
+    null
+  }
+
+val rawTag =
+  providers.gradleProperty("releaseTag").orNull?.takeIf { it.isNotBlank() }
+    ?: latestGitTag()
+    ?: "1.0.0"
+val parts =
+  rawTag.removePrefix("v")
+    .split(".")
+    .map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 }
+val major = parts.getOrElse(0) { 0 }
+val minor = parts.getOrElse(1) { 0 }
+val patch = parts.getOrElse(2) { 0 }
+val appVersionName = "$major.$minor.$patch"
+val appVersionCode = major * 1_000_000 + minor * 1_000 + patch
+
 android {
   namespace = "com.thindie.rknzbl"
   compileSdk {
@@ -26,8 +55,8 @@ android {
     applicationId = "com.thindie.rknzbl"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = appVersionCode
+    versionName = appVersionName
     vectorDrawables.useSupportLibrary = true
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

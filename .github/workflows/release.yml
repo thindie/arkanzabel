@@ -56,7 +56,9 @@ jobs:
           echo "${EXPECTED_SHA256}  v2ray-engine/libs/libv2ray.aar" | sha256sum -c -
 
       - name: Build release APK
-        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: ./gradlew :app:assembleRelease -PreleaseTag="$RELEASE_TAG" --no-daemon --stacktrace
 
       - name: Sign unsigned APK
         env:
