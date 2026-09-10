@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.settings.ui.inputurl
 
-import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.feature.home.HomeFlow
 
 fun HomeFlow.createInputUrl() =
@@ -12,12 +12,12 @@ fun HomeFlow.createInputUrl() =
         InputUrlCommand.Back -> {
           back()
           settingsRepository.setCustomSourceEnabled(false)
-          s
+          null
         }
         InputUrlCommand.Done -> {
           settingsRepository.setCustomSourceUrl(s.url)
           back()
-          s
+          null
         }
       }
     },

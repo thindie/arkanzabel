@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security config for Arkanzabel VPN client.
+
+    cleartextTrafficPermitted="true" — required for VPN traffic that may pass through
+    HTTP-based proxy chains or local debugging proxies. Production traffic uses HTTPS.
+
+    user CA trust — intentional: allows MITM proxies (corporate SSL inspection,
+    enterprise certificates) and local debugging tools (Charles, mitmproxy) to inspect
+    traffic when the VPN tunnel is NOT active. When VPN is active, all traffic is
+    encrypted inside the tunnel and user CA trust does not apply to tunneled traffic.
+    Users should be aware that any installed user CA can see plaintext traffic when
+    the VPN is disconnected.
+-->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

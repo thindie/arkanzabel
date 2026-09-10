@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.perapp
 
-import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.engine.core.RouteFactory
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.AppManagerUtil
@@ -29,11 +29,11 @@ fun PerAppProxyFlow.search() =
 internal suspend fun PerAppProxyFlow.execSearch(
   command: PerAppSearchCommand,
   state: SearchState,
-): SearchState {
+): SearchState? {
   return when (command) {
     PerAppSearchCommand.Back -> {
       back()
-      state
+      null
     }
 
     PerAppSearchCommand.LoadApps -> {

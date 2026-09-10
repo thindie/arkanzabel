@@ -1,21 +1,17 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
+import com.thindie.engine.core.RouteFactory
+import com.thindie.engine.core.ScreenScopeError
+import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.engine.RouteFactory
-import com.thindie.rknzbl.engine.ScreenScopeError
-import com.thindie.rknzbl.engine.WorkState
 import com.thindie.rknzbl.error.AppError
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
 import com.v2ray.ang.runtime.KeyValueStorage
-import com.v2ray.ang.runtime.ProfileUriParser
 import com.v2ray.ang.runtime.V2RayServiceManager
-import com.v2ray.ang.util.HttpUtil
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.first
@@ -83,25 +79,28 @@ private fun HomeFlow.newProfilesErrorMapper(e: Throwable): ScreenScopeError {
 private suspend fun HomeFlow.exec(
   command: ScreenCommand,
   homeState: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (command) {
     is ScreenCommand.Back -> {
       back()
-      homeState
+      null
     }
 
     is ScreenCommand.Select -> {
       withContext(Dispatchers.Default) {
+        val guid =
+          KeyValueStorage.encodeServerConfig(
+            guid = UUID.randomUUID().toString(),
+            config = command.profile,
+          )
         V2RayServiceManager.startVService(
           context = appContext,
-          guid =
-            KeyValueStorage.encodeServerConfig(
-              guid = UUID.randomUUID().toString(),
-              config = command.profile,
-            ),
+          guid = guid,
         )
-        (appContext as Application).vpnRuntimeState.filter { it is WorkState.NotRunning }.first()
-        appContext.vpnRuntimeState.filterNot { it is WorkState.NotRunning }.first()
+        (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
+        appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
+        // Persist a fresh latency reading for the just-saved profile.
+        (appContext as Application).applicationScope.pingManager.pingSaved(guid)
         selected.tryEmit(command.profile)
         homeState.copy(
           selected = command.profile,
@@ -112,42 +111,35 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Start -> {
       withContext(Dispatchers.IO) {
-        val links =
-          HttpUtil.getUrlContent(
-            url = homeState.sourceUrl,
-            timeout = 10_000,
-          )
-        val parsed =
-          links?.split("\n")
-            ?.map { uri ->
-              async { ProfileUriParser.parse(uri) }
-            }
-            ?.awaitAll()
-            ?.mapNotNull { it }
-        homeState.copy(links = parsed.orEmpty())
+        val profiles = repository.fetchFromSource(homeState.sourceUrl)
+        (appContext as Application).applicationScope.pingManager.pingProfiles(
+          profiles = profiles,
+          force = settingsRepository.forceProfileMeasure.first(),
+        )
+        homeState.copy(
+          links = profiles,
+          pingState = WorkState.Running,
+        )
       }
     }
 
     ScreenCommand.Stop -> {
       V2RayServiceManager.stopVService(appContext)
-      homeState
+      null
     }
 
     ScreenCommand.Refresh -> {
       withContext(Dispatchers.IO) {
-        val links =
-          HttpUtil.getUrlContent(
-            url = homeState.sourceUrl,
-            timeout = 10_000,
-          )
-        val parsed =
-          links?.split("\n")
-            ?.map { uri ->
-              async { ProfileUriParser.parse(uri) }
-            }
-            ?.awaitAll()
-            ?.mapNotNull { it }
-        homeState.copy(links = parsed ?: homeState.links)
+        repository.invalidateRemoteCache(homeState.sourceUrl)
+        val profiles = repository.fetchFromSource(homeState.sourceUrl)
+        (appContext as Application).applicationScope.pingManager.pingProfiles(
+          profiles = profiles,
+          force = settingsRepository.forceProfileMeasure.first(),
+        )
+        homeState.copy(
+          links = profiles,
+          pingState = WorkState.Running,
+        )
       }
     }
 
@@ -157,18 +149,22 @@ private suspend fun HomeFlow.exec(
 
     ScreenCommand.Choose -> {
       startSelectSourceFlow()
-      homeState
+      null
     }
 
     is ScreenCommand.Save -> {
       val guid = KeyValueStorage.getSelectServer()
       repository.save(requireNotNull(guid))
-      homeState
+      null
     }
 
     ScreenCommand.OpenPerAppProxy -> {
       startPerAppProxyFlow()
-      homeState
+      null
+    }
+
+    is ScreenCommand.Filter -> {
+      homeState.copy(filter = command.mode)
     }
   }
 }

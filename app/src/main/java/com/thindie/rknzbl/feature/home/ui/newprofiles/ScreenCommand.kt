@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 import com.v2ray.ang.dto.ConnectionProfile
 
 sealed interface ScreenCommand : Command {
@@ -21,4 +21,6 @@ sealed interface ScreenCommand : Command {
   data object Dismissed : ScreenCommand
 
   data object OpenPerAppProxy : ScreenCommand
+
+  data class Filter(val mode: FilterMode) : ScreenCommand
 }

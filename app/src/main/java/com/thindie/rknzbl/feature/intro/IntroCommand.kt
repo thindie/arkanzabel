@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.intro
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 sealed interface CommandIntro : Command {
   data object Start : CommandIntro

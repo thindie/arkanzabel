@@ -1,13 +1,14 @@
 package com.v2ray.ang.protocolstringsparsers
 
 import android.text.TextUtils
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.VmessQRCode
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -27,7 +28,7 @@ object Vmess : ProtocolParser() {
     var result = str.replace(Protocol.Vmess.protocolScheme, "")
     result = Utils.decode(result)
     if (TextUtils.isEmpty(result)) {
-      Log.w(AppConfig.TAG, "Toast decoding failed")
+      Log.w({ "Toast decoding failed" }, AppConfig.TAG)
       return null
     }
     val vmessQRCode = JsonUtil.fromJson(result, VmessQRCode::class.java) ?: return null
@@ -36,12 +37,11 @@ object Vmess : ProtocolParser() {
       TextUtils.isEmpty(vmessQRCode.id) ||
       TextUtils.isEmpty(vmessQRCode.net)
     ) {
-      Log.w(AppConfig.TAG, "Toast incorrect protocol")
+      Log.w({ "Toast incorrect protocol" }, AppConfig.TAG)
       return null
     }
 
-    val network =
-      vmessQRCode.net.ifBlank { null } ?: NetworkType.TCP.type
+    val networkType = NetworkType.fromString(vmessQRCode.net)
 
     val headerType = vmessQRCode.type
     val host = vmessQRCode.host
@@ -51,7 +51,7 @@ object Vmess : ProtocolParser() {
     var authority: String? = null
     var seed: String? = null
 
-    when (NetworkType.fromString(network)) {
+    when (networkType) {
       NetworkType.KCP -> {
         seed = vmessQRCode.path
       }
@@ -80,7 +80,7 @@ object Vmess : ProtocolParser() {
       password = vmessQRCode.id,
       method =
         if (TextUtils.isEmpty(vmessQRCode.scy)) AppConfig.DEFAULT_SECURITY else vmessQRCode.scy,
-      network = network,
+      network = networkType,
       headerType = headerType,
       host = host,
       path = path,
@@ -88,7 +88,7 @@ object Vmess : ProtocolParser() {
       mode = mode,
       serviceName = serviceName,
       authority = authority,
-      security = vmessQRCode.tls,
+      security = Security.fromString(vmessQRCode.tls),
       sni = vmessQRCode.sni,
       fingerPrint = vmessQRCode.fp,
       alpn = vmessQRCode.alpn,
@@ -108,9 +108,9 @@ object Vmess : ProtocolParser() {
     vmessQRCode.scy = config.method.orEmpty()
     vmessQRCode.aid = "0"
 
-    vmessQRCode.net = config.network.orEmpty()
+    vmessQRCode.net = config.network.type
     vmessQRCode.type = config.headerType.orEmpty()
-    when (NetworkType.fromString(config.network)) {
+    when (config.network) {
       NetworkType.KCP -> {
         vmessQRCode.path = config.seed.orEmpty()
       }
@@ -127,7 +127,7 @@ object Vmess : ProtocolParser() {
     config.host?.nullIfBlank()?.let { vmessQRCode.host = it }
     config.path?.nullIfBlank()?.let { vmessQRCode.path = it }
 
-    vmessQRCode.tls = config.security.orEmpty()
+    vmessQRCode.tls = config.security?.value.orEmpty()
     vmessQRCode.sni = config.sni.orEmpty()
     vmessQRCode.fp = config.fingerPrint.orEmpty()
     vmessQRCode.alpn = config.alpn.orEmpty()

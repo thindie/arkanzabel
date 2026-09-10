@@ -3,6 +3,7 @@ package com.v2ray.ang.protocolstringsparsers
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.NetworkType
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.extension.nullIfBlank
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.HttpUtil
@@ -100,7 +101,7 @@ open class ProtocolParser {
         else -> allowInsecure
       }
     return config.copy(
-      network = queryParam["type"] ?: NetworkType.TCP.type,
+      network = NetworkType.fromString(queryParam["type"]),
       headerType = queryParam["headerType"],
       host = queryParam["host"],
       path = queryParam["path"],
@@ -112,10 +113,7 @@ open class ProtocolParser {
       authority = queryParam["authority"],
       xhttpMode = queryParam["mode"],
       xhttpExtra = queryParam["extra"],
-      security =
-        queryParam["security"]?.trim()?.lowercase().takeIf {
-          it == AppConfig.TLS || it == AppConfig.REALITY
-        },
+      security = Security.fromString(queryParam["security"]),
       insecure = insecureResolved,
       sni = queryParam["sni"],
       fingerPrint = queryParam["fp"],
@@ -145,7 +143,7 @@ open class ProtocolParser {
    */
   fun getQueryDic(config: ConnectionProfile): HashMap<String, String> {
     val dicQuery = HashMap<String, String>()
-    dicQuery["security"] = config.security?.ifEmpty { "none" }.orEmpty()
+    dicQuery["security"] = config.security?.value ?: "none"
     config.sni?.nullIfBlank()?.let { dicQuery["sni"] = it }
     config.alpn?.nullIfBlank()?.let { dicQuery["alpn"] = it }
     config.echConfigList?.nullIfBlank()?.let { dicQuery["ech"] = it }
@@ -157,13 +155,13 @@ open class ProtocolParser {
     config.mldsa65Verify?.nullIfBlank()?.let { dicQuery["pqv"] = it }
     config.flow?.nullIfBlank()?.let { dicQuery["flow"] = it }
     // Add two keys for compatibility: "insecure" and "allowInsecure"
-    if (config.security == AppConfig.TLS) {
+    if (config.security == Security.TLS) {
       val insecureFlag = if (config.insecure) "1" else "0"
       dicQuery["insecure"] = insecureFlag
       dicQuery["allowInsecure"] = insecureFlag
     }
 
-    val networkType = NetworkType.fromString(config.network)
+    val networkType = config.network
     dicQuery["type"] = networkType.type
 
     when (networkType) {
@@ -215,7 +213,7 @@ open class ProtocolParser {
     val domain = HttpUtil.toIdnDomain(connectionProfile.server.orEmpty())
     if (KeyValueStorage.decodeSettingsString(
         AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD,
-        "1",
+        "0",
       ) != "2"
     ) {
       return domain

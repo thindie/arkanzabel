@@ -13,6 +13,7 @@ object AppConfig {
 
   val ANG_PACKAGE: String get() = hostApplicationId
   val TAG: String get() = hostApplicationId
+  val TAG_KERNEL: String get() = "$TAG${"_KERNEL"}"
 
   val httpUserAgent: String get() = "$hostApplicationId/$hostVersionName"
 
@@ -34,6 +35,8 @@ object AppConfig {
   const val ANG_CONFIG = "ang_config"
 
   /** Keys for [com.v2ray.ang.runtime.KeyValueStorage] (MMKV). */
+
+  const val PREF_FORCE_PROFILE_MEASUREMENT: String = "pref_force_profile_measurement"
   const val PREF_SNIFFING_ENABLED = "pref_sniffing_enabled"
   const val PREF_ROUTE_ONLY_ENABLED = "pref_route_only_enabled"
   const val PREF_PER_APP_PROXY = "pref_per_app_proxy"
@@ -81,6 +84,12 @@ object AppConfig {
   const val PREF_START_SCAN_IMMEDIATE = "pref_start_scan_immediate"
   const val PREF_DOUBLE_COLUMN_DISPLAY = "pref_double_column_display"
   const val PREF_LANGUAGE = "pref_language"
+
+  /** "start with favourite profiles" flag in settings MMKV — its own key so it is independent of local-save mode. */
+  const val PREF_START_WITH_FAVOURITES = "pref_start_with_favourites"
+
+  /** Feature toggle: bottom-navigation home design (vs legacy HomeSelect hub). Default off. */
+  const val PREF_USE_NEW_DESIGN = "pref_use_new_design"
   const val PREF_UI_MODE_NIGHT = "pref_ui_mode_night"
   const val PREF_PREFER_IPV6 = "pref_prefer_ipv6"
   const val PREF_PROXY_SHARING = "pref_proxy_sharing_enabled"
@@ -89,6 +98,7 @@ object AppConfig {
   const val PREF_REMOTE_DNS = "pref_remote_dns"
   const val PREF_DOMESTIC_DNS = "pref_domestic_dns"
   const val PREF_DNS_HOSTS = "pref_dns_hosts"
+  const val PREF_DNS_REFRESH_INTERVAL = "pref_dns_refresh_interval"
   const val PREF_DELAY_TEST_URL = "pref_delay_test_url"
   const val PREF_IP_API_URL = "pref_ip_api_url"
   const val PREF_LOGLEVEL = "pref_core_loglevel"
@@ -168,6 +178,14 @@ object AppConfig {
   const val WIREGUARD_LOCAL_ADDRESS_V4 = "172.16.0.2/32"
   const val WIREGUARD_LOCAL_ADDRESS_V6 = "2606:4700:110:8f81:d551:a0:532e:a2b3/128"
   const val WIREGUARD_LOCAL_MTU = "1420"
+
+  /**
+   * [StreamSettings.Sockopt.tcpKeepAliveIdle] (seconds) applied to proxy outbounds so the TCP
+   * connection to the VPN server stays alive between packets. Keeps idle connections from being
+   * closed by the server / caught by DPI as "dead".
+   */
+  const val OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS = 90
+
   const val LOOPBACK = "127.0.0.1"
 
   /** Message constants for communication. */
@@ -237,6 +255,39 @@ object AppConfig {
   const val DEFAULT_NETWORK = "tcp"
   const val TLS = "tls"
   const val REALITY = "reality"
+
+  /**
+   * Whether to enable Reality `show` (masquerade) so the core substitutes the real serverName
+   * certificate chain into the TLS ClientHello. Kept off by default: turning it on changes the
+   * outbound TLS fingerprint and may break already-working Reality connections.
+   */
+  const val REALITY_SHOW_ENABLED = false
+
+  /** Default fallback handshake for Reality `realitySettings.fallback`. */
+  const val REALITY_FALLBACK = "n"
+
+  /** Key for the global Reality masquerade toggle in settings. */
+  const val PREF_REALITY_SHOW_ENABLED = "reality_show_enabled"
+
+  /** Sniffing target protocols setting. See SniffingTarget enum. */
+  const val PREF_SNIFFING_TARGET = "sniffing_target"
+  const val DEFAULT_SNIFFING_TARGET = "all"
+
+  /** Storage keys for the Sniffing target protocols (see SniffingTarget enum). */
+  const val SNIFFING_TARGET_ALL = "all"
+  const val SNIFFING_TARGET_HTTP = "http"
+  const val SNIFFING_TARGET_TLS = "tls"
+  const val SNIFFING_TARGET_QUIC = "quic"
+
+  /** Sniffing port-range setting. See SniffingPortRange enum. */
+  const val PREF_SNIFFING_PORT_RANGE = "sniffing_port_range"
+  const val DEFAULT_SNIFFING_PORT_RANGE = "all"
+
+  /** Storage keys for the Sniffing port range (see SniffingPortRange enum). */
+  const val SNIFFING_PORT_RANGE_ALL = "all"
+  const val SNIFFING_PORT_RANGE_COMMON = "common"
+  const val SNIFFING_PORT_RANGE_HTTP = "http"
+  const val SNIFFING_PORT_RANGE_HTTPS = "https"
   const val HEADER_TYPE_HTTP = "http"
 
   val DNS_ALIDNS_ADDRESSES = arrayListOf("223.5.5.5", "223.6.6.6", "2400:3200::1", "2400:3200:baba::1")

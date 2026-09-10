@@ -1,9 +1,9 @@
 package com.v2ray.ang.runtime
 
 import android.content.Context
-import android.util.Log
 import com.google.gson.JsonIOException
 import com.tencent.mmkv.MMKV
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
@@ -209,7 +209,7 @@ object KeyValueStorage {
       if (!json.isNullOrBlank()) {
         val item = JsonUtil.fromJson(json, SubscriptionItem::class.java)
         if (item == null) {
-          Log.w(AppConfig.TAG, "Skip invalid subscription item: $key")
+          Log.w({ "Skip invalid subscription item: $key" }, AppConfig.TAG)
           return@forEach
         }
         subscriptions.add(SubscriptionCache(key, item))
@@ -264,7 +264,7 @@ object KeyValueStorage {
       if (!json.isNullOrBlank()) {
         val item = JsonUtil.fromJson(json, AssetUrlItem::class.java)
         if (item == null) {
-          Log.w(AppConfig.TAG, "Skip invalid asset url item: $key")
+          Log.w({ "Skip invalid asset url item: $key" }, AppConfig.TAG)
           return@forEach
         }
         assetUrlItems.add(AssetUrlCache(key, item))
@@ -445,20 +445,39 @@ object KeyValueStorage {
     mainStorage.encode(KEY_SAVED_PROFILES_JSON, profilesJson)
   }
 
-  // === Custom Source URL ===
+  // === Custom source URL (redesigned settings) ===
+  // Presence of a non-blank URL means the custom source is active — no separate flag.
   private const val KEY_CUSTOM_SOURCE_URL = "custom_source_url"
-  private const val KEY_CUSTOM_SOURCE_ENABLED = "custom_source_enabled"
 
-  fun getCustomSourceUrl(): String? = decodeSettingsString(KEY_CUSTOM_SOURCE_URL)
+  fun getCustomSourceUrl(): String? = decodeSettingsString(KEY_CUSTOM_SOURCE_URL)?.takeIf { it.isNotBlank() }
 
-  fun setCustomSourceUrl(url: String?): Boolean {
-    return encodeSettings(KEY_CUSTOM_SOURCE_URL, url)
+  /** Persists [url]; null/blank clears the key (disables the custom source). */
+  fun setCustomSourceUrl(url: String?) {
+    if (url.isNullOrBlank()) {
+      settingsStorage.removeValueForKey(KEY_CUSTOM_SOURCE_URL)
+    } else {
+      encodeSettings(KEY_CUSTOM_SOURCE_URL, url)
+    }
   }
 
-  fun isCustomSourceEnabled(): Boolean = decodeSettingsBool(KEY_CUSTOM_SOURCE_ENABLED, false)
+  // === Legacy custom source (classic design): URL + separate enabled flag ===
+  private const val KEY_LEGACY_CUSTOM_SOURCE_URL = "custom_source_url_legacy"
+  private const val KEY_LEGACY_CUSTOM_SOURCE_ENABLED = "custom_source_enabled_legacy"
 
-  fun setCustomSourceEnabled(enabled: Boolean): Boolean {
-    return encodeSettings(KEY_CUSTOM_SOURCE_ENABLED, enabled)
+  @Deprecated("Legacy classic-design source; redesigned settings use getCustomSourceUrl/setCustomSourceUrl")
+  fun getLegacyCustomSourceUrl(): String? = decodeSettingsString(KEY_LEGACY_CUSTOM_SOURCE_URL)
+
+  @Deprecated("Legacy classic-design source; redesigned settings use getCustomSourceUrl/setCustomSourceUrl")
+  fun setLegacyCustomSourceUrl(url: String?): Boolean {
+    return encodeSettings(KEY_LEGACY_CUSTOM_SOURCE_URL, url)
+  }
+
+  @Deprecated("Legacy classic-design source flag; redesigned settings derive the state from URL presence")
+  fun isLegacyCustomSourceEnabled(): Boolean = decodeSettingsBool(KEY_LEGACY_CUSTOM_SOURCE_ENABLED, false)
+
+  @Deprecated("Legacy classic-design source flag; redesigned settings derive the state from URL presence")
+  fun setLegacyCustomSourceEnabled(enabled: Boolean): Boolean {
+    return encodeSettings(KEY_LEGACY_CUSTOM_SOURCE_ENABLED, enabled)
   }
 
   fun getThemeMode(): String? = decodeSettingsString(KEY_THEME_MODE)
@@ -478,8 +497,15 @@ object KeyValueStorage {
   fun setAutosaveMode(enabled: Boolean): Boolean {
     return encodeSettings(KEY_AUTOSAVE_ENABLED, enabled)
   }
+
+  fun isStartWithFavouritesEnabled(): Boolean = decodeSettingsBool(KEY_START_WITH_FAVOURITES, false)
+
+  fun setStartWithFavourites(enabled: Boolean): Boolean {
+    return encodeSettings(KEY_START_WITH_FAVOURITES, enabled)
+  }
 }
 
 private const val KEY_STORAGE_MODE_LOCAL = "storage_mode_local"
 private const val KEY_AUTOSAVE_ENABLED = "autosave_enabled"
 private const val KEY_THEME_MODE = "theme_mode"
+private const val KEY_START_WITH_FAVOURITES = "start_with_favourites"

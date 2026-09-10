@@ -2,8 +2,8 @@ package com.v2ray.ang.runtime
 
 import android.content.Context
 import android.text.TextUtils
-import android.util.Log
 import com.google.gson.JsonArray
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2Ray
@@ -27,6 +27,7 @@ import com.v2ray.ang.runtimebuilder.ConnectionProfileToOutboundMapper
 import com.v2ray.ang.runtimebuilder.DnsConfigStep
 import com.v2ray.ang.runtimebuilder.DomainResolveStep
 import com.v2ray.ang.runtimebuilder.InboundConfigStep
+import com.v2ray.ang.runtimebuilder.KeyValueStorageSettingsReader
 import com.v2ray.ang.runtimebuilder.OutboundConfigStep
 import com.v2ray.ang.runtimebuilder.RoutingConfigStep
 import com.v2ray.ang.util.JsonUtil
@@ -36,13 +37,16 @@ import java.util.regex.PatternSyntaxException
 object V2rayConfigManager {
   private var initConfigCache: String? = null
   private var initConfigCacheWithTun: String? = null
-  private val inboundConfigStep by lazy { InboundConfigStep(::needTun) }
-  private val routingConfigStep by lazy { RoutingConfigStep() }
-  private val dnsConfigStep by lazy { DnsConfigStep(::getUserRule2Domain) }
-  private val outboundConfigStep by lazy { OutboundConfigStep(ConnectionProfileToOutboundMapper::map) }
-  private val domainResolveStep by lazy { DomainResolveStep() }
+  private val inboundConfigStep by lazy { InboundConfigStep(KeyValueStorageSettingsReader(), ::needTun) }
+  private val routingConfigStep by lazy { RoutingConfigStep(KeyValueStorageSettingsReader()) }
+  private val dnsConfigStep by lazy { DnsConfigStep(KeyValueStorageSettingsReader(), ::getUserRule2Domain) }
+  private val outboundConfigStep by lazy {
+    OutboundConfigStep(KeyValueStorageSettingsReader(), ConnectionProfileToOutboundMapper::map)
+  }
+  private val domainResolveStep by lazy { DomainResolveStep(KeyValueStorageSettingsReader()) }
   private val configAssembler by lazy {
     ConfigAssembler(
+      settings = KeyValueStorageSettingsReader(),
       applyInbounds = ::getInbounds,
       applyOutbounds = ::getOutbounds,
       applyMoreOutbounds = ::getMoreOutbounds,
@@ -86,6 +90,20 @@ object V2rayConfigManager {
       Protocol.PolicyGroup -> getV2rayGroupConfig(context, guid, config)
       else -> getV2rayNormalConfig4Speedtest(context, guid, config)
     }
+  }
+
+  /**
+   * Builds core JSON for outbound delay measurement from an in-memory [config].
+   *
+   * Only normal protocols are supported — [Protocol.Custom] and [Protocol.PolicyGroup] require a
+   * stored profile (GUID) and are not supported here. Use for unsaved profiles that are not
+   * persisted to the database.
+   */
+  fun getV2rayConfig4Speedtest(
+    context: Context,
+    config: ConnectionProfile,
+  ): V2Ray {
+    return getV2rayNormalConfig4Speedtest(context, "", config)
   }
 
   private fun getV2rayCustomConfig(
@@ -190,6 +208,11 @@ object V2rayConfigManager {
     val v2rayConfig = initV2rayConfig(context)
     v2rayConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
+    v2rayConfig.log =
+      v2rayConfig.log.copy(
+        access = CoreLogFiles.accessFile(context).absolutePath,
+        error = CoreLogFiles.errorFile(context).absolutePath,
+      )
     v2rayConfig.remarks = config.remarks
 
     val assembled = configAssembler.applyStandardSteps(v2rayConfig, config)
@@ -227,6 +250,11 @@ object V2rayConfigManager {
     val initialConfig = initV2rayConfig(context)
     initialConfig.log.loglevel =
       KeyValueStorage.decodeSettingsString(AppConfig.PREF_LOGLEVEL) ?: "warning"
+    initialConfig.log =
+      initialConfig.log.copy(
+        access = CoreLogFiles.accessFile(context).absolutePath,
+        error = CoreLogFiles.errorFile(context).absolutePath,
+      )
     initialConfig.remarks = config.remarks
 
     val configWithInbounds = getInbounds(initialConfig)
@@ -273,7 +301,7 @@ object V2rayConfigManager {
       config.server ?: throw ConfigValidationError(
         message = "Server address is missing",
         userReadable = "Server address is missing",
-        extras = mapOf("guid" to guid),
+        extras = mapOf("guid" to config.toString()),
       )
     if (!Utils.isPureIpAddress(address) && !Utils.isValidUrl(address)) {
       throw ConfigValidationError(
@@ -484,6 +512,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "leastLoad",
@@ -511,6 +540,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "random",
@@ -525,6 +555,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "roundRobin",
@@ -539,6 +570,7 @@ object V2rayConfigManager {
             V2rayConfig.Routing.Balancer(
               tag = AppConfig.TAG_BALANCER,
               selector = lstSelector,
+              fallbackTag = AppConfig.TAG_DIRECT,
               strategy =
                 V2rayConfig.Routing.StrategyObject(
                   type = "leastPing",
@@ -573,7 +605,7 @@ object V2rayConfigManager {
         )
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure balance", runtime)
+      Log.e({ "Failed to configure balance" }, AppConfig.TAG, runtime)
       throw RoutingConfigError(
         message = "Failed to configure balance for policy group",
         source = "V2rayConfigManager.getBalance",
@@ -626,7 +658,7 @@ object V2rayConfigManager {
   }
 
   private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "0") == "1") {
       resolveOutboundDomainsToHosts(this)
     }
     return this
@@ -715,7 +747,7 @@ object V2rayConfigManager {
     streamSettings: StreamSettings,
     connectionProfile: ConnectionProfile,
   ): String? {
-    val transport = connectionProfile.network.orEmpty()
+    val transport = connectionProfile.network.type
     val headerType = connectionProfile.headerType
     val host = connectionProfile.host
     val path = connectionProfile.path
@@ -816,7 +848,12 @@ object V2rayConfigManager {
         sni = host
         xhttpSetting.path = path ?: "/"
         xhttpSetting.mode = xhttpMode
-        xhttpSetting.extra = JsonUtil.parseString(xhttpExtra.orEmpty())
+        xhttpSetting.extra =
+          try {
+            JsonUtil.parseString(xhttpExtra.orEmpty())
+          } catch (_: Throwable) {
+            null
+          }
         streamSettings.xhttpSettings = xhttpSetting
       }
 
@@ -881,8 +918,7 @@ object V2rayConfigManager {
     connectionProfile: ConnectionProfile,
     sniExt: String?,
   ) {
-    val streamSecurity = connectionProfile.security.orEmpty()
-    val allowInsecure = connectionProfile.insecure
+    val streamSecurity = connectionProfile.security?.value.orEmpty()
     val sni =
       if (connectionProfile.sni.isNullOrEmpty()) {
         when {
@@ -899,9 +935,9 @@ object V2rayConfigManager {
     val realityPk = connectionProfile.publicKey.nullIfBlank()
     val tlsSetting =
       StreamSettings.TlsSettings(
-        allowInsecure = allowInsecure,
         serverName = sni.nullIfBlank(),
         fingerprint = connectionProfile.fingerPrint.nullIfBlank(),
+        utls = connectionProfile.fingerPrint.nullIfBlank(),
         alpn =
           connectionProfile.alpn?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
             .takeIf { !it.isNullOrEmpty() },
@@ -913,6 +949,8 @@ object V2rayConfigManager {
         shortId = connectionProfile.shortId.nullIfBlank(),
         spiderX = connectionProfile.spiderX.nullIfBlank(),
         mldsa65Verify = connectionProfile.mldsa65Verify.nullIfBlank(),
+        show = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_REALITY_SHOW_ENABLED, AppConfig.REALITY_SHOW_ENABLED),
+        fallback = AppConfig.REALITY_FALLBACK,
       )
     if (streamSettings.security == AppConfig.TLS) {
       streamSettings.tlsSettings = tlsSetting

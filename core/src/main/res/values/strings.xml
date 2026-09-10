@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Engine</string>
+    <string name="label_example">Example</string>
+    <string name="label_settings">Settings</string>
+</resources>

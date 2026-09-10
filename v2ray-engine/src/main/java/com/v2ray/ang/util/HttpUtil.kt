@@ -1,6 +1,6 @@
 package com.v2ray.ang.util
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.error.ConfigValidationError
@@ -61,10 +61,10 @@ object HttpUtil {
           addresses.sortedWith(compareBy { it is Inet6Address })
         }
       val ipList = sortedAddresses.mapNotNull { it.hostAddress }
-      Log.i(AppConfig.TAG, "Resolved IPs for $host: ${ipList.joinToString()}")
+      Log.i({ "Resolved IPs for $host: ${ipList.joinToString()}" }, AppConfig.TAG)
       ipList
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "Failed to resolve host to IP", e)
+      Log.e({ "Failed to resolve host to IP" }, AppConfig.TAG, e)
       null
     }
   }
@@ -185,7 +185,7 @@ object HttpUtil {
         userReadable = "Url is broken :'(",
       )
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "Failed to create proxy connection", e)
+      Log.e({ "Failed to create proxy connection" }, AppConfig.TAG, e)
       conn?.disconnect()
       null
     }

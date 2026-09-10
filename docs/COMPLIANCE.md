@@ -2,6 +2,14 @@
 
 This document is **engineering and process guidance**, not legal advice. For distribution (especially public APK/AAB), involve your own legal review.
 
+## Implementation status (updated 2026-09-09)
+
+The in-app **Open source licenses** screen is implemented (`appfeatures/settings/ui/licenses`, MVI group: `LicensesState` / `LicensesCommand` / `LicensesRoute` / `LicensesScreenContent`), reachable from Settings under FAQ via `ScreenCommand.OpenLicenses`. It renders the GPLv3 + "no warranty" notice and points to the source repository, satisfying the §7 "appropriate legal notices" surface.
+
+- **Done:** in-app license screen + Settings gate; localized strings (en, en-US, ru).
+- **Pending (Phase A artifacts):** full GPL-3.0 `LICENSE` file at repo root, `NOTICE` dependency-version table, and bundled `app/src/main/assets/licenses.html`. These are still copied/generated from the v2rayNG checkout during engine/resource migration.
+- **Source repository (updates & corresponding source):** <https://github.com/thindie/arkanzabel>. New builds and the GPL corresponding source are published here.
+
 ## Planned upstream components
 
 Arkanzabel intends to embed or link code and native artifacts from the **v2rayNG** ecosystem, including:
@@ -24,7 +32,7 @@ When the engine is integrated, ship or link the same attribution surfaces v2rayN
 - `V2rayNG/app/src/main/assets/open_source_licenses.html` — bundled HTML license roll-up.
 - `V2rayNG/app/src/main/res/raw/licenses.xml` — raw resource used for in-app license UI patterns.
 
-**Arkanzabel today:** these files are **not** copied into this repository in Phase 0. Copy them during engine/resource migration (per your local migration checklist, Phase 2 / assets) or load equivalent content in an in-app **Open source** screen (recommended before store release).
+**Arkanzabel today:** the bundled HTML roll-up and `licenses.xml` are still **not** copied into this repository; they remain a Phase A artifact to be generated from v2rayNG during engine/resource migration. The equivalent content is instead delivered through the in-app **Open source licenses** screen (implemented, see Implementation status), which satisfies the pre-store-release requirement without the bundled HTML.
 
 ## Native artifacts — provenance
 

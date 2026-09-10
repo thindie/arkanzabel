@@ -1,7 +1,7 @@
 package com.v2ray.ang.runtime
 
 import android.content.Context
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.util.Utils
 import go.Seq
@@ -32,14 +32,14 @@ object V2RayNativeManager {
         val assetPath = Utils.userAssetPath(context)
         val deviceId = Utils.getDeviceIdForXUDPBaseKey()
         Libv2ray.initCoreEnv(assetPath, deviceId)
-        Log.i(AppConfig.TAG, "V2Ray core environment initialized successfully")
+        Log.i({ "V2Ray core environment initialized successfully" }, AppConfig.TAG)
       } catch (runtime: RuntimeException) {
-        Log.e(AppConfig.TAG, "Failed to initialize V2Ray core environment", runtime)
+        Log.e({ "Failed to initialize V2Ray core environment" }, AppConfig.TAG, runtime)
         initialized.set(false)
         throw runtime
       }
     } else {
-      Log.d(AppConfig.TAG, "V2Ray core environment already initialized, skipping")
+      Log.d({ "V2Ray core environment already initialized, skipping" }, AppConfig.TAG)
     }
   }
 
@@ -52,7 +52,7 @@ object V2RayNativeManager {
     return try {
       Libv2ray.checkVersionX()
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to check V2Ray version", runtime)
+      Log.e({ "Failed to check V2Ray version" }, AppConfig.TAG, runtime)
       "Unknown"
     }
   }
@@ -71,7 +71,7 @@ object V2RayNativeManager {
     return try {
       Libv2ray.measureOutboundDelay(config, testUrl)
     } catch (runtime: Exception) {
-      Log.e(AppConfig.TAG, "Failed to measure outbound delay", runtime)
+      Log.e({ "Failed to measure outbound delay" }, AppConfig.TAG, runtime)
       -1L
     }
   }
@@ -86,7 +86,7 @@ object V2RayNativeManager {
     return try {
       Libv2ray.newCoreController(handler)
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to create core controller", runtime)
+      Log.e({ "Failed to create core controller" }, AppConfig.TAG, runtime)
       throw runtime
     }
   }

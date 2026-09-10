@@ -3,38 +3,48 @@ package com.thindie.rknzbl.feature.settings.ui
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.uikit.Action
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.LocalThemeSwitcher
+import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.engine.uikit.Toggle
+import com.thindie.engine.uikit.TopAppBar
+import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.uikit.Action
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.HSpacer
-import com.thindie.rknzbl.uikit.LocalThemeSwitcher
-import com.thindie.rknzbl.uikit.ThemeSwitcher
-import com.thindie.rknzbl.uikit.Toggle
-import com.thindie.rknzbl.uikit.TopAppBar
-import com.thindie.rknzbl.uikit.VSpacer
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -72,6 +82,8 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
 
       // === Appearance ===
       VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
       SectionTitle(stringResource(R.string.settings_section_appearance))
       VSpacer(16.dp)
 
@@ -130,6 +142,13 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
+        label = stringResource(R.string.settings_use_new_design_title),
+        subtitle = stringResource(R.string.settings_use_new_design_subtitle),
+        checked = state.useNewDesign ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleNewDesign) },
+      )
+
+      ToggleRow(
         label = stringResource(R.string.settings_start_with_favorite_profiles_title),
         subtitle = stringResource(R.string.settings_start_with_favorite_profiles_subtitle),
         checked = state.startWithFavoriteProfiles ?: false,
@@ -153,6 +172,13 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
           },
         checked = state.isCustomSourceEnabled,
         onCheckedChange = { scope.send(ScreenCommand.ToggleCustomSource) },
+      )
+
+      ToggleRow(
+        label = stringResource(R.string.settings_force_profile_measure_title),
+        subtitle = stringResource(R.string.settings_force_profile_measure_subtitle),
+        checked = state.forceProfileMeasure ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleForceProfileMeasure) },
       )
 
       ToggleRow(
@@ -205,6 +231,90 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       MuxFaqRow { sendMuxFaq(scope) }
+
+      // === Fragment ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_fragment_title))
+      VSpacer(16.dp)
+
+      ToggleRow(
+        label = stringResource(R.string.settings_fragment_title),
+        subtitle =
+          if (state.fragmentEnabled == true) {
+            stringResource(R.string.settings_fragment_subtitle)
+          } else {
+            stringResource(R.string.settings_fragment_subtitle_off)
+          },
+        checked = state.fragmentEnabled ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleFragment) },
+      )
+
+      if (state.fragmentEnabled == true) {
+        VSpacer(8.dp)
+        Text(
+          text = stringResource(R.string.settings_fragment_hint),
+          style = AppTheme.typography.bodySmall,
+          color = AppTheme.colors.contentSecondary,
+        )
+        VSpacer(8.dp)
+        FragmentIntervalField(
+          value = state.fragmentInterval.orEmpty(),
+          placeholder = stringResource(R.string.settings_fragment_interval_placeholder),
+          onValueChange = { scope.send(ScreenCommand.SetFragmentInterval(it)) },
+        )
+      }
+
+      FragmentFaqRow { sendFragmentFaq(scope) }
+
+      // === Reality ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_reality))
+      VSpacer(16.dp)
+
+      ToggleRow(
+        label = stringResource(R.string.settings_reality_show_title),
+        subtitle =
+          if (state.realityShowEnabled == true) {
+            stringResource(R.string.settings_reality_show_subtitle_on)
+          } else {
+            stringResource(R.string.settings_reality_show_subtitle_off)
+          },
+        checked = state.realityShowEnabled ?: false,
+        onCheckedChange = { scope.send(ScreenCommand.ToggleRealityShow) },
+      )
+
+      RealityFaqRow { sendRealityFaq(scope) }
+
+      // === Sniffing ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_sniffing))
+      VSpacer(16.dp)
+
+      SniffingChipRow(
+        title = stringResource(R.string.settings_sniffing_target_title),
+        subtitle = stringResource(R.string.settings_sniffing_target_subtitle),
+        options = SniffingTarget.entries,
+        selected = state.sniffingTarget ?: SniffingTarget.All,
+        optionLabel = { sniffingTarget -> stringResource(sniffingTarget.labelRes) },
+        onSelect = { scope.send(ScreenCommand.SetSniffingTarget(it)) },
+      )
+
+      SniffingChipRow(
+        title = stringResource(R.string.settings_sniffing_port_range_title),
+        subtitle = stringResource(R.string.settings_sniffing_port_range_subtitle),
+        options = SniffingPortRange.entries,
+        selected = state.sniffingPortRange ?: SniffingPortRange.All,
+        optionLabel = { sniffingPortRange -> stringResource(sniffingPortRange.labelRes) },
+        onSelect = { scope.send(ScreenCommand.SetSniffingPortRange(it)) },
+      )
+
+      SniffingFaqRow { sendSniffingFaq(scope) }
     }
   }
 }
@@ -283,6 +393,85 @@ private fun ToggleRow(
 }
 
 @Composable
+private fun <T : Enum<T>> SniffingChipRow(
+  title: String,
+  subtitle: String,
+  options: List<T>,
+  selected: T,
+  optionLabel: @Composable (T) -> String,
+  onSelect: (T) -> Unit,
+) {
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Text(text = title, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+    VSpacer(2.dp)
+    Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+    VSpacer(8.dp)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
+      options.forEach { option ->
+        key(title, subtitle, selected) {
+          val isSelected = option == selected
+          Box(
+            modifier =
+              Modifier
+                .weight(1f)
+                .background(
+                  if (isSelected) AppTheme.colors.accentPrimary else AppTheme.colors.backgroundSecondary,
+                  shape = RoundedCornerShape(8.dp),
+                )
+                .clickable { onSelect(option) }
+                .padding(vertical = 8.dp, horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(
+              text = optionLabel(option),
+              style = if (isSelected) AppTheme.typography.titleSmall else AppTheme.typography.bodyMedium,
+              color =
+                if (isSelected) AppTheme.colors.onAccentPrimary else AppTheme.colors.contentTertiary,
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun FragmentIntervalField(
+  value: String,
+  placeholder: String,
+  onValueChange: (String) -> Unit,
+) {
+  val focusRequester = remember { FocusRequester() }
+  Column(modifier = Modifier.fillMaxWidth()) {
+    BasicTextField(
+      modifier =
+        Modifier
+          .focusRequester(focusRequester)
+          .fillMaxWidth()
+          .background(
+            AppTheme.colors.backgroundSecondary,
+            shape = RoundedCornerShape(16.dp),
+          )
+          .padding(12.dp),
+      textStyle = TextStyle(color = AppTheme.colors.contentPrimary),
+      value = value,
+      onValueChange = onValueChange,
+      singleLine = true,
+    )
+  }
+  LaunchedEffect(Unit) {
+    focusRequester.requestFocus()
+  }
+  DisposableEffect(Unit) {
+    onDispose { focusRequester.freeFocus() }
+  }
+}
+
+@Composable
 private fun LanguageSection(
   label: String,
   subtitle: String,
@@ -350,6 +539,120 @@ private fun MuxFaqDialog() {
     VSpacer(16.dp)
     Text(
       text = stringResource(R.string.mux_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun SniffingFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.sniffing_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendSniffingFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { SniffingFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.sniffing_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun SniffingFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.sniffing_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.sniffing_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun FragmentFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.fragment_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendFragmentFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { FragmentFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.fragment_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun FragmentFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.fragment_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.fragment_faq_body),
+      style = AppTheme.typography.bodyMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+  }
+}
+
+@Composable
+private fun RealityFaqRow(onClick: () -> Unit) {
+  val faqTitle = stringResource(R.string.reality_faq_title)
+  Row(
+    modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Text(text = faqTitle, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+  }
+}
+
+private fun sendRealityFaq(scope: ScreenScope<*, *>) {
+  scope.sendEvent(
+    ServiceCommand.UiEvent.Decision(
+      content = { RealityFaqDialog() },
+      primaryAction = Action(listener = {}, resRef = R.string.reality_faq_ok),
+    ),
+  )
+}
+
+@Composable
+private fun RealityFaqDialog() {
+  Column {
+    Text(
+      text = stringResource(R.string.reality_faq_title),
+      style = AppTheme.typography.headlineMedium,
+      color = AppTheme.colors.contentPrimary,
+    )
+    VSpacer(16.dp)
+    Text(
+      text = stringResource(R.string.reality_faq_body),
       style = AppTheme.typography.bodyMedium,
       color = AppTheme.colors.contentPrimary,
     )

@@ -1,12 +1,12 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.core.WorkState
+import com.thindie.engine.core.stateSink
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.engine.WorkState
-import com.thindie.rknzbl.engine.stateSink
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
@@ -28,7 +28,7 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
               is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Idle -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
               WorkState.Running ->
                 SpeedtestManager.testConnection(
                   context = appContext,
@@ -66,21 +66,24 @@ internal fun FavoriteProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState
 internal suspend fun FavoriteProfilesFlow.exec(
   c: ScreenCommand,
   s: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (c) {
     ScreenCommand.BackRequested -> {
       finish(Unit)
-      s
+      null
     }
 
     ScreenCommand.Dismissed -> {
       finish(Unit)
-      s
+      null
     }
 
     ScreenCommand.RequestStoredProfiles -> {
       withContext(Dispatchers.IO) {
         val mode = settingsRepository.isLocalSave.first()
+        if (mode) {
+          repository.invalidateStoredCache()
+        }
         val profiles = repository.read()
         val active = repository.activeProfile()
         if (active != null) {
@@ -127,8 +130,8 @@ internal suspend fun FavoriteProfilesFlow.exec(
               config = c.profile,
             ),
         )
-        (appContext as Application).vpnRuntimeState.filter { it is WorkState.NotRunning }.first()
-        appContext.vpnRuntimeState.filterNot { it is WorkState.NotRunning }.first()
+        (appContext as Application).vpnRuntimeState.filter { it is WorkState.Idle }.first()
+        appContext.vpnRuntimeState.filterNot { it is WorkState.Idle }.first()
         selected.tryEmit(c.profile)
         s.copy(
           selected = c.profile,

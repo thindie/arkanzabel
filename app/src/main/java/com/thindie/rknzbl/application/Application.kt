@@ -1,50 +1,31 @@
 package com.thindie.rknzbl.application
 
 import android.app.Application
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
-import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.thindie.engine.core.Router
+import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.BuildConfig
-import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.di.ApplicationScope
 import com.thindie.rknzbl.application.work.ActiveProfileAutoSaveWorker
 import com.thindie.rknzbl.application.work.RknzblWorkerFactory
-import com.thindie.rknzbl.engine.Router
-import com.thindie.rknzbl.engine.WorkState
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
-import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.ConnectionProfileSummariser
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.TimeUnit
 
 class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
   private lateinit var applicationScopeInternal: ApplicationScope
-  val applicationScope get() = applicationScopeInternal
-  private val appCoroutineScope =
-    CoroutineScope(
-      SupervisorJob() + Dispatchers.Default +
-        CoroutineExceptionHandler { _, e ->
-          "${e.message}"
-        },
-    )
+
+  val applicationScope: ApplicationScope
+    get() = applicationScopeInternal
 
   override val workManagerConfiguration: Configuration
     get() =
@@ -54,50 +35,8 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
 
   private var router: Router? = null
 
-  private val vpnActivityReceiver =
-    object : BroadcastReceiver() {
-      override fun onReceive(
-        context: Context?,
-        intent: Intent?,
-      ) {
-        if (intent?.action != AppConfig.BROADCAST_ACTION_ACTIVITY) return
-        when (intent.getIntExtra("key", -1)) {
-          AppConfig.MSG_STATE_START_FAILURE -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: start == failure")
-            val fallback = this@Application.getString(R.string.vpn_core_failure_unspecified)
-            val broadcastString = readBroadcastString(intent, "content")
-            val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
-            vpnRuntimeState.value = WorkState.Error(message = errorMessage)
-          }
-
-          AppConfig.MSG_STATE_RUNNING,
-          AppConfig.MSG_STATE_START_SUCCESS,
-          -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: running or started")
-            vpnRuntimeState.value = WorkState.Running
-          }
-
-          AppConfig.MSG_STATE_NOT_RUNNING -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: not running")
-            vpnRuntimeState.value = WorkState.NotRunning
-          }
-          AppConfig.MSG_STATE_STOP_SUCCESS,
-          -> {
-            Log.i(AppConfig.TAG, "vpnActivityReceiver: stopped")
-            vpnRuntimeState.value = WorkState.NotRunning
-          }
-
-          AppConfig.MSG_STATE_SAVE_PROFILE -> {
-            appCoroutineScope.launch {
-              Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: received message")
-              val guid = KeyValueStorage.getSelectServer() ?: return@launch
-              Log.i(AppConfig.TAG, "vpnActivityReceiver: Save Profile: selected profile determined")
-              applicationScope.data.repository.save(guid)
-            }
-          }
-        }
-      }
-    }
+  val vpnRuntimeState: StateFlow<WorkState>
+    get() = applicationScope.vpnStateTracker.serviceState
 
   val finishCommand =
     MutableSharedFlow<Unit>(
@@ -105,26 +44,18 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
       extraBufferCapacity = 3,
       BufferOverflow.DROP_LATEST,
     )
-  val vpnRuntimeState = MutableStateFlow<WorkState>(WorkState.NotRunning)
 
   override fun onCreate() {
     super.onCreate()
     AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
-    applicationScopeInternal = ApplicationScope()
+    applicationScopeInternal = ApplicationScope.configure(this)
     SettingsManager.ensureDefaultSettings()
     SettingsManager.initRoutingRulesets(this)
     SettingsManager.initAssets(this, assets)
     SettingsManager.migrateHysteria2PinSHA256()
-    ContextCompat.registerReceiver(
-      this,
-      vpnActivityReceiver,
-      IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY),
-      ContextCompat.RECEIVER_NOT_EXPORTED,
-    )
     enqueueActiveProfileAutoSaveWork()
-    vpnRuntimeState.value = if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.NotRunning
   }
 
   private fun enqueueActiveProfileAutoSaveWork() {
@@ -152,19 +83,7 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
     return requireNotNull(router)
   }
 
-  private fun readBroadcastString(
-    intent: Intent,
-    key: String,
-  ): String? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      intent.getSerializableExtra(key, String::class.java)
-    } else {
-      @Suppress("DEPRECATION")
-      intent.getSerializableExtra(key)
-        as? String
-    }
-
   override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return applicationScope.data.repository.isSaved(connectionProfile)
+    return applicationScope.connectionProfileRepository.isSaved(connectionProfile)
   }
 }

@@ -1,10 +1,10 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.stateSink
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.stateSink
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -15,15 +15,13 @@ internal fun SelectSourceFlow.selectSourceStateSink(screenScope: ScreenScope<Scr
     s.sub(
       (appContext as Application)
         .applicationScope
-        .settings
-        .repository
+        .settingsRepositoryLegacy
         .isCustomSourceEnabled
         .filter { it }
         .flatMapLatest {
           appContext
             .applicationScope
-            .settings
-            .repository
+            .settingsRepositoryLegacy
             .customSourceUrl
             .filterNotNull()
         }

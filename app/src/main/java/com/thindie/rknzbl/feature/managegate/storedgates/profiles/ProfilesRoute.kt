@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.managegate.storedgates.profiles
 
-import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.feature.managegate.storedgates.FavoriteProfilesFlow
 
 internal fun FavoriteProfilesFlow.profiles() =

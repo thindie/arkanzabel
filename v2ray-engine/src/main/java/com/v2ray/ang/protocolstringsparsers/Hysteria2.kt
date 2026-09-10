@@ -6,6 +6,7 @@ import com.v2ray.ang.dto.V2rayConfig.Outbound
 import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings.FinalMask
 import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.extension.idnHost
 import com.v2ray.ang.extension.isNotNullEmpty
 import com.v2ray.ang.extension.nullIfBlank
@@ -28,8 +29,8 @@ object Hysteria2 : ProtocolParser() {
         server = uri.idnHost,
         serverPort = uri.port.toString(),
         password = uri.userInfo,
-        security = AppConfig.TLS,
-        network = NetworkType.HYSTERIA.type,
+        security = Security.TLS,
+        network = NetworkType.HYSTERIA,
         subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo,
       )
 
@@ -38,7 +39,7 @@ object Hysteria2 : ProtocolParser() {
       result = getItemFormQuery(result, queryParam, allowInsecure)
       result =
         result.copy(
-          security = queryParam["security"] ?: AppConfig.TLS,
+          security = Security.fromString(queryParam["security"]) ?: Security.TLS,
           obfsPassword = queryParam["obfs-password"],
           portHopping = queryParam["mport"],
           portHoppingInterval = queryParam["mportHopInt"]?.ifBlank { null },
@@ -51,7 +52,7 @@ object Hysteria2 : ProtocolParser() {
   fun toUri(config: ConnectionProfile): String {
     val dicQuery = HashMap<String, String>()
 
-    config.security.let { if (it != null) dicQuery["security"] = it }
+    config.security?.let { dicQuery["security"] = it.value }
     config.sni?.nullIfBlank()?.let { dicQuery["sni"] = it }
     config.alpn?.nullIfBlank()?.let { dicQuery["alpn"] = it }
     dicQuery["insecure"] = if (config.insecure) "1" else "0"
@@ -77,7 +78,7 @@ object Hysteria2 : ProtocolParser() {
     val outbound = V2rayConfigManager.createInitOutbound(Protocol.Hysteria2) ?: return null
     val profile =
       connectionProfile.copy(
-        network = NetworkType.HYSTERIA.type,
+        network = NetworkType.HYSTERIA,
         alpn = "h3",
       )
 

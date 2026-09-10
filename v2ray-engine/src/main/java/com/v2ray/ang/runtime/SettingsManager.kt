@@ -2,9 +2,9 @@ package com.v2ray.ang.runtime
 
 import android.content.Context
 import android.content.res.AssetManager
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.gson.JsonSyntaxException
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.GEOIP_PRIVATE
 import com.v2ray.ang.AppConfig.GEOSITE_PRIVATE
@@ -63,7 +63,7 @@ object SettingsManager {
       resetRoutingRulesetsCommon(rulesetList.toMutableList())
       true
     } catch (e: JsonSyntaxException) {
-      Log.e(AppConfig.TAG, "Failed to reset routing rulesets", e)
+      Log.e({ "Failed to reset routing rulesets" }, AppConfig.TAG, e)
       false
     }
   }
@@ -191,10 +191,10 @@ object SettingsManager {
               input.copyTo(output)
             }
           }
-          Log.i(AppConfig.TAG, "Copied from apk assets folder to ${target.absolutePath}")
+          Log.i({ "Copied from apk assets folder to ${target.absolutePath}" }, AppConfig.TAG)
         }
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "asset copy failed", e)
+      Log.e({ "asset copy failed" }, AppConfig.TAG, e)
     }
   }
 

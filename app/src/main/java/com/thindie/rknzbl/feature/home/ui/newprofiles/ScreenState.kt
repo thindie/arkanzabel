@@ -1,7 +1,8 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
 import androidx.compose.runtime.Immutable
-import com.thindie.rknzbl.engine.State
+import com.thindie.engine.core.ViewState
+import com.thindie.engine.core.WorkState
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.SpeedtestManager
 
@@ -12,4 +13,9 @@ data class ScreenState(
   val links: List<ConnectionProfile> = emptyList(),
   val selected: ConnectionProfile? = null,
   val selectedTestConnectionMessage: SpeedtestManager.SpeedTestResult? = null,
-) : State
+  val pingResults: Map<ConnectionProfile, Long>? = null,
+  val filter: FilterMode = FilterMode.All,
+  val pingState: WorkState = WorkState.Idle,
+  val refreshing: Boolean = false,
+  val sourceAvailable: Boolean? = null,
+) : ViewState

@@ -4,9 +4,9 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.error.ConfigBuildError
-import com.v2ray.ang.runtime.KeyValueStorage
 
 internal class ConfigAssembler(
+  private val settings: SettingsReader,
   private val applyInbounds: (V2rayConfig) -> V2rayConfig,
   private val applyOutbounds: (V2rayConfig, ConnectionProfile) -> V2rayConfig,
   private val applyMoreOutbounds: (V2rayConfig, String) -> V2rayConfig,
@@ -28,7 +28,7 @@ internal class ConfigAssembler(
       .then { applyFakeDns(it) }
       .then { applyDns(it) }
       .then {
-        if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_LOCAL_DNS_ENABLED)) {
+        if (settings.getBool(AppConfig.PREF_LOCAL_DNS_ENABLED, false)) {
           applyCustomLocalDns(it)
         } else {
           it
@@ -41,7 +41,7 @@ internal class ConfigAssembler(
   private inline fun V2rayConfig.then(step: (V2rayConfig) -> V2rayConfig): V2rayConfig = step(this)
 
   private fun V2rayConfig.applySpeedPolicyToggles(): V2rayConfig {
-    if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_SPEED_ENABLED)) {
+    if (!settings.getBool(AppConfig.PREF_SPEED_ENABLED, false)) {
       stats = null
       policy = null
     }
@@ -49,7 +49,7 @@ internal class ConfigAssembler(
   }
 
   private fun V2rayConfig.applyOptionalDomainResolve(): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "1") == "1") {
+    if (settings.getString(AppConfig.PREF_OUTBOUND_DOMAIN_RESOLVE_METHOD, "0") == "1") {
       return try {
         applyResolveOutboundDomainsToHosts(this)
       } catch (runtime: RuntimeException) {

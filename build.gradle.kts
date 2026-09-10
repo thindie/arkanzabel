@@ -6,3 +6,9 @@ plugins {
   alias(libs.plugins.kotlin.compose) apply false
   alias(libs.plugins.ktlint) apply false
 }
+
+tasks.register("buildWithTests") {
+  description = "Build the project and run all tests"
+  group = "verification"
+  dependsOn(":app:assembleDebug", ":app:testDebugUnitTest")
+}

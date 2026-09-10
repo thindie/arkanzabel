@@ -28,18 +28,19 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.uikit.Action
+import com.thindie.engine.uikit.AppScreen
+import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.Button
+import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.ProfileBorderState
+import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.VSpacer
+import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.uikit.Action
-import com.thindie.rknzbl.uikit.AppScreen
-import com.thindie.rknzbl.uikit.AppTheme
-import com.thindie.rknzbl.uikit.Button
-import com.thindie.rknzbl.uikit.HSpacer
-import com.thindie.rknzbl.uikit.ProfileBorderState
-import com.thindie.rknzbl.uikit.SentenceRow
-import com.thindie.rknzbl.uikit.VSpacer
-import com.thindie.rknzbl.uikit.profileBorder
+import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.runtime.SpeedtestManager
 
 @Composable
@@ -47,7 +48,7 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val st by scope.state.collectAsState()
   val established = st.selectedTestConnectionMessage is SpeedtestManager.SpeedTestResult.Ok
   AppScreen(
-    scope = scope,
+    screenScope = scope,
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
@@ -146,6 +147,10 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
 
                 else -> {
                   item.flow ?: item.server ?: item.serviceName.orEmpty()
+                }
+              }.let { subtitle ->
+                transportLabel(item.network).let { label ->
+                  if (label.isEmpty() || subtitle.isNullOrEmpty()) "" else "$subtitle · $label"
                 }
               },
             loading = st.selectedTestConnectionMessage == null && st.selected == item,
@@ -246,6 +251,24 @@ internal fun ProfilesScreen(scope: ScreenScope<ScreenState, ScreenCommand>) {
         )
       }
     }
+  }
+}
+
+/**
+ * Human-readable transport for [ConnectionProfile.network] so the user can see which transport a
+ * profile uses. TCP is omitted because it is the detectable baseline; non-TCP transports are the
+ * meaningful stealth signal, and skipping TCP keeps cards tidy for the common case.
+ */
+private fun transportLabel(network: NetworkType): String {
+  return when (network) {
+    NetworkType.WS -> "WebSocket"
+    NetworkType.HTTP_UPGRADE -> "HTTP Upgrade"
+    NetworkType.XHTTP -> "XHTTP"
+    NetworkType.H2 -> "HTTP/2"
+    NetworkType.GRPC -> "gRPC"
+    NetworkType.KCP -> "KCP"
+    NetworkType.HTTP -> "HTTP"
+    else -> network.type.uppercase()
   }
 }
 

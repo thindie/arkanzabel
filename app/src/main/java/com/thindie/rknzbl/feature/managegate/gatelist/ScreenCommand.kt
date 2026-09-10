@@ -1,9 +1,9 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 sealed interface ScreenCommand : Command {
   data object Back : ScreenCommand
 
-  data class Select(val type: SelectSourceFlow.Result) : ScreenCommand
+  data class Go(val type: SelectSourceFlow.Result) : ScreenCommand
 }

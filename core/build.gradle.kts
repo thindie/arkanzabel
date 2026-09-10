@@ -1,0 +1,73 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
+plugins {
+  alias(libs.plugins.android.library)
+  alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.kotlin.compose)
+  alias(libs.plugins.ktlint)
+}
+
+ktlint {
+  reporters {
+    reporter(ReporterType.PLAIN)
+  }
+  additionalEditorconfig.set(
+    mapOf(
+      "indent_size" to "2",
+    ),
+  )
+}
+
+android {
+  namespace = "com.thindie.engine"
+  compileSdk {
+    version = release(36)
+  }
+
+  defaultConfig {
+    minSdk = 24
+  }
+
+  buildTypes {
+    release {
+      isMinifyEnabled = false
+      proguardFiles(
+        getDefaultProguardFile("proguard-android-optimize.txt"),
+        "proguard-rules.pro",
+      )
+    }
+  }
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+  }
+
+  kotlin {
+    compilerOptions {
+      jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+  }
+  buildFeatures {
+    compose = true
+  }
+}
+
+dependencies {
+  testImplementation("junit:junit:4.13.2")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+  testImplementation(platform(libs.androidx.compose.bom))
+  testImplementation("androidx.compose.ui:ui-test-junit4")
+  testImplementation("androidx.compose.ui:ui-test-android")
+  testImplementation("org.jetbrains.kotlin:kotlin-test")
+
+  implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation(libs.androidx.activity.compose)
+  implementation(platform(libs.androidx.compose.bom))
+  implementation(libs.androidx.compose.ui)
+  implementation(libs.androidx.compose.ui.graphics)
+  implementation(libs.androidx.compose.ui.tooling.preview)
+  implementation(libs.androidx.compose.material3)
+  implementation(libs.kotlinx.coroutines.android)
+  debugImplementation(libs.androidx.compose.ui.tooling)
+}

@@ -13,8 +13,8 @@ import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.StrictMode
-import android.util.Log
 import androidx.annotation.RequiresApi
+import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
@@ -103,7 +103,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     // points at the new server, but re-running setup without stopping core first breaks TUN/core.
     // Tear down core + TUN in-process, then rebuild — same safe order as a full stop, without stopSelf.
     if (mInterface != null && V2RayServiceManager.isRunning()) {
-      Log.i(AppConfig.TAG, "VPN already running; switching profile (in-process teardown + setup)")
+      Log.i({ "VPN already running; switching profile (in-process teardown + setup)" }, AppConfig.TAG)
       teardownTunnelAndCoreInProcess()
       if (!setupVpnService()) {
         return START_STICKY
@@ -112,10 +112,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       return START_STICKY
     }
     if (V2RayServiceManager.isRunning() && mInterface == null) {
-      Log.w(
-        AppConfig.TAG,
-        "Core reports running but VPN fd is missing; stopping core before rebuilding TUN",
-      )
+      Log.w({ "Core reports running but VPN fd is missing; stopping core before rebuilding TUN" }, AppConfig.TAG)
       V2RayServiceManager.stopCoreLoop()
     }
     if (!setupVpnService()) {
@@ -133,11 +130,11 @@ class V2RayVpnService : VpnService(), ServiceControl {
   override fun startService() {
     val iface =
       mInterface ?: run {
-        Log.e(AppConfig.TAG, "Failed to create VPN interface")
+        Log.e({ "Failed to create VPN interface" }, AppConfig.TAG)
         return
       }
     if (!V2RayServiceManager.startCoreLoop(vpnInterface = iface, application)) {
-      Log.e(AppConfig.TAG, "Failed to start V2Ray core loop")
+      Log.e({ "Failed to start V2Ray core loop" }, AppConfig.TAG)
       stopAllService()
     }
   }
@@ -166,14 +163,14 @@ class V2RayVpnService : VpnService(), ServiceControl {
   private fun setupVpnService(): Boolean {
     val prepare = prepare(this)
     if (prepare != null) {
-      Log.e(AppConfig.TAG, "VPN preparation failed (consent missing in this process?)")
+      Log.e({ "VPN preparation failed (consent missing in this process?)" }, AppConfig.TAG)
       stopSelf()
       return false
     }
 
     val guid = KeyValueStorage.getSelectServer()
     if (guid.isNullOrBlank()) {
-      Log.e(AppConfig.TAG, "No selected VPN profile")
+      Log.e({ "No selected VPN profile" }, AppConfig.TAG)
       stopSelf()
       return false
     }
@@ -182,7 +179,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     } catch (cancel: CancellationException) {
       throw cancel
     } catch (appError: AppError) {
-      Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", appError)
+      Log.e({ "VPN configuration build failed before TUN" }, AppConfig.TAG, appError)
       MessageUtil.sendMsg2UI(
         this,
         AppConfig.MSG_STATE_START_FAILURE,
@@ -191,7 +188,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       stopSelf()
       return false
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "VPN configuration build failed before TUN", runtime)
+      Log.e({ "VPN configuration build failed before TUN" }, AppConfig.TAG, runtime)
       val payload =
         runtime.message?.trim()?.takeIf { it.isNotEmpty() }
           ?: getString(R.string.vpn_core_config_build_failed)
@@ -201,7 +198,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     }
 
     if (configureVpnService() != true) {
-      Log.e(AppConfig.TAG, "VPN configuration failed")
+      Log.e({ "VPN configuration failed" }, AppConfig.TAG)
       stopSelf()
       return false
     }
@@ -237,7 +234,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     try {
       val fd = builder.establish()
       if (fd == null) {
-        Log.e(AppConfig.TAG, "establish() returned null")
+        Log.e({ "establish() returned null" }, AppConfig.TAG)
         stopAllService()
         return false
       }
@@ -245,7 +242,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       isRunning = true
       return true
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to establish VPN interface", e)
+      Log.e({ "Failed to establish VPN interface" }, AppConfig.TAG, e)
       stopAllService()
     }
     return false
@@ -310,7 +307,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       try {
         connectivity.requestNetwork(defaultNetworkRequest, defaultNetworkCallback)
       } catch (e: Exception) {
-        Log.e(AppConfig.TAG, "Failed to request default network", e)
+        Log.e({ "Failed to request default network" }, AppConfig.TAG, e)
       }
     }
 
@@ -364,7 +361,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
           builder.addAllowedApplication(it)
         }
       } catch (e: PackageManager.NameNotFoundException) {
-        Log.e(AppConfig.TAG, "Failed to configure app in VPN: ${e.localizedMessage}", e)
+        Log.e({ "Failed to configure app in VPN: ${e.localizedMessage}" }, AppConfig.TAG, e)
       }
     }
   }
@@ -404,7 +401,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     try {
       mInterface?.close()
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "Failed to close VPN interface during profile switch", e)
+      Log.e({ "Failed to close VPN interface during profile switch" }, AppConfig.TAG, e)
     }
     mInterface = null
   }
@@ -435,7 +432,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       try {
         mInterface?.close()
       } catch (e: Exception) {
-        Log.e(AppConfig.TAG, "Failed to close VPN interface", e)
+        Log.e({ "Failed to close VPN interface" }, AppConfig.TAG, e)
       }
       mInterface = null
     }

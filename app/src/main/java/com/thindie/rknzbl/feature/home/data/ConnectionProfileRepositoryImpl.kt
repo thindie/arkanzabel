@@ -1,51 +1,82 @@
 package com.thindie.rknzbl.feature.home.data
 
-import android.util.Log
-import com.thindie.rknzbl.error.AppError
+import com.thindie.engine.core.Cache
+import com.thindie.engine.core.Log
+import com.thindie.engine.core.WorkState
+import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.runtime.ProfileUriParser
 import com.v2ray.ang.util.JsonUtil
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
-import io.ktor.client.plugins.auth.providers.basic
-import io.ktor.client.request.get
-import io.ktor.client.request.put
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.http.withCharset
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.updateAndGet
-import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.update
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 
 class ConnectionProfileRepositoryImpl(
-  private val userName: String,
-  private val password: String,
-  private val url: String,
+  private val pingManager: ProfilePingManager,
   private val storage: KeyValueStorage,
+  private val httpGateway: ProfileHttpGateway,
+  private val vpnGateway: VpnServiceGateway,
 ) : ConnectionProfileRepository {
-  private val httpClient: HttpClient by lazy {
-    newAuthenticatedWebdavClient(userName, password)
-  }
-
   private val isLocalSave get() = storage.isLocalSaveEnabled()
 
-  private val profilesCache: MutableStateFlow<List<ConnectionProfile>?> = MutableStateFlow(null)
+  // Getter, not a constructor-time val: the mode can be switched at runtime and the cache key must follow.
+  private val localStorageKey get() = if (isLocalSave) "prefs_stored" else "webdav_stored"
+  private val cacheLock: Any = Any()
+  private val profilesInMemoryCache = mutableMapOf<String, Cache<List<ConnectionProfile>?>>()
+
+  // Bumped on every [profilesInMemoryCache] mutation so the derived flows re-read current values.
+  private val cacheVersion = MutableStateFlow(0)
+
+  private fun cacheValueSyncInternal(k: String): List<ConnectionProfile>? {
+    // Read under the same lock as mutations to avoid racing a structural map update.
+    return synchronized(cacheLock) { profilesInMemoryCache[k]?.value?.value }
+  }
+
+  private fun setCacheInternal(
+    k: String,
+    v: List<ConnectionProfile>,
+  ) {
+    synchronized(cacheLock) {
+      val current = profilesInMemoryCache[k]
+      if (current != null) {
+        current.updateValue { v }
+      } else {
+        profilesInMemoryCache[k] = Cache(v)
+      }
+    }
+    cacheVersion.update { it + 1 }
+  }
+
+  private fun invalidateInternal(k: String) {
+    synchronized(cacheLock) {
+      val current = profilesInMemoryCache[k]
+      current?.clear()
+    }
+    cacheVersion.update { it + 1 }
+  }
+
+  private fun invalidateStoredInternal() = invalidateInternal(localStorageKey)
+
+  private fun storageCacheInternal(): List<ConnectionProfile>? = cacheValueSyncInternal(localStorageKey)
+
+  private fun setStorageCacheInternal(profiles: List<ConnectionProfile>) {
+    setCacheInternal(localStorageKey, profiles)
+  }
+
+  /** Re-parses [body] and publishes it to the stored caches (map + reactive flow). */
+  private fun refreshStoredCacheInternal(body: String) {
+    invalidateStoredInternal()
+    setStorageCacheInternal(parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR))
+  }
 
   private val autoSavedEvents =
     MutableSharedFlow<String>(
@@ -54,47 +85,74 @@ class ConnectionProfileRepositoryImpl(
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-  override suspend fun read(): List<ConnectionProfile> {
-    if (isLocalSave) {
-      val cache = profilesCache.value
-      if (cache != null) return cache
-      val body = storage.getLocalProfiles().orEmpty()
-
-      val profiles =
-        parseRemote(body)
-          .mapNotNull {
-            JsonUtil.fromJson(it, ConnectionProfile::class.java)
-          }
-          .toSet()
-          .toList()
-
-      profilesCache.updateAndGet { profiles }
-      return requireNotNull(profilesCache.value)
-    } else {
-      val cache = profilesCache.value
-      if (cache != null) return cache
-
-      val client = httpClient
-      val body = readInternal(client, url)
-
-      val profiles =
-        parseRemote(body)
-          .mapNotNull {
-            JsonUtil.fromJson(it, ConnectionProfile::class.java)
-          }
-          .toSet()
-          .toList()
-
-      profilesCache.updateAndGet { profiles }
-      return requireNotNull(profilesCache.value)
+  // Best profile of the last completed ping batch (lowest successful delay);
+  // null until a batch yields at least one successful measurement.
+  override val lastMeasured: Flow<ConnectionProfile?> =
+    pingManager.batch.map { batch ->
+      batch?.results
+        ?.filterValues { it > 0 }
+        ?.minByOrNull { it.value }
+        ?.key
     }
+
+  // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
+  private val activeProfileCache = Cache<ConnectionProfile?>(null)
+
+  // Emits null while the VPN service reports an error, so a failed start does not look connected.
+  override val connected: Flow<ConnectionProfile?> =
+    combine(activeProfileCache.value, vpnGateway.serviceState) { profile, state ->
+      if (state is WorkState.Error) null else profile
+    }
+
+  // Pending connect intent: set by [requestConnect], consumed when the reactive path launches a
+  // connect, cleared on disconnect. Intentionally survives route recreation so a pending intent
+  // completes once the user returns to Home.
+  private val connectRequested = AtomicBoolean(false)
+
+  override fun requestConnect() {
+    connectRequested.set(true)
+  }
+
+  override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
+
+  override suspend fun measureInMemory(): ConnectionProfile? {
+    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
+    val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
+    if (profiles.isEmpty()) return null
+    return pingManager.measure(profiles)
+  }
+
+  // Profiles received from remote sources: view of the active source URL's cache entry.
+  override val received: Flow<List<ConnectionProfile>?> =
+    cacheVersion.map { storage.getCustomSourceUrl()?.let { url -> cacheValueSyncInternal(url) } }
+
+  // Stored (saved) profiles: view of the local-storage key's cache entry.
+  override val stored: Flow<List<ConnectionProfile>?> =
+    cacheVersion.map { storageCacheInternal() }
+
+  override suspend fun read(): List<ConnectionProfile> {
+    val cached = storageCacheInternal()
+    if (cached != null) return cached
+
+    // Stored profiles live in local prefs or on WebDAV depending on the active storage mode.
+    val body =
+      if (isLocalSave) {
+        storage.getLocalProfiles().orEmpty()
+      } else {
+        // No WebDAV endpoint configured: nothing is stored remotely.
+        if (storage.decodeWebDavConfig() == null) return emptyList()
+        httpGateway.readWebDav()
+      }
+    val profiles = parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR)
+    setStorageCacheInternal(profiles)
+    return profiles
   }
 
   override suspend fun save(guid: String): Boolean {
     if (guid.isBlank()) return false
     val profilePretty = storage.decodeServerConfig(guid)
     if (profilePretty == null) {
-      Log.i(AppConfig.TAG, "Save Profile: failure, decodeServerConfig")
+      Log.w({ "Save Profile: failure, decodeServerConfig" }, LOG_TAG)
       return false
     }
     if (isLocalSave) {
@@ -110,19 +168,20 @@ class ConnectionProfileRepositoryImpl(
         }
       if (isSaved) return false
       val profileJson = JsonUtil.toJson(profilePretty)
-      val updatedBody = currentBody + SEPARATOR + profileJson
+      val updatedBody = currentBody + STORED_PROFILES_SEPARATOR + profileJson
       storage.setLocalProfiles(updatedBody)
-      Log.i(AppConfig.TAG, "Save Profile [LOCAL]: success")
-      invalidateCacheInternal()
+      Log.i({ "Save Profile [LOCAL]: success" }, LOG_TAG)
+      refreshStoredCacheInternal(updatedBody)
       return true
     } else {
-      val currentBody = readInternal(httpClient, url)
+      val currentBody = httpGateway.readWebDav()
       val isSaved = isSavedInternal(profilePretty, currentBody)
       if (isSaved) return false
       val profileJson = JsonUtil.toJson(profilePretty)
-      writeInternal(httpClient, url, currentBody + SEPARATOR + profileJson)
-      Log.i(AppConfig.TAG, "Save Profile: success")
-      invalidateCacheInternal()
+      val updatedBody = currentBody + STORED_PROFILES_SEPARATOR + profileJson
+      httpGateway.writeWebDav(updatedBody)
+      Log.i({ "Save Profile: success" }, LOG_TAG)
+      refreshStoredCacheInternal(updatedBody)
       return true
     }
   }
@@ -130,19 +189,18 @@ class ConnectionProfileRepositoryImpl(
   override suspend fun delete(profile: ConnectionProfile) {
     if (!isLocalSave) {
       val profileJson = JsonUtil.toJson(profile)
-      val client = httpClient
-      val currentBody = readInternal(client, url)
+      val currentBody = httpGateway.readWebDav()
       val filteredBody = currentBody.replace(oldValue = profileJson, "")
-      val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
-      writeInternal(client, url, fallbackBody)
-      invalidateCacheInternal()
+      val fallbackBody = filteredBody.replace(oldValue = STORED_PROFILES_SEPARATOR + STORED_PROFILES_SEPARATOR, STORED_PROFILES_SEPARATOR)
+      httpGateway.writeWebDav(fallbackBody)
+      refreshStoredCacheInternal(fallbackBody)
     } else {
       val profileJson = JsonUtil.toJson(profile)
       val currentBody = storage.getLocalProfiles().orEmpty()
       val filteredBody = currentBody.replace(oldValue = profileJson, "")
-      val fallbackBody = filteredBody.replace(oldValue = SEPARATOR + SEPARATOR, SEPARATOR)
+      val fallbackBody = filteredBody.replace(oldValue = STORED_PROFILES_SEPARATOR + STORED_PROFILES_SEPARATOR, STORED_PROFILES_SEPARATOR)
       storage.setLocalProfiles(fallbackBody)
-      invalidateCacheInternal()
+      refreshStoredCacheInternal(fallbackBody)
     }
   }
 
@@ -159,20 +217,56 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override suspend fun activeProfile(): ConnectionProfile? {
-    return activeProfileInternal()
+    val cached = activeProfileCache.get()
+    if (cached != null) return cached
+    val profile = activeProfileInternal()
+    if (profile != null) activeProfileCache.set(profile)
+    return profile
   }
 
   override fun isSaved(profile: ConnectionProfile): Boolean {
-    val profilesCache = profilesCache.value
-    return if (profilesCache != null) {
-      profilesCache.firstOrNull { it.subscriptionId == profile.subscriptionId } != null
-    } else {
-      false
-    }
+    val storedCached = storageCacheInternal()
+    return (storedCached?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null)
   }
 
   override fun invalidateCaches() {
     invalidateCacheInternal()
+  }
+
+  // VPN service operations
+  override suspend fun connect(profile: ConnectionProfile) {
+    val guid =
+      findOrSaveProfileGuid(profile)
+        ?: error("Cannot store profile: ${profile.subscriptionId}")
+    activeProfileCache.set(profile)
+    vpnGateway.startVService(guid = guid)
+  }
+
+  override suspend fun disconnect() {
+    connectRequested.set(false)
+    activeProfileCache.clear()
+    vpnGateway.stopVService()
+  }
+
+  override fun isConnected(): Boolean {
+    return vpnGateway.isRunning()
+  }
+
+  override fun getConnectedServerName(): String {
+    return vpnGateway.getRunningServerName()
+  }
+
+  override val vpnState: Flow<WorkState> = vpnGateway.serviceState
+
+  override suspend fun fetch(force: Boolean) {
+    val url = storage.getCustomSourceUrl()
+    url?.let { url ->
+      if (force) invalidateInternal(url)
+      if (cacheValueSyncInternal(url) != null) return
+      fetchFromSource(url)
+      val profiles = requireNotNull(cacheValueSyncInternal(url))
+      pingManager.pingProfiles(profiles, force = false)
+    }
   }
 
   private fun isSavedInternal(
@@ -180,12 +274,29 @@ class ConnectionProfileRepositoryImpl(
     currentBody: String,
   ): Boolean {
     val id = connectionProfile.subscriptionId
-    Log.i(AppConfig.TAG, "Save Profile: check for $id")
+    Log.v({ "Save Profile: check for $id" }, LOG_TAG)
     if (id in currentBody) {
-      Log.i(AppConfig.TAG, "Save Profile: already saved")
+      Log.d({ "Save Profile: already saved" }, LOG_TAG)
       return true
     }
     return false
+  }
+
+  /**
+   * Returns the GUID of [profile] if it is already stored locally (matched by subscriptionId),
+   * otherwise persists it and returns the new GUID. Null when profile cannot be stored.
+   */
+  private suspend fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
+    for (guid in storage.decodeServerList()) {
+      val config = storage.decodeServerConfig(guid)
+      if (config != null && config.subscriptionId == profile.subscriptionId) {
+        return guid
+      }
+    }
+    val guid = UUID.randomUUID().toString()
+    storage.encodeServerConfig(guid, profile)
+    Log.i({ "Connect: profile stored locally as $guid" }, LOG_TAG)
+    return guid
   }
 
   private fun activeProfileInternal(): ConnectionProfile? {
@@ -204,100 +315,78 @@ class ConnectionProfileRepositoryImpl(
     autoSavedEvents.tryEmit("")
   }
 
+  override fun invalidateStoredCache() {
+    invalidateStoredInternal()
+  }
+
+  override suspend fun invalidateRemoteCache(url: String) {
+    invalidateInternal(url)
+  }
+
+  override suspend fun fetchFromSource(url: String): List<ConnectionProfile> {
+    val cached = cacheValueSyncInternal(url)
+    if (cached != null) {
+      Log.d({ "Read from source: cache hit (${cached.size} profiles)" }, LOG_TAG)
+      return cached
+    }
+
+    Log.d({ "Read from source: fetching from network" }, LOG_TAG)
+    val body = httpGateway.fetchSource(url)
+    val profiles = parseAndDeduplicate(body, FETCH_PROFILES_SEPARATOR)
+    Log.d({ "Read from source: parsed ${profiles.size} profiles" }, LOG_TAG)
+    setCacheInternal(url, profiles)
+    return requireNotNull(cacheValueSyncInternal(url))
+  }
+
   private fun invalidateCacheInternal() {
-    profilesCache.value = null
+    synchronized(cacheLock) {
+      profilesInMemoryCache.clear()
+    }
+    cacheVersion.update { it + 1 }
+    activeProfileCache.clear()
   }
 }
 
-private fun parseRemote(trimmedBody: String): List<String> {
+private fun parseRemote(
+  trimmedBody: String,
+  delimeter: String,
+): List<String> {
   if (trimmedBody.isEmpty()) return emptyList()
   return trimmedBody
-    .split(SEPARATOR)
+    .split(delimeter)
     .map { it.trim() }
     .filter { it.isNotEmpty() }
 }
 
-private suspend fun readInternal(
-  client: HttpClient,
-  url: String,
-): String =
-  withTimeoutOrNull(5_000L) {
-    try {
-      val response = client.get(url)
-      if (!response.status.isSuccess()) {
-        throw webDavErrorFromStatus(response.status, url)
-      }
-      val result = response.body<String>().trim()
-      Log.i("readInternal: ", result)
-      result
-    } catch (e: CancellationException) {
-      throw e
-    } catch (_: HttpRequestTimeoutException) {
-      throw AppError.ServerError.TimeOut
-    } catch (_: IOException) {
-      throw AppError.WebDav.UploadOpenFailed
-    }
-  } ?: throw AppError.ServerError.TimeOut
+private const val STORED_PROFILES_SEPARATOR = "########"
+private const val FETCH_PROFILES_SEPARATOR = "\n"
 
-private suspend fun writeInternal(
-  client: HttpClient,
-  url: String,
+private val LOG_TAG = AppConfig.TAG
+
+private fun parseAndDeduplicate(
   body: String,
-) {
-  withTimeoutOrNull(5_000L) {
-    try {
-      val response =
-        client.put(url) {
-          contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
-          setBody(body)
-        }
-      if (!response.status.isSuccess()) {
-        throw webDavErrorFromStatus(response.status, url)
-      }
-    } catch (e: CancellationException) {
-      throw e
-    } catch (_: HttpRequestTimeoutException) {
-      throw AppError.ServerError.TimeOut
-    } catch (_: IOException) {
-      throw AppError.ServerError.ConnectionFailed
-    }
-  } ?: throw AppError.ServerError.TimeOut
+  delimeter: String,
+): List<ConnectionProfile> {
+  return parseRemote(trimmedBody = body, delimeter = delimeter)
+    .flatMap { parseChunk(it) }
+    .toSet()
+    .toList()
 }
 
-private const val SEPARATOR = "########"
-
-private fun newAuthenticatedWebdavClient(
-  userName: String,
-  password: String,
-): HttpClient =
-  HttpClient(CIO) {
-    engine {
-      maxConnectionsCount = 32
-    }
-    install(HttpTimeout) {
-      requestTimeoutMillis = 300_000
-      connectTimeoutMillis = 30_000
-      socketTimeoutMillis = 300_000
-    }
-    install(Auth) {
-      basic {
-        credentials {
-          BasicAuthCredentials(username = userName, password = password)
-        }
-        sendWithoutRequest { true }
-      }
-    }
+/**
+ * Lenient chunk parsing: a malformed chunk is logged and skipped instead of failing the whole fetch.
+ *
+ * Supports two formats:
+ * - JSON chunks (local-save format, `########`-separated)
+ * - subscription share lines (one URI per line, `#` lines are comments/headers)
+ */
+private fun parseChunk(chunk: String): List<ConnectionProfile> {
+  if (chunk.startsWith("{")) {
+    return listOfNotNull(JsonUtil.fromJsonOrNull(chunk, ConnectionProfile::class.java))
   }
-
-internal fun webDavErrorFromStatus(
-  status: HttpStatusCode,
-  requestedUrl: String? = null,
-): AppError.WebDav =
-  when (status) {
-    HttpStatusCode.Unauthorized -> AppError.WebDav.Unauthorized
-    HttpStatusCode.Forbidden -> AppError.WebDav.Forbidden
-    HttpStatusCode.NotFound -> AppError.WebDav.NotFound(requestedUrl = requestedUrl)
-    HttpStatusCode.Conflict -> AppError.WebDav.Conflict
-    HttpStatusCode.MethodNotAllowed -> AppError.WebDav.Conflict
-    else -> AppError.WebDav.InvalidPropfindResponse
-  }
+  return chunk.lineSequence()
+    .map { it.trim() }
+    .filter { it.isNotEmpty() && !it.startsWith("#") }
+    .mapNotNull { ProfileUriParser.parse(it) }
+    .toList()
+}

@@ -2,7 +2,7 @@ package com.v2ray.ang.service
 
 import android.content.Context
 import android.os.ParcelFileDescriptor
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.Tun2SocksControl
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -43,21 +43,26 @@ class TProxyService(
    * Starts the tun2socks process with the appropriate parameters.
    */
   override fun startTun2Socks() {
-//        Log.i(AppConfig.TAG, "Starting HevSocks5Tunnel via JNI")
+//        Log.i({ "Starting HevSocks5Tunnel via JNI" }, AppConfig.TAG)
 
     val configContent = buildConfig()
     val configFile =
       File(context.filesDir, "hev-socks5-tunnel.yaml").apply {
         writeText(configContent)
+        // 600: owner read/write only — config contains network settings
+        setReadable(true, false)
+        setReadable(false, true)
+        setWritable(true, false)
+        setWritable(false, true)
+        setExecutable(false, true)
       }
-//        Log.i(AppConfig.TAG, "Config file created: ${configFile.absolutePath}")
-    Log.d(AppConfig.TAG, "HevSocks5Tunnel Config content:\n$configContent")
+//        Log.i({ "Config file created: ${configFile.absolutePath}" }, AppConfig.TAG)
 
     try {
-//            Log.i(AppConfig.TAG, "TProxyStartService...")
+//            Log.i({ "TProxyStartService..." }, AppConfig.TAG)
       TProxyStartService(configFile.absolutePath, vpnInterface.fd)
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "HevSocks5Tunnel exception: ${e.message}")
+      Log.e({ "HevSocks5Tunnel exception: ${e.message}" }, AppConfig.TAG)
     }
   }
 
@@ -99,10 +104,10 @@ class TProxyService(
    */
   override fun stopTun2Socks() {
     try {
-      Log.i(AppConfig.TAG, "TProxyStopService...")
+      Log.i({ "TProxyStopService..." }, AppConfig.TAG)
       TProxyStopService()
     } catch (e: Exception) {
-      Log.e(AppConfig.TAG, "Failed to stop hev-socks5-tunnel", e)
+      Log.e({ "Failed to stop hev-socks5-tunnel" }, AppConfig.TAG, e)
     }
   }
 }

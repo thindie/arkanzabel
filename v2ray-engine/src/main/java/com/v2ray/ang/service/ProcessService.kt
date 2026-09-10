@@ -1,7 +1,7 @@
 package com.v2ray.ang.service
 
 import android.content.Context
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import java.io.IOException
 import java.util.concurrent.ExecutorService
@@ -19,7 +19,7 @@ class ProcessService {
     context: Context,
     cmd: List<String>,
   ) {
-    Log.i(AppConfig.TAG, cmd.toString())
+    Log.i({ cmd.toString() }, AppConfig.TAG)
     shutdownWaitExecutor()
     waitExecutor = Executors.newSingleThreadExecutor()
     try {
@@ -29,18 +29,18 @@ class ProcessService {
         proBuilder
           .directory(context.filesDir)
           .start()
-      Log.i(AppConfig.TAG, process.toString())
+      Log.i({ process.toString() }, AppConfig.TAG)
       waitExecutor?.execute {
         try {
           val code = process?.waitFor()
-          Log.i(AppConfig.TAG, "runProcess exited with code $code")
+          Log.i({ "runProcess exited with code $code" }, AppConfig.TAG)
         } catch (e: InterruptedException) {
           Thread.currentThread().interrupt()
-          Log.w(AppConfig.TAG, "runProcess wait interrupted", e)
+          Log.w({ "runProcess wait interrupted" }, AppConfig.TAG, e)
         }
       }
     } catch (e: IOException) {
-      Log.e(AppConfig.TAG, "runProcess start failed", e)
+      Log.e({ "runProcess start failed" }, AppConfig.TAG, e)
       shutdownWaitExecutor()
       process = null
     }
@@ -48,11 +48,11 @@ class ProcessService {
 
   /** Stops the running process and tears down the wait thread. */
   fun stopProcess() {
-    Log.i(AppConfig.TAG, "runProcess destroy")
+    Log.i({ "runProcess destroy" }, AppConfig.TAG)
     try {
       process?.destroy()
     } catch (e: SecurityException) {
-      Log.e(AppConfig.TAG, "runProcess destroy denied", e)
+      Log.e({ "runProcess destroy denied" }, AppConfig.TAG, e)
     } finally {
       shutdownWaitExecutor()
       process = null

@@ -1,12 +1,12 @@
 package com.thindie.rknzbl.feature.home.ui.newprofiles
 
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.core.WorkState
+import com.thindie.engine.core.stateSink
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.ServiceCommand
-import com.thindie.rknzbl.engine.WorkState
-import com.thindie.rknzbl.engine.stateSink
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.SelectSourceFlow
 import com.thindie.rknzbl.feature.managegate.gatelist.resolveLabels
@@ -50,15 +50,13 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     s.sub(
       (appContext as Application)
         .applicationScope
-        .settings
-        .repository
+        .settingsRepositoryLegacy
         .isCustomSourceEnabled
         .filter { it }
         .flatMapLatest {
           appContext
             .applicationScope
-            .settings
-            .repository
+            .settingsRepositoryLegacy
             .customSourceUrl
             .filterNotNull()
             .map { SelectSourceFlow.Result.CustomSource(it) }
@@ -71,12 +69,37 @@ fun HomeFlow.stateSink(screenScope: ScreenScope<ScreenState, ScreenCommand>) {
     }
 
     s.sub(
+      (appContext as Application)
+        .applicationScope
+        .pingManager
+        .measureResults,
+    ).transition { state, results ->
+      state.copy(
+        pingResults = results,
+        pingState = WorkState.Idle,
+      )
+    }
+
+    s.sub(
+      (appContext as Application)
+        .applicationScope
+        .pingManager
+        .lastMeasured
+        .filterNotNull(),
+    ).transition { state, (profile, ping) ->
+      val available = state.pingResults ?: emptyMap()
+      state.copy(
+        pingResults = available + (profile to ping),
+      )
+    }
+
+    s.sub(
       selected
         .mapLatest { profile ->
           val result =
             when ((appContext as Application).vpnRuntimeState.value) {
               is WorkState.Error -> SpeedtestManager.SpeedTestResult.Err("Впн сервис упал")
-              WorkState.NotRunning -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
+              WorkState.Idle -> SpeedtestManager.SpeedTestResult.Err("Впн сервис не стартовал")
               WorkState.Running ->
                 SpeedtestManager.testConnection(
                   context = appContext,

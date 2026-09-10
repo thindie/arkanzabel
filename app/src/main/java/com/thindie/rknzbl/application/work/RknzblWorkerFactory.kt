@@ -20,7 +20,7 @@ class RknzblWorkerFactory(
     return ActiveProfileAutoSaveWorker(
       appContext = appContext,
       params = workerParameters,
-      repository = applicationScope.data.repository,
+      repository = applicationScope.connectionProfileRepository,
     )
   }
 }

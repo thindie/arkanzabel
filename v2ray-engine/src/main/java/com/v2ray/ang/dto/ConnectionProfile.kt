@@ -6,7 +6,9 @@ import com.v2ray.ang.AppConfig.PORT_SOCKS
 import com.v2ray.ang.AppConfig.TAG_BLOCKED
 import com.v2ray.ang.AppConfig.TAG_DIRECT
 import com.v2ray.ang.AppConfig.TAG_PROXY
+import com.v2ray.ang.enums.NetworkType
 import com.v2ray.ang.enums.Protocol
+import com.v2ray.ang.enums.Security
 import com.v2ray.ang.util.Utils
 
 @Immutable
@@ -23,7 +25,7 @@ data class ConnectionProfile(
   val method: String? = null,
   val flow: String? = null,
   val username: String? = null,
-  val network: String? = null,
+  val network: NetworkType = NetworkType.TCP,
   val headerType: String? = null,
   val host: String? = null,
   val path: String? = null,
@@ -35,7 +37,7 @@ data class ConnectionProfile(
   val authority: String? = null,
   val xhttpMode: String? = null,
   val xhttpExtra: String? = null,
-  val security: String? = null,
+  val security: Security? = null,
   val sni: String? = null,
   val alpn: String? = null,
   val fingerPrint: String? = null,
@@ -136,7 +138,7 @@ data class ConnectionProfile(
     result = 31 * result + (method?.hashCode() ?: 0)
     result = 31 * result + (flow?.hashCode() ?: 0)
     result = 31 * result + (username?.hashCode() ?: 0)
-    result = 31 * result + (network?.hashCode() ?: 0)
+    result = 31 * result + network.hashCode()
     result = 31 * result + (headerType?.hashCode() ?: 0)
     result = 31 * result + (host?.hashCode() ?: 0)
     result = 31 * result + (path?.hashCode() ?: 0)
@@ -176,4 +178,26 @@ data class ConnectionProfile(
     result = 31 * result + (policyGroupFilter?.hashCode() ?: 0)
     return result
   }
+}
+
+fun ConnectionProfile.optimizeForRkn(): ConnectionProfile {
+  val targetSni =
+    if (sni.isNullOrEmpty() || sni.contains("cloudflare", true)) {
+      "://google.com"
+    } else {
+      sni
+    }
+
+  val targetFingerprint =
+    if (fingerPrint.isNullOrEmpty() || fingerPrint == "random") {
+      "chrome"
+    } else {
+      fingerPrint
+    }
+
+  return this.copy(
+    insecure = false,
+    fingerPrint = targetFingerprint,
+    sni = targetSni,
+  )
 }

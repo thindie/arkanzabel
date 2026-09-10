@@ -3,15 +3,16 @@ package com.v2ray.ang.runtimebuilder
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.V2rayConfig.Outbound.StreamSettings
-import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.HttpUtil
 
-internal class DomainResolveStep {
+internal class DomainResolveStep(
+  private val settings: SettingsReader,
+) {
   fun resolveOutboundDomainsToHosts(v2rayConfig: V2rayConfig): V2rayConfig {
     val proxyOutboundList = v2rayConfig.getAllProxyOutbound()
     val dns = v2rayConfig.dns ?: return v2rayConfig
     val newHosts = dns.hosts?.toMutableMap() ?: mutableMapOf()
-    val preferIpv6 = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6)
+    val preferIpv6 = settings.getBool(AppConfig.PREF_PREFER_IPV6, false)
 
     for (item in proxyOutboundList) {
       val domain = item.getServerAddress()

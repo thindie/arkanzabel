@@ -17,4 +17,5 @@
     <string name="vpn_core_start_failed_generic">Не удалось запустить ядро VPN.</string>
     <string name="vpn_core_not_running_after_start">Ядро VPN завершилось сразу после запуска.</string>
     <string name="vpn_core_notification_failed">Ядро VPN запущено, но уведомления недоступны.</string>
+    <string name="notification_speed_legend">Иконка: стрелка вверх — трафик идёт через VPN, точка — напрямую, кольцо — сейчас тишина.\nНазвание • скорость↑ скорость↓ — сколько данных ушло/пришло через этот маршрут (VPN или напрямую).</string>
 </resources>

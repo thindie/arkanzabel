@@ -4,7 +4,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.runtime.SettingsManager
@@ -34,13 +34,10 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     startId: Int,
   ): Int {
     if (V2RayServiceManager.isRunning()) {
-      Log.i(AppConfig.TAG, "Proxy-only core running; restarting loop for new profile")
+      Log.i({ "Proxy-only core running; restarting loop for new profile" }, AppConfig.TAG)
       V2RayServiceManager.stopCoreLoop()
       if (!V2RayServiceManager.startCoreLoop(null, application)) {
-        Log.e(
-          AppConfig.TAG,
-          "Failed to restart proxy-only core after profile switch",
-        )
+        Log.e({ "Failed to restart proxy-only core after profile switch" }, AppConfig.TAG)
       }
       return START_STICKY
     }

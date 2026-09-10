@@ -1,12 +1,12 @@
 package com.thindie.rknzbl.feature.intro
 
+import com.thindie.engine.core.RouteFactory
+import com.thindie.engine.core.ScreenScopeError
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.RouteFactory
-import com.thindie.rknzbl.engine.ScreenScopeError
 
 fun IntroFlow.main() =
   RouteFactory.create(
-    initialState = State(),
+    initialState = ViewState(),
     execute = ::exec,
     routeContent = { scope -> IntroScreenContent(scope) },
     errorMapper = {
@@ -24,8 +24,8 @@ fun IntroFlow.main() =
 
 private suspend fun IntroFlow.exec(
   command: CommandIntro,
-  state: State,
-): State {
+  state: ViewState,
+): ViewState? {
   return when (command) {
     CommandIntro.Start -> {
       when {
@@ -37,7 +37,7 @@ private suspend fun IntroFlow.exec(
 
         else -> {
           finish(IntroFlow.Result.Success)
-          state
+          null
         }
       }
     }
@@ -70,7 +70,7 @@ private suspend fun IntroFlow.exec(
 
         Permission.Push -> {
           finish(IntroFlow.Result.Success)
-          state
+          null
         }
       }
     }
@@ -99,7 +99,7 @@ private suspend fun IntroFlow.exec(
             Stage.RationaleDismissedOnce -> finish(IntroFlow.Result.Success)
           }
       }
-      state
+      null
     }
   }
 }

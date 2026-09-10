@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.perapp
 
-import com.thindie.rknzbl.engine.RouteFactory
+import com.thindie.engine.core.RouteFactory
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.util.AppManagerUtil
@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 fun PerAppProxyFlow.main() =
   RouteFactory.create(
     initialState =
-      State(
+      ViewState(
         mode =
           if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PER_APP_PROXY)) {
             ProxyScopeMode.Selected
@@ -33,12 +33,12 @@ fun PerAppProxyFlow.main() =
 
 internal suspend fun PerAppProxyFlow.execMain(
   command: PerAppProxyCommand,
-  state: State,
-): State {
+  state: ViewState,
+): ViewState? {
   return when (command) {
     PerAppProxyCommand.Back -> {
       finish(Unit)
-      state
+      null
     }
 
     PerAppProxyCommand.LoadApps -> {
@@ -76,7 +76,7 @@ internal suspend fun PerAppProxyFlow.execMain(
 
     PerAppProxyCommand.OpenSearch -> {
       go(search())
-      state
+      null
     }
 
     is PerAppProxyCommand.RemovePackage -> {

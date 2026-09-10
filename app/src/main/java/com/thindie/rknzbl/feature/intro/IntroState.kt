@@ -3,7 +3,7 @@ package com.thindie.rknzbl.feature.intro
 import androidx.compose.runtime.Immutable
 
 @Immutable
-data class State(
+data class ViewState(
   val permissionScope: List<Permission> =
     buildList {
       add(Permission.Vpn)
@@ -13,7 +13,7 @@ data class State(
   val current: Permission = Permission.Vpn,
   val stage: Stage = Stage.Loading,
   val hint: String? = null,
-) : com.thindie.rknzbl.engine.State
+) : com.thindie.engine.core.ViewState
 
 enum class Stage {
   Loading,

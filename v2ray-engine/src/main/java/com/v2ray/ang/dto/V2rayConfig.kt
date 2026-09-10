@@ -7,7 +7,7 @@ import com.v2ray.ang.enums.Protocol
 data class V2rayConfig(
   var remarks: String? = null,
   var stats: Any? = null,
-  val log: Log,
+  var log: Log,
   var policy: Policy? = null,
   val inbounds: ArrayList<Inbound>,
   var outbounds: ArrayList<Outbound>,
@@ -253,7 +253,6 @@ data class V2rayConfig(
       )
 
       data class TlsSettings(
-        var allowInsecure: Boolean = false,
         var serverName: String? = null,
         val alpn: List<String>? = null,
         val minVersion: String? = null,
@@ -261,6 +260,7 @@ data class V2rayConfig(
         val preferServerCipherSuites: Boolean = false,
         val cipherSuites: String? = null,
         val fingerprint: String? = null,
+        val utls: String? = null,
         val certificates: List<Any>? = null,
         val disableSystemRoot: Boolean = false,
         val enableSessionResumption: Boolean = false,
@@ -276,6 +276,7 @@ data class V2rayConfig(
         var shortId: String? = null,
         var spiderX: String? = null,
         var mldsa65Verify: String? = null,
+        var fallback: String? = "n",
       )
 
       data class QuicSetting(
@@ -399,6 +400,7 @@ data class V2rayConfig(
     val disableCache: Boolean = false,
     val queryStrategy: String? = null,
     val tag: String? = null,
+    var refreshInterval: Long? = null,
   ) {
     data class Servers(
       var address: String = "",

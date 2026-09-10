@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
+import com.thindie.engine.core.RouteFactory
+import com.thindie.engine.core.ScreenScopeError
 import com.thindie.rknzbl.R
-import com.thindie.rknzbl.engine.RouteFactory
-import com.thindie.rknzbl.engine.ScreenScopeError
 
 fun SelectSourceFlow.main() =
   RouteFactory.create(
@@ -22,19 +22,16 @@ fun SelectSourceFlow.main() =
 private suspend fun SelectSourceFlow.exec(
   command: ScreenCommand,
   state: ScreenState,
-): ScreenState {
+): ScreenState? {
   return when (command) {
     is ScreenCommand.Back -> {
-      finish(state.selected)
-      state
+      finish(SelectSourceFlow.Result.NotSelected)
+      null
     }
 
-    is ScreenCommand.Select -> {
-      if (state.selected == command.type) {
-        state.copy(selected = SelectSourceFlow.Result.NotSelected)
-      } else {
-        state.copy(selected = command.type)
-      }
+    is ScreenCommand.Go -> {
+      finish(command.type)
+      null
     }
   }
 }

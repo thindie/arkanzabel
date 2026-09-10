@@ -1,9 +1,9 @@
 package com.thindie.rknzbl.feature.managegate.gatelist
 
 import android.content.Context
-import com.thindie.rknzbl.engine.Route
-import com.thindie.rknzbl.engine.Router
-import com.thindie.rknzbl.engine.ScreenFlow
+import com.thindie.engine.core.Route
+import com.thindie.engine.core.Router
+import com.thindie.engine.core.ScreenFlow
 
 class SelectSourceFlow(
   private val router: Router,
@@ -48,7 +48,7 @@ class SelectSourceFlow(
 
     data object WhiteListRussian : Result {
       override val sourceUrl: String =
-        "https://github.com/igareck/vpn-configs-for-russia/blob/main/WHITE-CIDR-RU-checked.txt"
+        "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/WHITE-CIDR-RU-checked.txt"
     }
 
     data object NotSelected : Result {

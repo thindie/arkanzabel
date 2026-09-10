@@ -1,11 +1,11 @@
 package com.thindie.rknzbl.feature.settings.ui
 
-import com.thindie.rknzbl.engine.ScreenScope
-import com.thindie.rknzbl.engine.sub
-import com.thindie.rknzbl.engine.transition
+import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.sub
+import com.thindie.engine.core.transition
 import com.thindie.rknzbl.feature.home.HomeFlow
 import com.thindie.rknzbl.feature.settings.domain.SettingsRepository
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
 
 internal fun HomeFlow.settingsStateSink(
@@ -19,14 +19,23 @@ internal fun HomeFlow.settingsStateSink(
       newState
     }
 
-  // MUX support
+  screenScope.sub(repository.fragmentEnabled)
+    .transition { state, enabled ->
+      state.copy(fragmentEnabled = enabled)
+    }
+
   screenScope.sub(repository.muxEnabled)
     .transition { state, enabled ->
       state.copy(muxEnabled = enabled)
     }
 
+  screenScope.sub(repository.fragmentInterval.mapNotNull { it?.ifBlank { null } })
+    .transition { state, interval ->
+      state.copy(fragmentInterval = interval)
+    }
+
   // Language - read from storage on subscription start
-  screenScope.sub(flow { emit(repository.language()) })
+  screenScope.sub(repository.language)
     .transition { state, lang ->
       state.copy(language = lang)
     }
@@ -54,8 +63,38 @@ internal fun HomeFlow.settingsStateSink(
       state.copy(isCustomSourceEnabled = enabled)
     }
 
+  // Force profile measurement support
+  screenScope.sub(repository.forceProfileMeasure)
+    .transition { state, enabled ->
+      state.copy(forceProfileMeasure = enabled)
+    }
+
+  // Bottom-navigation home design support
+  screenScope.sub(repository.useNewDesign)
+    .transition { state, enabled ->
+      state.copy(useNewDesign = enabled)
+    }
+
   screenScope.sub(repository.customSourceUrl.mapNotNull { it?.ifBlank { null } })
     .transition { state, source ->
       state.copy(customSourceUrl = source)
+    }
+
+  // Reality masquerade (show) support
+  screenScope.sub(repository.realityShowEnabled)
+    .transition { state, enabled ->
+      state.copy(realityShowEnabled = enabled)
+    }
+
+  // Sniffing target protocol support
+  screenScope.sub(repository.sniffingTarget().filterNotNull())
+    .transition { state, target ->
+      state.copy(sniffingTarget = target)
+    }
+
+  // Sniffing port-range support
+  screenScope.sub(repository.sniffingPortRange().filterNotNull())
+    .transition { state, range ->
+      state.copy(sniffingPortRange = range)
     }
 }

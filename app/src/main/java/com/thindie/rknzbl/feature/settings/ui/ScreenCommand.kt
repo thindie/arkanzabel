@@ -1,6 +1,6 @@
 package com.thindie.rknzbl.feature.settings.ui
 
-import com.thindie.rknzbl.engine.Command
+import com.thindie.engine.core.Command
 
 internal sealed interface ScreenCommand : Command {
   data object Back : ScreenCommand
@@ -12,6 +12,12 @@ internal sealed interface ScreenCommand : Command {
 
   // MUX toggle command
   data object ToggleMux : ScreenCommand
+
+  /** Global fragment toggle (Recommendation #5) */
+  data object ToggleFragment : ScreenCommand
+
+  /** Set global fragment interval string */
+  data class SetFragmentInterval(val interval: String) : ScreenCommand
 
   // Local storage mode toggle command
   data object ToggleStorageMode : ScreenCommand
@@ -25,6 +31,21 @@ internal sealed interface ScreenCommand : Command {
   // Custom source URL toggle
   data object ToggleCustomSource : ScreenCommand
 
+  // Force profile measurement toggle
+  data object ToggleForceProfileMeasure : ScreenCommand
+
+  // Bottom-navigation home design toggle
+  data object ToggleNewDesign : ScreenCommand
+
   // Set custom source URL
   data class SetCustomSourceUrl(val url: String) : ScreenCommand
+
+  // Reality masquerade (show) toggle
+  data object ToggleRealityShow : ScreenCommand
+
+  // Sniffing target protocol selection
+  data class SetSniffingTarget(val target: SniffingTarget) : ScreenCommand
+
+  // Sniffing port-range selection
+  data class SetSniffingPortRange(val range: SniffingPortRange) : ScreenCommand
 }

@@ -1,6 +1,6 @@
 package com.v2ray.ang.runtimebuilder
 
-import android.util.Log
+import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.V2rayConfig
@@ -15,6 +15,7 @@ import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.util.JsonUtil
 
 internal class OutboundConfigStep(
+  private val settings: SettingsReader,
   private val convertProfile2Outbound: (ConnectionProfile) -> Outbound?,
 ) {
   fun applyOutbounds(
@@ -46,7 +47,7 @@ internal class OutboundConfigStep(
     v2rayConfig: V2rayConfig,
     subscriptionId: String,
   ): V2rayConfig {
-    if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+    if (settings.getBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
       return v2rayConfig
     }
     if (subscriptionId.isEmpty()) return v2rayConfig
@@ -78,7 +79,7 @@ internal class OutboundConfigStep(
         }
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to configure more outbounds", runtime)
+      Log.e({ "Failed to configure more outbounds" }, AppConfig.TAG, runtime)
       throw OutboundConfigError(
         message = "Failed to configure more outbounds",
         source = "OutboundConfigStep.applyMoreOutbounds",
@@ -90,7 +91,7 @@ internal class OutboundConfigStep(
 
   fun applyGlobalOutboundSettings(outbound: Outbound): Boolean {
     try {
-      var muxEnabled = KeyValueStorage.decodeSettingsBool(AppConfig.PREF_MUX_ENABLED, false)
+      var muxEnabled = settings.getBool(AppConfig.PREF_MUX_ENABLED, false)
       val protocol = outbound.protocol
       if (protocol.equals(Protocol.ShadowSocks.name, true) ||
         protocol.equals(Protocol.Socks.name, true) ||
@@ -107,11 +108,11 @@ internal class OutboundConfigStep(
       if (muxEnabled) {
         outbound.mux?.enabled = true
         outbound.mux?.concurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
+          settings.getString(AppConfig.PREF_MUX_CONCURRENCY, "8").orEmpty().toInt()
         outbound.mux?.xudpConcurrency =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "16").orEmpty().toInt()
+          settings.getString(AppConfig.PREF_MUX_XUDP_CONCURRENCY, "16").orEmpty().toInt()
         outbound.mux?.xudpProxyUDP443 =
-          KeyValueStorage.decodeSettingsString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
+          settings.getString(AppConfig.PREF_MUX_XUDP_QUIC, "reject")
         if (protocol.equals(Protocol.Vless.name, true) &&
           outbound.settings?.vnext?.first()?.users?.first()?.flow?.isNotEmpty() == true
         ) {
@@ -122,6 +123,10 @@ internal class OutboundConfigStep(
         outbound.mux?.concurrency = -1
       }
 
+      // Keep the outbound TCP connection alive between packets so idle connections are not
+      // closed by the server / caught by DPI as "dead".
+      outbound.ensureSockopt().tcpKeepAliveIdle = AppConfig.OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS
+
       if (protocol.equals(Protocol.WireGuard.name, true)) {
         var localTunAddr =
           if (outbound.settings?.address == null) {
@@ -129,7 +134,7 @@ internal class OutboundConfigStep(
           } else {
             outbound.settings?.address as List<*>
           }
-        if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_PREFER_IPV6) != true) {
+        if (!settings.getBool(AppConfig.PREF_PREFER_IPV6, false)) {
           localTunAddr = listOf(localTunAddr.first())
         }
         outbound.settings?.address = localTunAddr
@@ -142,7 +147,16 @@ internal class OutboundConfigStep(
         val host = outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host
 
         val requestString: String by lazy {
-          """{"version":"1.1","method":"GET","headers":{"User-Agent":["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.6478.122 Mobile Safari/537.36"],"Accept-Encoding":["gzip, deflate"],"Connection":["keep-alive"],"Pragma":"no-cache"}}"""
+          """
+          {"version":"1.1","method":"GET","headers":
+          {
+          "User-Agent"
+          :["Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) 
+          Chrome/126.0.6478.122 Mobile Safari/537.36"],
+          "Accept-Encoding":["gzip, deflate"],
+          "Connection":["keep-alive"],
+          "Pragma":"no-cache"}}
+          """.trimIndent()
         }
         outbound.streamSettings?.tcpSettings?.header?.request =
           JsonUtil.fromJson(
@@ -153,7 +167,7 @@ internal class OutboundConfigStep(
         outbound.streamSettings?.tcpSettings?.header?.request?.headers?.host = host
       }
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to update outbound with global settings", runtime)
+      Log.e({ "Failed to update outbound with global settings" }, AppConfig.TAG, runtime)
       return false
     }
     return true
@@ -161,7 +175,7 @@ internal class OutboundConfigStep(
 
   fun applyOutboundFragment(v2rayConfig: V2rayConfig): V2rayConfig {
     try {
-      if (!KeyValueStorage.decodeSettingsBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
+      if (!settings.getBool(AppConfig.PREF_FRAGMENT_ENABLED, false)) {
         return v2rayConfig
       }
       if (v2rayConfig.outbounds[0].streamSettings?.security != AppConfig.TLS &&
@@ -177,7 +191,7 @@ internal class OutboundConfigStep(
           mux = null,
         )
 
-      var packets = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_PACKETS) ?: "tlshello"
+      var packets = settings.getString(AppConfig.PREF_FRAGMENT_PACKETS) ?: "tlshello"
       if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.REALITY && packets == "tlshello") {
         packets = "1-3"
       } else if (v2rayConfig.outbounds[0].streamSettings?.security == AppConfig.TLS && packets != "tlshello") {
@@ -189,8 +203,8 @@ internal class OutboundConfigStep(
           fragment =
             OutSettings.Fragment(
               packets = packets,
-              length = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_LENGTH) ?: "50-100",
-              interval = KeyValueStorage.decodeSettingsString(AppConfig.PREF_FRAGMENT_INTERVAL) ?: "10-20",
+              length = settings.getString(AppConfig.PREF_FRAGMENT_LENGTH) ?: "50-100",
+              interval = settings.getString(AppConfig.PREF_FRAGMENT_INTERVAL) ?: "10-20",
             ),
           noises =
             listOf(
@@ -214,9 +228,10 @@ internal class OutboundConfigStep(
       v2rayConfig.outbounds[0].streamSettings?.sockopt =
         StreamSettings.Sockopt(
           dialerProxy = AppConfig.TAG_FRAGMENT,
+          tcpKeepAliveIdle = AppConfig.OUTBOUND_TCP_KEEPALIVE_IDLE_SECONDS,
         )
     } catch (runtime: RuntimeException) {
-      Log.e(AppConfig.TAG, "Failed to update outbound fragment", runtime)
+      Log.e({ "Failed to update outbound fragment" }, AppConfig.TAG, runtime)
       throw OutboundConfigError(
         message = "Failed to update outbound fragment",
         source = "OutboundConfigStep.applyOutboundFragment",
