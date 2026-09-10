@@ -37,6 +37,24 @@ jobs:
           mkdir -p app
           echo "$ANDROID_KEYSTORE_B64" | base64 -d > app/release.keystore
 
+      # Fetch the pinned native kernel (libv2ray) from upstream releases and
+      # verify its sha256 BEFORE building. The AAR is git-ignored in
+      # v2ray-engine/libs/, so a clean checkout has no kernel unless CI downloads it.
+      # Pin both version and hash for reproducible builds. If the hash ever needs
+      # updating after a kernel bump, recompute with:
+      #   curl -fL "https://github.com/2dust/AndroidLibV2rayLite/releases/download/<ver>/libv2ray.aar" | sha256sum
+      - name: Download pinned libv2ray kernel
+        env:
+          KERNEL_VERSION: 'v26.9.9'
+          EXPECTED_SHA256: '9ecf4c921568d8f4cb8550d3bafe08ff6f1d1984f45a6ad183dcdf52ee9302de'
+        run: |
+          set -euo pipefail
+          mkdir -p v2ray-engine/libs
+          curl -fL --retry 3 --max-time 300 \
+            -o v2ray-engine/libs/libv2ray.aar \
+            "https://github.com/2dust/AndroidLibV2rayLite/releases/download/${KERNEL_VERSION}/libv2ray.aar"
+          echo "${EXPECTED_SHA256}  v2ray-engine/libs/libv2ray.aar" | sha256sum -c -
+
       - name: Build release APK
         run: ./gradlew :app:assembleRelease --no-daemon --stacktrace
 
