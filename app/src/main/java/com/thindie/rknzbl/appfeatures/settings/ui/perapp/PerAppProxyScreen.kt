@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +26,8 @@ import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.HelpSecondaryText
+import com.thindie.engine.uikit.HelpSectionHeading
 import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
@@ -59,16 +60,8 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
               .background(AppTheme.colors.backgroundPrimary),
         ) {
           Column {
-            Text(
-              text = stringResource(R.string.per_app_proxy_title),
-              style = AppTheme.typography.headlineLarge,
-              color = AppTheme.colors.contentPrimary,
-            )
-            Text(
-              text = stringResource(R.string.per_app_proxy_mode_section),
-              style = AppTheme.typography.labelMedium,
-              color = AppTheme.colors.contentSecondary,
-            )
+            HelpSectionHeading(stringResource(R.string.per_app_proxy_title))
+            HelpSecondaryText(stringResource(R.string.per_app_proxy_mode_section))
           }
         }
       }
@@ -131,22 +124,14 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
                 .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
-              Text(
-                text = stringResource(R.string.per_app_proxy_applied_section),
-                style = AppTheme.typography.headlineLarge,
-                color = AppTheme.colors.contentPrimary,
-              )
+              HelpSectionHeading(stringResource(R.string.per_app_proxy_applied_section))
               val description =
                 if (screenState.selectedPackages.isEmpty()) {
                   stringResource(R.string.per_app_proxy_none_selected)
                 } else {
                   stringResource(R.string.per_app_proxy_mode_selected_header_subtitle)
                 }
-              Text(
-                text = description,
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary,
-              )
+              HelpSecondaryText(description)
             }
           }
         }
@@ -180,16 +165,8 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
                 .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
-              Text(
-                text = stringResource(R.string.per_app_proxy_open_search_title),
-                style = AppTheme.typography.headlineLarge,
-                color = AppTheme.colors.contentPrimary,
-              )
-              Text(
-                text = stringResource(R.string.per_app_proxy_open_search_subtitle),
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary,
-              )
+              HelpSectionHeading(stringResource(R.string.per_app_proxy_open_search_title))
+              HelpSecondaryText(stringResource(R.string.per_app_proxy_open_search_subtitle))
             }
           }
         }

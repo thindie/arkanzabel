@@ -21,6 +21,8 @@ import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.HelpParagraph
+import com.thindie.engine.uikit.HelpSectionHeading
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
@@ -54,9 +56,9 @@ internal fun VpnSetupScreenContent(scope: ScreenScope<VpnSetupState, VpnSetupCom
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.vpnsetup_steps_title))
+      HelpSectionHeading(stringResource(R.string.vpnsetup_steps_title))
       VSpacer(8.dp)
-      VpnParagraph(stringResource(R.string.vpnsetup_intro))
+      HelpParagraph(stringResource(R.string.vpnsetup_intro))
 
       VSpacer(16.dp)
       for (index in 0 until STEPS.size) {
@@ -67,16 +69,16 @@ internal fun VpnSetupScreenContent(scope: ScreenScope<VpnSetupState, VpnSetupCom
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.vpnsetup_permission_title))
+      HelpSectionHeading(stringResource(R.string.vpnsetup_permission_title))
       VSpacer(8.dp)
-      VpnParagraph(stringResource(R.string.vpnsetup_permission_body))
+      HelpParagraph(stringResource(R.string.vpnsetup_permission_body))
 
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.vpnsetup_keep_title))
+      HelpSectionHeading(stringResource(R.string.vpnsetup_keep_title))
       VSpacer(8.dp)
-      VpnParagraph(stringResource(R.string.vpnsetup_keep_body))
+      HelpParagraph(stringResource(R.string.vpnsetup_keep_body))
 
       VSpacer(16.dp)
       for (index in 0 until DEFAULT_STEPS.size) {
@@ -87,9 +89,9 @@ internal fun VpnSetupScreenContent(scope: ScreenScope<VpnSetupState, VpnSetupCom
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.vpnsetup_battery_title))
+      HelpSectionHeading(stringResource(R.string.vpnsetup_battery_title))
       VSpacer(8.dp)
-      VpnParagraph(stringResource(R.string.vpnsetup_battery_body))
+      HelpParagraph(stringResource(R.string.vpnsetup_battery_body))
 
       VSpacer(16.dp)
       for (index in 0 until BATTERY_STEPS.size) {
@@ -100,25 +102,6 @@ internal fun VpnSetupScreenContent(scope: ScreenScope<VpnSetupState, VpnSetupCom
       VSpacer(32.dp)
     }
   }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-  Text(
-    text = text,
-    style = AppTheme.typography.headlineMedium,
-    color = AppTheme.colors.contentSecondary,
-  )
-}
-
-@Composable
-private fun VpnParagraph(text: String) {
-  Text(
-    text = text,
-    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-    style = AppTheme.typography.bodySmall,
-    color = AppTheme.colors.contentPrimary,
-  )
 }
 
 @Composable
@@ -156,9 +139,9 @@ private fun VpnSetupScreenContentPreview() {
         color = AppTheme.colors.contentPrimary,
       )
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.vpnsetup_steps_title))
+      HelpSectionHeading(stringResource(R.string.vpnsetup_steps_title))
       VSpacer(8.dp)
-      VpnParagraph(stringResource(R.string.vpnsetup_intro))
+      HelpParagraph(stringResource(R.string.vpnsetup_intro))
       VSpacer(16.dp)
       VpnStep(number = 1, text = stringResource(R.string.vpnsetup_step_connect))
     }

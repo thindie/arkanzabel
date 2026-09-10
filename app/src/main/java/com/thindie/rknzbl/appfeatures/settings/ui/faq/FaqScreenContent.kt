@@ -28,6 +28,9 @@ import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.HSpacer
+import com.thindie.engine.uikit.HelpParagraph
+import com.thindie.engine.uikit.HelpSecondaryText
+import com.thindie.engine.uikit.HelpSectionHeading
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
@@ -62,33 +65,33 @@ internal fun FaqScreenContent(scope: ScreenScope<FaqState, FaqCommand>) {
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.faq_storage_title))
+      HelpSectionHeading(stringResource(R.string.faq_storage_title))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_storage_body_1))
+      HelpParagraph(stringResource(R.string.faq_storage_body_1))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_storage_body_2))
+      HelpParagraph(stringResource(R.string.faq_storage_body_2))
       VSpacer(8.dp)
-      FaqDiagramRow(stringResource(R.string.faq_storage_diagram_remote))
+      HelpSecondaryText(stringResource(R.string.faq_storage_diagram_remote))
       VSpacer(4.dp)
-      FaqDiagramRow(stringResource(R.string.faq_storage_diagram_local))
+      HelpSecondaryText(stringResource(R.string.faq_storage_diagram_local))
 
       // === Per-app proxy ===
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.faq_perapp_title))
+      HelpSectionHeading(stringResource(R.string.faq_perapp_title))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_perapp_body_1))
+      HelpParagraph(stringResource(R.string.faq_perapp_body_1))
       VSpacer(8.dp)
-      FaqDiagramRow(stringResource(R.string.faq_perapp_steps))
+      HelpSecondaryText(stringResource(R.string.faq_perapp_steps))
 
       // === Notification legend ===
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.faq_legend_title))
+      HelpSectionHeading(stringResource(R.string.faq_legend_title))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_legend_body))
+      HelpParagraph(stringResource(R.string.faq_legend_body))
       VSpacer(8.dp)
       FaqLegendItem(iconRes = EngineR.drawable.ic_stat_proxy, label = stringResource(R.string.faq_legend_proxy))
       VSpacer(4.dp)
@@ -96,47 +99,28 @@ internal fun FaqScreenContent(scope: ScreenScope<FaqState, FaqCommand>) {
       VSpacer(4.dp)
       FaqLegendItem(iconRes = EngineR.drawable.ic_stat_name, label = stringResource(R.string.faq_legend_idle))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_legend_format))
+      HelpParagraph(stringResource(R.string.faq_legend_format))
 
       // === Logs ===
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.faq_logs_title))
+      HelpSectionHeading(stringResource(R.string.faq_logs_title))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_logs_body))
+      HelpParagraph(stringResource(R.string.faq_logs_body))
 
       // === Updates ===
       VSpacer(24.dp)
       Divider()
       VSpacer(16.dp)
-      SectionTitle(stringResource(R.string.faq_updates_title))
+      HelpSectionHeading(stringResource(R.string.faq_updates_title))
       VSpacer(8.dp)
-      FaqParagraph(stringResource(R.string.faq_updates_body))
+      HelpParagraph(stringResource(R.string.faq_updates_body))
       FaqRepoLink(REPO_URL)
 
       VSpacer(32.dp)
     }
   }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-  Text(
-    text = text,
-    style = AppTheme.typography.titleMedium,
-    color = AppTheme.colors.contentSecondary,
-  )
-}
-
-@Composable
-private fun FaqParagraph(text: String) {
-  Text(
-    text = text,
-    modifier = Modifier.fillMaxWidth(),
-    style = AppTheme.typography.bodyMedium,
-    color = AppTheme.colors.contentPrimary,
-  )
 }
 
 private const val REPO_URL = "https://github.com/thindie/arkanzabel"
@@ -166,16 +150,6 @@ private fun FaqRepoLinkPreview() {
 }
 
 @Composable
-private fun FaqDiagramRow(text: String) {
-  Text(
-    text = text,
-    modifier = Modifier.fillMaxWidth(),
-    style = AppTheme.typography.bodySmall,
-    color = AppTheme.colors.accentPrimary,
-  )
-}
-
-@Composable
 private fun FaqLegendItem(
   iconRes: Int,
   label: String,
@@ -195,30 +169,6 @@ private fun FaqLegendItem(
       style = AppTheme.typography.bodyMedium,
       color = AppTheme.colors.contentPrimary,
     )
-  }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun FaqSectionTitlePreview() {
-  AppTheme {
-    SectionTitle("Where are my profiles stored?")
-  }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun FaqParagraphPreview() {
-  AppTheme {
-    FaqParagraph("By default, Arkanzabel syncs your connection profiles over WebDAV.")
-  }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun FaqDiagramRowPreview() {
-  AppTheme {
-    FaqDiagramRow("Remote: Profiles → WebDAV server → shared pool")
   }
 }
 
