@@ -86,6 +86,7 @@
     <string name="profiles_tab_main">Основные</string>
     <string name="profiles_tab_saved">Сохранённые</string>
     <string name="profiles_empty">Пока нет профилей</string>
+    <string name="profiles_saved_empty">Пока нет сохранённых профилей</string>
 
     <!-- Settings screen strings -->
     <string name="settings_section_appearance">Внешний вид</string>

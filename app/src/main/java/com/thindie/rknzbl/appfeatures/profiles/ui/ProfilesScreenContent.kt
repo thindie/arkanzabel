@@ -1,7 +1,9 @@
 package com.thindie.rknzbl.appfeatures.profiles.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -18,6 +21,7 @@ import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
+import com.thindie.engine.uikit.CircularProgress
 import com.thindie.engine.uikit.ProfileBorderState
 import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.TabItem
@@ -25,6 +29,7 @@ import com.thindie.engine.uikit.TabRow
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.profileBorder
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.appfeatures.profiles.component.EmptyProfilesContent
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.NetworkType
 
@@ -51,14 +56,33 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
         ) {
           val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
 
-          VSpacer(16.dp)
+          val loading = it == 0 && st.profilesLoading
 
-          if (profilesToShow.isEmpty()) {
-            Text(
-              text = stringResource(R.string.profiles_empty),
-              modifier = Modifier.fillMaxWidth(),
+          if (loading) {
+            Box(
+              modifier = Modifier.fillMaxSize(),
+              contentAlignment = Alignment.Center,
+            ) {
+              CircularProgress()
+            }
+          } else if (profilesToShow.isEmpty()) {
+            EmptyProfilesContent(
+              icon = if (it == 1) R.drawable.ic_folder_24 else R.drawable.ic_globus_24,
+              title =
+                if (it == 1) {
+                  stringResource(R.string.profiles_saved_empty)
+                } else {
+                  stringResource(R.string.profiles_empty)
+                },
+              subtitle =
+                if (it == 1) {
+                  null
+                } else {
+                  stringResource(R.string.home_select_new_profiles_subtitle)
+                },
             )
           } else {
+            VSpacer(16.dp)
             LazyColumn(modifier = Modifier.fillMaxHeight()) {
               items(profilesToShow) { profile ->
                 val borderState =

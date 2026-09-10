@@ -86,6 +86,7 @@
     <string name="profiles_tab_main">Main</string>
     <string name="profiles_tab_saved">Saved</string>
     <string name="profiles_empty">No profiles yet</string>
+    <string name="profiles_saved_empty">No saved profiles</string>
 
     <!-- Settings screen strings -->
     <string name="settings_section_appearance">Appearance</string>
