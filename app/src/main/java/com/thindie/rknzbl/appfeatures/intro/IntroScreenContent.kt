@@ -1,4 +1,4 @@
-package com.thindie.rknzbl.feature.intro
+package com.thindie.rknzbl.appfeatures.intro
 
 import android.Manifest
 import android.app.Activity

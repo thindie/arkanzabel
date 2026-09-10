@@ -45,7 +45,7 @@ import com.thindie.rknzbl.appfeatures.logs.LogsFlow
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.feature.intro.IntroFlow
+import com.thindie.rknzbl.appfeatures.intro.IntroFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch

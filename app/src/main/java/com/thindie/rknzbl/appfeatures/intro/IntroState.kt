@@ -1,6 +1,7 @@
-package com.thindie.rknzbl.feature.intro
+package com.thindie.rknzbl.appfeatures.intro
 
 import androidx.compose.runtime.Immutable
+import com.thindie.engine.core.ViewState
 
 @Immutable
 data class ViewState(
@@ -13,7 +14,7 @@ data class ViewState(
   val current: Permission = Permission.Vpn,
   val stage: Stage = Stage.Loading,
   val hint: String? = null,
-) : com.thindie.engine.core.ViewState
+) : ViewState
 
 enum class Stage {
   Loading,
