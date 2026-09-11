@@ -35,8 +35,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import com.thindie.rknzbl.feature.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
-import com.thindie.rknzbl.feature.settings.domain.SettingsRepository as LegacySettingsRepository
+import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
+import com.thindie.rknzbl.domain.SettingsRepository as LegacySettingsRepository
 
 /**
  * Root dependency graph.
