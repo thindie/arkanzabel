@@ -41,6 +41,7 @@ import com.thindie.engine.uikit.Toggle
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
+import com.v2ray.ang.dto.WebDavConfig
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -86,6 +87,14 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         subtitle = sourceDisplayName(state.customSourceUrl),
         selected = state.customSourceUrl != null,
         onClick = { scope.send(ScreenCommand.ToggleCustomSource) },
+      )
+
+      VSpacer(8.dp)
+      SourceSelectorRow(
+        label = stringResource(R.string.settings_webdav_title),
+        subtitle = webDavDisplayName(state.webDavConfig),
+        selected = state.webDavConfig != null,
+        onClick = { scope.send(ScreenCommand.OpenWebdav) },
       )
 
       VSpacer(8.dp)
@@ -230,21 +239,9 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       VSpacer(16.dp)
 
       FaqPortalRow(
-        label = stringResource(R.string.faq_row_title),
-        subtitle = stringResource(R.string.faq_row_subtitle),
-        onClick = { scope.send(ScreenCommand.OpenFaq) },
-      )
-
-      FaqPortalRow(
-        label = stringResource(R.string.licenses_row_title),
-        subtitle = stringResource(R.string.licenses_row_subtitle),
-        onClick = { scope.send(ScreenCommand.OpenLicenses) },
-      )
-
-      FaqPortalRow(
-        label = stringResource(R.string.vpnsetup_row_title),
-        subtitle = stringResource(R.string.vpnsetup_row_subtitle),
-        onClick = { scope.send(ScreenCommand.OpenVpnSetup) },
+        label = stringResource(R.string.help_row_title),
+        subtitle = stringResource(R.string.help_row_subtitle),
+        onClick = { scope.send(ScreenCommand.OpenHelp) },
       )
     }
   }
@@ -493,7 +490,7 @@ private fun LanguageOption(
 }
 
 @Composable
-private fun FaqPortalRow(
+internal fun FaqPortalRow(
   label: String,
   subtitle: String,
   onClick: () -> Unit,
@@ -580,6 +577,15 @@ private fun SourceSelectorRow(
       colorFilter = ColorFilter.tint(if (selected) AppTheme.colors.onButtonAccent else AppTheme.colors.contentSecondary),
     )
   }
+}
+
+@Composable
+private fun webDavDisplayName(config: WebDavConfig?): String {
+  if (config == null || config.baseUrl.isBlank()) {
+    return stringResource(R.string.settings_webdav_subtitle_off)
+  }
+  val url = config.baseUrl
+  return if (url.length > 40) url.take(37) + "..." else url
 }
 
 @Composable

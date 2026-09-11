@@ -5,8 +5,10 @@ import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
 import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
@@ -113,5 +115,19 @@ class SettingsRepositoryImpl(
   /** Persists [url]; null/blank clears the key and disables the custom source. */
   override fun setCustomSourceUrl(url: String?) {
     customSourceUrlSetting.set(url)
+  }
+
+  // --- WebDAV storage config (URL / login / password) ---
+  private val webDavConfigState = MutableStateFlow(storage.decodeWebDavConfig())
+  override val webDavConfig: Flow<WebDavConfig?> get() = webDavConfigState
+
+  /** Persists [config]; null clears the key and disables remote storage. */
+  override fun setWebDavConfig(config: WebDavConfig?) {
+    webDavConfigState.value = config
+    if (config == null) {
+      storage.clearWebDavConfig()
+    } else {
+      storage.encodeWebDavConfig(config)
+    }
   }
 }

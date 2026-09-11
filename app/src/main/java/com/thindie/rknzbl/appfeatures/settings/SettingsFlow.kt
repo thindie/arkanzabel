@@ -3,6 +3,7 @@ package com.thindie.rknzbl.appfeatures.settings
 import com.thindie.engine.core.Route
 import com.thindie.engine.core.Router
 import com.thindie.engine.core.ScreenFlow
+import com.thindie.rknzbl.appfeatures.help.HelpFlow
 import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.appfeatures.settings.ui.settings
 
@@ -18,6 +19,10 @@ class SettingsFlow(
 
   fun switch() {
     router.replaceTop(settingsRoute())
+  }
+
+  fun openHelp() {
+    HelpFlow(router).start()
   }
 
   private fun settingsRoute() =

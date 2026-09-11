@@ -253,6 +253,8 @@
     <string name="faq_row_title">FAQ</string>
     <string name="faq_row_subtitle">WebDAV, per-app proxy, notification legend and logs</string>
     <string name="faq_screen_title">FAQ</string>
+    <string name="help_row_title">Help</string>
+    <string name="help_row_subtitle">FAQ, licenses, VPN setup</string>
 
     <!-- Open source licenses -->
     <string name="licenses_row_title">Open source licenses</string>

@@ -45,4 +45,9 @@ internal fun settingsStateSink(
       val trimmed = url?.trim()
       state.copy(customSourceUrl = if (trimmed.isNullOrBlank()) null else trimmed)
     }
+
+  screenScope.sub(repository.webDavConfig)
+    .transition { state, config ->
+      state.copy(webDavConfig = config)
+    }
 }

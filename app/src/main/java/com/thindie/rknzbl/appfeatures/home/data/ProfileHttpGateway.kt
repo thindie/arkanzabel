@@ -37,17 +37,46 @@ interface ProfileHttpGateway {
   /** Replaces the stored profiles body on this gateway's WebDAV endpoint. */
   suspend fun writeWebDav(body: String)
 
+  /** Applies new WebDAV endpoint/credentials so the cached client is rebuilt on next use. */
+  fun updateWebDav(
+    webDavUrl: String,
+    userName: String,
+    password: String,
+  )
+
   suspend fun fetchSource(url: String): String
 }
 
 class ProfileHttpGatewayImpl(
-  private val webDavUrl: String,
-  private val userName: String,
-  private val password: String,
+  private var webDavUrl: String = "",
+  private var userName: String = "",
+  private var password: String = "",
 ) : ProfileHttpGateway {
-  private val webDavClient: HttpClient by lazy {
-    newAuthenticatedWebdavClient(userName, password)
+  // Rebuilt when the WebDAV endpoint/credentials change (in-app settings update), so a running app
+  // picks up new values without a restart. Double-checked under [clientLock]; the field is volatile
+  // so readers observe the latest reference without taking the lock on every request.
+  @Volatile
+  private var webDavClient: HttpClient? = null
+  private val clientLock = Any()
+
+  /** Applies new WebDAV endpoint/credentials and forces the authenticated client to be rebuilt. */
+  override fun updateWebDav(
+    webDavUrl: String,
+    userName: String,
+    password: String,
+  ) {
+    synchronized(clientLock) {
+      this.webDavUrl = webDavUrl
+      this.userName = userName
+      this.password = password
+      webDavClient = null
+    }
   }
+
+  private fun davClient(): HttpClient =
+    webDavClient ?: synchronized(clientLock) {
+      webDavClient ?: newAuthenticatedWebdavClient(userName, password).also { webDavClient = it }
+    }
 
   private val httpClient: HttpClient by lazy {
     HttpClient(CIO) {
@@ -65,7 +94,7 @@ class ProfileHttpGatewayImpl(
   override suspend fun readWebDav(): String =
     withTimeoutOrNull(REQUEST_TIMEOUT) {
       try {
-        val response = webDavClient.get(webDavUrl)
+        val response = davClient().get(webDavUrl)
         if (!response.status.isSuccess()) {
           throw webDavErrorFromStatus(response.status, webDavUrl)
         }
@@ -102,7 +131,7 @@ class ProfileHttpGatewayImpl(
     withTimeoutOrNull(REQUEST_TIMEOUT) {
       try {
         val response =
-          webDavClient.put(webDavUrl) {
+          davClient().put(webDavUrl) {
             contentType(ContentType.Text.Plain.withCharset(Charsets.UTF_8))
             setBody(body)
           }

@@ -4,13 +4,11 @@ import android.os.Build
 import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
-import com.thindie.rknzbl.appfeatures.settings.ui.faq.faq
-import com.thindie.rknzbl.appfeatures.settings.ui.licenses.licenses
 import com.thindie.rknzbl.appfeatures.settings.ui.perapp.perAppMain
 import com.thindie.rknzbl.appfeatures.settings.ui.source.source
-import com.thindie.rknzbl.appfeatures.settings.ui.vpnsetup.vpnSetup
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.appfeatures.settings.ui.webdav.webdav
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 
 fun SettingsFlow.settings(
   repository: SettingsRepository,
@@ -70,23 +68,18 @@ fun SettingsFlow.settings(
         null
       }
 
+      ScreenCommand.OpenWebdav -> {
+        go(webdav())
+        null
+      }
+
       ScreenCommand.OpenPerAppProxy -> {
         go(perAppMain())
         null
       }
 
-      ScreenCommand.OpenFaq -> {
-        go(faq())
-        null
-      }
-
-      ScreenCommand.OpenLicenses -> {
-        go(licenses())
-        null
-      }
-
-      ScreenCommand.OpenVpnSetup -> {
-        go(vpnSetup())
+      ScreenCommand.OpenHelp -> {
+        openHelp()
         null
       }
     }

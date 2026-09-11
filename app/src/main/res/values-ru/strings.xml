@@ -253,6 +253,8 @@
     <string name="faq_row_title">Частые вопросы</string>
     <string name="faq_row_subtitle">WebDAV, прокси по приложениям, легенда уведомлений и логи</string>
     <string name="faq_screen_title">Частые вопросы</string>
+    <string name="help_row_title">Помощь</string>
+    <string name="help_row_subtitle">Частые вопросы, лицензии, настройка VPN</string>
 
     <!-- Лицензии открытого ПО -->
     <string name="licenses_row_title">Лицензии открытого ПО</string>
