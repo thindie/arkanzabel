@@ -19,4 +19,10 @@ internal fun webdavStateSink(
         passwordInput = config?.password.orEmpty(),
       )
     }
+
+  // Toggle is persisted independently of the stored config; [sub] accepts the boolean flow directly.
+  screenScope.sub(repository.webDavUseDefaults)
+    .transition { state, useDefaults ->
+      state.copy(useDefaults = useDefaults)
+    }
 }

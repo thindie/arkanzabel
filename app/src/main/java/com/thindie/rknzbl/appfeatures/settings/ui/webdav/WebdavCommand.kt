@@ -14,4 +14,6 @@ internal sealed interface WebdavCommand : Command {
   data class SetUsername(val value: String) : WebdavCommand
 
   data class SetPassword(val value: String) : WebdavCommand
+
+  data object ToggleUseDefaults : WebdavCommand
 }

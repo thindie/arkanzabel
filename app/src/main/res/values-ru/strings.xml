@@ -109,12 +109,14 @@
     <string name="settings_custom_source_placeholder">https://example.com/configs.json</string>
     <string name="settings_webdav_title">Хранение WebDAV</string>
     <string name="settings_webdav_subtitle">Хранить и синхронизировать скачанные профили на сервере WebDAV. Введите URL, имя пользователя и пароль.</string>
-    <string name="settings_webdav_subtitle_off">Не задано</string>
+    <string name="settings_webdav_subtitle_off">Обычный</string>
     <string name="settings_webdav_url_placeholder">https://example.com/webdav/profiles.json</string>
     <string name="settings_webdav_username_placeholder">Имя пользователя</string>
     <string name="settings_webdav_password_placeholder">Пароль</string>
     <string name="settings_webdav_save">Сохранить</string>
     <string name="settings_webdav_clear">Очистить</string>
+    <string name="settings_webdav_use_defaults_title">Использовать значения по умолчанию</string>
+    <string name="settings_webdav_use_defaults_subtitle">Применять встроенные настройки сервера вместо ручного ввода</string>
     <string name="settings_speed_notification_title">Уведомление о скорости</string>
     <string name="settings_speed_notification_subtitle">Показывать скорость загрузки/отправки в строке состояния</string>
     <string name="btn_close">Закрыть</string>

@@ -35,9 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
-import com.thindie.rknzbl.domain.SettingsRepository as LegacySettingsRepository
 
 /**
  * Root dependency graph.
@@ -46,9 +43,6 @@ import com.thindie.rknzbl.domain.SettingsRepository as LegacySettingsRepository
  * [SettingsFlowModule]) are created once here and injected into flows via [inject].
  * Flows only need the Router; repositories come from this scope.
  *
- * Two settings repositories coexist during migration: [LegacySettingsRepository] for legacy
- * `feature/` screens and [SettingsRepositoryImpl] for new-design `appfeatures/` flows —
- * both read/write the same storage.
  */
 class ApplicationScope private constructor(application: Application) {
   val coroutineScope =
@@ -66,10 +60,25 @@ class ApplicationScope private constructor(application: Application) {
 
   private val profileHttpGateway: ProfileHttpGateway =
     ProfileHttpGatewayImpl(
-      webDavUrl = webDavConfig?.baseUrl.orEmpty(),
-      userName = webDavConfig?.username.orEmpty(),
-      password = webDavConfig?.password.orEmpty(),
+      webDavUrlDefault = WEBDAV_DEFAULT_BASE_URL,
+      userNameDefault = WEBDAV_DEFAULT_USERNAME.orEmpty(),
+      passwordDefault = WEBDAV_DEFAULT_PASSWORD.orEmpty(),
     )
+      .also {
+        if (webDavConfig != null) {
+          it.updateWebDav(
+            webDavConfig.baseUrl,
+            webDavConfig.username.orEmpty(),
+            webDavConfig.password.orEmpty(),
+          )
+        } else {
+          it.updateWebDav(
+            WEBDAV_DEFAULT_BASE_URL,
+            WEBDAV_DEFAULT_USERNAME.orEmpty(),
+            WEBDAV_DEFAULT_PASSWORD.orEmpty(),
+          )
+        }
+      }
 
   // Resolves the remote version once at app start and exposes it so screens can offer an update.
   private val appVersionResolver: AppVersionResolver =
@@ -87,24 +96,11 @@ class ApplicationScope private constructor(application: Application) {
       vpnGateway = vpnStateTracker,
     )
 
-  val settingsRepository: SettingsRepository = SettingsRepositoryImpl(storage = KeyValueStorage)
-
-  // Keep the WebDAV gateway in sync with in-app config changes so a new endpoint/credentials take
-  // effect without restarting the app.
-  init {
-    coroutineScope.launch {
-      settingsRepository.webDavConfig.collect { config ->
-        profileHttpGateway.updateWebDav(
-          webDavUrl = config?.baseUrl.orEmpty(),
-          userName = config?.username.orEmpty(),
-          password = config?.password.orEmpty(),
-        )
-      }
-    }
-  }
-
-  private val legacySettingsRepositoryImpl = LegacySettingsRepositoryImpl(storage = KeyValueStorage)
-  val settingsRepositoryLegacy: LegacySettingsRepository get() = legacySettingsRepositoryImpl
+  val settingsRepository: SettingsRepository =
+    SettingsRepositoryImpl(
+      storage = KeyValueStorage,
+      profileHttpGateway = profileHttpGateway,
+    )
 
   private val updateLocaleFn: (String) -> Unit = { code ->
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -155,6 +151,10 @@ class ApplicationScope private constructor(application: Application) {
   }
 
   companion object {
+    private val WEBDAV_DEFAULT_BASE_URL: String = BuildConfig.WEBDAV_DEFAULT_BASE_URL
+    private val WEBDAV_DEFAULT_USERNAME: String? = BuildConfig.WEBDAV_DEFAULT_USERNAME.takeIf { it.isNotBlank() }
+    private val WEBDAV_DEFAULT_PASSWORD: String? = BuildConfig.WEBDAV_DEFAULT_PASSWORD.takeIf { it.isNotBlank() }
+
     fun configure(application: Application): ApplicationScope {
       LogSinkProvider.init()
       return ApplicationScope(application)

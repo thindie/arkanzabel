@@ -115,12 +115,14 @@
     <string name="settings_custom_source_placeholder">https://example.com/configs.json</string>
     <string name="settings_webdav_title">WebDAV storage</string>
     <string name="settings_webdav_subtitle">Store and sync downloaded profiles on a WebDAV server. Enter the endpoint URL, login and password.</string>
-    <string name="settings_webdav_subtitle_off">Not set</string>
+    <string name="settings_webdav_subtitle_off">Default</string>
     <string name="settings_webdav_url_placeholder">https://example.com/webdav/profiles.json</string>
     <string name="settings_webdav_username_placeholder">Username</string>
     <string name="settings_webdav_password_placeholder">Password</string>
     <string name="settings_webdav_save">Save</string>
     <string name="settings_webdav_clear">Clear</string>
+    <string name="settings_webdav_use_defaults_title">Use defaults</string>
+    <string name="settings_webdav_use_defaults_subtitle">Apply built-in server settings instead of entering them manually</string>
     <string name="settings_speed_notification_title">Speed notification</string>
     <string name="settings_speed_notification_subtitle">Show download/upload speed in status bar</string>
     <string name="btn_close">Close</string>

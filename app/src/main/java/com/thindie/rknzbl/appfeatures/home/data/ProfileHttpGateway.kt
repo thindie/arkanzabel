@@ -19,6 +19,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
@@ -44,13 +46,15 @@ interface ProfileHttpGateway {
     password: String,
   )
 
+  fun resetWebDav()
+
   suspend fun fetchSource(url: String): String
 }
 
 class ProfileHttpGatewayImpl(
-  private var webDavUrl: String = "",
-  private var userName: String = "",
-  private var password: String = "",
+  private val webDavUrlDefault: String,
+  private val userNameDefault: String,
+  private val passwordDefault: String,
 ) : ProfileHttpGateway {
   // Rebuilt when the WebDAV endpoint/credentials change (in-app settings update), so a running app
   // picks up new values without a restart. Double-checked under [clientLock]; the field is volatile
@@ -58,6 +62,11 @@ class ProfileHttpGatewayImpl(
   @Volatile
   private var webDavClient: HttpClient? = null
   private val clientLock = Any()
+  private val params: MutableStateFlow<Triple<String, String, String>?> = MutableStateFlow(null)
+
+  private val webDavUrl get() = requireNotNull(params.value?.first)
+  private val userName get() = requireNotNull(params.value?.second)
+  private val password get() = requireNotNull(params.value?.third)
 
   /** Applies new WebDAV endpoint/credentials and forces the authenticated client to be rebuilt. */
   override fun updateWebDav(
@@ -65,17 +74,25 @@ class ProfileHttpGatewayImpl(
     userName: String,
     password: String,
   ) {
-    synchronized(clientLock) {
-      this.webDavUrl = webDavUrl
-      this.userName = userName
-      this.password = password
-      webDavClient = null
+    params.update {
+      Triple(webDavUrl, userName, password)
     }
+    webDavClient = null
+  }
+
+  override fun resetWebDav() {
+    updateWebDav(
+      webDavUrl = webDavUrlDefault,
+      userName = userNameDefault,
+      password = passwordDefault,
+    )
   }
 
   private fun davClient(): HttpClient =
     webDavClient ?: synchronized(clientLock) {
-      webDavClient ?: newAuthenticatedWebdavClient(userName, password).also { webDavClient = it }
+      webDavClient
+        ?: newAuthenticatedWebdavClient(userName, password)
+          .also { webDavClient = it }
     }
 
   private val httpClient: HttpClient by lazy {
@@ -94,7 +111,10 @@ class ProfileHttpGatewayImpl(
   override suspend fun readWebDav(): String =
     withTimeoutOrNull(REQUEST_TIMEOUT) {
       try {
-        val response = davClient().get(webDavUrl)
+        val client = davClient()
+        Log.d({ "WebDAV GET: configure client $webDavUrl}" }, LOG_TAG)
+        val response = client.get(webDavUrl)
+        Log.d({ "WebDAV GET: status=$response }" }, LOG_TAG)
         if (!response.status.isSuccess()) {
           throw webDavErrorFromStatus(response.status, webDavUrl)
         }

@@ -43,4 +43,9 @@ interface SettingsRepository {
 
   /** Persists [config]; null clears the stored key and disables remote storage. */
   fun setWebDavConfig(config: WebDavConfig?)
+
+  // --- WebDAV: use built-in default config instead of manual entry ---
+  val webDavUseDefaults: Flow<Boolean>
+
+  suspend fun toggleWebDavUseDefaults(enabled: Boolean)
 }

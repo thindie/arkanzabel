@@ -8,4 +8,5 @@ internal data class WebdavState(
   val urlInput: String = "",
   val usernameInput: String = "",
   val passwordInput: String = "",
+  val useDefaults: Boolean = false,
 ) : ViewState

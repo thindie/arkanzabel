@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.appfeatures.settings.ui.webdav
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,18 +17,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
-import com.thindie.engine.uikit.HSpacer
 import com.thindie.engine.uikit.TextField
+import com.thindie.engine.uikit.Toggle
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
@@ -77,49 +80,105 @@ internal fun WebdavScreenContent(scope: ScreenScope<WebdavState, WebdavCommand>)
         style = AppTheme.typography.bodySmall,
         color = AppTheme.colors.contentSecondary,
       )
-      Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-      ) {
-        VSpacer(24.dp)
-        Divider()
-        VSpacer(16.dp)
+      VSpacer(24.dp)
+      ToggleRow(
+        label = stringResource(R.string.settings_webdav_use_defaults_title),
+        subtitle = stringResource(R.string.settings_webdav_use_defaults_subtitle),
+        checked = state.useDefaults,
+        onCheckedChange = { scope.send(WebdavCommand.ToggleUseDefaults) },
+      )
+      if (!state.useDefaults) {
+        Column(
+          modifier = Modifier.padding(horizontal = 16.dp),
+        ) {
+          VSpacer(24.dp)
+          Divider()
+          VSpacer(16.dp)
 
-        TextField(
-          modifier =
-            Modifier
-              .focusRequester(focusRequester)
-              .fillMaxWidth(),
-          value = state.urlInput,
-          onValueChange = { scope.send(WebdavCommand.SetUrl(it)) },
-          placeholder = placeholderUrl,
-          showClearButton = true,
-        )
+          TextField(
+            modifier =
+              Modifier
+                .focusRequester(focusRequester)
+                .fillMaxWidth(),
+            value = state.urlInput,
+            onValueChange = { scope.send(WebdavCommand.SetUrl(it)) },
+            placeholder = placeholderUrl,
+            showClearButton = true,
+          )
 
-        VSpacer(8.dp)
-        TextField(
-          modifier = Modifier.fillMaxWidth(),
-          value = state.usernameInput,
-          onValueChange = { scope.send(WebdavCommand.SetUsername(it)) },
-          placeholder = placeholderUser,
-          showClearButton = true,
-        )
+          VSpacer(8.dp)
+          TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = state.usernameInput,
+            onValueChange = { scope.send(WebdavCommand.SetUsername(it)) },
+            placeholder = placeholderUser,
+            showClearButton = true,
+          )
 
-        VSpacer(8.dp)
-        TextField(
-          modifier = Modifier.fillMaxWidth(),
-          value = state.passwordInput,
-          onValueChange = { scope.send(WebdavCommand.SetPassword(it)) },
-          placeholder = placeholderPass,
-          showClearButton = true,
-        )
+          VSpacer(8.dp)
+          TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = state.passwordInput,
+            onValueChange = { scope.send(WebdavCommand.SetPassword(it)) },
+            placeholder = placeholderPass,
+            showClearButton = true,
+          )
 
-        VSpacer(32.dp)
-        Row(horizontalArrangement = Arrangement.End) {
+          VSpacer(32.dp)
+        }
+
+        Column(verticalArrangement = Arrangement.Center) {
           Button(text = btnClear, onClick = { scope.send(WebdavCommand.Clear) })
-          HSpacer(8.dp)
+          VSpacer(8.dp)
           Button(text = btnSave, onClick = { scope.send(WebdavCommand.Save) })
         }
       }
     }
+  }
+}
+
+@Composable
+private fun ToggleRow(
+  label: String,
+  subtitle: String,
+  checked: Boolean,
+  onCheckedChange: () -> Unit,
+) {
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onCheckedChange, indication = null, interactionSource = null)
+        .padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = label,
+        style = AppTheme.typography.titleMedium,
+        color = AppTheme.colors.contentPrimary,
+      )
+      VSpacer(2.dp)
+      Text(
+        text = subtitle,
+        style = AppTheme.typography.bodySmall,
+        color = AppTheme.colors.contentSecondary,
+      )
+    }
+    Toggle(checked = checked)
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun WebdavToggleRowPreview() {
+  AppTheme {
+    ToggleRow(
+      label = "Use defaults",
+      subtitle = "Apply built-in server settings instead of entering them manually",
+      checked = false,
+      onCheckedChange = {},
+    )
   }
 }

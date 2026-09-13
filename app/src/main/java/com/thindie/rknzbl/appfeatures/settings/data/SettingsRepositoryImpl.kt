@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.appfeatures.settings.data
 
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
 import com.thindie.rknzbl.domain.SettingsRepository
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.filterNotNull
  */
 class SettingsRepositoryImpl(
   private val storage: KeyValueStorage,
+  private val profileHttpGateway: ProfileHttpGateway,
 ) : SettingsRepository {
   // --- Theme mode ---
   // Storage returns null until the user has ever touched settings; default to "auto" so callers get
@@ -126,8 +128,31 @@ class SettingsRepositoryImpl(
     webDavConfigState.value = config
     if (config == null) {
       storage.clearWebDavConfig()
+      profileHttpGateway.resetWebDav()
     } else {
+      profileHttpGateway.updateWebDav(
+        config.baseUrl,
+        config.username.orEmpty(),
+        config.password.orEmpty(),
+      )
       storage.encodeWebDavConfig(config)
     }
+  }
+
+  // --- WebDAV: use built-in default config instead of manual entry (default off) ---
+  private val webDavUseDefaultsSetting =
+    Setting<Boolean>(
+      read = { storage.decodeSettingsBool(AppConfig.PREF_WEBDAV_USE_DEFAULTS, true) },
+      write = {
+        if (it) {
+          profileHttpGateway.resetWebDav()
+        }
+        storage.encodeSettings(AppConfig.PREF_WEBDAV_USE_DEFAULTS, it)
+      },
+    )
+  override val webDavUseDefaults: Flow<Boolean> get() = webDavUseDefaultsSetting.flow
+
+  override suspend fun toggleWebDavUseDefaults(enabled: Boolean) {
+    webDavUseDefaultsSetting.set(enabled)
   }
 }

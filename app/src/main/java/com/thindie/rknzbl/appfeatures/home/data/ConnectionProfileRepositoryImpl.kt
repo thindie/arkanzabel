@@ -139,8 +139,6 @@ class ConnectionProfileRepositoryImpl(
       if (isLocalSave) {
         storage.getLocalProfiles().orEmpty()
       } else {
-        // No WebDAV endpoint configured: nothing is stored remotely.
-        if (storage.decodeWebDavConfig() == null) return emptyList()
         httpGateway.readWebDav()
       }
     val profiles = parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR)

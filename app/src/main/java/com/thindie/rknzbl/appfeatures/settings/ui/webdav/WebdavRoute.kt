@@ -14,27 +14,40 @@ fun SettingsFlow.webdav() =
           null
         }
 
+        is WebdavCommand.ToggleUseDefaults -> {
+          val current = s.useDefaults
+          flowModule.settingsRepository.toggleWebDavUseDefaults(!current)
+          null
+        }
+
         is WebdavCommand.Save -> {
           val url = s.urlInput.trim()
-          if (url.isEmpty()) {
-            s
-          } else {
-            flowModule.settingsRepository.setWebDavConfig(
+          val config =
+            if (url.isEmpty()) {
+              null
+            } else {
               WebDavConfig(
                 baseUrl = url,
                 username = s.usernameInput.ifBlank { null },
                 password = s.passwordInput.ifBlank { null },
-              ),
-            )
+              )
+            }
+
+          if (config == null) {
+            s
+          } else {
+            flowModule.settingsRepository.setWebDavConfig(config)
             back()
             null
           }
         }
 
         WebdavCommand.Clear -> {
-          flowModule.settingsRepository.setWebDavConfig(null)
-          back()
-          null
+          s.copy(
+            urlInput = "",
+            usernameInput = "",
+            passwordInput = "",
+          )
         }
 
         is WebdavCommand.SetUrl -> s.copy(urlInput = c.value)
