@@ -101,8 +101,8 @@
     <string name="settings_use_new_design_subtitle">Использовать новый главный экран с вкладками вместо классического хаба</string>
     <string name="settings_start_with_favorite_profiles_title">Запускать с избранными</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Открывать сохранённые профили при запуске приложения</string>
-    <string name="home_select_storage_mode_title">Режим хранения</string>
-    <string name="home_select_storage_mode_subtitle">Выберите, где хранить профили</string>
+    <string name="settings_local_storage_title">Локальное хранение</string>
+    <string name="settings_local_storage_subtitle">Хранить профили на этом устройстве вместо сервера WebDAV</string>
     <string name="settings_custom_source_title">Пользовательский URL источника</string>
     <string name="settings_custom_source_subtitle_off">Не задан</string>
     <string name="settings_custom_source_save">Сохранить</string>

@@ -11,7 +11,7 @@ internal sealed interface ScreenCommand : Command {
 
   data object ToggleMux : ScreenCommand
 
-  data object ToggleStorageMode : ScreenCommand
+  data object ToggleLocalStorage : ScreenCommand
 
   data object ToggleSpeed : ScreenCommand
 

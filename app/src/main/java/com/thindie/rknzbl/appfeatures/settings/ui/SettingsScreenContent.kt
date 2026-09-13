@@ -174,10 +174,10 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
       )
 
       ToggleRow(
-        label = stringResource(R.string.home_select_storage_mode_title),
-        subtitle = stringResource(R.string.home_select_storage_mode_subtitle),
+        label = stringResource(R.string.settings_local_storage_title),
+        subtitle = stringResource(R.string.settings_local_storage_subtitle),
         checked = state.isLocalSave ?: false,
-        onCheckedChange = { scope.send(ScreenCommand.ToggleStorageMode) },
+        onCheckedChange = { scope.send(ScreenCommand.ToggleLocalStorage) },
       )
 
       ToggleRow(

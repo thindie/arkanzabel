@@ -44,7 +44,7 @@ fun SettingsFlow.settings(
         null
       }
 
-      ScreenCommand.ToggleStorageMode -> {
+      ScreenCommand.ToggleLocalStorage -> {
         val current = s.isLocalSave ?: false
         repository.toggleLocalSave(!current)
         connectionProfileRepository.invalidateCaches()
