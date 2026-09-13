@@ -424,6 +424,21 @@ object KeyValueStorage {
 
   fun getVpnSessionLastAutoSaveStartMs(): Long = mainStorage.decodeLong(AppConfig.PREF_VPN_SESSION_LAST_AUTO_SAVE_START_MS, 0L)
 
+  private const val KEY_REMOTE_VERSION = "remote_version"
+  private const val KEY_REMOTE_VERSION_FETCHED_AT_MS = "remote_version_fetched_at_ms"
+
+  /** Latest remote version string fetched from the update source, or null when never fetched. */
+  fun decodeRemoteVersion(): String? = settingsStorage.decodeString(KEY_REMOTE_VERSION)
+
+  /** Epoch millis of the last successful remote-version fetch, or 0L when never fetched. */
+  fun decodeRemoteVersionFetchedAtMs(): Long = settingsStorage.decodeLong(KEY_REMOTE_VERSION_FETCHED_AT_MS, 0L)
+
+  /** Persists [versionRaw] together with the current time as its fetch timestamp. */
+  fun storeRemoteVersion(versionRaw: String, fetchedAtMs: Long) {
+    settingsStorage.encode(KEY_REMOTE_VERSION, versionRaw)
+    settingsStorage.encode(KEY_REMOTE_VERSION_FETCHED_AT_MS, fetchedAtMs)
+  }
+
   /** Key for storing the last auto-save notification timestamp to prevent duplicate notifications. */
   const val KEY_LAST_AUTO_SAVE_NOTIFICATION_TIMESTAMP = "last_auto_save_notification_timestamp"
 

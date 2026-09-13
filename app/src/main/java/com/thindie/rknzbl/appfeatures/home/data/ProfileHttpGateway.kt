@@ -49,6 +49,9 @@ interface ProfileHttpGateway {
   fun resetWebDav()
 
   suspend fun fetchSource(url: String): String
+
+  /** Fetches an arbitrary file from the default WebDAV endpoint using its stored credentials. */
+  suspend fun fetchAuthenticated(url: String): String
 }
 
 class ProfileHttpGatewayImpl(
@@ -108,6 +111,10 @@ class ProfileHttpGatewayImpl(
     }
   }
 
+  // Dedicated authenticated client for fixed deploy-time endpoints (e.g. version.txt). Uses the
+  // default WebDAV credentials only, so it is unaffected by any user-configured endpoint change.
+  private val defaultAuthClient: HttpClient by lazy { newAuthenticatedWebdavClient(userNameDefault, passwordDefault) }
+
   override suspend fun readWebDav(): String =
     withTimeoutOrNull(REQUEST_TIMEOUT) {
       try {
@@ -137,6 +144,25 @@ class ProfileHttpGatewayImpl(
 
         val result = response.body<String>().trim()
         Log.d({ "Remote GET: status=${response.status}, body length=${result.length}" }, LOG_TAG)
+        result
+      } catch (e: CancellationException) {
+        throw e
+      } catch (_: HttpRequestTimeoutException) {
+        throw AppError.ServerError.TimeOut
+      } catch (_: IOException) {
+        throw AppError.WebDav.UploadOpenFailed
+      }
+    } ?: throw AppError.ServerError.TimeOut
+
+  override suspend fun fetchAuthenticated(url: String): String =
+    withTimeoutOrNull(REQUEST_TIMEOUT) {
+      try {
+        val response = defaultAuthClient.get(url)
+        if (!response.status.isSuccess()) {
+          throw webDavErrorFromStatus(response.status, url)
+        }
+        val result = response.body<String>().trim()
+        Log.d({ "Version GET: status=${response.status}, body length=${result.length}" }, LOG_TAG)
         result
       } catch (e: CancellationException) {
         throw e

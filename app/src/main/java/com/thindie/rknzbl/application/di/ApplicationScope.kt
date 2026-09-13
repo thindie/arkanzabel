@@ -25,7 +25,6 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.appversion.AppVersion
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.appversion.AppVersionResolverImpl
-import com.thindie.rknzbl.appversion.REMOTE_VERSION_URL
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.dto.WebDavConfig
@@ -79,12 +78,12 @@ class ApplicationScope private constructor(application: Application) {
         }
       }
 
-  // Resolves the remote version once at app start and exposes it so screens can offer an update.
   private val appVersionResolver: AppVersionResolver =
     AppVersionResolverImpl(
       gateway = profileHttpGateway,
-      versionUrl = REMOTE_VERSION_URL,
+      versionUrl = BuildConfig.WEBDAV_VERSION_TXT_URL,
       localVersion = AppVersion.parse(BuildConfig.VERSION_NAME) ?: AppVersion(0),
+      storage = KeyValueStorage,
     ).also { it.start(coroutineScope) }
 
   val connectionProfileRepository: ConnectionProfileRepository =
