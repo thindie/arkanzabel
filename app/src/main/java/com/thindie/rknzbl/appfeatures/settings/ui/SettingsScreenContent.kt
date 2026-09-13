@@ -89,13 +89,15 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         onClick = { scope.send(ScreenCommand.ToggleCustomSource) },
       )
 
-      VSpacer(8.dp)
-      SourceSelectorRow(
-        label = stringResource(R.string.settings_webdav_title),
-        subtitle = webDavDisplayName(state.webDavConfig),
-        selected = state.webDavConfig != null,
-        onClick = { scope.send(ScreenCommand.OpenWebdav) },
-      )
+      if (state.isLocalSave != true) {
+        VSpacer(8.dp)
+        SourceSelectorRow(
+          label = stringResource(R.string.settings_webdav_title),
+          subtitle = webDavDisplayName(state.webDavConfig, state.webDavUseDefaults),
+          selected = state.webDavConfig != null,
+          onClick = { scope.send(ScreenCommand.OpenWebdav) },
+        )
+      }
 
       VSpacer(8.dp)
       SourceSelectorRow(
@@ -573,8 +575,11 @@ private fun SourceSelectorRow(
 }
 
 @Composable
-private fun webDavDisplayName(config: WebDavConfig?): String {
-  if (config == null || config.baseUrl.isBlank()) {
+private fun webDavDisplayName(
+  config: WebDavConfig?,
+  useDefaults: Boolean,
+): String {
+  if (useDefaults || config == null || config.baseUrl.isBlank()) {
     return stringResource(R.string.settings_webdav_subtitle_off)
   }
   val url = config.baseUrl

@@ -18,4 +18,6 @@ internal data class ScreenState(
   val customSourceUrl: String? = null,
   // WebDAV storage config; null means the endpoint is not configured
   val webDavConfig: WebDavConfig? = null,
+  // When true, built-in server settings are used and any stored manual config is ignored for display
+  val webDavUseDefaults: Boolean = false,
 ) : ViewState

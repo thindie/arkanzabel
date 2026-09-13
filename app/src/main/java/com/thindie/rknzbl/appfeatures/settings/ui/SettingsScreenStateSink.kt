@@ -45,4 +45,9 @@ internal fun settingsStateSink(
     .transition { state, config ->
       state.copy(webDavConfig = config)
     }
+
+  screenScope.sub(repository.webDavUseDefaults)
+    .transition { state, useDefaults ->
+      state.copy(webDavUseDefaults = useDefaults)
+    }
 }
