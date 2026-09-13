@@ -1,6 +1,7 @@
 package com.thindie.rknzbl.domain
 
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.v2ray.ang.dto.WebDavConfig
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
@@ -36,4 +37,10 @@ interface SettingsRepository {
 
   /** Persists [url]; null/blank clears it and disables the custom source. */
   fun setCustomSourceUrl(url: String?)
+
+  // --- WebDAV storage config (URL / login / password); null means not configured ---
+  val webDavConfig: Flow<WebDavConfig?>
+
+  /** Persists [config]; null clears the stored key and disables remote storage. */
+  fun setWebDavConfig(config: WebDavConfig?)
 }

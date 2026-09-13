@@ -383,6 +383,10 @@ object KeyValueStorage {
     return JsonUtil.fromJson(json, WebDavConfig::class.java)
   }
 
+  fun clearWebDavConfig() {
+    mainStorage.remove(KEY_WEBDAV_CONFIG)
+  }
+
   fun setVpnSessionActive(active: Boolean) {
     mainStorage.encode(AppConfig.PREF_VPN_SESSION_ACTIVE, active)
   }

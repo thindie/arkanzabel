@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
 import com.thindie.rknzbl.domain.SettingsRepository as LegacySettingsRepository
 
@@ -87,6 +88,20 @@ class ApplicationScope private constructor(application: Application) {
     )
 
   val settingsRepository: SettingsRepository = SettingsRepositoryImpl(storage = KeyValueStorage)
+
+  // Keep the WebDAV gateway in sync with in-app config changes so a new endpoint/credentials take
+  // effect without restarting the app.
+  init {
+    coroutineScope.launch {
+      settingsRepository.webDavConfig.collect { config ->
+        profileHttpGateway.updateWebDav(
+          webDavUrl = config?.baseUrl.orEmpty(),
+          userName = config?.username.orEmpty(),
+          password = config?.password.orEmpty(),
+        )
+      }
+    }
+  }
 
   private val legacySettingsRepositoryImpl = LegacySettingsRepositoryImpl(storage = KeyValueStorage)
   val settingsRepositoryLegacy: LegacySettingsRepository get() = legacySettingsRepositoryImpl
