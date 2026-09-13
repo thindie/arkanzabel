@@ -434,7 +434,10 @@ object KeyValueStorage {
   fun decodeRemoteVersionFetchedAtMs(): Long = settingsStorage.decodeLong(KEY_REMOTE_VERSION_FETCHED_AT_MS, 0L)
 
   /** Persists [versionRaw] together with the current time as its fetch timestamp. */
-  fun storeRemoteVersion(versionRaw: String, fetchedAtMs: Long) {
+  fun storeRemoteVersion(
+    versionRaw: String,
+    fetchedAtMs: Long,
+  ) {
     settingsStorage.encode(KEY_REMOTE_VERSION, versionRaw)
     settingsStorage.encode(KEY_REMOTE_VERSION_FETCHED_AT_MS, fetchedAtMs)
   }
