@@ -57,12 +57,6 @@ fun SettingsFlow.settings(
         null
       }
 
-      ScreenCommand.ToggleNewDesign -> {
-        val current = s.useNewDesign ?: false
-        repository.toggleUseNewDesign(!current)
-        null
-      }
-
       ScreenCommand.ToggleCustomSource -> {
         go(source())
         null

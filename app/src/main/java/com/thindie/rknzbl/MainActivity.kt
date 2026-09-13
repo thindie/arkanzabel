@@ -9,8 +9,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.thindie.rknzbl.appfeatures.home.AppContent
@@ -43,33 +41,30 @@ class MainActivity : ComponentActivity() {
     awaitFinish()
 
     setContent {
-      val useNewDesign by app.applicationScope.useNewDesignFeature().collectAsState(false)
-      if (useNewDesign) {
-        val homeFlow = HomeFlow(router).apply { app.applicationScope.inject(this) }
-        val profilesFlow = ProfilesFlow(router).apply { app.applicationScope.inject(this) }
-        val settingsFlow =
-          SettingsFlow(router).apply {
-            app.applicationScope.inject(this)
-            onFinishBuilder { router.pop() }
-          }
-        val logsFlow = LogsFlow(router, app)
+      val homeFlow = HomeFlow(router).apply { app.applicationScope.inject(this) }
+      val profilesFlow = ProfilesFlow(router).apply { app.applicationScope.inject(this) }
+      val settingsFlow =
+        SettingsFlow(router).apply {
+          app.applicationScope.inject(this)
+          onFinishBuilder { router.pop() }
+        }
+      val logsFlow = LogsFlow(router, app)
 
-        IntroFlow(
-          router,
-          hasPushPermission = hasPermission,
-          appContext = app,
-        )
-          .onFinishBuilder { homeFlow.start() }
-          .start()
+      IntroFlow(
+        router,
+        hasPushPermission = hasPermission,
+        appContext = app,
+      )
+        .onFinishBuilder { homeFlow.start() }
+        .start()
 
-        AppContent(
-          router,
-          onHomeClick = { homeFlow.switch() },
-          onProfilesClick = { profilesFlow.switch() },
-          onSettingsClick = { settingsFlow.switch() },
-          onLogsClick = { logsFlow.switch() },
-        )
-      }
+      AppContent(
+        router,
+        onHomeClick = { homeFlow.switch() },
+        onProfilesClick = { profilesFlow.switch() },
+        onSettingsClick = { settingsFlow.switch() },
+        onLogsClick = { logsFlow.switch() },
+      )
     }
   }
 

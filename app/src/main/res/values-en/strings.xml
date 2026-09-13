@@ -97,8 +97,6 @@
     <string name="settings_section_general">General</string>
     <string name="home_select_autosave_title">Auto-save profile</string>
     <string name="home_select_autosave_subtitle">Remember last used server</string>
-    <string name="settings_use_new_design_title">New design</string>
-    <string name="settings_use_new_design_subtitle">Use new tabbed home screen instead of classic hub</string>
     <string name="settings_start_with_favorite_profiles_title">Start with favorites</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Open saved profiles on app launch</string>
     <string name="settings_local_storage_title">Local storage</string>

@@ -34,7 +34,6 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Root dependency graph.
@@ -133,10 +132,6 @@ class ApplicationScope private constructor(application: Application) {
       perAppProxyRepository = perAppProxyRepository,
       updateLocale = updateLocaleFn,
     )
-
-  fun useNewDesignFeature(): Flow<Boolean> {
-    return (settingsRepository as SettingsRepositoryImpl).useNewDesign
-  }
 
   fun inject(homeFlow: HomeFlow) {
     homeFlow.flowModule = homeFlowModule

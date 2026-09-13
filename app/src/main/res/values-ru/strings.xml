@@ -97,8 +97,6 @@
     <string name="settings_section_general">Общие</string>
     <string name="home_select_autosave_title">Автосохранение профиля</string>
     <string name="home_select_autosave_subtitle">Запоминать последний использованный сервер</string>
-    <string name="settings_use_new_design_title">Новый дизайн</string>
-    <string name="settings_use_new_design_subtitle">Использовать новый главный экран с вкладками вместо классического хаба</string>
     <string name="settings_start_with_favorite_profiles_title">Запускать с избранными</string>
     <string name="settings_start_with_favorite_profiles_subtitle">Открывать сохранённые профили при запуске приложения</string>
     <string name="settings_local_storage_title">Локальное хранение</string>

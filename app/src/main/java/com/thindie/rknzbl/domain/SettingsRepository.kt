@@ -19,10 +19,6 @@ interface SettingsRepository {
 
   suspend fun toggleLocalSave(enabled: Boolean)
 
-  val useNewDesign: Flow<Boolean>
-
-  suspend fun toggleUseNewDesign(enabled: Boolean)
-
   val speedEnabled: Flow<Boolean?>
 
   suspend fun toggleSpeed(enabled: Boolean)

@@ -35,11 +35,6 @@ internal fun settingsStateSink(
       state.copy(speedEnabled = enabled)
     }
 
-  screenScope.sub(repository.useNewDesign)
-    .transition { state, enabled ->
-      state.copy(useNewDesign = enabled)
-    }
-
   screenScope.sub(repository.customSourceUrl)
     .transition { state, url ->
       val trimmed = url?.trim()

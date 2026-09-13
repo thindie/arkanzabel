@@ -14,7 +14,6 @@ internal data class ScreenState(
   val language: String? = null,
   val legacyRestart: Boolean = false,
   val speedEnabled: Boolean? = null,
-  val useNewDesign: Boolean? = null,
   // Presence of a non-blank URL means the custom source is active
   val customSourceUrl: String? = null,
   // WebDAV storage config; null means the endpoint is not configured
