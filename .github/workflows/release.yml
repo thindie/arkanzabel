@@ -22,13 +22,21 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platform-tools
-            platforms;android-36
-            build-tools;36.0.0
+      - name: Download Android Command Line Tools
+        run: |
+          mkdir -p "$ANDROID_HOME/cmdline-tools"
+          curl -fL --retry 3 \
+            -o cmdline-tools.zip \
+            "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          unzip -q cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+          mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+
+      - name: Install Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-36" \
+            "build-tools;36.0.0"
 
       - name: Decode signing keystore
         env:
@@ -42,7 +50,7 @@ jobs:
       # v2ray-engine/libs/, so a clean checkout has no kernel unless CI downloads it.
       # Pin both version and hash for reproducible builds. If the hash ever needs
       # updating after a kernel bump, recompute with:
-      #   curl -fL "https://github.com/2dust/AndroidLibV2rayLite/releases/download/<ver>/libv2ray.aar" | sha256sum
+      #   curl -fL "https://github.com/2dust/AndroidLibXrayLite/releases/download/<ver>/libv2ray.aar" | sha256sum
       - name: Download pinned libv2ray kernel
         env:
           KERNEL_VERSION: 'v26.9.9'
@@ -52,7 +60,7 @@ jobs:
           mkdir -p v2ray-engine/libs
           curl -fL --retry 3 --max-time 300 \
             -o v2ray-engine/libs/libv2ray.aar \
-            "https://github.com/2dust/AndroidLibV2rayLite/releases/download/${KERNEL_VERSION}/libv2ray.aar"
+            "https://github.com/2dust/AndroidLibXrayLite/releases/download/${KERNEL_VERSION}/libv2ray.aar"
           echo "${EXPECTED_SHA256}  v2ray-engine/libs/libv2ray.aar" | sha256sum -c -
 
       - name: Build release APK
