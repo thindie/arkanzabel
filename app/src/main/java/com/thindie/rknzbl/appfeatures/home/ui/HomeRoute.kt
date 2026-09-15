@@ -42,9 +42,9 @@ internal fun HomeRoute(
               // Fast path: a measured best profile is already known, reconnect without re-measuring.
               globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(best) }
             } else if (s.hasProfiles) {
-              // Slow path: measure cached profiles and connect to the fastest reachable one.
+              // Slow path: three-stage measurement, connect to the best profile.
               globalJobManager.launchGlobal(CONNECT_KEY) {
-                val measured = repository.measureInMemory() ?: return@launchGlobal
+                val measured = repository.measureStaged() ?: return@launchGlobal
                 repository.connect(measured)
               }
             }

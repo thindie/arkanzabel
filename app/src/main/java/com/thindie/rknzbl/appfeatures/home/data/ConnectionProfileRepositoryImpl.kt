@@ -109,6 +109,18 @@ class ConnectionProfileRepositoryImpl(
   // completes once the user returns to Home.
   private val connectRequested = AtomicBoolean(false)
 
+  init {
+    // Restore active profile from storage if VPN service is already running.
+    // This handles the case where the activity was killed but the process survived
+    // due to the background VPN service, so reopening the app shows the correct state.
+    if (vpnGateway.isRunning()) {
+      val restored = activeProfileInternal()
+      if (restored != null) {
+        activeProfileCache.set(restored)
+      }
+    }
+  }
+
   override fun requestConnect() {
     connectRequested.set(true)
   }
@@ -120,6 +132,13 @@ class ConnectionProfileRepositoryImpl(
     val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
     if (profiles.isEmpty()) return null
     return pingManager.measure(profiles)
+  }
+
+  override suspend fun measureStaged(): ConnectionProfile? {
+    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
+    val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
+    if (profiles.isEmpty()) return null
+    return pingManager.measureStaged(profiles)
   }
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
@@ -230,6 +249,7 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override fun invalidateCaches() {
+    pingManager.invalidateMeasurementCache()
     invalidateCacheInternal()
   }
 

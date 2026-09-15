@@ -61,6 +61,9 @@ interface ConnectionProfileRepository {
   /** Measures all cached in-memory profiles and returns the fastest reachable one. */
   suspend fun measureInMemory(): ConnectionProfile?
 
+  /** Three-stage measurement: reachability -> latency -> bandwidth. Returns best profile. */
+  suspend fun measureStaged(): ConnectionProfile?
+
   val received: Flow<List<ConnectionProfile>?>
   val stored: Flow<List<ConnectionProfile>?>
 
