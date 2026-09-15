@@ -83,9 +83,9 @@ jobs:
           echo "Using apksigner: $APKSIGNER"
           "$APKSIGNER" sign \
             --ks app/release.keystore \
-            --ksPassword "$ANDROID_KEYSTORE_PASS" \
-            --ksKeyAlias "$ANDROID_KEY_ALIAS" \
-            --ksKeyPassword "$ANDROID_KEY_PASS" \
+            --ks-pass pass:"$ANDROID_KEYSTORE_PASS" \
+            --key-alias "$ANDROID_KEY_ALIAS" \
+            --key-pass pass:"$ANDROID_KEY_PASS" \
             --min-sdk-version 24 \
             --out app/build/outputs/apk/release/app-release.apk \
             app/build/outputs/apk/release/app-release-unsigned.apk
