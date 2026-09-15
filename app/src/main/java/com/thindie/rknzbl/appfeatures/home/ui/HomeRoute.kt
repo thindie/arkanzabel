@@ -35,41 +35,43 @@ internal fun HomeRoute(
     when (c) {
       ScreenCommand.ToggleConnect -> {
         when (s.screenVpnState) {
-          // Error counts as disconnected: a tap retries the connect.
           ScreenVpnState.NotStarted, ScreenVpnState.Error -> {
             val best = s.lastBestProfile
             if (best != null) {
-              // Fast path: a measured best profile is already known, reconnect without re-measuring.
               globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(best) }
             } else if (s.hasProfiles) {
-              // Slow path: three-stage measurement, connect to the best profile.
               globalJobManager.launchGlobal(CONNECT_KEY) {
+                val measured = repository.measureStaged() ?: return@launchGlobal
+                repository.connect(measured)
+              }
+            } else {
+              globalJobManager.launchGlobal(FETCH_KEY_HOME) {
+                repository.fetch(true)
                 val measured = repository.measureStaged() ?: return@launchGlobal
                 repository.connect(measured)
               }
             }
           }
           ScreenVpnState.TurningOff, ScreenVpnState.TurningOn -> null // busy: ignore taps
-          ScreenVpnState.Running -> globalJobManager.launchGlobal(DISCONNECT_KEY) { repository.disconnect() }
+          ScreenVpnState.Running ->
+            globalJobManager.launchGlobal(DISCONNECT_KEY) {
+              repository.disconnect()
+            }
         }
         null
       }
 
       ScreenCommand.RefreshProfiles -> {
-        globalJobManager.launchGlobal(FETCH_KEY_HOME) { repository.fetch(true) }
+        repository.fetch(true)
         null
       }
     }
   },
   section = HomeSection.Home,
   stateSink = { screenScope ->
-    // The block must mutate state for the action to fire: transition() skips actions when the
-    // resulting state is unchanged (e.g. a replayed best profile after route recreation).
     screenScope.sub(repository.lastMeasured).transition(
       block = { state, profile -> if (profile != null) state.copy(lastBestProfile = profile) else state },
       action = { _, _, profile ->
-        // Auto-connect only with a pending connect intent; otherwise this is a stale replay
-        // after an explicit disconnect.
         if (profile == null || !repository.takeConnectIntent()) return@transition
         globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(profile) }
       },

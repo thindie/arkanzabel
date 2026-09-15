@@ -3,6 +3,7 @@ package com.thindie.rknzbl.appfeatures.home.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -58,8 +59,8 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
       // Animated nebula background, visible only when connected
       AnimatedVisibility(
         visible = state.connectedProfile != null,
-        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(800)),
-        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(600)),
+        enter = fadeIn(animationSpec = tween(800)),
+        exit = fadeOut(animationSpec = tween(600)),
       ) {
         NebulaBackground(modifier = Modifier.fillMaxSize())
       }
