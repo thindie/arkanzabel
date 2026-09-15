@@ -131,7 +131,7 @@ internal fun ConnectButton(
           text =
             when {
               isConnected -> stringResource(R.string.home_btn_disconnect)
-              hasError -> state.vpnError ?: stringResource(R.string.home_vpn_connection_error)
+              hasError -> stringResource(R.string.home_vpn_connection_error)
               showEmpty -> stringResource(R.string.home_no_profiles_cache)
               else -> stringResource(R.string.home_btn_connect)
             },
