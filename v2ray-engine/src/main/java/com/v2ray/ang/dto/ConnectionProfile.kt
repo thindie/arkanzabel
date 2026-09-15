@@ -138,7 +138,7 @@ data class ConnectionProfile(
     result = 31 * result + (method?.hashCode() ?: 0)
     result = 31 * result + (flow?.hashCode() ?: 0)
     result = 31 * result + (username?.hashCode() ?: 0)
-    result = 31 * result + network.hashCode()
+    result = 31 * result + (network?.hashCode() ?: 0)
     result = 31 * result + (headerType?.hashCode() ?: 0)
     result = 31 * result + (host?.hashCode() ?: 0)
     result = 31 * result + (path?.hashCode() ?: 0)

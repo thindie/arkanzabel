@@ -129,9 +129,14 @@ private fun profileSubtitle(
       ping < 0 -> stringResource(R.string.home_profile_unreachable)
       else -> stringResource(R.string.home_profile_ping_ms, ping)
     }
-  return transportLabel(item.network).let { label ->
-    if (label.isEmpty()) base else "$base · $label"
-  }
+  val network =
+    if (item.network != null) {
+      val label = transportLabel(item.network)
+      if (label.isEmpty()) base else "$base · $label"
+    } else {
+      ""
+    }
+  return network
 }
 
 private fun transportLabel(network: NetworkType): String {
