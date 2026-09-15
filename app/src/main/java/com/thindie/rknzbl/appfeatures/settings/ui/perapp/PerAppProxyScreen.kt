@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,7 +61,11 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand
               .background(AppTheme.colors.backgroundPrimary),
         ) {
           Column {
-            HelpSectionHeading(stringResource(R.string.per_app_proxy_title))
+            Text(
+              text = stringResource(R.string.per_app_proxy_title),
+              style = AppTheme.typography.headlineLarge,
+              color = AppTheme.colors.contentPrimary,
+            )
             HelpSecondaryText(stringResource(R.string.per_app_proxy_mode_section))
           }
         }
@@ -165,7 +170,11 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand
                 .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
-              HelpSectionHeading(stringResource(R.string.per_app_proxy_open_search_title))
+              Text(
+                text = stringResource(R.string.per_app_proxy_open_search_title),
+                style = AppTheme.typography.headlineLarge,
+                color = AppTheme.colors.contentPrimary,
+              )
               HelpSecondaryText(stringResource(R.string.per_app_proxy_open_search_subtitle))
             }
           }
