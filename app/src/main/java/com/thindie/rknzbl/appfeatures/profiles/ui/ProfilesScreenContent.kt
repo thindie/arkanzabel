@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,82 +38,88 @@ import com.v2ray.ang.enums.NetworkType
 fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val st by scope.state.collectAsState()
   AppScreen(scope) {
-    Column(modifier = Modifier.fillMaxHeight().padding(16.dp)) {
-      Column(modifier = Modifier.weight(1f)) {
-        Text(
-          text = stringResource(R.string.profiles_title),
-          style = AppTheme.typography.headlineLarge,
-          color = AppTheme.colors.contentPrimary,
-        )
-        VSpacer(24.dp)
-        TabRow(
-          items =
-            listOf(
-              TabItem(stringResource(R.string.profiles_tab_main)),
-              TabItem(stringResource(R.string.profiles_tab_saved)),
-            ),
-          selected = st.selectedTab,
-          onTabSelected = { scope.send(ScreenCommand.SelectTab(it)) },
-        ) {
-          val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
+    PullToRefreshBox(
+      modifier = Modifier.fillMaxSize(),
+      isRefreshing = st.profilesLoading,
+      onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
+    ) {
+      Column(modifier = Modifier.fillMaxHeight().padding(16.dp)) {
+        Column(modifier = Modifier.weight(1f)) {
+          Text(
+            text = stringResource(R.string.profiles_title),
+            style = AppTheme.typography.headlineLarge,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(24.dp)
+          TabRow(
+            items =
+              listOf(
+                TabItem(stringResource(R.string.profiles_tab_main)),
+                TabItem(stringResource(R.string.profiles_tab_saved)),
+              ),
+            selected = st.selectedTab,
+            onTabSelected = { scope.send(ScreenCommand.SelectTab(it)) },
+          ) {
+            val profilesToShow = if (it == 0) st.profiles else st.savedProfiles
 
-          val loading = it == 0 && st.profilesLoading
+            val loading = it == 0 && st.profilesLoading
 
-          if (loading) {
-            Box(
-              modifier = Modifier.fillMaxSize(),
-              contentAlignment = Alignment.Center,
-            ) {
-              CircularProgress()
-            }
-          } else if (profilesToShow.isEmpty()) {
-            EmptyProfilesContent(
-              icon = if (it == 1) R.drawable.ic_folder_24 else R.drawable.ic_globus_24,
-              title =
-                if (it == 1) {
-                  stringResource(R.string.profiles_saved_empty)
-                } else {
-                  stringResource(R.string.profiles_empty)
-                },
-              subtitle =
-                if (it == 1) {
-                  null
-                } else {
-                  stringResource(R.string.home_select_new_profiles_subtitle)
-                },
-            )
-          } else {
-            VSpacer(16.dp)
-            LazyColumn(modifier = Modifier.fillMaxHeight()) {
-              items(profilesToShow) { profile ->
-                val borderState =
-                  when {
-                    st.connectedProfile == profile -> ProfileBorderState.Connected
-                    else -> ProfileBorderState.Inactive
-                  }
+            if (loading) {
+              Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+              ) {
+                CircularProgress()
+              }
+            } else if (profilesToShow.isEmpty()) {
+              EmptyProfilesContent(
+                icon = if (it == 1) R.drawable.ic_folder_24 else R.drawable.ic_globus_24,
+                title =
+                  if (it == 1) {
+                    stringResource(R.string.profiles_saved_empty)
+                  } else {
+                    stringResource(R.string.profiles_empty)
+                  },
+                subtitle =
+                  if (it == 1) {
+                    null
+                  } else {
+                    stringResource(R.string.home_select_new_profiles_subtitle)
+                  },
+              )
+            } else {
+              VSpacer(16.dp)
+              LazyColumn(modifier = Modifier.fillMaxHeight()) {
+                items(profilesToShow) { profile ->
+                  val borderState =
+                    when {
+                      st.connectedProfile == profile -> ProfileBorderState.Connected
+                      else -> ProfileBorderState.Inactive
+                    }
 
-                SentenceRow(
-                  modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
-                  painter = painterResource(R.drawable.ic_internet_24),
-                  title = profile.remarks,
-                  subtitle = profileSubtitle(profile, st.pingResults[profile.subscriptionId]),
-                  loading = false,
-                  onClick = { scope.send(ScreenCommand.ConnectProfile(profile)) },
-                )
+                  SentenceRow(
+                    modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
+                    painter = painterResource(R.drawable.ic_internet_24),
+                    title = profile.remarks,
+                    subtitle = profileSubtitle(profile, st.pingResults[profile.subscriptionId]),
+                    loading = false,
+                    onClick = { scope.send(ScreenCommand.ConnectProfile(profile)) },
+                  )
 
-                VSpacer(8.dp)
+                  VSpacer(8.dp)
+                }
               }
             }
           }
         }
-      }
 
-      if (st.selectedTab == 1 && st.savedProfiles.isNotEmpty()) {
-        VSpacer(24.dp)
-        Button(
-          text = stringResource(R.string.profiles_open_delete),
-          onClick = { scope.send(ScreenCommand.OpenDeleteSavedProfiles) },
-        )
+        if (st.selectedTab == 1 && st.savedProfiles.isNotEmpty()) {
+          VSpacer(24.dp)
+          Button(
+            text = stringResource(R.string.profiles_open_delete),
+            onClick = { scope.send(ScreenCommand.OpenDeleteSavedProfiles) },
+          )
+        }
       }
     }
   }

@@ -37,6 +37,11 @@ internal suspend fun ProfilesFlow.exec(
       null
     }
 
+    ScreenCommand.RefreshProfiles -> {
+      globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(true) }
+      null
+    }
+
     is ScreenCommand.SelectTab -> {
       val next = s.copy(selectedTab = c.index)
       if (c.index == 1) {
