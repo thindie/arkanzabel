@@ -127,6 +127,9 @@ class ProfileHttpGatewayImpl(
         }
         val result = response.body<String>().trim()
         Log.d({ "WebDAV GET: status=${response.status}, body length=${result.length}" }, LOG_TAG)
+        if (result.isNotEmpty()) {
+          Log.d({ "WebDAV GET body: ${result.take(500)}" }, LOG_TAG)
+        }
         result
       } catch (e: CancellationException) {
         throw e
@@ -144,6 +147,9 @@ class ProfileHttpGatewayImpl(
 
         val result = response.body<String>().trim()
         Log.d({ "Remote GET: status=${response.status}, body length=${result.length}" }, LOG_TAG)
+        if (result.isNotEmpty()) {
+          Log.d({ "Remote GET body: ${result.take(500)}" }, LOG_TAG)
+        }
         result
       } catch (e: CancellationException) {
         throw e

@@ -141,7 +141,9 @@ class ConnectionProfileRepositoryImpl(
       } else {
         httpGateway.readWebDav()
       }
+    Log.d({ "Read stored: body length=${body.length}" }, LOG_TAG)
     val profiles = parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR)
+    Log.d({ "Read stored: parsed ${profiles.size} profiles" }, LOG_TAG)
     setStorageCacheInternal(profiles)
     return profiles
   }
