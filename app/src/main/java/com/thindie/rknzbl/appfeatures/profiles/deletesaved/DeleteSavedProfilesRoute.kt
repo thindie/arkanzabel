@@ -5,7 +5,7 @@ import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 
 internal fun ProfilesFlow.deleteSavedProfiles() =
   RouteFactory.create(
-    initialState = DeleteSavedProfilesState(),
+    initialState = DeleteSavedProfilesState(isLocalSave = flowModule.connectionProfileRepository.isLocalStorage()),
     execute = { c, s ->
       exec(
         c = c,

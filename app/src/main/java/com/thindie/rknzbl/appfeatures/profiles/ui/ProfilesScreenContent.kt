@@ -1,5 +1,6 @@
 package com.thindie.rknzbl.appfeatures.profiles.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -40,7 +41,7 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   AppScreen(scope) {
     PullToRefreshBox(
       modifier = Modifier.fillMaxSize(),
-      isRefreshing = st.profilesLoading,
+      isRefreshing = scope.processing.value is ScreenCommand.RefreshProfiles,
       onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
     ) {
       Column(modifier = Modifier.fillMaxHeight().padding(16.dp)) {
@@ -50,6 +51,21 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
             style = AppTheme.typography.headlineLarge,
             color = AppTheme.colors.contentPrimary,
           )
+          AnimatedVisibility(
+            visible = st.selectedTab == 1,
+          ) {
+            VSpacer(8.dp)
+            Text(
+              text =
+                if (st.isLocalSave) {
+                  stringResource(R.string.source_stored_local)
+                } else {
+                  stringResource(R.string.source_stored_remote)
+                },
+              style = AppTheme.typography.bodySmall,
+              color = AppTheme.colors.contentSecondary,
+            )
+          }
           VSpacer(24.dp)
           TabRow(
             items =

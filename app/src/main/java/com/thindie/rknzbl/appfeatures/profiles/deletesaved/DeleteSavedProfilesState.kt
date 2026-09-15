@@ -9,4 +9,5 @@ data class DeleteSavedProfilesState(
   val savedProfiles: List<ConnectionProfile> = emptyList(),
   val selectedProfiles: Set<ConnectionProfile> = emptySet(),
   val connectedProfile: ConnectionProfile? = null,
+  val isLocalSave: Boolean = true,
 ) : ViewState

@@ -323,6 +323,8 @@ class ConnectionProfileRepositoryImpl(
     invalidateInternal(url)
   }
 
+  override fun isLocalStorage(): Boolean = storage.isLocalSaveEnabled()
+
   override suspend fun fetchFromSource(url: String): List<ConnectionProfile> {
     val cached = cacheValueSyncInternal(url)
     if (cached != null) {

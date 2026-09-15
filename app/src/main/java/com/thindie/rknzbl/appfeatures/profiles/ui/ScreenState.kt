@@ -13,4 +13,5 @@ data class ScreenState(
   val connectedProfile: ConnectionProfile? = null,
   val profilesLoading: Boolean = false,
   val serviceConnection: Boolean = false,
+  val isLocalSave: Boolean = true,
 ) : ViewState

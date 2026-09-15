@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 @Suppress("MagicNumber")
 internal fun ProfilesFlow.profiles() =
   RouteFactory.create(
-    initialState = ScreenState(),
+    initialState = ScreenState(isLocalSave = flowModule.connectionProfileRepository.isLocalStorage()),
     execute = ::exec,
     stateSink = ::stateSink,
     routeContent = ::ProfilesScreenContent,

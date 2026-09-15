@@ -67,4 +67,7 @@ interface ConnectionProfileRepository {
   val lastMeasured: Flow<ConnectionProfile?>
 
   val connected: Flow<ConnectionProfile?>
+
+  /** Returns true if saved profiles are stored locally, false for WebDAV. */
+  fun isLocalStorage(): Boolean
 }
