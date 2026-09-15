@@ -1,7 +1,10 @@
 package com.thindie.rknzbl.appfeatures.home.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +49,15 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
         .fillMaxSize(),
     contentAlignment = Alignment.Center,
   ) {
+    // Animated nebula background, visible only when connected
+    AnimatedVisibility(
+      visible = state.connectedProfile != null,
+      enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(800)),
+      exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(600)),
+    ) {
+      NebulaBackground(modifier = Modifier.fillMaxSize())
+    }
+
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.spacedBy(16.dp),

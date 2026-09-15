@@ -58,10 +58,8 @@ interface ConnectionProfileRepository {
   /** Atomically reads and clears the pending connect intent. */
   fun takeConnectIntent(): Boolean
 
-  /** Measures all cached in-memory profiles and returns the fastest reachable one. */
   suspend fun measureInMemory(): ConnectionProfile?
 
-  /** Three-stage measurement: reachability -> latency -> bandwidth. Returns best profile. */
   suspend fun measureStaged(): ConnectionProfile?
 
   val received: Flow<List<ConnectionProfile>?>
@@ -71,6 +69,5 @@ interface ConnectionProfileRepository {
 
   val connected: Flow<ConnectionProfile?>
 
-  /** Returns true if saved profiles are stored locally, false for WebDAV. */
   fun isLocalStorage(): Boolean
 }

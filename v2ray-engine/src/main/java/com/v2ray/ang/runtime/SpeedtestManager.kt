@@ -172,7 +172,6 @@ object SpeedtestManager {
    * data and timing it. Returns bytes per second, or -1 on failure.
    */
   suspend fun measureBandwidth(
-    context: Context,
     port: Int,
     testUrl: String = SettingsManager.getDelayTestUrl(),
   ): Long {

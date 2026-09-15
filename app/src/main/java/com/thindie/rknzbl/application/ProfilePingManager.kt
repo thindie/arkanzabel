@@ -322,7 +322,7 @@ class ProfilePingManager(
             var bw: Long? = null
             if (port != null) {
               try {
-                bw = SpeedtestManager.measureBandwidth(context, port)
+                bw = SpeedtestManager.measureBandwidth(port)
               } catch (e: Exception) {
                 Log.w({ "Bandwidth test failed for ${m.profile.remarks}" }, AppConfig.TAG, e)
               }
