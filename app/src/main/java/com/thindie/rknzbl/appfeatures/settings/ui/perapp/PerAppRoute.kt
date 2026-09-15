@@ -16,32 +16,29 @@ fun SettingsFlow.perAppMain() =
         allApps = emptyList(),
         selectedPackages = emptySet(),
       ),
-    execute = { c: PerAppProxyCommand, s: PerAppViewState ->
+    execute = { c: PerAppCommand, s: PerAppViewState ->
       when (c) {
-        PerAppProxyCommand.Back -> {
+        PerAppCommand.Back -> {
           back()
           null
         }
 
-        PerAppProxyCommand.LoadApps ->
-          s.copy(allApps = flowModule.perAppProxyRepository.loadInstalledApps())
-
-        PerAppProxyCommand.SetModeAll -> {
+        PerAppCommand.SetModeAll -> {
           flowModule.perAppProxyRepository.setMode(selectedOnly = false)
           null
         }
 
-        PerAppProxyCommand.SetModeSelected -> {
+        PerAppCommand.SetModeSelected -> {
           flowModule.perAppProxyRepository.setMode(selectedOnly = true)
           null
         }
 
-        PerAppProxyCommand.OpenSearch -> {
+        PerAppCommand.OpenSearch -> {
           go(perAppSearch())
           null
         }
 
-        is PerAppProxyCommand.RemovePackage -> {
+        is PerAppCommand.RemovePackage -> {
           val next = s.selectedPackages - c.packageName
           flowModule.perAppProxyRepository.setPackages(next)
           null
@@ -50,15 +47,11 @@ fun SettingsFlow.perAppMain() =
     },
     stateSink = { screenScope -> perAppMainStateSink(screenScope, flowModule.perAppProxyRepository) },
     id = "SettingsFlow-perapp-main",
-    initialCommand =
-      RouteFactory.InitialCommand {
-        PerAppProxyCommand.LoadApps as PerAppProxyCommand
-      },
     routeContent = ::PerAppProxyScreen,
   )
 
 private fun perAppMainStateSink(
-  screenScope: ScreenScope<PerAppViewState, PerAppProxyCommand>,
+  screenScope: ScreenScope<PerAppViewState, PerAppCommand>,
   repository: PerAppProxyRepository,
 ) {
   screenScope.sub(repository.selectedOnly)

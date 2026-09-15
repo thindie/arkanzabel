@@ -11,17 +11,15 @@ internal sealed interface ScreenCommand : Command {
 
   data object ToggleMux : ScreenCommand
 
-  data object ToggleStorageMode : ScreenCommand
+  data object ToggleLocalStorage : ScreenCommand
 
   data object ToggleSpeed : ScreenCommand
 
-  data object ToggleNewDesign : ScreenCommand
-
   data object ToggleCustomSource : ScreenCommand
+
+  data object OpenWebdav : ScreenCommand
 
   data object OpenPerAppProxy : ScreenCommand
 
-  data object OpenFaq : ScreenCommand
-
-  data object OpenLicenses : ScreenCommand
+  data object OpenHelp : ScreenCommand
 }

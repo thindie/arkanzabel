@@ -5,6 +5,11 @@ import android.os.Build
 import android.os.LocaleList
 import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.appfeatures.home.HomeFlow
+import com.thindie.rknzbl.appfeatures.home.data.ConnectionProfileRepositoryImpl
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGatewayImpl
+import com.thindie.rknzbl.appfeatures.home.data.V2RayVpnServiceGateway
+import com.thindie.rknzbl.appfeatures.home.data.VpnServiceGateway
 import com.thindie.rknzbl.appfeatures.home.di.HomeFlowModule
 import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.profiles.di.ProfilesFlowModule
@@ -13,7 +18,6 @@ import com.thindie.rknzbl.appfeatures.settings.data.PerAppProxyRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.ProfilePingManager
@@ -21,22 +25,14 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.appversion.AppVersion
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.appversion.AppVersionResolverImpl
-import com.thindie.rknzbl.appversion.REMOTE_VERSION_URL
-import com.thindie.rknzbl.feature.home.data.ConnectionProfileRepositoryImpl
-import com.thindie.rknzbl.feature.home.data.ProfileHttpGateway
-import com.thindie.rknzbl.feature.home.data.ProfileHttpGatewayImpl
-import com.thindie.rknzbl.feature.home.data.V2RayVpnServiceGateway
-import com.thindie.rknzbl.feature.home.data.VpnServiceGateway
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
-import com.thindie.rknzbl.feature.settings.data.SettingsRepositoryImpl as LegacySettingsRepositoryImpl
-import com.thindie.rknzbl.feature.settings.domain.SettingsRepository as LegacySettingsRepository
 
 /**
  * Root dependency graph.
@@ -45,9 +41,6 @@ import com.thindie.rknzbl.feature.settings.domain.SettingsRepository as LegacySe
  * [SettingsFlowModule]) are created once here and injected into flows via [inject].
  * Flows only need the Router; repositories come from this scope.
  *
- * Two settings repositories coexist during migration: [LegacySettingsRepository] for legacy
- * `feature/` screens and [SettingsRepositoryImpl] for new-design `appfeatures/` flows —
- * both read/write the same storage.
  */
 class ApplicationScope private constructor(application: Application) {
   val coroutineScope =
@@ -65,17 +58,32 @@ class ApplicationScope private constructor(application: Application) {
 
   private val profileHttpGateway: ProfileHttpGateway =
     ProfileHttpGatewayImpl(
-      webDavUrl = webDavConfig?.baseUrl.orEmpty(),
-      userName = webDavConfig?.username.orEmpty(),
-      password = webDavConfig?.password.orEmpty(),
+      webDavUrlDefault = WEBDAV_DEFAULT_BASE_URL,
+      userNameDefault = WEBDAV_DEFAULT_USERNAME.orEmpty(),
+      passwordDefault = WEBDAV_DEFAULT_PASSWORD.orEmpty(),
     )
+      .also {
+        if (webDavConfig != null) {
+          it.updateWebDav(
+            webDavConfig.baseUrl,
+            webDavConfig.username.orEmpty(),
+            webDavConfig.password.orEmpty(),
+          )
+        } else {
+          it.updateWebDav(
+            WEBDAV_DEFAULT_BASE_URL,
+            WEBDAV_DEFAULT_USERNAME.orEmpty(),
+            WEBDAV_DEFAULT_PASSWORD.orEmpty(),
+          )
+        }
+      }
 
-  // Resolves the remote version once at app start and exposes it so screens can offer an update.
   private val appVersionResolver: AppVersionResolver =
     AppVersionResolverImpl(
       gateway = profileHttpGateway,
-      versionUrl = REMOTE_VERSION_URL,
+      versionUrl = BuildConfig.WEBDAV_VERSION_TXT_URL,
       localVersion = AppVersion.parse(BuildConfig.VERSION_NAME) ?: AppVersion(0),
+      storage = KeyValueStorage,
     ).also { it.start(coroutineScope) }
 
   val connectionProfileRepository: ConnectionProfileRepository =
@@ -86,10 +94,11 @@ class ApplicationScope private constructor(application: Application) {
       vpnGateway = vpnStateTracker,
     )
 
-  val settingsRepository: SettingsRepository = SettingsRepositoryImpl(storage = KeyValueStorage)
-
-  private val legacySettingsRepositoryImpl = LegacySettingsRepositoryImpl(storage = KeyValueStorage)
-  val settingsRepositoryLegacy: LegacySettingsRepository get() = legacySettingsRepositoryImpl
+  val settingsRepository: SettingsRepository =
+    SettingsRepositoryImpl(
+      storage = KeyValueStorage,
+      profileHttpGateway = profileHttpGateway,
+    )
 
   private val updateLocaleFn: (String) -> Unit = { code ->
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -123,10 +132,6 @@ class ApplicationScope private constructor(application: Application) {
       updateLocale = updateLocaleFn,
     )
 
-  fun useNewDesignFeature(): Flow<Boolean> {
-    return (settingsRepository as SettingsRepositoryImpl).useNewDesign
-  }
-
   fun inject(homeFlow: HomeFlow) {
     homeFlow.flowModule = homeFlowModule
   }
@@ -140,6 +145,10 @@ class ApplicationScope private constructor(application: Application) {
   }
 
   companion object {
+    private val WEBDAV_DEFAULT_BASE_URL: String = BuildConfig.WEBDAV_DEFAULT_BASE_URL
+    private val WEBDAV_DEFAULT_USERNAME: String? = BuildConfig.WEBDAV_DEFAULT_USERNAME.takeIf { it.isNotBlank() }
+    private val WEBDAV_DEFAULT_PASSWORD: String? = BuildConfig.WEBDAV_DEFAULT_PASSWORD.takeIf { it.isNotBlank() }
+
     fun configure(application: Application): ApplicationScope {
       LogSinkProvider.init()
       return ApplicationScope(application)

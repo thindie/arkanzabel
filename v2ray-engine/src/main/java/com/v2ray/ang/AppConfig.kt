@@ -88,8 +88,7 @@ object AppConfig {
   /** "start with favourite profiles" flag in settings MMKV — its own key so it is independent of local-save mode. */
   const val PREF_START_WITH_FAVOURITES = "pref_start_with_favourites"
 
-  /** Feature toggle: bottom-navigation home design (vs legacy HomeSelect hub). Default off. */
-  const val PREF_USE_NEW_DESIGN = "pref_use_new_design"
+  const val PREF_WEBDAV_USE_DEFAULTS = "pref_webdav_use_defaults"
   const val PREF_UI_MODE_NIGHT = "pref_ui_mode_night"
   const val PREF_PREFER_IPV6 = "pref_prefer_ipv6"
   const val PREF_PROXY_SHARING = "pref_proxy_sharing_enabled"

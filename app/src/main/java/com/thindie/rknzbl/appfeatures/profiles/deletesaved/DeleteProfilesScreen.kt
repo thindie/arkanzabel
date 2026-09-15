@@ -43,7 +43,18 @@ internal fun DeleteProfilesScreen(scope: ScreenScope<DeleteSavedProfilesState, D
         style = AppTheme.typography.headlineLarge,
         color = AppTheme.colors.contentPrimary,
       )
-      VSpacer(24.dp)
+      VSpacer(8.dp)
+      Text(
+        text =
+          if (st.isLocalSave) {
+            stringResource(R.string.source_stored_local)
+          } else {
+            stringResource(R.string.source_stored_remote)
+          },
+        style = AppTheme.typography.bodySmall,
+        color = AppTheme.colors.contentSecondary,
+      )
+      VSpacer(16.dp)
       if (st.savedProfiles.isEmpty()) {
         Text(
           text = stringResource(R.string.profiles_saved_empty),

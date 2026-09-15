@@ -1,7 +1,11 @@
 package com.thindie.rknzbl.appfeatures.home.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -38,37 +43,52 @@ import com.v2ray.ang.enums.Protocol
 internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val state = scope.state.collectAsState().value
 
-  Box(
-    modifier =
-      Modifier
-        .background(AppTheme.colors.backgroundPrimary)
-        .systemBarsPadding()
-        .fillMaxSize(),
-    contentAlignment = Alignment.Center,
+  PullToRefreshBox(
+    modifier = Modifier.fillMaxSize(),
+    isRefreshing = scope.processing.value is ScreenCommand.RefreshProfiles,
+    onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
   ) {
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(16.dp),
+    Box(
+      modifier =
+        Modifier
+          .background(AppTheme.colors.backgroundPrimary)
+          .systemBarsPadding()
+          .fillMaxSize(),
+      contentAlignment = Alignment.Center,
     ) {
-      if (state.connectedProfile != null) {
-        Text(
-          text = stringResource(R.string.home_connected),
-          style = AppTheme.typography.labelMedium,
-          color = AppTheme.colors.successPrimary,
-        )
-        Text(
-          text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
-          style = AppTheme.typography.bodySmall,
-          color = AppTheme.colors.contentSecondary,
-        )
+      // Animated nebula background, visible only when connected
+      AnimatedVisibility(
+        visible = state.connectedProfile != null,
+        enter = fadeIn(animationSpec = tween(800)),
+        exit = fadeOut(animationSpec = tween(600)),
+      ) {
+        NebulaBackground(modifier = Modifier.fillMaxSize())
       }
 
-      ConnectButton(
-        state = state,
-        onClick = {
-          scope.send(ScreenCommand.ToggleConnect)
-        },
-      )
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+      ) {
+        if (state.connectedProfile != null) {
+          Text(
+            text = stringResource(R.string.home_connected),
+            style = AppTheme.typography.labelMedium,
+            color = AppTheme.colors.successPrimary,
+          )
+          Text(
+            text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
+            style = AppTheme.typography.bodySmall,
+            color = AppTheme.colors.contentSecondary,
+          )
+        }
+
+        ConnectButton(
+          state = state,
+          onClick = {
+            scope.send(ScreenCommand.ToggleConnect)
+          },
+        )
+      }
     }
   }
 }
@@ -131,7 +151,7 @@ internal fun ConnectButton(
           text =
             when {
               isConnected -> stringResource(R.string.home_btn_disconnect)
-              hasError -> state.vpnError ?: stringResource(R.string.home_vpn_connection_error)
+              hasError -> stringResource(R.string.home_vpn_connection_error)
               showEmpty -> stringResource(R.string.home_no_profiles_cache)
               else -> stringResource(R.string.home_btn_connect)
             },

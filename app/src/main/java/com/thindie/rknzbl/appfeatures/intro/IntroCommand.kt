@@ -1,0 +1,17 @@
+package com.thindie.rknzbl.appfeatures.intro
+
+import com.thindie.engine.core.Command
+
+sealed interface CommandIntro : Command {
+  data object Start : CommandIntro
+
+  data object Dismiss : CommandIntro
+
+  data object AcceptSoftRequest : CommandIntro
+
+  data object DeclineSoftRequest : CommandIntro
+
+  data object ConfirmRationale : CommandIntro
+
+  data object PermissionDenied : CommandIntro
+}

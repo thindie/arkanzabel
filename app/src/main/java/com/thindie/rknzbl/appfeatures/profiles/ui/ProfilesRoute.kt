@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 @Suppress("MagicNumber")
 internal fun ProfilesFlow.profiles() =
   RouteFactory.create(
-    initialState = ScreenState(),
+    initialState = ScreenState(isLocalSave = flowModule.connectionProfileRepository.isLocalStorage()),
     execute = ::exec,
     stateSink = ::stateSink,
     routeContent = ::ProfilesScreenContent,
@@ -34,6 +34,11 @@ internal suspend fun ProfilesFlow.exec(
   return when (c) {
     ScreenCommand.LoadProfiles -> {
       globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(false) }
+      null
+    }
+
+    ScreenCommand.RefreshProfiles -> {
+      globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(true) }
       null
     }
 

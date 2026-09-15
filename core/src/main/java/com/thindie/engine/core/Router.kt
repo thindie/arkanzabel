@@ -211,24 +211,21 @@ object RouteFactory {
 
                 else -> {
                   commandMutex.withLock {
+                    // non-nervous loading treatment region
+                    val loadingJob =
+                      launch {
+                        delay(200)
+                        _processing.value = command
+                      }
                     try {
-                      // non-nervous loading treatment region
-                      val loadingJob =
-                        launch {
-                          delay(200)
-                          _processing.value = command
-                        }
                       val newState = execute(command, _state.value)
                       if (_processing.value != null) {
                         delay(300)
                       }
-                      loadingJob.cancel()
-                      // end region
                       if (newState != null) {
                         _state.update { newState }
                       }
                       _error.value = null
-                      _processing.value = null
                     } catch (e: CancellationException) {
                       dispose()
                       disposeCommand.tryEmit(command)
@@ -237,6 +234,8 @@ object RouteFactory {
                       Log.e({ "ScreenScope error (route=$id, command=$command)" }, throwable = e)
                       val error = errorMapper(e)
                       _error.value = error
+                    } finally {
+                      loadingJob.cancel()
                       _processing.value = null
                     }
                   }

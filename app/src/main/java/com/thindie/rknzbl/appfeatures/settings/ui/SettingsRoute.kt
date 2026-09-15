@@ -4,12 +4,11 @@ import android.os.Build
 import com.thindie.engine.core.RouteFactory
 import com.thindie.rknzbl.appfeatures.home.HomeSection
 import com.thindie.rknzbl.appfeatures.settings.SettingsFlow
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
-import com.thindie.rknzbl.appfeatures.settings.ui.faq.faq
-import com.thindie.rknzbl.appfeatures.settings.ui.licenses.licenses
 import com.thindie.rknzbl.appfeatures.settings.ui.perapp.perAppMain
 import com.thindie.rknzbl.appfeatures.settings.ui.source.source
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.appfeatures.settings.ui.webdav.webdav
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 
 fun SettingsFlow.settings(
   repository: SettingsRepository,
@@ -45,7 +44,7 @@ fun SettingsFlow.settings(
         null
       }
 
-      ScreenCommand.ToggleStorageMode -> {
+      ScreenCommand.ToggleLocalStorage -> {
         val current = s.isLocalSave ?: false
         repository.toggleLocalSave(!current)
         connectionProfileRepository.invalidateCaches()
@@ -58,14 +57,13 @@ fun SettingsFlow.settings(
         null
       }
 
-      ScreenCommand.ToggleNewDesign -> {
-        val current = s.useNewDesign ?: false
-        repository.toggleUseNewDesign(!current)
+      ScreenCommand.ToggleCustomSource -> {
+        go(source())
         null
       }
 
-      ScreenCommand.ToggleCustomSource -> {
-        go(source())
+      ScreenCommand.OpenWebdav -> {
+        go(webdav())
         null
       }
 
@@ -74,13 +72,8 @@ fun SettingsFlow.settings(
         null
       }
 
-      ScreenCommand.OpenFaq -> {
-        go(faq())
-        null
-      }
-
-      ScreenCommand.OpenLicenses -> {
-        go(licenses())
+      ScreenCommand.OpenHelp -> {
+        openHelp()
         null
       }
     }

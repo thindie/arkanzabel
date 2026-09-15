@@ -2,16 +2,14 @@ package com.thindie.rknzbl.appfeatures.settings.ui.perapp
 
 import com.thindie.engine.core.Command
 
-internal sealed interface PerAppProxyCommand : Command {
-  data object Back : PerAppProxyCommand
+internal sealed interface PerAppCommand : Command {
+  data object Back : PerAppCommand
 
-  data object LoadApps : PerAppProxyCommand
+  data object SetModeAll : PerAppCommand
 
-  data object SetModeAll : PerAppProxyCommand
+  data object SetModeSelected : PerAppCommand
 
-  data object SetModeSelected : PerAppProxyCommand
+  data object OpenSearch : PerAppCommand
 
-  data object OpenSearch : PerAppProxyCommand
-
-  data class RemovePackage(val packageName: String) : PerAppProxyCommand
+  data class RemovePackage(val packageName: String) : PerAppCommand
 }

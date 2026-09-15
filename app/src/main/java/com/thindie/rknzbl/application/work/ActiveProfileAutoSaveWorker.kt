@@ -3,8 +3,8 @@ package com.thindie.rknzbl.application.work
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import com.thindie.rknzbl.error.AppError
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 

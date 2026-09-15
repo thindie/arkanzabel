@@ -58,6 +58,9 @@ jobs:
       - name: Build release APK
         env:
           RELEASE_TAG: ${{ github.ref_name }}
+          WEBDAV_DEFAULT_BASE_URL: ${{ secrets.WEBDAV_DEFAULT_BASE_URL }}
+          WEBDAV_DEFAULT_USERNAME: ${{ secrets.WEBDAV_DEFAULT_USERNAME }}
+          WEBDAV_DEFAULT_PASSWORD: ${{ secrets.WEBDAV_DEFAULT_PASSWORD }}
         run: ./gradlew :app:assembleRelease -PreleaseTag="$RELEASE_TAG" --no-daemon --stacktrace
 
       - name: Sign unsigned APK

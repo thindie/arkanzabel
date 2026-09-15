@@ -27,13 +27,15 @@ import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.HelpSecondaryText
+import com.thindie.engine.uikit.HelpSectionHeading
 import com.thindie.engine.uikit.SentenceRow
 import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.appfeatures.settings.ui.searchapppackage.rememberAppIconPainter
 
 @Composable
-internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCommand>) {
+internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand>) {
   val screenState by scope.state.collectAsState()
   AppScreen(
     screenScope = scope,
@@ -42,10 +44,10 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
     primary =
       Action(
         resRef = R.drawable.ic_arrow_back_24,
-        listener = { scope.send(PerAppProxyCommand.Back) },
+        listener = { scope.send(PerAppCommand.Back) },
       ),
   ) {
-    BackHandler { scope.send(PerAppProxyCommand.Back) }
+    BackHandler { scope.send(PerAppCommand.Back) }
     val appsByPackage = screenState.allApps.associateBy { it.packageName }
     LazyColumn(
       contentPadding = PaddingValues(16.dp),
@@ -64,11 +66,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
               style = AppTheme.typography.headlineLarge,
               color = AppTheme.colors.contentPrimary,
             )
-            Text(
-              text = stringResource(R.string.per_app_proxy_mode_section),
-              style = AppTheme.typography.labelMedium,
-              color = AppTheme.colors.contentSecondary,
-            )
+            HelpSecondaryText(stringResource(R.string.per_app_proxy_mode_section))
           }
         }
       }
@@ -94,7 +92,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
           title = stringResource(R.string.per_app_proxy_mode_all),
           subtitle = stringResource(R.string.per_app_proxy_mode_all_subtitle),
           loading = false,
-          onClick = { scope.send(PerAppProxyCommand.SetModeAll) },
+          onClick = { scope.send(PerAppCommand.SetModeAll) },
         )
       }
       item {
@@ -119,7 +117,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
           title = stringResource(R.string.per_app_proxy_mode_selected),
           subtitle = stringResource(R.string.per_app_proxy_mode_selected_subtitle),
           loading = false,
-          onClick = { scope.send(PerAppProxyCommand.SetModeSelected) },
+          onClick = { scope.send(PerAppCommand.SetModeSelected) },
         )
       }
       if (screenState.mode == ProxyScopeMode.Selected) {
@@ -131,22 +129,14 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
                 .background(AppTheme.colors.backgroundPrimary),
           ) {
             Column {
-              Text(
-                text = stringResource(R.string.per_app_proxy_applied_section),
-                style = AppTheme.typography.headlineLarge,
-                color = AppTheme.colors.contentPrimary,
-              )
+              HelpSectionHeading(stringResource(R.string.per_app_proxy_applied_section))
               val description =
                 if (screenState.selectedPackages.isEmpty()) {
                   stringResource(R.string.per_app_proxy_none_selected)
                 } else {
                   stringResource(R.string.per_app_proxy_mode_selected_header_subtitle)
                 }
-              Text(
-                text = description,
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary,
-              )
+              HelpSecondaryText(description)
             }
           }
         }
@@ -169,7 +159,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
             title = row?.appName ?: pkg,
             subtitle = row?.packageName ?: pkg,
             loading = false,
-            onClick = { scope.send(PerAppProxyCommand.RemovePackage(pkg)) },
+            onClick = { scope.send(PerAppCommand.RemovePackage(pkg)) },
           )
         }
         stickyHeader {
@@ -185,11 +175,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
                 style = AppTheme.typography.headlineLarge,
                 color = AppTheme.colors.contentPrimary,
               )
-              Text(
-                text = stringResource(R.string.per_app_proxy_open_search_subtitle),
-                style = AppTheme.typography.labelMedium,
-                color = AppTheme.colors.contentSecondary,
-              )
+              HelpSecondaryText(stringResource(R.string.per_app_proxy_open_search_subtitle))
             }
           }
         }
@@ -201,7 +187,7 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppProxyCo
                 .height(52.dp)
                 .surface(
                   shape = RoundedCornerShape(16.dp),
-                  onClick = { scope.send(PerAppProxyCommand.OpenSearch) },
+                  onClick = { scope.send(PerAppCommand.OpenSearch) },
                   backgroundColor = AppTheme.colors.backgroundSecondary,
                 ),
           )

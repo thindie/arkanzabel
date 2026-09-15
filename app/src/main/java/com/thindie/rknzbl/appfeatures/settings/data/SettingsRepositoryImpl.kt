@@ -1,12 +1,15 @@
 package com.thindie.rknzbl.appfeatures.settings.data
 
 import com.thindie.engine.uikit.ThemeSwitcher
+import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
@@ -19,6 +22,7 @@ import kotlinx.coroutines.flow.filterNotNull
  */
 class SettingsRepositoryImpl(
   private val storage: KeyValueStorage,
+  private val profileHttpGateway: ProfileHttpGateway,
 ) : SettingsRepository {
   // --- Theme mode ---
   // Storage returns null until the user has ever touched settings; default to "auto" so callers get
@@ -66,18 +70,6 @@ class SettingsRepositoryImpl(
     localSaveSetting.set(enabled)
   }
 
-  // --- Feature toggle: bottom-navigation home design (default off) ---
-  private val useNewDesignSetting =
-    Setting<Boolean>(
-      read = { storage.decodeSettingsBool(AppConfig.PREF_USE_NEW_DESIGN, false) },
-      write = { storage.encodeSettings(AppConfig.PREF_USE_NEW_DESIGN, it) },
-    )
-  override val useNewDesign: Flow<Boolean> get() = useNewDesignSetting.flow
-
-  override suspend fun toggleUseNewDesign(enabled: Boolean) {
-    useNewDesignSetting.set(enabled)
-  }
-
   // --- Speed notification support ---
   private val speedSetting =
     Setting<Boolean>(
@@ -113,5 +105,42 @@ class SettingsRepositoryImpl(
   /** Persists [url]; null/blank clears the key and disables the custom source. */
   override fun setCustomSourceUrl(url: String?) {
     customSourceUrlSetting.set(url)
+  }
+
+  // --- WebDAV storage config (URL / login / password) ---
+  private val webDavConfigState = MutableStateFlow(storage.decodeWebDavConfig())
+  override val webDavConfig: Flow<WebDavConfig?> get() = webDavConfigState
+
+  /** Persists [config]; null clears the key and disables remote storage. */
+  override fun setWebDavConfig(config: WebDavConfig?) {
+    webDavConfigState.value = config
+    if (config == null) {
+      storage.clearWebDavConfig()
+      profileHttpGateway.resetWebDav()
+    } else {
+      profileHttpGateway.updateWebDav(
+        config.baseUrl,
+        config.username.orEmpty(),
+        config.password.orEmpty(),
+      )
+      storage.encodeWebDavConfig(config)
+    }
+  }
+
+  // --- WebDAV: use built-in default config instead of manual entry (default off) ---
+  private val webDavUseDefaultsSetting =
+    Setting<Boolean>(
+      read = { storage.decodeSettingsBool(AppConfig.PREF_WEBDAV_USE_DEFAULTS, true) },
+      write = {
+        if (it) {
+          profileHttpGateway.resetWebDav()
+        }
+        storage.encodeSettings(AppConfig.PREF_WEBDAV_USE_DEFAULTS, it)
+      },
+    )
+  override val webDavUseDefaults: Flow<Boolean> get() = webDavUseDefaultsSetting.flow
+
+  override suspend fun toggleWebDavUseDefaults(enabled: Boolean) {
+    webDavUseDefaultsSetting.set(enabled)
   }
 }

@@ -167,6 +167,47 @@ object SpeedtestManager {
       }
   }
 
+  /**
+   * Measures download throughput through a proxy connection by downloading
+   * data and timing it. Returns bytes per second, or -1 on failure.
+   */
+  suspend fun measureBandwidth(
+    port: Int,
+    testUrl: String = SettingsManager.getDelayTestUrl(),
+  ): Long {
+    return withContext(Dispatchers.IO) {
+      val conn =
+        HttpUtil.createProxyConnection(testUrl, port, 15000, 30000)
+          ?: return@withContext -1L
+      try {
+        if (conn.responseCode != 200 && conn.responseCode != 204) return@withContext -1L
+
+        val start = SystemClock.elapsedRealtime()
+        var totalBytes = 0L
+        conn.inputStream.use { input ->
+          val buffer = ByteArray(8192)
+          while (true) {
+            val read = input.read(buffer)
+            if (read == -1) break
+            totalBytes += read
+            // Cap at ~5MB to keep test bounded
+            if (totalBytes >= 5 * 1024 * 1024) break
+          }
+        }
+        val elapsedMs = SystemClock.elapsedRealtime() - start
+        if (elapsedMs == 0L || totalBytes == 0L) return@withContext -1L
+
+        // Return bytes per second
+        (totalBytes * 1000L / elapsedMs).toInt().toLong()
+      } catch (e: IOException) {
+        Log.e({ "Bandwidth test failed" }, AppConfig.TAG, e)
+        -1L
+      } finally {
+        conn.disconnect()
+      }
+    }
+  }
+
   suspend fun getRemoteIPInfo(): String? =
     withContext(Dispatchers.IO) {
       val url =

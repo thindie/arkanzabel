@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +38,8 @@ import com.thindie.engine.uikit.BottomNavigationBar
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
+import com.v2ray.ang.runtime.KeyValueStorage
 
 /**
  * New-design content: same as [com.thindie.rknzbl.MainActivity.LegacyAppContent] but adds the
@@ -51,7 +53,13 @@ fun AppContent(
   onSettingsClick: () -> Unit,
   onLogsClick: () -> Unit,
 ) {
-  val themeSwitcher = remember { ThemeSwitcher() }
+  val themeSwitcher =
+    remember {
+      val switcher = ThemeSwitcher()
+      val storedMode = KeyValueStorage.getThemeMode()?.toChoice() ?: ThemeSwitcher.Choice.Auto
+      switcher.set(storedMode)
+      switcher
+    }
   CompositionLocalProvider(LocalThemeSwitcher provides themeSwitcher) {
     val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
     val isDark =
@@ -65,7 +73,9 @@ fun AppContent(
     if (!view.isInEditMode) {
       SideEffect {
         val window = (view.context as Activity).window
-        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
+        val insetsController = WindowCompat.getInsetsController(window, view)
+        insetsController.isAppearanceLightStatusBars = !isDark
+        insetsController.isAppearanceLightNavigationBars = !isDark
       }
     }
     AppTheme(isDark) {
@@ -105,7 +115,7 @@ fun AppContent(
                   Modifier
                     .fillMaxSize()
                     .background(color = AppTheme.colors.backgroundPrimary)
-                    .navigationBarsPadding(),
+                    .systemBarsPadding(),
               ) {
                 Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                   route.content.invoke()

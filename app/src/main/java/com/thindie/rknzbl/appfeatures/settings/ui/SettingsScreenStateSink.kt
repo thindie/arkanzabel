@@ -3,7 +3,7 @@ package com.thindie.rknzbl.appfeatures.settings.ui
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 
 internal fun settingsStateSink(
   screenScope: ScreenScope<ScreenState, ScreenCommand>,
@@ -35,14 +35,19 @@ internal fun settingsStateSink(
       state.copy(speedEnabled = enabled)
     }
 
-  screenScope.sub(repository.useNewDesign)
-    .transition { state, enabled ->
-      state.copy(useNewDesign = enabled)
-    }
-
   screenScope.sub(repository.customSourceUrl)
     .transition { state, url ->
       val trimmed = url?.trim()
       state.copy(customSourceUrl = if (trimmed.isNullOrBlank()) null else trimmed)
+    }
+
+  screenScope.sub(repository.webDavConfig)
+    .transition { state, config ->
+      state.copy(webDavConfig = config)
+    }
+
+  screenScope.sub(repository.webDavUseDefaults)
+    .transition { state, useDefaults ->
+      state.copy(webDavUseDefaults = useDefaults)
     }
 }

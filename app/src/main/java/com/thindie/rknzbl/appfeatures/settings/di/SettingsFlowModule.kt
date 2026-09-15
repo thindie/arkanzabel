@@ -1,8 +1,8 @@
 package com.thindie.rknzbl.appfeatures.settings.di
 
 import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
-import com.thindie.rknzbl.appfeatures.settings.domain.SettingsRepository
-import com.thindie.rknzbl.feature.home.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.ConnectionProfileRepository
+import com.thindie.rknzbl.domain.SettingsRepository
 
 /**
  * One flow == one module.

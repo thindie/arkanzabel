@@ -45,6 +45,23 @@ val patch = parts.getOrElse(2) { 0 }
 val appVersionName = "$major.$minor.$patch"
 val appVersionCode = major * 1_000_000 + minor * 1_000 + patch
 
+// Build-time WebDAV defaults injected from CI environment variables (GitHub Actions secrets).
+// Empty when unset, so local builds and unconfigured CI keep Save-in-default-mode a no-op.
+private fun javaString(value: String): String = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+private fun webdavDefault(name: String): String = javaString(providers.environmentVariable(name).getOrElse(""))
+
+// version.txt sits on the same WebDAV as profile storage, one path below the configured base URL.
+private fun webdavVersionTxtUrl(): String {
+  val base = providers.environmentVariable("WEBDAV_DEFAULT_BASE_URL").getOrElse("").trim()
+  return javaString(if (base.isBlank()) "" else base.removeSuffix("/").plus("/version.txt"))
+}
+
+private fun webdavProfilesTxtUrl(): String {
+  val base = providers.environmentVariable("WEBDAV_DEFAULT_BASE_URL").getOrElse("").trim()
+  return javaString(if (base.isBlank()) "" else base.removeSuffix("/").plus("/profiles.txt"))
+}
+
 android {
   namespace = "com.thindie.rknzbl"
   compileSdk {
@@ -59,6 +76,11 @@ android {
     versionName = appVersionName
     vectorDrawables.useSupportLibrary = true
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    buildConfigField("String", "WEBDAV_DEFAULT_BASE_URL", webdavProfilesTxtUrl())
+    buildConfigField("String", "WEBDAV_DEFAULT_USERNAME", webdavDefault("WEBDAV_DEFAULT_USERNAME"))
+    buildConfigField("String", "WEBDAV_DEFAULT_PASSWORD", webdavDefault("WEBDAV_DEFAULT_PASSWORD"))
+    buildConfigField("String", "WEBDAV_VERSION_TXT_URL", webdavVersionTxtUrl())
   }
 
   buildTypes {
