@@ -79,7 +79,8 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
         run: |
-          APKSIGNER="$ANDROID_SDK_ROOT/build-tools/36.0.0/bin/apksigner"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | head -1)
+          echo "Using apksigner: $APKSIGNER"
           "$APKSIGNER" sign \
             --ks app/release.keystore \
             --ksPassword "$ANDROID_KEYSTORE_PASS" \
