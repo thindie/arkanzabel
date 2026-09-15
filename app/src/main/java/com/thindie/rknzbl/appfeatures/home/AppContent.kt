@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -105,7 +105,7 @@ fun AppContent(
                   Modifier
                     .fillMaxSize()
                     .background(color = AppTheme.colors.backgroundPrimary)
-                    .navigationBarsPadding(),
+                    .systemBarsPadding(),
               ) {
                 Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                   route.content.invoke()
