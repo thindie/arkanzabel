@@ -326,5 +326,12 @@
         <string name="faq_updates_title">Where do updates come from?</string>
         <string name="faq_updates_body">New builds and the full source code are published at:</string>
 
+        <string name="home_no_profiles_cache">No profiles in cache</string>
+        <string name="home_vpn_connection_error">Connection failed</string>
+        <string name="logs_scroll_down">Scroll down</string>
+        <string name="logs_scroll_up">Scroll up</string>
+        <string name="profiles_delete_title">Delete saved profiles</string>
+        <string name="profiles_open_delete">Delete saved</string>
+
         <string name="app_version_update_snack">Update available</string>
 </resources>

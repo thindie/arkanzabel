@@ -326,5 +326,12 @@
         <string name="faq_updates_title">Откуда берутся обновления?</string>
         <string name="faq_updates_body">Новые сборки и исходный код публикуются по адресу:</string>
 
+        <string name="home_no_profiles_cache">Нет профилей в кэше</string>
+        <string name="home_vpn_connection_error">Ошибка подключения</string>
+        <string name="logs_scroll_down">Прокрутить вниз</string>
+        <string name="logs_scroll_up">Прокрутить вверх</string>
+        <string name="profiles_delete_title">Удалить сохранённые профили</string>
+        <string name="profiles_open_delete">Удалить сохранённые</string>
+
         <string name="app_version_update_snack">Доступно обновление</string>
 </resources>
