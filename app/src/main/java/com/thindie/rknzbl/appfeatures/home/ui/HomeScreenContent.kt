@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -41,46 +42,52 @@ import com.v2ray.ang.enums.Protocol
 internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val state = scope.state.collectAsState().value
 
-  Box(
-    modifier =
-      Modifier
-        .background(AppTheme.colors.backgroundPrimary)
-        .systemBarsPadding()
-        .fillMaxSize(),
-    contentAlignment = Alignment.Center,
+  PullToRefreshBox(
+    modifier = Modifier.fillMaxSize(),
+    isRefreshing = scope.processing.value is ScreenCommand.RefreshProfiles,
+    onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
   ) {
-    // Animated nebula background, visible only when connected
-    AnimatedVisibility(
-      visible = state.connectedProfile != null,
-      enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(800)),
-      exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(600)),
+    Box(
+      modifier =
+        Modifier
+          .background(AppTheme.colors.backgroundPrimary)
+          .systemBarsPadding()
+          .fillMaxSize(),
+      contentAlignment = Alignment.Center,
     ) {
-      NebulaBackground(modifier = Modifier.fillMaxSize())
-    }
-
-    Column(
-      horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-      if (state.connectedProfile != null) {
-        Text(
-          text = stringResource(R.string.home_connected),
-          style = AppTheme.typography.labelMedium,
-          color = AppTheme.colors.successPrimary,
-        )
-        Text(
-          text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
-          style = AppTheme.typography.bodySmall,
-          color = AppTheme.colors.contentSecondary,
-        )
+      // Animated nebula background, visible only when connected
+      AnimatedVisibility(
+        visible = state.connectedProfile != null,
+        enter = fadeIn(animationSpec = androidx.compose.animation.core.tween(800)),
+        exit = fadeOut(animationSpec = androidx.compose.animation.core.tween(600)),
+      ) {
+        NebulaBackground(modifier = Modifier.fillMaxSize())
       }
 
-      ConnectButton(
-        state = state,
-        onClick = {
-          scope.send(ScreenCommand.ToggleConnect)
-        },
-      )
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+      ) {
+        if (state.connectedProfile != null) {
+          Text(
+            text = stringResource(R.string.home_connected),
+            style = AppTheme.typography.labelMedium,
+            color = AppTheme.colors.successPrimary,
+          )
+          Text(
+            text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
+            style = AppTheme.typography.bodySmall,
+            color = AppTheme.colors.contentSecondary,
+          )
+        }
+
+        ConnectButton(
+          state = state,
+          onClick = {
+            scope.send(ScreenCommand.ToggleConnect)
+          },
+        )
+      }
     }
   }
 }

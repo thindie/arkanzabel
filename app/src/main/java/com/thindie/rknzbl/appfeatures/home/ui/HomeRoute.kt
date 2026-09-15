@@ -54,6 +54,11 @@ internal fun HomeRoute(
         }
         null
       }
+
+      ScreenCommand.RefreshProfiles -> {
+        globalJobManager.launchGlobal(FETCH_KEY_HOME) { repository.fetch(true) }
+        null
+      }
     }
   },
   section = HomeSection.Home,
