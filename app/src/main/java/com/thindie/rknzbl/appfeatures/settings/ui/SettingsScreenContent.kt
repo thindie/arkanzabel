@@ -41,7 +41,9 @@ import com.thindie.engine.uikit.Toggle
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
 import com.v2ray.ang.dto.WebDavConfig
+import com.v2ray.ang.runtime.KeyValueStorage
 
 @Composable
 internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
@@ -123,9 +125,9 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         subtitle = stringResource(R.string.home_select_theme_auto_subtitle),
         checked = theme == ThemeSwitcher.Choice.Auto,
         onCheckedChange = {
-          themeSwitcher.set(
-            if (theme == ThemeSwitcher.Choice.Auto) ThemeSwitcher.Choice.Dark else ThemeSwitcher.Choice.Auto,
-          )
+          val newChoice = if (theme == ThemeSwitcher.Choice.Auto) ThemeSwitcher.Choice.Dark else ThemeSwitcher.Choice.Auto
+          themeSwitcher.set(newChoice)
+          KeyValueStorage.setThemeMode(newChoice.toStorageString())
         },
       )
 
@@ -145,6 +147,7 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         onCheckedChange = {
           if (theme == ThemeSwitcher.Choice.Auto) return@ThemeOption
           themeSwitcher.set(ThemeSwitcher.Choice.Light)
+          KeyValueStorage.setThemeMode(ThemeSwitcher.Choice.Light.toStorageString())
         },
       )
 
@@ -155,6 +158,7 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         onCheckedChange = {
           if (theme == ThemeSwitcher.Choice.Auto) return@ThemeOption
           themeSwitcher.set(ThemeSwitcher.Choice.Dark)
+          KeyValueStorage.setThemeMode(ThemeSwitcher.Choice.Dark.toStorageString())
         },
       )
 

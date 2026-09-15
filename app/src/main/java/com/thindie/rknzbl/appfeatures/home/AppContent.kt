@@ -38,6 +38,8 @@ import com.thindie.engine.uikit.BottomNavigationBar
 import com.thindie.engine.uikit.LocalThemeSwitcher
 import com.thindie.engine.uikit.ThemeSwitcher
 import com.thindie.rknzbl.R
+import com.thindie.rknzbl.appfeatures.settings.data.theme.toChoice
+import com.v2ray.ang.runtime.KeyValueStorage
 
 /**
  * New-design content: same as [com.thindie.rknzbl.MainActivity.LegacyAppContent] but adds the
@@ -51,7 +53,13 @@ fun AppContent(
   onSettingsClick: () -> Unit,
   onLogsClick: () -> Unit,
 ) {
-  val themeSwitcher = remember { ThemeSwitcher() }
+  val themeSwitcher =
+    remember {
+      val switcher = ThemeSwitcher()
+      val storedMode = KeyValueStorage.getThemeMode()?.toChoice() ?: ThemeSwitcher.Choice.Auto
+      switcher.set(storedMode)
+      switcher
+    }
   CompositionLocalProvider(LocalThemeSwitcher provides themeSwitcher) {
     val themeColors = LocalThemeSwitcher.current.themeFlow.collectAsState(null)
     val isDark =
