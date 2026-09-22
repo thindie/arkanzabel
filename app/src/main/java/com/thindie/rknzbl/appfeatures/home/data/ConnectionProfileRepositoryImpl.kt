@@ -127,16 +127,23 @@ class ConnectionProfileRepositoryImpl(
 
   override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
 
+  override fun markProfileUsed(profile: ConnectionProfile) {
+    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty() + profile
+    setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, skipped)
+  }
+
   override suspend fun measureInMemory(): ConnectionProfile? {
     val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
-    val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
+    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty()
+    val profiles = ((storageCacheInternal().orEmpty() - skipped.toSet()) + receivedProfiles).distinct()
     if (profiles.isEmpty()) return null
     return pingManager.measure(profiles)
   }
 
   override suspend fun measureStaged(): ConnectionProfile? {
     val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
-    val profiles = (storageCacheInternal().orEmpty() + receivedProfiles).distinct()
+    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty()
+    val profiles = ((storageCacheInternal().orEmpty() - skipped.toSet()) + receivedProfiles).distinct()
     if (profiles.isEmpty()) return null
     return pingManager.measureStaged(profiles)
   }
@@ -383,6 +390,7 @@ private fun parseRemote(
 private const val STORED_PROFILES_SEPARATOR = "########"
 private const val FETCH_PROFILES_SEPARATOR = "\n"
 
+private const val SKIPPED_PROFILES_CACHE_KEY = "skipped_measured_cache"
 private val LOG_TAG = AppConfig.TAG
 
 private fun parseAndDeduplicate(

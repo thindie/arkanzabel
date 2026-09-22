@@ -58,6 +58,9 @@ interface ConnectionProfileRepository {
   /** Atomically reads and clears the pending connect intent. */
   fun takeConnectIntent(): Boolean
 
+  /** Mark a profile as used for next-best selection (survives route recreation). */
+  fun markProfileUsed(profile: ConnectionProfile)
+
   suspend fun measureInMemory(): ConnectionProfile?
 
   suspend fun measureStaged(): ConnectionProfile?

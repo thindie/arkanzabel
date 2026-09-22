@@ -89,6 +89,29 @@ internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
           },
         )
       }
+
+      AnimatedVisibility(
+        modifier =
+          Modifier
+            .surface(
+              onClick = { scope.send(ScreenCommand.NextBestProfile) },
+            )
+            .align(Alignment.CenterEnd),
+        visible = state.connectedProfile != null && !state.profilesLoading,
+        enter = fadeIn(animationSpec = tween(300)),
+        exit = fadeOut(animationSpec = tween(200)),
+      ) {
+        Icon(
+          modifier =
+            Modifier.size(
+              96.dp,
+              128.dp,
+            ),
+          painter = painterResource(R.drawable.ic_chevron_right_24),
+          contentDescription = null,
+          tint = AppTheme.colors.successPrimary,
+        )
+      }
     }
   }
 }
