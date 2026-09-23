@@ -1,27 +1,24 @@
 package com.thindie.rknzbl.application
 
+import android.app.ActivityManager
 import android.app.Application
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.thindie.engine.core.Router
-import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.BuildConfig
 import com.thindie.rknzbl.application.di.ApplicationScope
 import com.thindie.rknzbl.application.work.ActiveProfileAutoSaveWorker
 import com.thindie.rknzbl.application.work.RknzblWorkerFactory
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
-import com.v2ray.ang.util.ConnectionProfileSummariser
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.TimeUnit
 
-class Application : Application(), Configuration.Provider, ConnectionProfileSummariser {
+class Application : Application(), Configuration.Provider {
   private lateinit var applicationScopeInternal: ApplicationScope
 
   val applicationScope: ApplicationScope
@@ -35,9 +32,6 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
 
   private var router: Router? = null
 
-  val vpnRuntimeState: StateFlow<WorkState>
-    get() = applicationScope.vpnStateTracker.serviceState
-
   val finishCommand =
     MutableSharedFlow<Unit>(
       replay = 0,
@@ -47,9 +41,24 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
 
   override fun onCreate() {
     super.onCreate()
+
+    // Common initialization for all processes
     AppStrings.init(this)
     AppConfig.initHostApplicationId(packageName, BuildConfig.VERSION_NAME)
     KeyValueStorage.initialize(this)
+
+    // Daemon process only needs minimal setup — no UI, no repositories,
+    // no WorkManager. It runs V2Ray services directly via V2RayServiceManager.
+    val isDaemonProcess =
+      getSystemService(ActivityManager::class.java).runningAppProcesses
+        ?.firstOrNull { it.pid == android.os.Process.myPid() }
+        ?.processName
+        ?.endsWith(":RunSoLibV2RayDaemon") == true
+    if (isDaemonProcess) {
+      return
+    }
+
+    // Main process: full dependency graph and background work
     applicationScopeInternal = ApplicationScope.configure(this)
     SettingsManager.ensureDefaultSettings()
     SettingsManager.initRoutingRulesets(this)
@@ -81,9 +90,5 @@ class Application : Application(), Configuration.Provider, ConnectionProfileSumm
         }
     }
     return requireNotNull(router)
-  }
-
-  override fun isSavedAsFavorite(connectionProfile: ConnectionProfile): Boolean {
-    return applicationScope.connectionProfileRepository.isSaved(connectionProfile)
   }
 }

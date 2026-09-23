@@ -464,17 +464,6 @@ class ConnectionProfileRepositoryImplTest {
   // isSaved / activeProfile
 
   @Test
-  fun `isSaved matches by subscriptionId in the stored cache`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      every { KeyValueStorage.getLocalProfiles() } returns json(profile("a"))
-      repository.read()
-
-      assertTrue(repository.isSaved(profile("a")))
-      assertFalse(repository.isSaved(profile("b")))
-    }
-
-  @Test
   fun `activeProfile reads the selected server and caches it`() =
     runTest {
       val repository = createRepository(localSave = true)

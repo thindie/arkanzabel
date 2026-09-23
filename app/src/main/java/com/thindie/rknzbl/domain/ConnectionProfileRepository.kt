@@ -21,8 +21,6 @@ interface ConnectionProfileRepository {
 
   suspend fun activeProfile(): ConnectionProfile?
 
-  fun isSaved(profile: ConnectionProfile): Boolean
-
   fun invalidateCaches()
 
   /** Invalidate only the stored (local) profiles cache. */

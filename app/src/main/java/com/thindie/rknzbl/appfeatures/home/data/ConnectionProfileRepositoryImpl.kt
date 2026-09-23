@@ -250,11 +250,6 @@ class ConnectionProfileRepositoryImpl(
     return profile
   }
 
-  override fun isSaved(profile: ConnectionProfile): Boolean {
-    val storedCached = storageCacheInternal()
-    return (storedCached?.firstOrNull { it.subscriptionId == profile.subscriptionId } != null)
-  }
-
   override fun invalidateCaches() {
     pingManager.invalidateMeasurementCache()
     invalidateCacheInternal()

@@ -1,6 +1,5 @@
 package com.v2ray.ang.runtime
 
-import android.app.Application
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -19,7 +18,6 @@ import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.error.AppError
 import com.v2ray.ang.service.V2RayProxyOnlyService
 import com.v2ray.ang.service.V2RayVpnService
-import com.v2ray.ang.util.ConnectionProfileSummariser
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
@@ -158,10 +156,7 @@ object V2RayServiceManager {
    * `registerReceiver(Context, BroadcastReceiver, IntentFilter, int)`.
    * Starts the V2Ray core service.
    */
-  fun startCoreLoop(
-    vpnInterface: ParcelFileDescriptor?,
-    application: Application,
-  ): Boolean {
+  fun startCoreLoop(vpnInterface: ParcelFileDescriptor?): Boolean {
     if (isRunningInternal) {
       return false
     }
@@ -218,8 +213,7 @@ object V2RayServiceManager {
     }
 
     try {
-      val isFavorite = (application as ConnectionProfileSummariser).isSavedAsFavorite(config)
-      NotificationManager.showNotification(config, isFavorite)
+      NotificationManager.showNotification(config, false)
       CoreLogFiles.truncateAll(service)
       coreController.startLoop(result.json, tunFd)
     } catch (runtime: Exception) {

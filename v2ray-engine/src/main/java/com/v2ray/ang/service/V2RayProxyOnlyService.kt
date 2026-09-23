@@ -36,12 +36,12 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     if (V2RayServiceManager.isRunning()) {
       Log.i({ "Proxy-only core running; restarting loop for new profile" }, AppConfig.TAG)
       V2RayServiceManager.stopCoreLoop()
-      if (!V2RayServiceManager.startCoreLoop(null, application)) {
+      if (!V2RayServiceManager.startCoreLoop(null)) {
         Log.e({ "Failed to restart proxy-only core after profile switch" }, AppConfig.TAG)
       }
       return START_STICKY
     }
-    V2RayServiceManager.startCoreLoop(null, application)
+    V2RayServiceManager.startCoreLoop(null)
     return START_STICKY
   }
 
