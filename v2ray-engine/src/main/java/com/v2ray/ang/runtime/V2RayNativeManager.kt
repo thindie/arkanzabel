@@ -44,20 +44,6 @@ object V2RayNativeManager {
   }
 
   /**
-   * Get V2Ray core version.
-   *
-   * @return Version string of the V2Ray core
-   */
-  fun getLibVersion(): String {
-    return try {
-      Libv2ray.checkVersionX()
-    } catch (runtime: RuntimeException) {
-      Log.e({ "Failed to check V2Ray version" }, AppConfig.TAG, runtime)
-      "Unknown"
-    }
-  }
-
-  /**
    * Measure outbound connection delay.
    *
    * @param config The configuration JSON string
