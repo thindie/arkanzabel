@@ -1,5 +1,6 @@
 package com.thindie.engine.core
 
+import android.util.Log
 import java.util.Date
 
 /**
@@ -134,13 +135,12 @@ object Log {
     message: () -> String,
     throwable: Throwable?,
   ) {
-    val msg = message.invoke()
-    if (throwable != null) {
-      println("$tag ${level.tag} $msg\n" + throwable.stackTraceToString())
-      dispatch(level, tag, "$msg\n${throwable.stackTraceToString()}")
-    } else {
-      println("$tag ${level.tag} $msg")
-      dispatch(level, tag, msg)
+    when (level) {
+      Level.VERBOSE -> Log.v(tag, message.invoke())
+      Level.DEBUG -> Log.d(tag, message.invoke(), throwable)
+      Level.INFO -> Log.i(tag, message.invoke(), throwable)
+      Level.WARN -> Log.w(tag, message.invoke(), throwable)
+      Level.ERROR -> Log.e(tag, message.invoke(), throwable)
     }
   }
 }
