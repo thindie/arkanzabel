@@ -1,4 +1,4 @@
-package com.v2ray.ang.service
+package com.v2ray.ang.v2raydaemon
 
 import android.app.Service
 import android.content.Context
@@ -17,7 +17,6 @@ import androidx.annotation.RequiresApi
 import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.AppConfig.LOOPBACK
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
 import com.v2ray.ang.error.AppError
@@ -26,6 +25,7 @@ import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.runtime.V2rayConfigManager
+import com.v2ray.ang.service.TProxyService
 import com.v2ray.ang.util.LocaleContextWrapper
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
@@ -315,7 +315,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       builder.setMetered(false)
       if (KeyValueStorage.decodeSettingsBool(AppConfig.PREF_APPEND_HTTP_PROXY)) {
-        builder.setHttpProxy(ProxyInfo.buildDirectProxy(LOOPBACK, SettingsManager.getHttpPort()))
+        builder.setHttpProxy(ProxyInfo.buildDirectProxy(AppConfig.LOOPBACK, SettingsManager.getHttpPort()))
       }
     }
   }

@@ -1,4 +1,4 @@
-package com.v2ray.ang.service
+package com.v2ray.ang.v2raydaemon
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -16,10 +16,10 @@ import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.enums.Protocol
 import com.v2ray.ang.error.AppError
-import com.v2ray.ang.service.V2RayProxyOnlyService
-import com.v2ray.ang.service.V2RayVpnService
 import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
+import com.v2ray.ang.v2raydaemon.V2RayProxyOnlyService
+import com.v2ray.ang.v2raydaemon.V2RayVpnService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -25,7 +25,7 @@
     <application>
 
         <service
-            android:name="com.v2ray.ang.service.V2RayVpnService"
+            android:name="com.v2ray.ang.v2raydaemon.V2RayVpnService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse"
@@ -45,7 +45,7 @@
         </service>
 
         <service
-            android:name="com.v2ray.ang.service.V2RayProxyOnlyService"
+            android:name="com.v2ray.ang.v2raydaemon.V2RayProxyOnlyService"
             android:exported="false"
             android:foregroundServiceType="specialUse"
             android:label="@string/app_name"
@@ -56,12 +56,12 @@
         </service>
 
         <service
-            android:name="com.v2ray.ang.service.V2RayTestService"
+            android:name="com.v2ray.ang.v2raydaemon.V2RayTestService"
             android:exported="false"
             android:process=":RunSoLibV2RayDaemon" />
 
         <service
-            android:name="com.v2ray.ang.service.QSTileService"
+            android:name="com.v2ray.ang.v2raydaemon.QSTileService"
             android:exported="true"
             android:foregroundServiceType="specialUse"
             android:icon="@drawable/ic_stat_name"
@@ -77,7 +77,7 @@
         </service>
 
         <receiver
-            android:name="com.v2ray.ang.receiver.BootReceiver"
+            android:name="com.v2ray.ang.v2raydaemon.BootReceiver"
             android:exported="true"
             android:label="BootReceiver">
             <intent-filter>

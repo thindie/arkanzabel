@@ -1,13 +1,12 @@
-package com.v2ray.ang.service
+package com.v2ray.ang.v2raydaemon
 
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.AppConfig.MSG_MEASURE_CONFIG
-import com.v2ray.ang.AppConfig.MSG_MEASURE_CONFIG_CANCEL
 import com.v2ray.ang.extension.serializable
 import com.v2ray.ang.runtime.V2RayNativeManager
+import com.v2ray.ang.service.RealPingWorkerService
 import com.v2ray.ang.util.MessageUtil
 import java.util.Collections
 
@@ -56,14 +55,18 @@ class V2RayTestService : Service() {
     startId: Int,
   ): Int {
     when (intent?.getIntExtra("key", 0)) {
-      MSG_MEASURE_CONFIG -> {
+      AppConfig.MSG_MEASURE_CONFIG -> {
         val guidsList = intent.serializable<ArrayList<String>>("content")
         if (guidsList != null && guidsList.isNotEmpty()) {
           lateinit var worker: RealPingWorkerService
           worker =
             RealPingWorkerService(this, guidsList) { status ->
               // notify UI and remove the worker from active list when finished
-              MessageUtil.sendMsg2UI(this@V2RayTestService, AppConfig.MSG_MEASURE_CONFIG_FINISH, status)
+              MessageUtil.sendMsg2UI(
+                this@V2RayTestService,
+                AppConfig.MSG_MEASURE_CONFIG_FINISH,
+                status,
+              )
               activeWorkers.remove(worker)
             }
           activeWorkers.add(worker)
@@ -71,7 +74,7 @@ class V2RayTestService : Service() {
         }
       }
 
-      MSG_MEASURE_CONFIG_CANCEL -> {
+      AppConfig.MSG_MEASURE_CONFIG_CANCEL -> {
         // cancel all running batch workers independently
         val snapshot = ArrayList(activeWorkers)
         snapshot.forEach { it.cancel() }

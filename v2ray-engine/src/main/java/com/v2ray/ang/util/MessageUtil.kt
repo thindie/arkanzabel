@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.service.V2RayTestService
+import com.v2ray.ang.v2raydaemon.V2RayTestService
 import java.io.Serializable
 
 object MessageUtil {
