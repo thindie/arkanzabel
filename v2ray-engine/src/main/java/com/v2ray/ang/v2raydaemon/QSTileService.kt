@@ -1,36 +1,24 @@
 package com.v2ray.ang.v2raydaemon
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.drawable.Icon
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.core.content.ContextCompat
 import com.thindie.engine.core.Log
 import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.ipc.BroadcastersHolder
+import com.v2ray.ang.ipc.DaemonToMain
+import com.v2ray.ang.ipc.FromMainToDaemon.Start
+import com.v2ray.ang.ipc.FromMainToDaemon.Stop
+import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import com.v2ray.ang.runtime.V2RayServiceManager
-import com.v2ray.ang.util.MessageUtil
-import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class QSTileService : TileService() {
-  private val tileStateReceiver =
-    object : BroadcastReceiver() {
-      override fun onReceive(
-        ctx: Context?,
-        intent: Intent?,
-      ) {
-        when (intent?.getIntExtra("key", 0)) {
-          AppConfig.MSG_STATE_RUNNING -> setState(Tile.STATE_ACTIVE)
-          AppConfig.MSG_STATE_NOT_RUNNING -> setState(Tile.STATE_INACTIVE)
-          AppConfig.MSG_STATE_START_SUCCESS -> setState(Tile.STATE_ACTIVE)
-          AppConfig.MSG_STATE_START_FAILURE -> setState(Tile.STATE_INACTIVE)
-          AppConfig.MSG_STATE_STOP_SUCCESS -> setState(Tile.STATE_INACTIVE)
-        }
-      }
-    }
+  private val holder get() = applicationContext as BroadcastersHolder
+  private var job: kotlinx.coroutines.Job? = null
 
   fun setState(state: Int) {
     qsTile?.icon = Icon.createWithResource(applicationContext, R.drawable.ic_stat_name)
@@ -51,25 +39,32 @@ class QSTileService : TileService() {
     } else {
       setState(Tile.STATE_INACTIVE)
     }
-    try {
-      applicationContext.unregisterReceiver(tileStateReceiver)
-    } catch (_: IllegalArgumentException) {
-      // not registered yet
-    }
-    val filter = IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY)
-    ContextCompat.registerReceiver(
-      applicationContext,
-      tileStateReceiver,
-      filter,
-      Utils.receiverFlags(),
-    )
-    MessageUtil.sendMsg2Service(this, AppConfig.MSG_REGISTER_CLIENT, "")
+
+    holder.mainBroadcastReceiver.startObserving()
+    job =
+      CoroutineScope(Dispatchers.Main).launch {
+        IpcMainBroadcastReceiver.events.collect { event ->
+          when (event) {
+            is DaemonToMain.Running,
+            is DaemonToMain.StartSuccess,
+            -> setState(Tile.STATE_ACTIVE)
+
+            is DaemonToMain.NotRunning,
+            is DaemonToMain.StopSuccess,
+            is DaemonToMain.StartFailure,
+            -> setState(Tile.STATE_INACTIVE)
+
+            else -> {}
+          }
+        }
+      }
   }
 
   override fun onStopListening() {
     super.onStopListening()
+    job?.cancel()
     try {
-      applicationContext.unregisterReceiver(tileStateReceiver)
+      holder.mainBroadcastReceiver.stopObserving()
     } catch (e: IllegalArgumentException) {
       Log.w({ "QS tile receiver not registered" }, AppConfig.TAG, e)
     }
@@ -78,8 +73,8 @@ class QSTileService : TileService() {
   override fun onClick() {
     super.onClick()
     when (qsTile?.state) {
-      Tile.STATE_INACTIVE -> V2RayServiceManager.startVServiceFromToggle(this)
-      Tile.STATE_ACTIVE -> V2RayServiceManager.stopVService(this)
+      Tile.STATE_INACTIVE -> holder.mainBroadcastReceiver.send(Start(null))
+      Tile.STATE_ACTIVE -> holder.mainBroadcastReceiver.send(Stop)
       else -> {}
     }
   }

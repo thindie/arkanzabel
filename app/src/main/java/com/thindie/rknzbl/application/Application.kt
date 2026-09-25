@@ -12,13 +12,17 @@ import com.thindie.rknzbl.application.di.ApplicationScope
 import com.thindie.rknzbl.application.work.ActiveProfileAutoSaveWorker
 import com.thindie.rknzbl.application.work.RknzblWorkerFactory
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.ipc.BroadcastersHolder
+import com.v2ray.ang.ipc.IpcDaemonBroadcastReceiver
+import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.SettingsManager
+import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.util.concurrent.TimeUnit
 
-class Application : Application(), Configuration.Provider {
+class Application : Application(), Configuration.Provider, BroadcastersHolder {
   private lateinit var applicationScopeInternal: ApplicationScope
 
   val applicationScope: ApplicationScope
@@ -55,6 +59,10 @@ class Application : Application(), Configuration.Provider {
         ?.processName
         ?.endsWith(":RunSoLibV2RayDaemon") == true
     if (isDaemonProcess) {
+      // Daemon process: set up IPC receivers for command/event exchange with main process
+      V2RayServiceManager.setBroadcastersHolder(this)
+      daemonBroadcastReceiver.startObserving()
+      mainBroadcastReceiver.startObserving()
       return
     }
 
@@ -90,5 +98,13 @@ class Application : Application(), Configuration.Provider {
         }
     }
     return requireNotNull(router)
+  }
+
+  override val daemonBroadcastReceiver: IpcDaemonBroadcastReceiver by lazy {
+    IpcDaemonBroadcastReceiver(this)
+  }
+
+  override val mainBroadcastReceiver: IpcMainBroadcastReceiver by lazy {
+    IpcMainBroadcastReceiver(this)
   }
 }

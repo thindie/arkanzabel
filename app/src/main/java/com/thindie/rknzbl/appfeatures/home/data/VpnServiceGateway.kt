@@ -1,17 +1,12 @@
 package com.thindie.rknzbl.appfeatures.home.data
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.Build
-import androidx.core.content.ContextCompat
 import com.thindie.engine.core.Log
 import com.thindie.engine.core.WorkState
-import com.thindie.rknzbl.R
 import com.thindie.rknzbl.application.Application
-import com.v2ray.ang.AppConfig
-import com.v2ray.ang.runtime.KeyValueStorage
+import com.v2ray.ang.ipc.BroadcastersHolder
+import com.v2ray.ang.ipc.DaemonToMain
+import com.v2ray.ang.ipc.FromMainToDaemon
+import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,69 +35,13 @@ internal class V2RayVpnServiceGateway private constructor(
 
   override val serviceState = MutableStateFlow<WorkState>(if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle)
 
-  private val vpnActivityReceiver =
-    object : BroadcastReceiver() {
-      override fun onReceive(
-        context: Context?,
-        intent: Intent?,
-      ) {
-        if (intent?.action != AppConfig.BROADCAST_ACTION_ACTIVITY) return
-        when (intent.getIntExtra("key", -1)) {
-          AppConfig.MSG_STATE_START_FAILURE -> {
-            Log.w({ "vpnActivityReceiver: start == failure" }, AppConfig.TAG)
-            val fallback = application.getString(R.string.vpn_core_failure_unspecified)
-            val broadcastString = readBroadcastString(intent)
-            val errorMessage = broadcastString?.trim()?.ifBlank { null } ?: fallback
-            serviceState.value = WorkState.Error(message = errorMessage)
-          }
-
-          AppConfig.MSG_STATE_RUNNING -> {
-            Log.i({ "vpnActivityReceiver: running" }, AppConfig.TAG)
-            serviceState.value = WorkState.Running
-          }
-          AppConfig.MSG_STATE_START_SUCCESS -> {
-            Log.i({ "vpnActivityReceiver: started" }, AppConfig.TAG)
-            serviceState.value = WorkState.Running
-          }
-
-          AppConfig.MSG_STATE_NOT_RUNNING -> {
-            Log.i({ "vpnActivityReceiver: not running" }, AppConfig.TAG)
-            serviceState.value = WorkState.Idle
-          }
-          AppConfig.MSG_STATE_STOP_SUCCESS,
-          -> {
-            Log.i({ "vpnActivityReceiver: stopped" }, AppConfig.TAG)
-            serviceState.value = WorkState.Idle
-          }
-
-          AppConfig.MSG_STATE_SAVE_PROFILE -> {
-            scope.launch {
-              Log.d({ "vpnActivityReceiver: Save Profile: received message" }, AppConfig.TAG)
-              val guid = KeyValueStorage.getSelectServer() ?: return@launch
-              Log.d({ "vpnActivityReceiver: Save Profile: selected profile determined" }, AppConfig.TAG)
-              application.applicationScope.connectionProfileRepository.save(guid)
-            }
-          }
-        }
-      }
-    }
-
-  private fun readBroadcastString(
-    intent: Intent,
-    key: String = "content",
-  ): String? {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-      intent.getSerializableExtra(key, String::class.java)
-    } else {
-      @Suppress("DEPRECATION")
-      intent.getSerializableExtra(key)
-        as? String
-    }
+  override fun startVService(guid: String) {
+    (application as BroadcastersHolder).mainBroadcastReceiver.send(FromMainToDaemon.Start(guid))
   }
 
-  override fun startVService(guid: String) = V2RayServiceManager.startVService(application, guid)
-
-  override fun stopVService() = V2RayServiceManager.stopVService(application)
+  override fun stopVService() {
+    (application as BroadcastersHolder).mainBroadcastReceiver.send(FromMainToDaemon.Stop)
+  }
 
   override fun isRunning(): Boolean = serviceState.value is WorkState.Running
 
@@ -110,13 +49,45 @@ internal class V2RayVpnServiceGateway private constructor(
 
   companion object {
     fun instance(application: Application): VpnServiceGateway {
+      val holder = application as BroadcastersHolder
       return V2RayVpnServiceGateway(application).apply {
-        ContextCompat.registerReceiver(
-          application,
-          vpnActivityReceiver,
-          IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY),
-          ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
+        holder.mainBroadcastReceiver.startObserving()
+        scope.launch {
+          IpcMainBroadcastReceiver.events.collect { event ->
+            when (event) {
+              is DaemonToMain.StartFailure -> {
+                Log.w({ "ipc: start == failure" }, "VPN")
+                serviceState.value =
+                  WorkState.Error(message = event.message)
+              }
+
+              is DaemonToMain.Running,
+              is DaemonToMain.StartSuccess,
+              -> {
+                Log.i({ "ipc: running" }, "VPN")
+                serviceState.value = WorkState.Running
+              }
+
+              is DaemonToMain.NotRunning,
+              is DaemonToMain.StopSuccess,
+              -> {
+                Log.i({ "ipc: stopped" }, "VPN")
+                serviceState.value = WorkState.Idle
+              }
+
+              is DaemonToMain.DelayMeasured -> {
+                Log.i({ "ipc: delay measured ${event.guid}=${event.delayMs}" }, "VPN")
+              }
+
+              is DaemonToMain.ConfigTestResult,
+              is DaemonToMain.ConfigTestProgress,
+              is DaemonToMain.ConfigTestFinished,
+              -> {
+                Log.i({ "ipc: config test event" }, "VPN")
+              }
+            }
+          }
+        }
       }
     }
   }

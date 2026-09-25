@@ -20,6 +20,8 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
 import com.v2ray.ang.error.AppError
+import com.v2ray.ang.ipc.DaemonToMain
+import com.v2ray.ang.ipc.IpcDaemonBroadcastReceiver
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
@@ -27,7 +29,6 @@ import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.service.TProxyService
 import com.v2ray.ang.util.LocaleContextWrapper
-import com.v2ray.ang.util.MessageUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
@@ -37,6 +38,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
   private var mInterface: ParcelFileDescriptor? = null
   private var isRunning = false
   private var tun2SocksService: Tun2SocksControl? = null
+  private lateinit var ipcSender: IpcDaemonBroadcastReceiver
 
   /**destroy
    * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
@@ -161,6 +163,8 @@ class V2RayVpnService : VpnService(), ServiceControl {
    * @return false if VPN interface was not established (caller must not run [startService])
    */
   private fun setupVpnService(): Boolean {
+    ipcSender = IpcDaemonBroadcastReceiver(this)
+
     val prepare = prepare(this)
     if (prepare != null) {
       Log.e({ "VPN preparation failed (consent missing in this process?)" }, AppConfig.TAG)
@@ -180,11 +184,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       throw cancel
     } catch (appError: AppError) {
       Log.e({ "VPN configuration build failed before TUN" }, AppConfig.TAG, appError)
-      MessageUtil.sendMsg2UI(
-        this,
-        AppConfig.MSG_STATE_START_FAILURE,
-        appError.userReadable,
-      )
+      ipcSender.sendEvent(DaemonToMain.StartFailure(appError.userReadable))
       stopSelf()
       return false
     } catch (runtime: RuntimeException) {
@@ -192,7 +192,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       val payload =
         runtime.message?.trim()?.takeIf { it.isNotEmpty() }
           ?: getString(R.string.vpn_core_config_build_failed)
-      MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, payload)
+      ipcSender.sendEvent(DaemonToMain.StartFailure(payload))
       stopSelf()
       return false
     }
