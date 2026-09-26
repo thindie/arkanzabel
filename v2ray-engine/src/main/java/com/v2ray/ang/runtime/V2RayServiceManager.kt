@@ -145,6 +145,8 @@ object V2RayServiceManager {
       }
 
       is FromMainToDaemon.SaveProfile -> {
+        Log.i({ "Daemon command: Save Profile" }, AppConfig.TAG)
+        broadcastersHolder.daemonBroadcastReceiver.sendEvent(DaemonToMain.SaveProfile)
       }
     }
   }

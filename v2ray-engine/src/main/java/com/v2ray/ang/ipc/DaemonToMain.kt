@@ -18,7 +18,7 @@ sealed interface DaemonToMain {
 
   data class ConfigTestResult(
     val guid: String,
-    val result: Any?,
+    val result: Long?,
   ) : DaemonToMain
 
   data class ConfigTestProgress(
@@ -27,4 +27,6 @@ sealed interface DaemonToMain {
   ) : DaemonToMain
 
   data object ConfigTestFinished : DaemonToMain
+
+  data object SaveProfile : DaemonToMain
 }

@@ -20,6 +20,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
 import com.v2ray.ang.error.AppError
+import com.v2ray.ang.ipc.BroadcastersHolder
 import com.v2ray.ang.ipc.DaemonToMain
 import com.v2ray.ang.ipc.IpcDaemonBroadcastReceiver
 import com.v2ray.ang.runtime.KeyValueStorage
@@ -163,7 +164,8 @@ class V2RayVpnService : VpnService(), ServiceControl {
    * @return false if VPN interface was not established (caller must not run [startService])
    */
   private fun setupVpnService(): Boolean {
-    ipcSender = IpcDaemonBroadcastReceiver(this)
+    val daemonBroadcastReceiver = (application as BroadcastersHolder).daemonBroadcastReceiver
+    ipcSender = daemonBroadcastReceiver
 
     val prepare = prepare(this)
     if (prepare != null) {

@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import com.thindie.engine.core.Log
+import com.thindie.engine.core.ProcessKind
+import com.thindie.engine.core.determineProcess
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,9 +34,10 @@ class IpcMainBroadcastReceiver(private val context: Context) {
         ctx: Context?,
         intent: Intent?,
       ) {
+        if (ctx?.determineProcess() != ProcessKind.Main) return
         if (intent?.action != AppConfig.BROADCAST_ACTION_ACTIVITY) return
         val event = intent.getCoreExtra()
-        Log.i({ "DaemonClient received: $event" }, AppConfig.TAG)
+        Log.i({ "MainBroadcast received: $event" }, AppConfig.TAG)
         event ?: return
         sharedEventInternal.tryEmit(event)
       }
@@ -48,16 +52,20 @@ class IpcMainBroadcastReceiver(private val context: Context) {
           putCoreExtra(command)
         }
       context.sendBroadcast(intent)
-      Log.i({ "DaemonClient sent: $command" }, AppConfig.TAG)
+      Log.i({ "MainBroadcast sent to Daemon: $command" }, AppConfig.TAG)
     } catch (e: Exception) {
-      Log.e({ "Failed to send command to daemon: $command" }, AppConfig.TAG, e)
+      Log.e({ "MainBroadcast, failed to send command: $command" }, AppConfig.TAG, e)
     }
   }
 
   fun startObserving() {
     if (receiverRegistered) return
     try {
-      context.registerReceiver(receiver, IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY))
+      context.registerReceiver(
+        receiver,
+        IntentFilter(AppConfig.BROADCAST_ACTION_ACTIVITY),
+        Utils.receiverFlags(),
+      )
       receiverRegistered = true
     } catch (e: Exception) {
       Log.e({ "Failed to register daemon event receiver" }, AppConfig.TAG, e)
