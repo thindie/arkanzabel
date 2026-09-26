@@ -1,16 +1,12 @@
 package com.thindie.rknzbl.appfeatures.home.data
 
-import com.thindie.engine.core.Log
 import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.Application
 import com.v2ray.ang.ipc.BroadcastersHolder
-import com.v2ray.ang.ipc.DaemonToMain
 import com.v2ray.ang.ipc.FromMainToDaemon
-import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import com.v2ray.ang.runtime.V2RayServiceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 /**
  * Thin wrapper around [V2RayServiceManager] so [ConnectionProfileRepositoryImpl] can be
@@ -31,8 +27,6 @@ interface VpnServiceGateway {
 internal class V2RayVpnServiceGateway private constructor(
   private val application: Application,
 ) : VpnServiceGateway {
-  private val scope get() = application.applicationScope.coroutineScope
-
   override val serviceState = MutableStateFlow<WorkState>(if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle)
 
   override fun startVService(guid: String) {
@@ -49,46 +43,7 @@ internal class V2RayVpnServiceGateway private constructor(
 
   companion object {
     fun instance(application: Application): VpnServiceGateway {
-      val holder = application as BroadcastersHolder
-      return V2RayVpnServiceGateway(application).apply {
-        holder.mainBroadcastReceiver.startObserving()
-        scope.launch {
-          IpcMainBroadcastReceiver.events.collect { event ->
-            when (event) {
-              is DaemonToMain.StartFailure -> {
-                Log.w({ "ipc: start == failure" }, "VPN")
-                serviceState.value =
-                  WorkState.Error(message = event.message)
-              }
-
-              is DaemonToMain.Running,
-              is DaemonToMain.StartSuccess,
-              -> {
-                Log.i({ "ipc: running" }, "VPN")
-                serviceState.value = WorkState.Running
-              }
-
-              is DaemonToMain.NotRunning,
-              is DaemonToMain.StopSuccess,
-              -> {
-                Log.i({ "ipc: stopped" }, "VPN")
-                serviceState.value = WorkState.Idle
-              }
-
-              is DaemonToMain.DelayMeasured -> {
-                Log.i({ "ipc: delay measured ${event.guid}=${event.delayMs}" }, "VPN")
-              }
-
-              is DaemonToMain.ConfigTestResult,
-              is DaemonToMain.ConfigTestProgress,
-              is DaemonToMain.ConfigTestFinished,
-              -> {
-                Log.i({ "ipc: config test event" }, "VPN")
-              }
-            }
-          }
-        }
-      }
+      return V2RayVpnServiceGateway(application)
     }
   }
 }
