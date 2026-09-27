@@ -72,7 +72,6 @@ class ConnectionProfileRepositoryImpl(
     setCacheInternal(localStorageKey, profiles)
   }
 
-  /** Re-parses [body] and publishes it to the stored caches (map + reactive flow). */
   private fun refreshStoredCacheInternal(body: String) {
     invalidateStoredInternal()
     setStorageCacheInternal(parseAndDeduplicate(body, STORED_PROFILES_SEPARATOR))
@@ -121,23 +120,11 @@ class ConnectionProfileRepositoryImpl(
     }
   }
 
-  override fun requestConnect() {
-    connectRequested.set(true)
-  }
-
   override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
 
   override fun markProfileUsed(profile: ConnectionProfile) {
     val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty() + profile
     setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, skipped)
-  }
-
-  override suspend fun measureInMemory(): ConnectionProfile? {
-    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
-    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty()
-    val profiles = ((storageCacheInternal().orEmpty() - skipped.toSet()) + receivedProfiles).distinct()
-    if (profiles.isEmpty()) return null
-    return pingManager.measure(profiles)
   }
 
   override suspend fun measureStaged(): ConnectionProfile? {
@@ -230,26 +217,6 @@ class ConnectionProfileRepositoryImpl(
     }
   }
 
-  override fun autoSaved(): Flow<ConnectionProfile?> {
-    return autoSavedEvents
-      .map { guid ->
-        storage.decodeServerConfig(guid)
-      }
-  }
-
-  override suspend fun fetchAutoSaved() {
-    val guid = KeyValueStorage.getLastAutoSaveProfilesJson()
-    guid?.let { autoSavedEvents.tryEmit(it) }
-  }
-
-  override suspend fun activeProfile(): ConnectionProfile? {
-    val cached = activeProfileCache.get()
-    if (cached != null) return cached
-    val profile = activeProfileInternal()
-    if (profile != null) activeProfileCache.set(profile)
-    return profile
-  }
-
   override fun invalidateCaches() {
     pingManager.invalidateMeasurementCache()
     invalidateCacheInternal()
@@ -268,14 +235,6 @@ class ConnectionProfileRepositoryImpl(
     connectRequested.set(false)
     activeProfileCache.clear()
     vpnGateway.stopVService()
-  }
-
-  override fun isConnected(): Boolean {
-    return vpnGateway.isRunning()
-  }
-
-  override fun getConnectedServerName(): String {
-    return vpnGateway.getRunningServerName()
   }
 
   override val vpnState: Flow<WorkState> = vpnGateway.serviceState
@@ -308,7 +267,7 @@ class ConnectionProfileRepositoryImpl(
    * Returns the GUID of [profile] if it is already stored locally (matched by subscriptionId),
    * otherwise persists it and returns the new GUID. Null when profile cannot be stored.
    */
-  private suspend fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
+  private fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
     for (guid in storage.decodeServerList()) {
       val config = storage.decodeServerConfig(guid)
       if (config != null && config.subscriptionId == profile.subscriptionId) {
@@ -332,22 +291,13 @@ class ConnectionProfileRepositoryImpl(
     autoSavedEvents.tryEmit(guid)
   }
 
-  override suspend fun markAutoSavedSeen() {
-    KeyValueStorage.setLastAutoSaveProfilesJson("")
-    autoSavedEvents.tryEmit("")
-  }
-
   override fun invalidateStoredCache() {
     invalidateStoredInternal()
   }
 
-  override suspend fun invalidateRemoteCache(url: String) {
-    invalidateInternal(url)
-  }
-
   override fun isLocalStorage(): Boolean = storage.isLocalSaveEnabled()
 
-  override suspend fun fetchFromSource(url: String): List<ConnectionProfile> {
+  private suspend fun fetchFromSource(url: String): List<ConnectionProfile> {
     val cached = cacheValueSyncInternal(url)
     if (cached != null) {
       Log.d({ "Read from source: cache hit (${cached.size} profiles)" }, LOG_TAG)

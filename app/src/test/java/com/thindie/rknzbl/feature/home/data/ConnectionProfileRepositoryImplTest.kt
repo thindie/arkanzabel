@@ -20,13 +20,9 @@ import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -259,19 +255,6 @@ class ConnectionProfileRepositoryImplTest {
   // fetch / flows
 
   @Test
-  fun `fetchFromSource serves cache hit without network`() =
-    runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = false, sourceUrl = url)
-      val p1 = profile("a")
-      coEvery { httpGateway.fetchSource(url) } returns json(p1)
-
-      assertEquals(listOf(p1), repository.fetchFromSource(url))
-      assertEquals(listOf(p1), repository.fetchFromSource(url))
-      coVerify(exactly = 1) { httpGateway.fetchSource(url) }
-    }
-
-  @Test
   fun `fetch with force refetches and pings profiles`() =
     runTest {
       val url = "https://example.com/sub"
@@ -296,19 +279,6 @@ class ConnectionProfileRepositoryImplTest {
       repository.fetch(force = true)
 
       coVerify(exactly = 0) { httpGateway.fetchSource(any()) }
-    }
-
-  @Test
-  fun `received flow exposes the active source cache`() =
-    runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = false, sourceUrl = url)
-      val p1 = profile("a")
-      coEvery { httpGateway.fetchSource(url) } returns json(p1)
-
-      assertNull(repository.received.first())
-      repository.fetchFromSource(url)
-      assertEquals(listOf(p1), repository.received.first())
     }
 
   @Test
@@ -354,39 +324,6 @@ class ConnectionProfileRepositoryImplTest {
       assertNull(repository.lastMeasured.first())
     }
 
-  // measureInMemory()
-
-  @Test
-  fun `measureInMemory returns null and skips ping when no profiles are cached`() =
-    runTest {
-      val repository = createRepository(localSave = true, sourceUrl = "https://example.com/sub")
-      every { KeyValueStorage.getLocalProfiles() } returns null
-
-      assertNull(repository.measureInMemory())
-      coVerify(exactly = 0) { pingManager.measure(any()) }
-    }
-
-  @Test
-  fun `measureInMemory measures the deduplicated union of stored and received profiles`() =
-    runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = true, sourceUrl = url)
-      val p1 = profile("a")
-      every { KeyValueStorage.getLocalProfiles() } returns json(p1)
-      repository.read()
-
-      // p1 is present on both sides: it must be measured only once.
-      val p2 = profile("b")
-      val body = listOf(p1, p2).joinToString(separator = "\n") { JsonUtil.toJson(it) }
-      coEvery { httpGateway.fetchSource(url) } returns body
-      repository.fetchFromSource(url)
-
-      coEvery { pingManager.measure(any()) } returns p1
-
-      assertEquals(p1, repository.measureInMemory())
-      coVerify(exactly = 1) { pingManager.measure(listOf(p1, p2)) }
-    }
-
   @Test
   fun `invalidateCaches forces a re-read from storage`() =
     runTest {
@@ -416,22 +353,6 @@ class ConnectionProfileRepositoryImplTest {
       coVerify(exactly = 1) { httpGateway.fetchSource(url) }
     }
 
-  @Test
-  fun `fetchFromSource parses subscription uri lines and skips comments and unknown lines`() =
-    runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = false, sourceUrl = url)
-      val uriLine =
-        "vless://11111111-2222-3333-4444-555555555555@example.com:443" +
-          "?encryption=none&security=tls&sni=example.com&type=ws#My%20Server"
-      coEvery { httpGateway.fetchSource(url) } returns "# comment header\n$uriLine\ngarbage-not-a-profile\n"
-
-      val profiles = repository.fetchFromSource(url)
-
-      assertEquals(1, profiles.size)
-      assertEquals("example.com", profiles.first().server)
-    }
-
   // invalidateStoredCache / invalidateRemoteCache
 
   @Test
@@ -446,42 +367,6 @@ class ConnectionProfileRepositoryImplTest {
 
       repository.invalidateStoredCache()
       assertEquals(listOf(profile("b")), repository.read())
-    }
-
-  @Test
-  fun `invalidateRemoteCache forces a refetch from the source`() =
-    runTest {
-      val url = "https://example.com/sub"
-      val repository = createRepository(localSave = false, sourceUrl = url)
-      coEvery { httpGateway.fetchSource(url) } returns json(profile("a")) andThen json(profile("b"))
-
-      assertEquals(listOf(profile("a")), repository.fetchFromSource(url))
-      repository.invalidateRemoteCache(url)
-      assertEquals(listOf(profile("b")), repository.fetchFromSource(url))
-      coVerify(exactly = 2) { httpGateway.fetchSource(url) }
-    }
-
-  // isSaved / activeProfile
-
-  @Test
-  fun `activeProfile reads the selected server and caches it`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      val p = profile("sel")
-      every { KeyValueStorage.getSelectServer() } returns "guid-sel"
-      every { KeyValueStorage.decodeServerConfig("guid-sel") } returns p
-
-      assertEquals(p, repository.activeProfile())
-      assertEquals(p, repository.connected.first())
-      verify(exactly = 1) { KeyValueStorage.decodeServerConfig("guid-sel") }
-    }
-
-  @Test
-  fun `activeProfile is null when nothing is selected`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-
-      assertNull(repository.activeProfile())
     }
 
   // connect / disconnect via the gateway
@@ -543,87 +428,6 @@ class ConnectionProfileRepositoryImplTest {
 
       serviceState.value = WorkState.Running
       assertEquals(p, repository.connected.first())
-    }
-
-  @Test
-  fun `connect intent is set by requestConnect, consumed once and cleared on disconnect`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      assertFalse(repository.takeConnectIntent())
-
-      repository.requestConnect()
-      assertTrue(repository.takeConnectIntent())
-      assertFalse(repository.takeConnectIntent())
-
-      repository.requestConnect()
-      val p = profile("f1")
-      every { KeyValueStorage.encodeServerConfig(any(), p) } answers { firstArg<String>() }
-      repository.connect(p)
-      repository.disconnect()
-      assertFalse(repository.takeConnectIntent())
-    }
-
-  @Test
-  fun `isConnected and server name delegate to the gateway`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      every { vpnGateway.isRunning() } returns true
-      every { vpnGateway.getRunningServerName() } returns "srv"
-
-      assertTrue(repository.isConnected())
-      assertEquals("srv", repository.getConnectedServerName())
-    }
-
-  // auto-save events
-
-  @Test
-  fun `saveAuto persists guid and emits the decoded profile`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      val p = profile("auto")
-      every { KeyValueStorage.decodeServerConfig("guid-auto") } returns p
-
-      val result = CompletableDeferred<ConnectionProfile?>()
-      launch(UnconfinedTestDispatcher(testScheduler)) {
-        result.complete(repository.autoSaved().first())
-      }
-      repository.saveAuto("guid-auto")
-
-      verify(exactly = 1) { KeyValueStorage.setLastAutoSaveProfilesJson("guid-auto") }
-      assertEquals(p, withTimeout(2_000) { result.await() })
-    }
-
-  @Test
-  fun `fetchAutoSaved re-emits the last stored guid`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      val p = profile("auto")
-      every { KeyValueStorage.getLastAutoSaveProfilesJson() } returns "guid-last"
-      every { KeyValueStorage.decodeServerConfig("guid-last") } returns p
-
-      val result = CompletableDeferred<ConnectionProfile?>()
-      launch(UnconfinedTestDispatcher(testScheduler)) {
-        result.complete(repository.autoSaved().first())
-      }
-      repository.fetchAutoSaved()
-
-      assertEquals(p, withTimeout(2_000) { result.await() })
-    }
-
-  @Test
-  fun `markAutoSavedSeen clears the stored guid and emits null profile`() =
-    runTest {
-      val repository = createRepository(localSave = true)
-      every { KeyValueStorage.decodeServerConfig("") } returns null
-
-      val result = CompletableDeferred<ConnectionProfile?>()
-      launch(UnconfinedTestDispatcher(testScheduler)) {
-        result.complete(repository.autoSaved().first())
-      }
-      repository.markAutoSavedSeen()
-
-      verify(exactly = 1) { KeyValueStorage.setLastAutoSaveProfilesJson("") }
-      assertNull(withTimeout(2_000) { result.await() })
     }
 
   private fun json(vararg profiles: ConnectionProfile): String = profiles.joinToString(separator = SEP) { JsonUtil.toJson(it) }

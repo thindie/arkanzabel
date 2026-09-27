@@ -11,55 +11,25 @@ interface ConnectionProfileRepository {
 
   suspend fun delete(profile: ConnectionProfile)
 
-  fun autoSaved(): Flow<ConnectionProfile?>
-
   suspend fun saveAuto(guid: String)
-
-  suspend fun markAutoSavedSeen()
-
-  suspend fun fetchAutoSaved()
-
-  suspend fun activeProfile(): ConnectionProfile?
 
   fun invalidateCaches()
 
-  /** Invalidate only the stored (local) profiles cache. */
   fun invalidateStoredCache()
-
-  /** Invalidate only the remote source cache for a specific URL. */
-  suspend fun invalidateRemoteCache(url: String)
-
-  /** Read profiles from a specific remote source, using its dedicated cache. */
-  suspend fun fetchFromSource(url: String): List<ConnectionProfile>
 
   // VPN service operations
   suspend fun connect(profile: ConnectionProfile)
 
   suspend fun disconnect()
 
-  fun isConnected(): Boolean
-
-  fun getConnectedServerName(): String
-
   val vpnState: Flow<WorkState>
 
-  // Reactive API for connect -> fetch -> measure -> apply flow
   suspend fun fetch(force: Boolean)
 
-  /**
-   * Marks a pending connect intent so the reactive measurement path auto-connects once it yields
-   * a best profile. Survives route recreation on purpose: a pending intent completes when the
-   * user returns to Home.
-   */
-  fun requestConnect()
-
-  /** Atomically reads and clears the pending connect intent. */
   fun takeConnectIntent(): Boolean
 
   /** Mark a profile as used for next-best selection (survives route recreation). */
   fun markProfileUsed(profile: ConnectionProfile)
-
-  suspend fun measureInMemory(): ConnectionProfile?
 
   suspend fun measureStaged(): ConnectionProfile?
 
