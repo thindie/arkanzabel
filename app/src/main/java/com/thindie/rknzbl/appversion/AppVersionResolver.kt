@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Resolves the version published on the WebDAV [versionUrl] and exposes it as a flow so screens can
@@ -83,4 +83,4 @@ class AppVersionResolverImpl(
 }
 
 /** How long a fetched remote version stays valid before the next network check is allowed. */
-private val VERSION_CACHE_TTL = 7.days
+private val VERSION_CACHE_TTL = 30.minutes
