@@ -29,6 +29,7 @@ import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.core.ServiceCommand
 import com.thindie.engine.core.ViewState
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun <S : ViewState, C : Command> AppScreen(
@@ -103,9 +104,14 @@ fun <S : ViewState, C : Command> AppScreen(
               )
             }
 
-            is ServiceCommand.UiEvent.Snack, is ServiceCommand.UiEvent.SnackText -> {
+            is ServiceCommand.UiEvent.Snack,
+            is ServiceCommand.UiEvent.SnackText,
+            -> {
               LaunchedEffect(showEvent) {
-                delay(2000)
+                val delay =
+                  (showEvent as? ServiceCommand.UiEvent.Snack)
+                    ?.duration ?: 2.seconds
+                delay(delay)
                 showEvent = null
               }
               AnimatedVisibility(
