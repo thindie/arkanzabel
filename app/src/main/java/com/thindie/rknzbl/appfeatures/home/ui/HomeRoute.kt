@@ -19,10 +19,9 @@ import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.NEXT_BEST_
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterIsInstance
-
-/** Where a tap on the update prompt lands: the project's release page in the browser. */
-private const val RELEASE_URL = "https://github.com/thindie/arkanzabel"
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("FunctionName", "MagicNumber")
 internal fun HomeRoute(
@@ -143,10 +142,7 @@ internal fun HomeRoute(
       state.copy(hasProfiles = hasProfiles)
     }
 
-    // Offer an update once a strictly newer remote version is known. The engine fires the action
-    // only when state changes, so the updateShown flag makes the snack appear exactly once; its
-    // tap opens the release page in the browser and it auto-dismisses on its own.
-    screenScope.sub(appVersionResolver.remoteVersion).transition(
+    screenScope.sub(appVersionResolver.remoteVersion.debounce(3.seconds)).transition(
       block = { state, remote ->
         if (!state.updateShown && appVersionResolver.isUpdateAvailable(remote)) {
           state.copy(updateShown = true)
@@ -154,15 +150,18 @@ internal fun HomeRoute(
           state
         }
       },
-      action = { _, _, _ ->
-        screenScope.sendEvent(
-          ServiceCommand.UiEvent.Snack(
-            Action(
-              listener = { openReleaseInBrowser(context) },
-              resRef = R.string.app_version_update_snack,
+      action = { s, ns, _ ->
+        if (!s.updateShown && ns.updateShown) {
+          screenScope.sendEvent(
+            ServiceCommand.UiEvent.Snack(
+              Action(
+                listener = { openReleaseInBrowser(context) },
+                resRef = R.string.app_version_update_snack,
+              ),
+              duration = 6.seconds,
             ),
-          ),
-        )
+          )
+        }
       },
     )
   },
@@ -176,3 +175,6 @@ private fun openReleaseInBrowser(context: Context) {
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
   )
 }
+
+/** Where a tap on the update prompt lands: the project's release page in the browser. */
+private const val RELEASE_URL = "https://github.com/thindie/arkanzabel/releases"
