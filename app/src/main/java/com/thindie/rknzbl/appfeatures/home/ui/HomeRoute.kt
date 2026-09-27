@@ -65,6 +65,20 @@ internal fun HomeRoute(
         repository.fetch(true)
         null
       }
+
+      ScreenCommand.NextBestProfile -> {
+        val currentConnected = s.connectedProfile
+        if (currentConnected != null) {
+          repository.markProfileUsed(currentConnected)
+        }
+        globalJobManager.launchGlobal(CONNECT_KEY) {
+          val measured = repository.measureStaged()
+          if (measured != null) {
+            repository.connect(measured)
+          }
+        }
+        null
+      }
     }
   },
   section = HomeSection.Home,

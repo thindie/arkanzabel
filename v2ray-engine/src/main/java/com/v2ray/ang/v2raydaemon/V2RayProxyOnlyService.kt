@@ -1,4 +1,4 @@
-package com.v2ray.ang.service
+package com.v2ray.ang.v2raydaemon
 
 import android.app.Service
 import android.content.Context
@@ -13,21 +13,11 @@ import com.v2ray.ang.util.LocaleContextWrapper
 import java.lang.ref.SoftReference
 
 class V2RayProxyOnlyService : Service(), ServiceControl {
-  /**
-   * Initializes the service.
-   */
   override fun onCreate() {
     super.onCreate()
     V2RayServiceManager.serviceControl = SoftReference(this)
   }
 
-  /**
-   * Handles the start command for the service.
-   * @param intent The intent.
-   * @param flags The flags.
-   * @param startId The start ID.
-   * @return The start mode.
-   */
   override fun onStartCommand(
     intent: Intent?,
     flags: Int,
@@ -36,41 +26,28 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     if (V2RayServiceManager.isRunning()) {
       Log.i({ "Proxy-only core running; restarting loop for new profile" }, AppConfig.TAG)
       V2RayServiceManager.stopCoreLoop()
-      if (!V2RayServiceManager.startCoreLoop(null, application)) {
+      if (!V2RayServiceManager.startCoreLoop(null)) {
         Log.e({ "Failed to restart proxy-only core after profile switch" }, AppConfig.TAG)
       }
       return START_STICKY
     }
-    V2RayServiceManager.startCoreLoop(null, application)
+    V2RayServiceManager.startCoreLoop(null)
     return START_STICKY
   }
 
-  /**
-   * Destroys the service.
-   */
   override fun onDestroy() {
     super.onDestroy()
     V2RayServiceManager.stopCoreLoop()
   }
 
-  /**
-   * Gets the service instance.
-   * @return The service instance.
-   */
   override fun getService(): Service {
     return this
   }
 
-  /**
-   * Starts the service.
-   */
   override fun startService() {
     // do nothing
   }
 
-  /**
-   * Stops the service.
-   */
   override fun stopService() {
     stopSelf()
   }

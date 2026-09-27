@@ -1,10 +1,11 @@
-package com.v2ray.ang.receiver
+package com.v2ray.ang.v2raydaemon
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.v2ray.ang.ipc.BroadcastersHolder
+import com.v2ray.ang.ipc.FromMainToDaemon.Start
 import com.v2ray.ang.runtime.KeyValueStorage
-import com.v2ray.ang.runtime.V2RayServiceManager
 
 class BootReceiver : BroadcastReceiver() {
   /**
@@ -26,6 +27,7 @@ class BootReceiver : BroadcastReceiver() {
     ) {
       return
     }
-    V2RayServiceManager.startVService(context)
+    val guid = KeyValueStorage.getSelectServer()
+    (context.applicationContext as BroadcastersHolder).mainBroadcastReceiver.send(Start(guid))
   }
 }

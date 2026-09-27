@@ -4,10 +4,11 @@ import android.content.Context
 import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.error.AppError
+import com.v2ray.ang.ipc.DaemonToMain
+import com.v2ray.ang.ipc.IpcDaemonBroadcastReceiver
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayNativeManager
 import com.v2ray.ang.runtime.V2rayConfigManager
-import com.v2ray.ang.util.MessageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger
 class RealPingWorkerService(
   private val context: Context,
   private val guids: List<String>,
-  private val onFinish: (status: String) -> Unit = {},
+  private val daemonBroadcastReceiver: IpcDaemonBroadcastReceiver,
+  private val onFinish: (status: String, RealPingWorkerService) -> Unit = { _, _ -> },
 ) {
   private val job = SupervisorJob()
   private val cpu = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
@@ -43,18 +45,12 @@ class RealPingWorkerService(
           runningCount.incrementAndGet()
           try {
             val result = startRealPing(guid)
-            MessageUtil.sendMsg2UI(
-              ctx = context,
-              what = AppConfig.MSG_MEASURE_CONFIG_SUCCESS,
-              content = guid to result,
-            )
+            daemonBroadcastReceiver.sendEvent(DaemonToMain.ConfigTestResult(guid, result))
           } finally {
             val count = totalCount.decrementAndGet()
             val left = runningCount.decrementAndGet()
-            MessageUtil.sendMsg2UI(
-              ctx = context,
-              what = AppConfig.MSG_MEASURE_CONFIG_NOTIFY,
-              content = "$left / $count",
+            daemonBroadcastReceiver.sendEvent(
+              DaemonToMain.ConfigTestProgress(left, count),
             )
           }
         }
@@ -63,9 +59,11 @@ class RealPingWorkerService(
     scope.launch {
       try {
         joinAll(*jobs.toTypedArray())
-        onFinish("0")
+        daemonBroadcastReceiver.sendEvent(DaemonToMain.ConfigTestFinished)
+        onFinish("0", this@RealPingWorkerService)
       } catch (_: CancellationException) {
-        onFinish("-1")
+        daemonBroadcastReceiver.sendEvent(DaemonToMain.ConfigTestFinished)
+        onFinish("-1", this@RealPingWorkerService)
       } finally {
         close()
       }

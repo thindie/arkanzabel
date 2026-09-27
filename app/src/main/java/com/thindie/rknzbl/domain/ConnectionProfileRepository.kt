@@ -21,8 +21,6 @@ interface ConnectionProfileRepository {
 
   suspend fun activeProfile(): ConnectionProfile?
 
-  fun isSaved(profile: ConnectionProfile): Boolean
-
   fun invalidateCaches()
 
   /** Invalidate only the stored (local) profiles cache. */
@@ -57,6 +55,9 @@ interface ConnectionProfileRepository {
 
   /** Atomically reads and clears the pending connect intent. */
   fun takeConnectIntent(): Boolean
+
+  /** Mark a profile as used for next-best selection (survives route recreation). */
+  fun markProfileUsed(profile: ConnectionProfile)
 
   suspend fun measureInMemory(): ConnectionProfile?
 
