@@ -83,4 +83,4 @@ class AppVersionResolverImpl(
 }
 
 /** How long a fetched remote version stays valid before the next network check is allowed. */
-private val VERSION_CACHE_TTL = 30.minutes
+private val VERSION_CACHE_TTL = 10.minutes
