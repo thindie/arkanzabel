@@ -19,6 +19,7 @@ import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.NEXT_BEST_
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterIsInstance
 
 /** Where a tap on the update prompt lands: the project's release page in the browser. */
 private const val RELEASE_URL = "https://github.com/thindie/arkanzabel"
@@ -122,9 +123,17 @@ internal fun HomeRoute(
             is WorkState.Idle -> ScreenVpnState.NotStarted
             is WorkState.Error -> ScreenVpnState.Error
           },
-        vpnError = (vpn as? WorkState.Error)?.message,
       )
     }
+
+    screenScope.sub(repository.vpnState.filterIsInstance<WorkState.Error>())
+      .transition(
+        action = { _, _, vpn -> screenScope.sendEvent(ServiceCommand.UiEvent.SnackText(text = vpn.message)) },
+      ) { state, vpn ->
+        state.copy(
+          vpnError = vpn.message,
+        )
+      }
 
     screenScope.sub(
       repository.stored.combine(repository.received) { stored, received ->

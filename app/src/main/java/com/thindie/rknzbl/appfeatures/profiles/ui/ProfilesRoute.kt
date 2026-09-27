@@ -2,6 +2,8 @@ package com.thindie.rknzbl.appfeatures.profiles.ui
 
 import com.thindie.engine.core.RouteFactory
 import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.core.WorkState
 import com.thindie.engine.core.sub
 import com.thindie.engine.core.transition
 import com.thindie.rknzbl.appfeatures.home.HomeSection
@@ -10,6 +12,7 @@ import com.thindie.rknzbl.appfeatures.profiles.deletesaved.deleteSavedProfiles
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.withContext
 
@@ -104,4 +107,13 @@ internal fun ProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, Screen
   screenScope.sub(globalJobManager.isRunning(CONNECT_KEY)).transition { state, running ->
     state.copy(serviceConnection = running)
   }
+
+  screenScope.sub(repository.vpnState.filterIsInstance<WorkState.Error>())
+    .transition(
+      action = { _, _, vpn -> screenScope.sendEvent(ServiceCommand.UiEvent.SnackText(text = vpn.message)) },
+    ) { state, _ ->
+      state.copy(
+        connectedProfile = null,
+      )
+    }
 }
