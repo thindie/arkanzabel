@@ -73,7 +73,8 @@ internal fun handleIntent(intent: Intent): FromMainToDaemon? {
   }
 }
 
-private fun guidFrom(intent: Intent): String? = intent
+private fun guidFrom(intent: Intent): String? =
+  intent
     .getStringExtra(EXTRA_GUID)
     ?.ifBlank { null }
 

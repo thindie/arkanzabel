@@ -11,6 +11,7 @@ internal data class ScreenState(
   val lastBestProfile: ConnectionProfile? = null,
   val profilesLoading: Boolean = false,
   val hasProfiles: Boolean = false,
+  val nextBestProfileSeeking: Boolean = false,
   val screenVpnState: ScreenVpnState = ScreenVpnState.NotStarted,
   val vpnError: String? = null,
   // Flips true once the update snack has been shown, so it appears at most once per session.

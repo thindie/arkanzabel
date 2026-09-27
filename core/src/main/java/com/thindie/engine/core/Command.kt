@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import com.thindie.engine.uikit.Action
 import java.io.Serializable
+import kotlin.time.Duration
 
 @Stable
 interface Command
@@ -33,6 +34,7 @@ sealed interface ServiceCommand : Command {
     @Immutable
     data class Snack(
       val action: Action,
+      val duration: Duration,
     ) : UiEvent
 
     @Immutable

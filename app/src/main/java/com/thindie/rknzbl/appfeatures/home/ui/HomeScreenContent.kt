@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +30,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
+import com.thindie.engine.core.ServiceCommand
+import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
+import com.thindie.engine.uikit.CircularProgress
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
@@ -42,75 +46,106 @@ import com.v2ray.ang.enums.Protocol
 @Composable
 internal fun HomeScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
   val state = scope.state.collectAsState().value
-
-  PullToRefreshBox(
-    modifier = Modifier.fillMaxSize(),
-    isRefreshing = scope.processing.value is ScreenCommand.RefreshProfiles,
-    onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
-  ) {
-    Box(
-      modifier =
-        Modifier
-          .background(AppTheme.colors.backgroundPrimary)
-          .systemBarsPadding()
-          .fillMaxSize(),
-      contentAlignment = Alignment.Center,
+  val nextBestSeekingSnackText = stringResource(R.string.home_next_best_profile_seeking_snack)
+  AppScreen(scope) {
+    PullToRefreshBox(
+      modifier = Modifier.fillMaxSize(),
+      isRefreshing = scope.processing.value is ScreenCommand.RefreshProfiles,
+      onRefresh = { scope.send(ScreenCommand.RefreshProfiles) },
     ) {
-      // Animated nebula background, visible only when connected
-      AnimatedVisibility(
-        visible = state.connectedProfile != null,
-        enter = fadeIn(animationSpec = tween(800)),
-        exit = fadeOut(animationSpec = tween(600)),
+      Box(
+        modifier =
+          Modifier
+            .background(AppTheme.colors.backgroundPrimary)
+            .systemBarsPadding()
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center,
       ) {
-        NebulaBackground(modifier = Modifier.fillMaxSize())
-      }
+        // Animated nebula background, visible only when connected
+        AnimatedVisibility(
+          visible = state.connectedProfile != null,
+          enter = fadeIn(animationSpec = tween(800)),
+          exit = fadeOut(animationSpec = tween(600)),
+        ) {
+          NebulaBackground(modifier = Modifier.fillMaxSize())
+        }
 
-      Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-      ) {
-        if (state.connectedProfile != null) {
-          Text(
-            text = stringResource(R.string.home_connected),
-            style = AppTheme.typography.labelMedium,
-            color = AppTheme.colors.successPrimary,
-          )
-          Text(
-            text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
-            style = AppTheme.typography.bodySmall,
-            color = AppTheme.colors.contentSecondary,
+        Column(
+          horizontalAlignment = Alignment.CenterHorizontally,
+          verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+          if (state.connectedProfile != null) {
+            Text(
+              text = stringResource(R.string.home_connected),
+              style = AppTheme.typography.labelMedium,
+              color = AppTheme.colors.successPrimary,
+            )
+            Text(
+              text = state.connectedProfile.remarks.ifEmpty { "${state.connectedProfile.server}:${state.connectedProfile.serverPort}" },
+              style = AppTheme.typography.bodySmall,
+              color = AppTheme.colors.contentSecondary,
+            )
+          }
+
+          ConnectButton(
+            state = state,
+            onClick = {
+              scope.send(ScreenCommand.ToggleConnect)
+            },
           )
         }
 
-        ConnectButton(
-          state = state,
-          onClick = {
-            scope.send(ScreenCommand.ToggleConnect)
-          },
-        )
-      }
-
-      AnimatedVisibility(
-        modifier =
-          Modifier
-            .surface(
-              onClick = { scope.send(ScreenCommand.NextBestProfile) },
-            )
-            .align(Alignment.CenterEnd),
-        visible = state.connectedProfile != null && !state.profilesLoading,
-        enter = fadeIn(animationSpec = tween(300)),
-        exit = fadeOut(animationSpec = tween(200)),
-      ) {
-        Icon(
+        AnimatedVisibility(
           modifier =
-            Modifier.size(
-              96.dp,
-              128.dp,
-            ),
-          painter = painterResource(R.drawable.ic_chevron_right_24),
-          contentDescription = null,
-          tint = AppTheme.colors.successPrimary,
-        )
+            Modifier
+              .padding(end = 16.dp, bottom = 24.dp)
+              .surface(
+                onClick = {
+                  if (!state.nextBestProfileSeeking) {
+                    run {
+                      scope.send(ScreenCommand.NextBestProfile)
+                      scope.sendEvent(ServiceCommand.UiEvent.SnackText(text = nextBestSeekingSnackText))
+                    }
+                  }
+                },
+              )
+              .align(Alignment.BottomEnd),
+          visible = state.connectedProfile != null && !state.profilesLoading,
+          enter = fadeIn(animationSpec = tween(300)),
+          exit = fadeOut(animationSpec = tween(200)),
+        ) {
+          if (state.nextBestProfileSeeking) {
+            CircularProgress(
+              modifier =
+                Modifier
+                  .background(
+                    color = AppTheme.colors.successPrimary.copy(alpha = 0.05f),
+                  )
+                  .padding(
+                    horizontal = 24.dp,
+                    vertical = 32.dp,
+                  )
+                  .size(24.dp),
+              color = AppTheme.colors.successPrimary,
+            )
+          } else {
+            Icon(
+              modifier =
+                Modifier
+                  .background(
+                    color = AppTheme.colors.successPrimary.copy(alpha = 0.05f),
+                  )
+                  .padding(
+                    horizontal = 24.dp,
+                    vertical = 32.dp,
+                  )
+                  .size(24.dp),
+              painter = painterResource(R.drawable.ic_chevron_right_24),
+              contentDescription = null,
+              tint = AppTheme.colors.successPrimary,
+            )
+          }
+        }
       }
     }
   }

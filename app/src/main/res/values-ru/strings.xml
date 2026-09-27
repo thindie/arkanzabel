@@ -5,6 +5,7 @@
     <string name="vpn_import">Сохранить профиль</string>
     <string name="vpn_start">Запустить VPN</string>
     <string name="vpn_stop">Остановить VPN</string>
+    <string name="home_next_best_profile_seeking_snack">Ищу следующий профиль</string>
     <string name="vpn_import_ok">Профиль сохранён</string>
     <string name="vpn_import_fail">Не удалось разобрать URI</string>
     <string name="vpn_import_save_failed_storage">Не удалось сохранить профиль: хранилище не готово. Перезапустите приложение.</string>

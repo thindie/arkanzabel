@@ -15,12 +15,13 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.DISCONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY_HOME
+import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.NEXT_BEST_KEY
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
-
-/** Where a tap on the update prompt lands: the project's release page in the browser. */
-private const val RELEASE_URL = "https://github.com/thindie/arkanzabel"
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("FunctionName", "MagicNumber")
 internal fun HomeRoute(
@@ -71,7 +72,7 @@ internal fun HomeRoute(
         if (currentConnected != null) {
           repository.markProfileUsed(currentConnected)
         }
-        globalJobManager.launchGlobal(CONNECT_KEY) {
+        globalJobManager.launchGlobal(NEXT_BEST_KEY) {
           val measured = repository.measureStaged()
           if (measured != null) {
             repository.connect(measured)
@@ -99,6 +100,10 @@ internal fun HomeRoute(
       state.copy(profilesLoading = running)
     }
 
+    screenScope.sub(globalJobManager.isRunning(NEXT_BEST_KEY)).transition { state, seeking ->
+      state.copy(nextBestProfileSeeking = seeking)
+    }
+
     val connectRunning = globalJobManager.isRunning(CONNECT_KEY)
     screenScope.sub(connectRunning).transition { state, running ->
       if (running) state.copy(screenVpnState = ScreenVpnState.TurningOn) else state
@@ -117,9 +122,17 @@ internal fun HomeRoute(
             is WorkState.Idle -> ScreenVpnState.NotStarted
             is WorkState.Error -> ScreenVpnState.Error
           },
-        vpnError = (vpn as? WorkState.Error)?.message,
       )
     }
+
+    screenScope.sub(repository.vpnState.filterIsInstance<WorkState.Error>())
+      .transition(
+        action = { _, _, vpn -> screenScope.sendEvent(ServiceCommand.UiEvent.SnackText(text = vpn.message)) },
+      ) { state, vpn ->
+        state.copy(
+          vpnError = vpn.message,
+        )
+      }
 
     screenScope.sub(
       repository.stored.combine(repository.received) { stored, received ->
@@ -129,10 +142,7 @@ internal fun HomeRoute(
       state.copy(hasProfiles = hasProfiles)
     }
 
-    // Offer an update once a strictly newer remote version is known. The engine fires the action
-    // only when state changes, so the updateShown flag makes the snack appear exactly once; its
-    // tap opens the release page in the browser and it auto-dismisses on its own.
-    screenScope.sub(appVersionResolver.remoteVersion).transition(
+    screenScope.sub(appVersionResolver.remoteVersion.debounce(3.seconds)).transition(
       block = { state, remote ->
         if (!state.updateShown && appVersionResolver.isUpdateAvailable(remote)) {
           state.copy(updateShown = true)
@@ -140,15 +150,18 @@ internal fun HomeRoute(
           state
         }
       },
-      action = { _, _, _ ->
-        screenScope.sendEvent(
-          ServiceCommand.UiEvent.Snack(
-            Action(
-              listener = { openReleaseInBrowser(context) },
-              resRef = R.string.app_version_update_snack,
+      action = { s, ns, _ ->
+        if (!s.updateShown && ns.updateShown) {
+          screenScope.sendEvent(
+            ServiceCommand.UiEvent.Snack(
+              Action(
+                listener = { openReleaseInBrowser(context) },
+                resRef = R.string.app_version_update_snack,
+              ),
+              duration = 6.seconds,
             ),
-          ),
-        )
+          )
+        }
       },
     )
   },
@@ -162,3 +175,6 @@ private fun openReleaseInBrowser(context: Context) {
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
   )
 }
+
+/** Where a tap on the update prompt lands: the project's release page in the browser. */
+private const val RELEASE_URL = "https://github.com/thindie/arkanzabel/releases"
