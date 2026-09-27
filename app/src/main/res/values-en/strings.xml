@@ -5,6 +5,7 @@
     <string name="vpn_import">Save profile</string>
     <string name="vpn_start">Start VPN</string>
     <string name="vpn_stop">Stop VPN</string>
+    <string name="home_next_best_profile_seeking_snack">Finding next best profile</string>
     <string name="vpn_import_ok">Profile saved</string>
     <string name="vpn_import_fail">Failed to parse URI</string>
     <string name="vpn_import_save_failed_storage">Could not save profile: storage is not ready. Restart the app.</string>

@@ -15,6 +15,7 @@ import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.DISCONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY_HOME
+import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.NEXT_BEST_KEY
 import com.thindie.rknzbl.appversion.AppVersionResolver
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import kotlinx.coroutines.flow.combine
@@ -71,7 +72,7 @@ internal fun HomeRoute(
         if (currentConnected != null) {
           repository.markProfileUsed(currentConnected)
         }
-        globalJobManager.launchGlobal(CONNECT_KEY) {
+        globalJobManager.launchGlobal(NEXT_BEST_KEY) {
           val measured = repository.measureStaged()
           if (measured != null) {
             repository.connect(measured)
@@ -97,6 +98,10 @@ internal fun HomeRoute(
 
     screenScope.sub(globalJobManager.isRunning(FETCH_KEY_HOME)).transition { state, running ->
       state.copy(profilesLoading = running)
+    }
+
+    screenScope.sub(globalJobManager.isRunning(NEXT_BEST_KEY)).transition { state, seeking ->
+      state.copy(nextBestProfileSeeking = seeking)
     }
 
     val connectRunning = globalJobManager.isRunning(CONNECT_KEY)
