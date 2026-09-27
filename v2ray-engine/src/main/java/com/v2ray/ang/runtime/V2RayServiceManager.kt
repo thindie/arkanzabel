@@ -200,13 +200,6 @@ object V2RayServiceManager {
     val guid = KeyValueStorage.getSelectServer() ?: return false
     val config = KeyValueStorage.decodeServerConfig(guid) ?: return false
 
-    // Set up IPC channel first so all error paths can report back
-    val control =
-      serviceControl?.get() ?: run {
-        Log.e({ "serviceControl not available" }, AppConfig.TAG)
-        return false
-      }
-
     try {
       screenReceiver =
         object : BroadcastReceiver() {
@@ -425,15 +418,11 @@ object V2RayServiceManager {
     }
 
     managerScope.launch {
-      val service = getService() ?: return@launch
       var time = -1L
-      var errorStr = ""
-
       try {
         time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
       } catch (runtime: RuntimeException) {
         Log.e({ "Failed to measure delay with primary URL" }, AppConfig.TAG, runtime)
-        errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
       }
       if (time == -1L) {
         try {
@@ -444,7 +433,6 @@ object V2RayServiceManager {
             AppConfig.TAG,
             runtime,
           )
-          errorStr = runtime.message?.substringAfter("\":") ?: "empty message"
         }
       }
 
