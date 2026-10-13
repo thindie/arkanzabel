@@ -3,7 +3,6 @@ package com.thindie.rknzbl.appfeatures.home.data
 import com.thindie.engine.core.Cache
 import com.thindie.engine.core.Log
 import com.thindie.engine.core.WorkState
-import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
@@ -15,13 +14,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.withTimeoutOrNull
 
 class ConnectionProfileRepositoryImpl(
-  private val pingManager: ProfilePingManager,
   private val storage: KeyValueStorage,
   private val httpGateway: ProfileHttpGateway,
   private val vpnGateway: VpnServiceGateway,
@@ -84,16 +82,6 @@ class ConnectionProfileRepositoryImpl(
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-  // Best profile of the last completed ping batch (lowest successful delay);
-  // null until a batch yields at least one successful measurement.
-  override val lastMeasured: Flow<ConnectionProfile?> =
-    pingManager.batch.map { batch ->
-      batch?.results
-        ?.filterValues { it > 0 }
-        ?.minByOrNull { it.value }
-        ?.key
-    }
-
   // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
   private val activeProfileCache = Cache<ConnectionProfile?>(null)
 
@@ -103,10 +91,58 @@ class ConnectionProfileRepositoryImpl(
       if (state is WorkState.Error) null else profile
     }
 
-  // Pending connect intent: set by [requestConnect], consumed when the reactive path launches a
-  // connect, cleared on disconnect. Intentionally survives route recreation so a pending intent
-  // completes once the user returns to Home.
-  private val connectRequested = AtomicBoolean(false)
+  override val measured: Flow<List<ConnectionProfile>?> =
+    cacheVersion.map {
+      cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)
+    }
+
+  override suspend fun ping() {
+    pingInternal()
+  }
+
+  private suspend fun pingInternal(cap: Int? = null) {
+    profilesInMemoryCache
+      .filter { it.key != MEASURED_PROFILES_CACHE_KEY && it.key != SKIPPED_PROFILES_CACHE_KEY }
+      .filter { it.key == storage.getCustomSourceUrl() }
+      .forEach { (_, cache) ->
+        val profiles = cache.value.value
+        val resultProfiles = profiles?.toMutableList() ?: return
+        if (!ensureVpnRunning(profiles)) return
+        var capInternal = 0
+        profiles.forEachIndexed { index, profile ->
+          if (capInternal == cap) {
+            return
+          }
+          val measured = httpGateway.ping(profile)
+          if (measured.delay != null && measured.delay!! > 0) {
+            capInternal += 1
+          }
+          resultProfiles[index] = measured
+          setCacheInternal(MEASURED_PROFILES_CACHE_KEY, resultProfiles)
+        }
+      }
+  }
+
+  override suspend fun asapProfile() {
+    val url = storage.getCustomSourceUrl() ?: return
+    val profiles = fetchFromSource(url)
+    if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
+    pingInternal(5)
+    val profile =
+      cacheValueSyncInternal(url)
+        ?.filter { profile -> profile.delay?.let { it > 0 } == true }
+        ?.minByOrNull { it.delay ?: Long.MAX_VALUE }
+    profile?.let { connect(it) }
+  }
+
+  private suspend fun ensureVpnRunning(profiles: List<ConnectionProfile>): Boolean {
+    if (vpnGateway.isRunning()) return true
+    val bootstrapProfile = profiles.firstOrNull() ?: return false
+    connect(bootstrapProfile)
+    return withTimeoutOrNull(VPN_START_TIMEOUT_MS) {
+      vpnGateway.serviceState.first { it is WorkState.Running }
+    } != null
+  }
 
   init {
     // Restore active profile from storage if VPN service is already running.
@@ -120,19 +156,9 @@ class ConnectionProfileRepositoryImpl(
     }
   }
 
-  override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
-
   override fun markProfileUsed(profile: ConnectionProfile) {
     val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty() + profile
     setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, skipped)
-  }
-
-  override suspend fun measureStaged(): ConnectionProfile? {
-    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
-    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty()
-    val profiles = ((storageCacheInternal().orEmpty() - skipped.toSet()) + receivedProfiles).distinct()
-    if (profiles.isEmpty()) return null
-    return pingManager.measureStaged(profiles)
   }
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
@@ -218,21 +244,16 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override fun invalidateCaches() {
-    pingManager.invalidateMeasurementCache()
     invalidateCacheInternal()
   }
 
   // VPN service operations
   override suspend fun connect(profile: ConnectionProfile) {
-    val guid =
-      findOrSaveProfileGuid(profile)
-        ?: error("Cannot store profile: ${profile.subscriptionId}")
     activeProfileCache.set(profile)
-    vpnGateway.startVService(guid = guid)
+    vpnGateway.startVService(profile)
   }
 
   override suspend fun disconnect() {
-    connectRequested.set(false)
     activeProfileCache.clear()
     vpnGateway.stopVService()
   }
@@ -245,8 +266,6 @@ class ConnectionProfileRepositoryImpl(
       if (force) invalidateInternal(url)
       if (cacheValueSyncInternal(url) != null) return
       fetchFromSource(url)
-      val profiles = requireNotNull(cacheValueSyncInternal(url))
-      pingManager.pingProfiles(profiles, force = false)
     }
   }
 
@@ -261,23 +280,6 @@ class ConnectionProfileRepositoryImpl(
       return true
     }
     return false
-  }
-
-  /**
-   * Returns the GUID of [profile] if it is already stored locally (matched by subscriptionId),
-   * otherwise persists it and returns the new GUID. Null when profile cannot be stored.
-   */
-  private fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
-    for (guid in storage.decodeServerList()) {
-      val config = storage.decodeServerConfig(guid)
-      if (config != null && config.subscriptionId == profile.subscriptionId) {
-        return guid
-      }
-    }
-    val guid = UUID.randomUUID().toString()
-    storage.encodeServerConfig(guid, profile)
-    Log.i({ "Connect: profile stored locally as $guid" }, LOG_TAG)
-    return guid
   }
 
   private fun activeProfileInternal(): ConnectionProfile? {
@@ -336,6 +338,8 @@ private const val STORED_PROFILES_SEPARATOR = "########"
 private const val FETCH_PROFILES_SEPARATOR = "\n"
 
 private const val SKIPPED_PROFILES_CACHE_KEY = "skipped_measured_cache"
+private const val MEASURED_PROFILES_CACHE_KEY = "measured_profiles_measured_cache"
+private const val VPN_START_TIMEOUT_MS = 30_000L
 private val LOG_TAG = AppConfig.TAG
 
 private fun parseAndDeduplicate(

@@ -42,12 +42,13 @@ class IpcDaemonBroadcastReceiver(private val context: Context) {
         intent: Intent?,
       ) {
         if (warmedUp) {
+          Log.i({ "Daemon received event, warmedUp" }, AppConfig.TAG_KERNEL)
           if (ctx?.determineProcess() != ProcessKind.Daemon) return
         }
         warmedUp = true
         Log.i({ "Daemon received event, process: ${ctx?.determineProcess()}" }, AppConfig.TAG_KERNEL)
         if (intent?.action != AppConfig.BROADCAST_ACTION_SERVICE) return
-        val command = handleIntent(intent) ?: return
+        val command = intent.getMainExtra() ?: return
         Log.i({ "Daemon received command: $command" }, AppConfig.TAG_KERNEL)
         ctx?.let { dispatchCommand(command, it) }
       }
@@ -62,13 +63,17 @@ class IpcDaemonBroadcastReceiver(private val context: Context) {
             V2RayServiceManager.handleDaemonCommand(command, control, context)
 
           is FromMainToDaemon.Start ->
-            V2RayServiceManager.startVService(context, command.guid)
+            V2RayServiceManager.startVService(context, command.profile)
 
           is FromMainToDaemon.Stop ->
             V2RayServiceManager.stopCoreLoop()
 
           is FromMainToDaemon.Restart ->
             V2RayServiceManager.handleDaemonCommand(command, control, context)
+
+          is FromMainToDaemon.MeasureProfile -> {
+            V2RayServiceManager.handleDaemonCommand(command, control, context)
+          }
 
           else -> Unit
         }
@@ -96,16 +101,6 @@ class IpcDaemonBroadcastReceiver(private val context: Context) {
       receiverRegistered = true
     } catch (e: Exception) {
       Log.e({ "Failed to register daemon command receiver" }, AppConfig.TAG_KERNEL, e)
-    }
-  }
-
-  fun stopObserving() {
-    if (!receiverRegistered) return
-    try {
-      context.unregisterReceiver(receiver)
-      receiverRegistered = false
-    } catch (e: Exception) {
-      Log.e({ "Failed to unregister daemon command receiver" }, AppConfig.TAG_KERNEL, e)
     }
   }
 }

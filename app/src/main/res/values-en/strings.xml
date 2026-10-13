@@ -61,7 +61,7 @@
     <string name="home_btn_disconnect">Disconnect</string>
     <string name="home_btn_connect">Connect</string>
     <string name="home_profile_unreachable">Unreachable</string>
-    <string name="home_profile_ping_ms">%d ms</string>
+    <string name="home_profile_ping_ms">%s ms</string>
     <string name="home_downloaded_profiles_header">Downloaded profiles</string>
     <string name="home_choose_source">Choose source</string>
     <string name="home_source_selected_prefix">Selected:</string>

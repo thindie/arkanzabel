@@ -13,4 +13,6 @@ sealed interface ScreenCommand : Command {
   data class ConnectProfile(val profile: ConnectionProfile) : ScreenCommand
 
   data object OpenDeleteSavedProfiles : ScreenCommand
+
+  data object PingAllProfiles : ScreenCommand
 }

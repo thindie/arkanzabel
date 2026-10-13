@@ -3,6 +3,10 @@ package com.thindie.rknzbl.appfeatures.home.data
 import com.thindie.engine.core.Log
 import com.thindie.rknzbl.error.AppError
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.ipc.DaemonToMain
+import com.v2ray.ang.ipc.FromMainToDaemon
+import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -19,10 +23,16 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
+import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
@@ -52,12 +62,15 @@ interface ProfileHttpGateway {
 
   /** Fetches an arbitrary file from the default WebDAV endpoint using its stored credentials. */
   suspend fun fetchAuthenticated(url: String): String
+
+  suspend fun ping(profile: ConnectionProfile): ConnectionProfile
 }
 
 class ProfileHttpGatewayImpl(
   private val webDavUrlDefault: String,
   private val userNameDefault: String,
   private val passwordDefault: String,
+  private val ipcMainBroadcastReceiver: IpcMainBroadcastReceiver,
 ) : ProfileHttpGateway {
   // Rebuilt when the WebDAV endpoint/credentials change (in-app settings update), so a running app
   // picks up new values without a restart. Double-checked under [clientLock]; the field is volatile
@@ -179,6 +192,22 @@ class ProfileHttpGatewayImpl(
       }
     } ?: throw AppError.ServerError.TimeOut
 
+  override suspend fun ping(profile: ConnectionProfile): ConnectionProfile {
+    val requestId = UUID.randomUUID().toString()
+    return coroutineScope {
+      val response =
+        async(start = CoroutineStart.UNDISPATCHED) {
+          withTimeoutOrNull(PROFILE_PING_TIMEOUT_MS) {
+            IpcMainBroadcastReceiver.events
+              .filterIsInstance<DaemonToMain.ProfileMeasured>()
+              .first { it.requestId == requestId }
+          }
+        }
+      ipcMainBroadcastReceiver.send(FromMainToDaemon.MeasureProfile(profile, requestId))
+      response.await()?.profile ?: profile.copy(delay = -1L)
+    }
+  }
+
   override suspend fun writeWebDav(body: String) {
     withTimeoutOrNull(REQUEST_TIMEOUT) {
       try {
@@ -241,6 +270,7 @@ private const val MAX_CONNECTIONS_COUNT = 32
 private const val REQUEST_TIMEOUT_MS = 300_000L
 private const val CONNECT_TIMEOUT_MS = 30_000L
 private const val SOCKET_TIMEOUT_MS = 300_000L
+private const val PROFILE_PING_TIMEOUT_MS = 35_000L
 private val REQUEST_TIMEOUT = 5.seconds
 
 private val LOG_TAG = AppConfig.TAG

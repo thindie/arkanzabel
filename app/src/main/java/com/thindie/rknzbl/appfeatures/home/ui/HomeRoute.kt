@@ -37,19 +37,14 @@ internal fun HomeRoute(
       ScreenCommand.ToggleConnect -> {
         when (s.screenVpnState) {
           ScreenVpnState.NotStarted, ScreenVpnState.Error -> {
-            val best = s.lastBestProfile
-            if (best != null) {
-              globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(best) }
-            } else if (s.hasProfiles) {
+            if (s.hasProfiles) {
               globalJobManager.launchGlobal(CONNECT_KEY) {
-                val measured = repository.measureStaged() ?: return@launchGlobal
-                repository.connect(measured)
+                repository.asapProfile()
               }
             } else {
               globalJobManager.launchGlobal(FETCH_KEY_HOME) {
                 repository.fetch(true)
-                val measured = repository.measureStaged() ?: return@launchGlobal
-                repository.connect(measured)
+                repository.asapProfile()
               }
             }
           }
@@ -73,10 +68,7 @@ internal fun HomeRoute(
           repository.markProfileUsed(currentConnected)
         }
         globalJobManager.launchGlobal(NEXT_BEST_KEY) {
-          val measured = repository.measureStaged()
-          if (measured != null) {
-            repository.connect(measured)
-          }
+          repository.asapProfile()
         }
         null
       }
@@ -84,14 +76,6 @@ internal fun HomeRoute(
   },
   section = HomeSection.Home,
   stateSink = { screenScope ->
-    screenScope.sub(repository.lastMeasured).transition(
-      block = { state, profile -> if (profile != null) state.copy(lastBestProfile = profile) else state },
-      action = { _, _, profile ->
-        if (profile == null || !repository.takeConnectIntent()) return@transition
-        globalJobManager.launchGlobal(CONNECT_KEY) { repository.connect(profile) }
-      },
-    )
-
     screenScope.sub(repository.connected).transition { state, connected ->
       state.copy(connectedProfile = connected)
     }

@@ -20,7 +20,6 @@ import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
 import com.thindie.rknzbl.application.Application
 import com.thindie.rknzbl.application.LogSinkProvider
-import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.appversion.AppVersion
 import com.thindie.rknzbl.appversion.AppVersionResolver
@@ -49,18 +48,18 @@ class ApplicationScope private constructor(application: Application) {
         CoroutineExceptionHandler { _, e -> "${e.message}" },
     )
 
-  val pingManager = ProfilePingManager(application, coroutineScope)
   val globalJobManager = GlobalJobManager(coroutineScope)
   val vpnStateTracker: VpnServiceGateway = V2RayVpnServiceGateway.instance(application)
 
   // WebDAV endpoint for remote (non-local) profile storage; null when not configured.
   private val webDavConfig: WebDavConfig? = KeyValueStorage.decodeWebDavConfig()
 
-  private val profileHttpGateway: ProfileHttpGateway =
+  private val profileHttpGateway: ProfileHttpGateway by lazy {
     ProfileHttpGatewayImpl(
       webDavUrlDefault = WEBDAV_DEFAULT_BASE_URL,
       userNameDefault = WEBDAV_DEFAULT_USERNAME.orEmpty(),
       passwordDefault = WEBDAV_DEFAULT_PASSWORD.orEmpty(),
+      ipcMainBroadcastReceiver = application.mainBroadcastReceiver,
     )
       .also {
         if (webDavConfig != null) {
@@ -77,6 +76,7 @@ class ApplicationScope private constructor(application: Application) {
           )
         }
       }
+  }
 
   private val appVersionResolver: AppVersionResolver =
     AppVersionResolverImpl(
@@ -88,7 +88,6 @@ class ApplicationScope private constructor(application: Application) {
 
   val connectionProfileRepository: ConnectionProfileRepository =
     ConnectionProfileRepositoryImpl(
-      pingManager = pingManager,
       storage = KeyValueStorage,
       httpGateway = profileHttpGateway,
       vpnGateway = vpnStateTracker,

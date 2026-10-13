@@ -199,13 +199,10 @@ object AppConfig {
   const val MSG_STATE_STOP_SUCCESS = 41
   const val MSG_STATE_RESTART = 5
   const val MSG_STATE_SAVE_PROFILE = 55
-  const val MSG_MEASURE_DELAY = 6
-  const val MSG_MEASURE_DELAY_SUCCESS = 61
+
+  const val MSG_MEASURE_PROFILE = 62
+  const val MSG_MEASURE_PROFILE_DONE = 63
   const val MSG_MEASURE_CONFIG = 7
-  const val MSG_MEASURE_CONFIG_SUCCESS = 71
-  const val MSG_MEASURE_CONFIG_CANCEL = 72
-  const val MSG_MEASURE_CONFIG_NOTIFY = 73
-  const val MSG_MEASURE_CONFIG_FINISH = 74
 
   /** Notification channel IDs and names. */
   const val RAY_NG_CHANNEL_ID = "RAY_NG_M_CH_ID"

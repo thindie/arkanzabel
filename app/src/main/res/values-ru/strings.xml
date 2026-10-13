@@ -61,7 +61,7 @@
     <string name="home_btn_disconnect">Отключить</string>
     <string name="home_btn_connect">Подключить</string>
     <string name="home_profile_unreachable">Недоступен</string>
-    <string name="home_profile_ping_ms">%d мс</string>
+    <string name="home_profile_ping_ms">%s мс</string>
     <string name="home_downloaded_profiles_header">Скачанные профили</string>
     <string name="home_choose_source">Выберите источник</string>
     <string name="home_source_selected_prefix">Выбрано:</string>

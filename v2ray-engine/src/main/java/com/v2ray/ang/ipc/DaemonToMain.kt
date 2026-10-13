@@ -1,32 +1,22 @@
 package com.v2ray.ang.ipc
 
+import com.v2ray.ang.dto.ConnectionProfile
+
 sealed interface DaemonToMain {
   data object Running : DaemonToMain
 
   data object NotRunning : DaemonToMain
 
-  data class StartSuccess(val guid: String? = null) : DaemonToMain
+  data class StartSuccess(val profile: ConnectionProfile) : DaemonToMain
 
   data class StartFailure(val message: String) : DaemonToMain
 
   data object StopSuccess : DaemonToMain
 
-  data class DelayMeasured(
-    val guid: String?,
-    val delayMs: Long?,
+  data class ProfileMeasured(
+    val profile: ConnectionProfile,
+    val requestId: String,
   ) : DaemonToMain
-
-  data class ConfigTestResult(
-    val guid: String,
-    val result: Long?,
-  ) : DaemonToMain
-
-  data class ConfigTestProgress(
-    val remaining: Int,
-    val total: Int,
-  ) : DaemonToMain
-
-  data object ConfigTestFinished : DaemonToMain
 
   data object SaveProfile : DaemonToMain
 }

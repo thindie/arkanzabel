@@ -120,22 +120,13 @@ class Application : Application(), Configuration.Provider, BroadcastersHolder {
             gateway.serviceState.value = WorkState.Idle
           }
 
-          is DaemonToMain.DelayMeasured -> {
-            Log.i({ "ipc: delay measured ${event.guid}=${event.delayMs}" }, "VPN")
-          }
-
-          is DaemonToMain.ConfigTestResult,
-          is DaemonToMain.ConfigTestProgress,
-          is DaemonToMain.ConfigTestFinished,
-          -> {
-            Log.i({ "ipc: config test event" }, "VPN")
-          }
-
           is DaemonToMain.SaveProfile -> {
             Log.d({ "ipc: Save Profile requested" }, "VPN")
             val guid = KeyValueStorage.getSelectServer()
             if (guid != null) applicationScope.connectionProfileRepository.save(guid)
           }
+
+          is DaemonToMain.ProfileMeasured -> { }
         }
       }
     }

@@ -65,7 +65,7 @@
     <string name="home_no_profiles_cache">No profiles in cache</string>
     <string name="home_vpn_connection_error">Connection failed</string>
     <string name="home_profile_unreachable">Unreachable</string>
-    <string name="home_profile_ping_ms">%d ms</string>
+    <string name="home_profile_ping_ms">%s ms</string>
     <string name="home_downloaded_profiles_header">Downloaded profiles</string>
     <string name="home_choose_source">Choose source</string>
     <string name="home_source_selected_prefix">Selected:</string>
@@ -91,6 +91,7 @@
     <string name="profiles_tab_main">Main</string>
     <string name="profiles_tab_saved">Saved</string>
     <string name="profiles_empty">No profiles yet</string>
+    <string name="profiles_ping_all">Ping all profiles</string>
     <string name="profiles_open_delete">Delete saved</string>
     <string name="profiles_delete_title">Delete saved profiles</string>
     <string name="profiles_saved_empty">No saved profiles</string>

@@ -161,45 +161,45 @@ open class ProtocolParser {
       dicQuery["allowInsecure"] = insecureFlag
     }
 
-    val networkType = config.network
-    dicQuery["type"] = networkType.type
+    config.network?.let {
+      dicQuery["type"] = it.type
+      when (it) {
+        NetworkType.TCP -> {
+          dicQuery["headerType"] = config.headerType?.ifEmpty { "none" }.orEmpty()
+          config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
+        }
 
-    when (networkType) {
-      NetworkType.TCP -> {
-        dicQuery["headerType"] = config.headerType?.ifEmpty { "none" }.orEmpty()
-        config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
+        NetworkType.KCP -> {
+          dicQuery["headerType"] = config.headerType?.ifEmpty { "none" }.orEmpty()
+          config.seed?.nullIfBlank()?.let { dicQuery["seed"] = it }
+        }
+
+        NetworkType.WS, NetworkType.HTTP_UPGRADE -> {
+          config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
+          config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
+        }
+
+        NetworkType.XHTTP -> {
+          config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
+          config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
+          config.xhttpMode?.nullIfBlank()?.let { dicQuery["mode"] = it }
+          config.xhttpExtra?.nullIfBlank()?.let { dicQuery["extra"] = it }
+        }
+
+        NetworkType.HTTP, NetworkType.H2 -> {
+          dicQuery["type"] = "http"
+          config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
+          config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
+        }
+
+        NetworkType.GRPC -> {
+          config.mode?.nullIfBlank()?.let { dicQuery["mode"] = it }
+          config.authority?.nullIfBlank()?.let { dicQuery["authority"] = it }
+          config.serviceName?.nullIfBlank()?.let { dicQuery["serviceName"] = it }
+        }
+
+        else -> {}
       }
-
-      NetworkType.KCP -> {
-        dicQuery["headerType"] = config.headerType?.ifEmpty { "none" }.orEmpty()
-        config.seed?.nullIfBlank()?.let { dicQuery["seed"] = it }
-      }
-
-      NetworkType.WS, NetworkType.HTTP_UPGRADE -> {
-        config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
-        config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
-      }
-
-      NetworkType.XHTTP -> {
-        config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
-        config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
-        config.xhttpMode?.nullIfBlank()?.let { dicQuery["mode"] = it }
-        config.xhttpExtra?.nullIfBlank()?.let { dicQuery["extra"] = it }
-      }
-
-      NetworkType.HTTP, NetworkType.H2 -> {
-        dicQuery["type"] = "http"
-        config.host?.nullIfBlank()?.let { dicQuery["host"] = it }
-        config.path?.nullIfBlank()?.let { dicQuery["path"] = it }
-      }
-
-      NetworkType.GRPC -> {
-        config.mode?.nullIfBlank()?.let { dicQuery["mode"] = it }
-        config.authority?.nullIfBlank()?.let { dicQuery["authority"] = it }
-        config.serviceName?.nullIfBlank()?.let { dicQuery["serviceName"] = it }
-      }
-
-      else -> {}
     }
 
     return dicQuery

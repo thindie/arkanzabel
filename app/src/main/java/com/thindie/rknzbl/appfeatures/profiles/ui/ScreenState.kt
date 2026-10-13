@@ -9,9 +9,9 @@ data class ScreenState(
   val selectedTab: Int = 0,
   val profiles: List<ConnectionProfile> = emptyList(),
   val savedProfiles: List<ConnectionProfile> = emptyList(),
-  val pingResults: Map<String, Long> = emptyMap(),
   val connectedProfile: ConnectionProfile? = null,
   val profilesLoading: Boolean = false,
+  val pingInProgress: Boolean = false,
   val serviceConnection: Boolean = false,
   val isLocalSave: Boolean = true,
 ) : ViewState

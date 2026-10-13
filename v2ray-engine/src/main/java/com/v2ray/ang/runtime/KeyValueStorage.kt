@@ -34,6 +34,7 @@ object KeyValueStorage {
   private const val ID_ASSET = "ASSET"
   private const val ID_SETTING = "SETTING"
   private const val KEY_SELECTED_SERVER = "SELECTED_SERVER"
+  private const val KEY_LAST_CONNECTION_PROFILE = "LAST_CONNECTION_PROFILE"
   private const val KEY_ANG_CONFIGS = "ANG_CONFIGS"
   private const val KEY_SUB_IDS = "SUB_IDS"
   private const val KEY_WEBDAV_CONFIG = "WEBDAV_CONFIG"
@@ -52,6 +53,15 @@ object KeyValueStorage {
   private val settingsStorage by lazy { MMKV.mmkvWithID(ID_SETTING, MMKV.MULTI_PROCESS_MODE) }
 
   fun getSelectServer(): String? = mainStorage.decodeString(KEY_SELECTED_SERVER)
+
+  fun setLastConnectionProfile(profile: ConnectionProfile) {
+    encodeSettings(KEY_LAST_CONNECTION_PROFILE, JsonUtil.toJson(profile))
+  }
+
+  fun getLastConnectionProfile(): ConnectionProfile? =
+    decodeSettingsString(KEY_LAST_CONNECTION_PROFILE)?.let {
+      JsonUtil.fromJson(it, ConnectionProfile::class.java)
+    }
 
   fun setSelectServer(guid: String) {
     mainStorage.encode(KEY_SELECTED_SERVER, guid)

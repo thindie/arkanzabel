@@ -8,7 +8,7 @@ import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.ipc.BroadcastersHolder
 import com.v2ray.ang.ipc.DaemonToMain
-import com.v2ray.ang.ipc.FromMainToDaemon.Start
+import com.v2ray.ang.ipc.FromMainToDaemon.Restart
 import com.v2ray.ang.ipc.FromMainToDaemon.Stop
 import com.v2ray.ang.ipc.IpcMainBroadcastReceiver
 import com.v2ray.ang.runtime.V2RayServiceManager
@@ -73,9 +73,9 @@ class QSTileService : TileService() {
   override fun onClick() {
     super.onClick()
     when (qsTile?.state) {
-      Tile.STATE_INACTIVE -> holder.mainBroadcastReceiver.send(Start(null))
       Tile.STATE_ACTIVE -> holder.mainBroadcastReceiver.send(Stop)
-      else -> {}
+      Tile.STATE_INACTIVE -> holder.mainBroadcastReceiver.send(Restart)
+      else -> Unit
     }
   }
 }

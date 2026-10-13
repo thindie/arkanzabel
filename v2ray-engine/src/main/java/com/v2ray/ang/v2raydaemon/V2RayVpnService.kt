@@ -15,23 +15,20 @@ import android.os.ParcelFileDescriptor
 import android.os.StrictMode
 import androidx.annotation.RequiresApi
 import com.thindie.engine.core.Log
-import com.thindie.rknzbl.v2rayengine.R
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
 import com.v2ray.ang.contracts.Tun2SocksControl
-import com.v2ray.ang.error.AppError
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.ipc.BroadcastersHolder
-import com.v2ray.ang.ipc.DaemonToMain
 import com.v2ray.ang.ipc.IpcDaemonBroadcastReceiver
+import com.v2ray.ang.ipc.getProfile
 import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayServiceManager
-import com.v2ray.ang.runtime.V2rayConfigManager
 import com.v2ray.ang.service.TProxyService
 import com.v2ray.ang.util.LocaleContextWrapper
 import com.v2ray.ang.util.Utils
-import kotlinx.coroutines.CancellationException
 import java.io.IOException
 import java.lang.ref.SoftReference
 
@@ -102,6 +99,13 @@ class V2RayVpnService : VpnService(), ServiceControl {
     flags: Int,
     startId: Int,
   ): Int {
+    val profile =
+      intent?.getProfile() ?: run {
+        Log.e({ "VPN start without a valid profile extra; stopping service" }, AppConfig.TAG)
+        stopAllService()
+        return START_NOT_STICKY
+      }
+    NotificationManager.showNotification(profile, true)
     // Second startForegroundService while VPN is up (e.g. new profile): KeyValueStorage already
     // points at the new server, but re-running setup without stopping core first breaks TUN/core.
     // Tear down core + TUN in-process, then rebuild — same safe order as a full stop, without stopSelf.
@@ -111,7 +115,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       if (!setupVpnService()) {
         return START_STICKY
       }
-      startService()
+      startService(profile)
       return START_STICKY
     }
     if (V2RayServiceManager.isRunning() && mInterface == null) {
@@ -121,22 +125,21 @@ class V2RayVpnService : VpnService(), ServiceControl {
     if (!setupVpnService()) {
       return START_STICKY
     }
-    startService()
+    startService(profile)
     return START_STICKY
-    // return super.onStartCommand(intent, flags, startId)
   }
 
   override fun getService(): Service {
     return this
   }
 
-  override fun startService() {
+  override fun startService(connectionProfile: ConnectionProfile) {
     val iface =
       mInterface ?: run {
         Log.e({ "Failed to create VPN interface" }, AppConfig.TAG)
         return
       }
-    if (!V2RayServiceManager.startCoreLoop(vpnInterface = iface)) {
+    if (!V2RayServiceManager.startCoreLoop(vpnInterface = iface, connectionProfile)) {
       Log.e({ "Failed to start V2Ray core loop" }, AppConfig.TAG)
       stopAllService()
     }
@@ -174,32 +177,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
       return false
     }
 
-    val guid = KeyValueStorage.getSelectServer()
-    if (guid.isNullOrBlank()) {
-      Log.e({ "No selected VPN profile" }, AppConfig.TAG)
-      stopSelf()
-      return false
-    }
-    try {
-      V2rayConfigManager.getV2rayConfig(this, guid)
-    } catch (cancel: CancellationException) {
-      throw cancel
-    } catch (appError: AppError) {
-      Log.e({ "VPN configuration build failed before TUN" }, AppConfig.TAG, appError)
-      ipcSender.sendEvent(DaemonToMain.StartFailure(appError.userReadable))
-      stopSelf()
-      return false
-    } catch (runtime: RuntimeException) {
-      Log.e({ "VPN configuration build failed before TUN" }, AppConfig.TAG, runtime)
-      val payload =
-        runtime.message?.trim()?.takeIf { it.isNotEmpty() }
-          ?: getString(R.string.vpn_core_config_build_failed)
-      ipcSender.sendEvent(DaemonToMain.StartFailure(payload))
-      stopSelf()
-      return false
-    }
-
-    if (configureVpnService() != true) {
+    if (!configureVpnService()) {
       Log.e({ "VPN configuration failed" }, AppConfig.TAG)
       stopSelf()
       return false
