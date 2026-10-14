@@ -1,12 +1,13 @@
 package com.v2ray.ang.contracts
 
 import android.app.Service
+import com.v2ray.ang.dto.ConnectionProfile
 
 /** v2rayNG parity: control surface used by [com.v2ray.ang.runtime.V2RayServiceManager] and VPN/proxy services. */
 interface ServiceControl {
   fun getService(): Service
 
-  fun startService()
+  fun startService(connectionProfile: ConnectionProfile)
 
   fun stopService()
 

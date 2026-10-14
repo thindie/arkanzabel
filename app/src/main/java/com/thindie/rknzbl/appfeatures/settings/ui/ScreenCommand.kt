@@ -15,6 +15,14 @@ internal sealed interface ScreenCommand : Command {
 
   data object ToggleSpeed : ScreenCommand
 
+  data object IncrementParallelPing : ScreenCommand
+
+  data object DecrementParallelPing : ScreenCommand
+
+  data object IncrementAsapSeriesSize : ScreenCommand
+
+  data object DecrementAsapSeriesSize : ScreenCommand
+
   data object ToggleCustomSource : ScreenCommand
 
   data object OpenWebdav : ScreenCommand

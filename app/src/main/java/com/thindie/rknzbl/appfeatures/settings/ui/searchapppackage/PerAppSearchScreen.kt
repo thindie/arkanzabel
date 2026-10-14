@@ -42,6 +42,8 @@ import com.thindie.engine.uikit.Action
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
+import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
 
 @Composable
@@ -121,10 +123,25 @@ internal fun PerAppSearchScreen(scope: ScreenScope<SearchState, PerAppSearchComm
                 shape = RoundedCornerShape(20.dp),
               )
               .fillMaxWidth(),
-          painter = appIcon ?: painterResource(R.drawable.ic_internet_24),
-          tintIcon = appIcon == null,
-          title = row.appName,
-          subtitle = row.packageName,
+          leading = {
+            SentenceRowIcon(
+              painter = appIcon ?: painterResource(R.drawable.ic_internet_24),
+              tint = appIcon == null,
+            )
+          },
+          content = {
+            Text(
+              text = row.appName,
+              style = AppTheme.typography.titleMedium,
+              color = AppTheme.colors.contentPrimary,
+            )
+            VSpacer(2.dp)
+            Text(
+              text = row.packageName,
+              style = AppTheme.typography.bodyMedium,
+              color = AppTheme.colors.contentSecondary,
+            )
+          },
           loading = false,
           onClick = {
             scope.send(PerAppSearchCommand.AddPackage(row.packageName))

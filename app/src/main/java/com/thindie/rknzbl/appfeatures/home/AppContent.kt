@@ -155,14 +155,12 @@ private fun rememberNavItems(): List<BottomNavItem> {
   val homeTitle = stringResource(R.string.bottom_nav_home)
   val profilesTitle = stringResource(R.string.bottom_nav_profiles)
   val settingsTitle = stringResource(R.string.bottom_nav_settings)
-  val logsTitle = stringResource(R.string.bottom_nav_logs)
 
   return remember(homeIcon, profilesIcon, settingsIcon, logsIcon) {
     listOf(
       BottomNavItem(icon = homeIcon, title = homeTitle),
       BottomNavItem(icon = profilesIcon, title = profilesTitle),
       BottomNavItem(icon = settingsIcon, title = settingsTitle),
-      BottomNavItem(icon = logsIcon, title = logsTitle),
     )
   }
 }

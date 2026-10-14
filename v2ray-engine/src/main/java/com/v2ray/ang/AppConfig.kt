@@ -60,6 +60,19 @@ object AppConfig {
   const val PREF_FRAGMENT_PACKETS = "pref_fragment_packets"
   const val PREF_FRAGMENT_LENGTH = "pref_fragment_length"
   const val PREF_FRAGMENT_INTERVAL = "pref_fragment_interval"
+
+  /** Profile measurement: number of parallel ping requests sent during measurement. */
+  const val PREF_PARALLEL_PING_COUNT = "pref_parallel_ping_count"
+  const val DEFAULT_PARALLEL_PING_COUNT = 4
+  const val MIN_PARALLEL_PING_COUNT = 1
+  const val MAX_PARALLEL_PING_COUNT = 16
+
+  /** ASAP profile: number of reachable profiles measured per cycle (the series length). */
+  const val PREF_ASAP_SERIES_SIZE = "pref_asap_series_size"
+  const val DEFAULT_ASAP_SERIES_SIZE = 5
+  const val MIN_ASAP_SERIES_SIZE = 1
+  const val MAX_ASAP_SERIES_SIZE = 50
+
   const val SUBSCRIPTION_AUTO_UPDATE = "pref_auto_update_subscription"
   const val SUBSCRIPTION_AUTO_UPDATE_INTERVAL = "pref_auto_update_interval"
   const val SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL = "1440" // Default is 24 hours
@@ -199,13 +212,10 @@ object AppConfig {
   const val MSG_STATE_STOP_SUCCESS = 41
   const val MSG_STATE_RESTART = 5
   const val MSG_STATE_SAVE_PROFILE = 55
-  const val MSG_MEASURE_DELAY = 6
-  const val MSG_MEASURE_DELAY_SUCCESS = 61
+
+  const val MSG_MEASURE_PROFILE = 62
+  const val MSG_MEASURE_PROFILE_DONE = 63
   const val MSG_MEASURE_CONFIG = 7
-  const val MSG_MEASURE_CONFIG_SUCCESS = 71
-  const val MSG_MEASURE_CONFIG_CANCEL = 72
-  const val MSG_MEASURE_CONFIG_NOTIFY = 73
-  const val MSG_MEASURE_CONFIG_FINISH = 74
 
   /** Notification channel IDs and names. */
   const val RAY_NG_CHANNEL_ID = "RAY_NG_M_CH_ID"

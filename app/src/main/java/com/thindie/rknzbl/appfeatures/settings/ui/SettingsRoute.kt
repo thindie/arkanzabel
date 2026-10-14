@@ -57,6 +57,26 @@ fun SettingsFlow.settings(
         null
       }
 
+      ScreenCommand.IncrementParallelPing -> {
+        repository.setParallelPingCount(s.parallelPingCount + 1)
+        null
+      }
+
+      ScreenCommand.DecrementParallelPing -> {
+        repository.setParallelPingCount(s.parallelPingCount - 1)
+        null
+      }
+
+      ScreenCommand.IncrementAsapSeriesSize -> {
+        repository.setAsapSeriesSize(s.asapSeriesSize + 1)
+        null
+      }
+
+      ScreenCommand.DecrementAsapSeriesSize -> {
+        repository.setAsapSeriesSize(s.asapSeriesSize - 1)
+        null
+      }
+
       ScreenCommand.ToggleCustomSource -> {
         go(source())
         null

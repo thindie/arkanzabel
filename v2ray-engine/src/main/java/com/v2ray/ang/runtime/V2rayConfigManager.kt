@@ -77,6 +77,17 @@ object V2rayConfigManager {
     }
   }
 
+  fun getV2rayConfig(
+    context: Context,
+    config: ConnectionProfile,
+  ): V2Ray {
+    return when (config.protocol) {
+      Protocol.Custom -> getV2rayCustomConfig(context, Utils.getUuid())
+      Protocol.PolicyGroup -> getV2rayGroupConfig(context, Utils.getUuid(), config)
+      else -> getV2rayNormalConfig(context, Utils.getUuid(), config)
+    }
+  }
+
   /**
    * Same as [getV2rayConfig] but tuned for outbound delay measurement.
    */
@@ -747,7 +758,7 @@ object V2rayConfigManager {
     streamSettings: StreamSettings,
     connectionProfile: ConnectionProfile,
   ): String? {
-    val transport = connectionProfile.network.type
+    val transport = connectionProfile.network?.type
     val headerType = connectionProfile.headerType
     val host = connectionProfile.host
     val path = connectionProfile.path
@@ -759,7 +770,7 @@ object V2rayConfigManager {
     val xhttpExtra = connectionProfile.xhttpExtra
 
     var sni: String? = null
-    streamSettings.network = transport.ifEmpty { NetworkType.TCP.type }
+    streamSettings.network = transport?.ifEmpty { NetworkType.TCP.type } ?: NetworkType.TCP.type
     when (streamSettings.network) {
       NetworkType.TCP.type -> {
         val tcpSetting = StreamSettings.TcpSettings()

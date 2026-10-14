@@ -30,6 +30,8 @@ import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.HelpSecondaryText
 import com.thindie.engine.uikit.HelpSectionHeading
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
+import com.thindie.engine.uikit.VSpacer
 import com.thindie.engine.uikit.surface
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.appfeatures.settings.ui.searchapppackage.rememberAppIconPainter
@@ -88,9 +90,22 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand
                 shape = RoundedCornerShape(20.dp),
               )
               .fillMaxWidth(),
-          painter = painterResource(R.drawable.ic_internet_24),
-          title = stringResource(R.string.per_app_proxy_mode_all),
-          subtitle = stringResource(R.string.per_app_proxy_mode_all_subtitle),
+          leading = {
+            SentenceRowIcon(painter = painterResource(R.drawable.ic_internet_24))
+          },
+          content = {
+            Text(
+              text = stringResource(R.string.per_app_proxy_mode_all),
+              style = AppTheme.typography.titleMedium,
+              color = AppTheme.colors.contentPrimary,
+            )
+            VSpacer(2.dp)
+            Text(
+              text = stringResource(R.string.per_app_proxy_mode_all_subtitle),
+              style = AppTheme.typography.bodyMedium,
+              color = AppTheme.colors.contentSecondary,
+            )
+          },
           loading = false,
           onClick = { scope.send(PerAppCommand.SetModeAll) },
         )
@@ -113,9 +128,22 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand
                 shape = RoundedCornerShape(20.dp),
               )
               .fillMaxWidth(),
-          painter = painterResource(R.drawable.ic_information_24),
-          title = stringResource(R.string.per_app_proxy_mode_selected),
-          subtitle = stringResource(R.string.per_app_proxy_mode_selected_subtitle),
+          leading = {
+            SentenceRowIcon(painter = painterResource(R.drawable.ic_information_24))
+          },
+          content = {
+            Text(
+              text = stringResource(R.string.per_app_proxy_mode_selected),
+              style = AppTheme.typography.titleMedium,
+              color = AppTheme.colors.contentPrimary,
+            )
+            VSpacer(2.dp)
+            Text(
+              text = stringResource(R.string.per_app_proxy_mode_selected_subtitle),
+              style = AppTheme.typography.bodyMedium,
+              color = AppTheme.colors.contentSecondary,
+            )
+          },
           loading = false,
           onClick = { scope.send(PerAppCommand.SetModeSelected) },
         )
@@ -154,10 +182,25 @@ internal fun PerAppProxyScreen(scope: ScreenScope<PerAppViewState, PerAppCommand
                   shape = RoundedCornerShape(20.dp),
                 )
                 .fillMaxWidth(),
-            painter = appIcon ?: painterResource(R.drawable.ic_internet_24),
-            tintIcon = appIcon == null,
-            title = row?.appName ?: pkg,
-            subtitle = row?.packageName ?: pkg,
+            leading = {
+              SentenceRowIcon(
+                painter = appIcon ?: painterResource(R.drawable.ic_internet_24),
+                tint = appIcon == null,
+              )
+            },
+            content = {
+              Text(
+                text = row?.appName ?: pkg,
+                style = AppTheme.typography.titleMedium,
+                color = AppTheme.colors.contentPrimary,
+              )
+              VSpacer(2.dp)
+              Text(
+                text = row?.packageName ?: pkg,
+                style = AppTheme.typography.bodyMedium,
+                color = AppTheme.colors.contentSecondary,
+              )
+            },
             loading = false,
             onClick = { scope.send(PerAppCommand.RemovePackage(pkg)) },
           )

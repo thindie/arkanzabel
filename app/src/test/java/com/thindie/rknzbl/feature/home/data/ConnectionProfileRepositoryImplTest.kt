@@ -4,7 +4,6 @@ import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.appfeatures.home.data.ConnectionProfileRepositoryImpl
 import com.thindie.rknzbl.appfeatures.home.data.ProfileHttpGateway
 import com.thindie.rknzbl.appfeatures.home.data.VpnServiceGateway
-import com.thindie.rknzbl.application.ProfilePingManager
 import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.enums.Protocol
@@ -32,7 +31,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ConnectionProfileRepositoryImplTest {
-  private val pingManager = mockk<ProfilePingManager>(relaxed = true)
   private val httpGateway = mockk<ProfileHttpGateway>()
   private val vpnGateway = mockk<VpnServiceGateway>(relaxed = true)
 
@@ -65,7 +63,6 @@ class ConnectionProfileRepositoryImplTest {
     every { KeyValueStorage.isLocalSaveEnabled() } returns localSave
     every { KeyValueStorage.getCustomSourceUrl() } returns sourceUrl
     return ConnectionProfileRepositoryImpl(
-      pingManager = pingManager,
       storage = KeyValueStorage,
       httpGateway = httpGateway,
       vpnGateway = vpnGateway,
@@ -255,7 +252,7 @@ class ConnectionProfileRepositoryImplTest {
   // fetch / flows
 
   @Test
-  fun `fetch with force refetches and pings profiles`() =
+  fun `fetch with force refetches`() =
     runTest {
       val url = "https://example.com/sub"
       val repository = createRepository(localSave = false, sourceUrl = url)
@@ -267,8 +264,6 @@ class ConnectionProfileRepositoryImplTest {
       repository.fetch(force = true)
 
       coVerify(exactly = 2) { httpGateway.fetchSource(url) }
-      verify(exactly = 1) { pingManager.pingProfiles(listOf(p1), force = false) }
-      verify(exactly = 1) { pingManager.pingProfiles(listOf(p2), force = false) }
     }
 
   @Test
@@ -290,38 +285,6 @@ class ConnectionProfileRepositoryImplTest {
       assertNull(repository.stored.first())
       repository.read()
       assertEquals(emptyList<ConnectionProfile>(), repository.stored.first())
-    }
-
-  // lastMeasured()
-
-  @Test
-  fun `lastMeasured emits the best profile of the completed batch`() =
-    runTest {
-      // The repository captures pingManager.batch at construction, so stub it first.
-      val batchFlow = MutableStateFlow<ProfilePingManager.BatchResult?>(null)
-      every { pingManager.batch } returns batchFlow
-      val repository = createRepository(localSave = true)
-      val fast = profile("fast")
-      val slow = profile("slow")
-      val failed = profile("failed")
-
-      assertNull(repository.lastMeasured.first())
-      batchFlow.value = ProfilePingManager.BatchResult(1L, mapOf(fast to 20L, slow to 80L, failed to -1L))
-      assertEquals(fast, repository.lastMeasured.first())
-    }
-
-  @Test
-  fun `lastMeasured is null when the batch has no successful measurements`() =
-    runTest {
-      // The repository captures pingManager.batch at construction, so stub it first.
-      val batchFlow = MutableStateFlow<ProfilePingManager.BatchResult?>(null)
-      every { pingManager.batch } returns batchFlow
-      val repository = createRepository(localSave = true)
-      val failed = profile("failed")
-      val unmeasured = profile("unmeasured")
-
-      batchFlow.value = ProfilePingManager.BatchResult(1L, mapOf(failed to -1L, unmeasured to 0L))
-      assertNull(repository.lastMeasured.first())
     }
 
   @Test

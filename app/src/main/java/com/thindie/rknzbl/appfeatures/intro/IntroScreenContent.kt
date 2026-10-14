@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,12 +25,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.thindie.engine.core.ScreenScope
 import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
+import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
 
 @Composable
@@ -97,22 +101,34 @@ internal fun IntroScreenContent(scope: ScreenScope<ViewState, CommandIntro>) {
             containerColor = AppTheme.colors.backgroundPrimary,
             text = {
               SentenceRow(
-                painter = painterResource(R.drawable.ic_attention_24),
-                onClick = null,
-                title =
-                  stringResource(
-                    when (st.current) {
-                      Permission.Vpn -> R.string.intro_soft_title_vpn
-                      Permission.Push -> R.string.intro_soft_title_push
-                    },
-                  ),
-                subtitle =
-                  stringResource(
-                    when (st.current) {
-                      Permission.Vpn -> R.string.intro_soft_subtitle_vpn
-                      Permission.Push -> R.string.intro_soft_subtitle_push
-                    },
-                  ),
+                leading = {
+                  SentenceRowIcon(painter = painterResource(R.drawable.ic_attention_24))
+                },
+                content = {
+                  Text(
+                    text =
+                      stringResource(
+                        when (st.current) {
+                          Permission.Vpn -> R.string.intro_soft_title_vpn
+                          Permission.Push -> R.string.intro_soft_title_push
+                        },
+                      ),
+                    style = AppTheme.typography.titleMedium,
+                    color = AppTheme.colors.contentPrimary,
+                  )
+                  VSpacer(2.dp)
+                  Text(
+                    text =
+                      stringResource(
+                        when (st.current) {
+                          Permission.Vpn -> R.string.intro_soft_subtitle_vpn
+                          Permission.Push -> R.string.intro_soft_subtitle_push
+                        },
+                      ),
+                    style = AppTheme.typography.bodyMedium,
+                    color = AppTheme.colors.contentSecondary,
+                  )
+                },
                 loading = false,
               )
             },
@@ -172,10 +188,22 @@ internal fun IntroScreenContent(scope: ScreenScope<ViewState, CommandIntro>) {
             containerColor = AppTheme.colors.backgroundPrimary,
             text = {
               SentenceRow(
-                painter = painterResource(R.drawable.ic_attention_24),
-                onClick = null,
-                title = stringResource(R.string.intro_push_denied_title),
-                subtitle = stringResource(R.string.intro_push_denied_subtitle),
+                leading = {
+                  SentenceRowIcon(painter = painterResource(R.drawable.ic_attention_24))
+                },
+                content = {
+                  Text(
+                    text = stringResource(R.string.intro_push_denied_title),
+                    style = AppTheme.typography.titleMedium,
+                    color = AppTheme.colors.contentPrimary,
+                  )
+                  VSpacer(2.dp)
+                  Text(
+                    text = stringResource(R.string.intro_push_denied_subtitle),
+                    style = AppTheme.typography.bodyMedium,
+                    color = AppTheme.colors.contentSecondary,
+                  )
+                },
                 loading = false,
               )
             },

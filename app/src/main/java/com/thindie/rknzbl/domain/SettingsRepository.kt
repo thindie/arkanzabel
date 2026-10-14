@@ -44,4 +44,16 @@ interface SettingsRepository {
   val webDavUseDefaults: Flow<Boolean>
 
   suspend fun toggleWebDavUseDefaults(enabled: Boolean)
+
+  // --- Profile measurement tuning ---
+
+  /** Number of profiles pinged in parallel during measurement. */
+  val parallelPingCount: Flow<Int>
+
+  fun setParallelPingCount(count: Int)
+
+  /** Number of reachable profiles measured per ASAP cycle (the series length). */
+  val asapSeriesSize: Flow<Int>
+
+  fun setAsapSeriesSize(size: Int)
 }

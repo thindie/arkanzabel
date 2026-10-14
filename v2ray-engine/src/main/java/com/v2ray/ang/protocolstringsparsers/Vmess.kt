@@ -108,7 +108,7 @@ object Vmess : ProtocolParser() {
     vmessQRCode.scy = config.method.orEmpty()
     vmessQRCode.aid = "0"
 
-    vmessQRCode.net = config.network.type
+    vmessQRCode.net = config.network?.type.orEmpty()
     vmessQRCode.type = config.headerType.orEmpty()
     when (config.network) {
       NetworkType.KCP -> {

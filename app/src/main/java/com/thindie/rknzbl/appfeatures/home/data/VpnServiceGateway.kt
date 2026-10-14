@@ -2,6 +2,7 @@ package com.thindie.rknzbl.appfeatures.home.data
 
 import com.thindie.engine.core.WorkState
 import com.thindie.rknzbl.application.Application
+import com.v2ray.ang.dto.ConnectionProfile
 import com.v2ray.ang.ipc.BroadcastersHolder
 import com.v2ray.ang.ipc.FromMainToDaemon
 import com.v2ray.ang.runtime.V2RayServiceManager
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
  * unit-tested without initializing the native V2Ray core (the manager's static init loads JNI).
  */
 interface VpnServiceGateway {
-  fun startVService(guid: String)
+  fun startVService(profile: ConnectionProfile)
 
   fun stopVService()
 
@@ -29,8 +30,8 @@ internal class V2RayVpnServiceGateway private constructor(
 ) : VpnServiceGateway {
   override val serviceState = MutableStateFlow<WorkState>(if (V2RayServiceManager.isRunning()) WorkState.Running else WorkState.Idle)
 
-  override fun startVService(guid: String) {
-    (application as BroadcastersHolder).mainBroadcastReceiver.send(FromMainToDaemon.Start(guid))
+  override fun startVService(profile: ConnectionProfile) {
+    (application as BroadcastersHolder).mainBroadcastReceiver.send(FromMainToDaemon.Start(profile))
   }
 
   override fun stopVService() {

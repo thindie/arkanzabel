@@ -3,8 +3,6 @@ package com.v2ray.ang.v2raydaemon
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.v2ray.ang.ipc.BroadcastersHolder
-import com.v2ray.ang.ipc.FromMainToDaemon.Start
 import com.v2ray.ang.runtime.KeyValueStorage
 
 class BootReceiver : BroadcastReceiver() {
@@ -27,7 +25,5 @@ class BootReceiver : BroadcastReceiver() {
     ) {
       return
     }
-    val guid = KeyValueStorage.getSelectServer()
-    (context.applicationContext as BroadcastersHolder).mainBroadcastReceiver.send(Start(guid))
   }
 }

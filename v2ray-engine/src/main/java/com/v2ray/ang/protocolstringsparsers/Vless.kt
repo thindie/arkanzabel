@@ -64,7 +64,11 @@ object Vless : ProtocolParser() {
         subscriptionId = uri.idnHost + uri.port.toString() + uri.userInfo + Protocol.Vless,
       )
 
-    val withQuery = getItemFormQuery(base, queryParam, allowInsecure)
+    var withQuery = getItemFormQuery(base, queryParam, allowInsecure)
+    // VLESS without explicit security defaults to TLS (plain VLESS is rejected by Xray for public addresses)
+    if (withQuery.security == null) {
+      withQuery = withQuery.copy(security = Security.TLS)
+    }
     return mergeRealityPublicKeyFromRawLine(withQuery, str)
   }
 

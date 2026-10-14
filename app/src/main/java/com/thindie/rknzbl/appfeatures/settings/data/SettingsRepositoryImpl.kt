@@ -143,4 +143,35 @@ class SettingsRepositoryImpl(
   override suspend fun toggleWebDavUseDefaults(enabled: Boolean) {
     webDavUseDefaultsSetting.set(enabled)
   }
+
+  // --- Parallel ping count (profile measurement concurrency) ---
+  private val parallelPingSetting =
+    Setting<Int>(
+      read = { storage.decodeSettingsInt(AppConfig.PREF_PARALLEL_PING_COUNT, AppConfig.DEFAULT_PARALLEL_PING_COUNT) },
+      write = { storage.encodeSettings(AppConfig.PREF_PARALLEL_PING_COUNT, it) },
+    )
+  override val parallelPingCount: Flow<Int> get() = parallelPingSetting.flow
+
+  override fun setParallelPingCount(count: Int) {
+    parallelPingSetting.set(clampParallelPing(count))
+  }
+
+  // --- ASAP series size (reachable profiles measured per cycle) ---
+  private val asapSeriesSizeSetting =
+    Setting<Int>(
+      read = { storage.decodeSettingsInt(AppConfig.PREF_ASAP_SERIES_SIZE, AppConfig.DEFAULT_ASAP_SERIES_SIZE) },
+      write = { storage.encodeSettings(AppConfig.PREF_ASAP_SERIES_SIZE, it) },
+    )
+  override val asapSeriesSize: Flow<Int> get() = asapSeriesSizeSetting.flow
+
+  override fun setAsapSeriesSize(size: Int) {
+    asapSeriesSizeSetting.set(clampAsapSeries(size))
+  }
+
+  // Keep the parallel-ping worker count within a sane range (>=1, capped so it cannot spawn more
+  // ephemeral cores than there are profiles to measure).
+  private fun clampParallelPing(count: Int): Int = count.coerceIn(AppConfig.MIN_PARALLEL_PING_COUNT, AppConfig.MAX_PARALLEL_PING_COUNT)
+
+  // Keep the ASAP series length within a sane range.
+  private fun clampAsapSeries(size: Int): Int = size.coerceIn(AppConfig.MIN_ASAP_SERIES_SIZE, AppConfig.MAX_ASAP_SERIES_SIZE)
 }

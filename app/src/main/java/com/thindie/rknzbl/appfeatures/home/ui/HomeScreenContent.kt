@@ -156,7 +156,7 @@ internal fun ConnectButton(
   state: ScreenState,
   onClick: () -> Unit,
 ) {
-  val isConnected = state.connectedProfile != null || state.screenVpnState == ScreenVpnState.Running
+  val isConnected = state.connectedProfile != null && state.screenVpnState == ScreenVpnState.Running
   val isWorking =
     state.profilesLoading ||
       state.screenVpnState == ScreenVpnState.TurningOn ||
@@ -244,6 +244,7 @@ private fun HomeScreenConnectedPreview() {
     ConnectButton(
       state =
         ScreenState(
+          screenVpnState = ScreenVpnState.Running,
           connectedProfile = ConnectionProfile(protocol = Protocol.Vmess, subscriptionId = "test", remarks = "Test Server"),
         ),
     ) {}

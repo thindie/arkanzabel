@@ -7,6 +7,9 @@ import android.os.IBinder
 import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.contracts.ServiceControl
+import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.ipc.getProfile
+import com.v2ray.ang.runtime.NotificationManager
 import com.v2ray.ang.runtime.SettingsManager
 import com.v2ray.ang.runtime.V2RayServiceManager
 import com.v2ray.ang.util.LocaleContextWrapper
@@ -23,15 +26,22 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     flags: Int,
     startId: Int,
   ): Int {
+    val profile =
+      intent?.getProfile() ?: run {
+        Log.e({ "Proxy-only start without a valid profile extra; stopping service" }, AppConfig.TAG)
+        stopService()
+        return START_NOT_STICKY
+      }
+    NotificationManager.showNotification(profile, true)
     if (V2RayServiceManager.isRunning()) {
       Log.i({ "Proxy-only core running; restarting loop for new profile" }, AppConfig.TAG)
       V2RayServiceManager.stopCoreLoop()
-      if (!V2RayServiceManager.startCoreLoop(null)) {
+      if (!V2RayServiceManager.startCoreLoop(null, profile)) {
         Log.e({ "Failed to restart proxy-only core after profile switch" }, AppConfig.TAG)
       }
       return START_STICKY
     }
-    V2RayServiceManager.startCoreLoop(null)
+    V2RayServiceManager.startCoreLoop(null, profile)
     return START_STICKY
   }
 
@@ -44,7 +54,7 @@ class V2RayProxyOnlyService : Service(), ServiceControl {
     return this
   }
 
-  override fun startService() {
+  override fun startService(connectionProfile: ConnectionProfile) {
     // do nothing
   }
 

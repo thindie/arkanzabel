@@ -3,7 +3,6 @@ package com.thindie.rknzbl.appfeatures.home.data
 import com.thindie.engine.core.Cache
 import com.thindie.engine.core.Log
 import com.thindie.engine.core.WorkState
-import com.thindie.rknzbl.application.ProfilePingManager
 import com.thindie.rknzbl.domain.ConnectionProfileRepository
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.ConnectionProfile
@@ -11,24 +10,24 @@ import com.v2ray.ang.runtime.KeyValueStorage
 import com.v2ray.ang.runtime.ProfileUriParser
 import com.v2ray.ang.util.JsonUtil
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicInteger
 
 class ConnectionProfileRepositoryImpl(
-  private val pingManager: ProfilePingManager,
   private val storage: KeyValueStorage,
   private val httpGateway: ProfileHttpGateway,
   private val vpnGateway: VpnServiceGateway,
 ) : ConnectionProfileRepository {
   private val isLocalSave get() = storage.isLocalSaveEnabled()
-
-  // Getter, not a constructor-time val: the mode can be switched at runtime and the cache key must follow.
   private val localStorageKey get() = if (isLocalSave) "prefs_stored" else "webdav_stored"
   private val cacheLock: Any = Any()
   private val profilesInMemoryCache = mutableMapOf<String, Cache<List<ConnectionProfile>?>>()
@@ -37,7 +36,6 @@ class ConnectionProfileRepositoryImpl(
   private val cacheVersion = MutableStateFlow(0)
 
   private fun cacheValueSyncInternal(k: String): List<ConnectionProfile>? {
-    // Read under the same lock as mutations to avoid racing a structural map update.
     return synchronized(cacheLock) { profilesInMemoryCache[k]?.value?.value }
   }
 
@@ -84,17 +82,6 @@ class ConnectionProfileRepositoryImpl(
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-  // Best profile of the last completed ping batch (lowest successful delay);
-  // null until a batch yields at least one successful measurement.
-  override val lastMeasured: Flow<ConnectionProfile?> =
-    pingManager.batch.map { batch ->
-      batch?.results
-        ?.filterValues { it > 0 }
-        ?.minByOrNull { it.value }
-        ?.key
-    }
-
-  // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
   private val activeProfileCache = Cache<ConnectionProfile?>(null)
 
   // Emits null while the VPN service reports an error, so a failed start does not look connected.
@@ -103,10 +90,119 @@ class ConnectionProfileRepositoryImpl(
       if (state is WorkState.Error) null else profile
     }
 
-  // Pending connect intent: set by [requestConnect], consumed when the reactive path launches a
-  // connect, cleared on disconnect. Intentionally survives route recreation so a pending intent
-  // completes once the user returns to Home.
-  private val connectRequested = AtomicBoolean(false)
+  override val measured: Flow<List<ConnectionProfile>?> =
+    cacheVersion.map {
+      cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)
+    }
+
+  override suspend fun ping() {
+    pingInternal()
+  }
+
+  private suspend fun pingInternal(cap: Int? = null): List<ConnectionProfile> {
+    val measured =
+      profilesInMemoryCache.entries.firstOrNull { entry ->
+        entry.key != MEASURED_PROFILES_CACHE_KEY &&
+          entry.key != SKIPPED_PROFILES_CACHE_KEY &&
+          entry.key == storage.getCustomSourceUrl()
+      }?.let { (_, cache) ->
+        val profiles = cache.value.value ?: return@let null
+        if (!ensureVpnRunning(profiles)) return@let null
+        measureProfilesConcurrently(
+          profiles = profiles,
+          cap = cap,
+          parallelCount = storage.decodeSettingsInt(AppConfig.PREF_PARALLEL_PING_COUNT, AppConfig.DEFAULT_PARALLEL_PING_COUNT),
+        )
+      }
+    return measured.orEmpty()
+  }
+
+  /**
+   * Measures outbound delay for [profiles] concurrently, capping simultaneous ephemeral cores at
+   * [parallelCount] because one running VPN core plus several ephemeral cores share `libgojni.so`.
+   * Each result is written back at its index and the measured cache refreshes after every
+   * completion so the UI updates progressively. Stops pulling new profiles once [cap] reachable ones
+   * are found, matching the previous sequential early-stop.
+   */
+  private suspend fun measureProfilesConcurrently(
+    profiles: List<ConnectionProfile>,
+    cap: Int?,
+    parallelCount: Int,
+  ): List<ConnectionProfile> {
+    val results = Array(profiles.size) { profiles[it] }
+    val nextIndex = AtomicInteger(0)
+    val reachable = AtomicInteger(0)
+    val limit = cap ?: Int.MAX_VALUE
+    coroutineScope {
+      repeat(minOf(parallelCount, profiles.size)) {
+        launch {
+          while (true) {
+            val index = nextIndex.getAndIncrement()
+            if (index >= profiles.size) return@launch
+            val measuredProfile = httpGateway.ping(profiles[index])
+            results[index] = measuredProfile
+            setCacheInternal(MEASURED_PROFILES_CACHE_KEY, results.toList())
+            if (
+              measuredProfile.delay != null &&
+              measuredProfile.delay!! > 0 &&
+              reachable.incrementAndGet() >= limit
+            ) {
+              nextIndex.set(profiles.size)
+              return@launch
+            }
+          }
+        }
+      }
+    }
+    return results.toList()
+  }
+
+  override suspend fun asapProfile() {
+    val cachedMeasured = cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)?.ifEmpty { null }
+    if (cachedMeasured != null) {
+      val active = activeProfileCache.value.value
+      val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY)
+      val updatedSkipped = (skipped.orEmpty() + active).filterNotNull()
+      val skippedIds =
+        updatedSkipped
+          .map { it.subscriptionId }
+      val candidates =
+        cachedMeasured
+          .filterNot { it.subscriptionId in skippedIds || it.subscriptionId == active?.subscriptionId }
+      // Only reachable profiles (delay > 0) are eligible; minByOrNull would otherwise
+      // prefer an unreachable one (-1) over a working server with positive latency.
+      val reachable = candidates.filter { it.delay?.let { d -> d > 0 } == true }
+      if (reachable.isEmpty()) {
+        invalidateCacheInternal()
+        asapProfile()
+      } else {
+        val best = reachable.minByOrNull { it.delay ?: Long.MAX_VALUE }
+        setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, updatedSkipped)
+        connect(requireNotNull(best))
+      }
+    } else {
+      val url = storage.getCustomSourceUrl() ?: return
+      val profiles = fetchFromSource(url)
+      if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
+      val seriesSize =
+        storage.decodeSettingsInt(AppConfig.PREF_ASAP_SERIES_SIZE, AppConfig.DEFAULT_ASAP_SERIES_SIZE)
+      val measured = pingInternal(seriesSize)
+      val best =
+        measured.filter { it.delay?.let { d -> d > 0 } == true }
+          .minByOrNull { it.delay ?: Long.MAX_VALUE }
+      setCacheInternal(MEASURED_PROFILES_CACHE_KEY, measured)
+      best?.let { connect(it) }
+    }
+  }
+
+  private suspend fun ensureVpnRunning(profiles: List<ConnectionProfile>): Boolean {
+    if (vpnGateway.isRunning()) return true
+    val bootstrapProfile = profiles.firstOrNull() ?: return false
+    warmupWithAnyProfile(bootstrapProfile)
+    return withTimeoutOrNull(VPN_START_TIMEOUT_MS) {
+      vpnGateway.serviceState.first { it is WorkState.Running }
+    } != null
+  }
 
   init {
     // Restore active profile from storage if VPN service is already running.
@@ -118,21 +214,6 @@ class ConnectionProfileRepositoryImpl(
         activeProfileCache.set(restored)
       }
     }
-  }
-
-  override fun takeConnectIntent(): Boolean = connectRequested.getAndSet(false)
-
-  override fun markProfileUsed(profile: ConnectionProfile) {
-    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty() + profile
-    setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, skipped)
-  }
-
-  override suspend fun measureStaged(): ConnectionProfile? {
-    val receivedProfiles = storage.getCustomSourceUrl()?.let { cacheValueSyncInternal(it) }.orEmpty()
-    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty()
-    val profiles = ((storageCacheInternal().orEmpty() - skipped.toSet()) + receivedProfiles).distinct()
-    if (profiles.isEmpty()) return null
-    return pingManager.measureStaged(profiles)
   }
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
@@ -218,21 +299,20 @@ class ConnectionProfileRepositoryImpl(
   }
 
   override fun invalidateCaches() {
-    pingManager.invalidateMeasurementCache()
     invalidateCacheInternal()
   }
 
   // VPN service operations
   override suspend fun connect(profile: ConnectionProfile) {
-    val guid =
-      findOrSaveProfileGuid(profile)
-        ?: error("Cannot store profile: ${profile.subscriptionId}")
     activeProfileCache.set(profile)
-    vpnGateway.startVService(guid = guid)
+    vpnGateway.startVService(profile)
+  }
+
+  private fun warmupWithAnyProfile(profile: ConnectionProfile) {
+    vpnGateway.startVService(profile)
   }
 
   override suspend fun disconnect() {
-    connectRequested.set(false)
     activeProfileCache.clear()
     vpnGateway.stopVService()
   }
@@ -245,8 +325,6 @@ class ConnectionProfileRepositoryImpl(
       if (force) invalidateInternal(url)
       if (cacheValueSyncInternal(url) != null) return
       fetchFromSource(url)
-      val profiles = requireNotNull(cacheValueSyncInternal(url))
-      pingManager.pingProfiles(profiles, force = false)
     }
   }
 
@@ -261,23 +339,6 @@ class ConnectionProfileRepositoryImpl(
       return true
     }
     return false
-  }
-
-  /**
-   * Returns the GUID of [profile] if it is already stored locally (matched by subscriptionId),
-   * otherwise persists it and returns the new GUID. Null when profile cannot be stored.
-   */
-  private fun findOrSaveProfileGuid(profile: ConnectionProfile): String? {
-    for (guid in storage.decodeServerList()) {
-      val config = storage.decodeServerConfig(guid)
-      if (config != null && config.subscriptionId == profile.subscriptionId) {
-        return guid
-      }
-    }
-    val guid = UUID.randomUUID().toString()
-    storage.encodeServerConfig(guid, profile)
-    Log.i({ "Connect: profile stored locally as $guid" }, LOG_TAG)
-    return guid
   }
 
   private fun activeProfileInternal(): ConnectionProfile? {
@@ -336,6 +397,11 @@ private const val STORED_PROFILES_SEPARATOR = "########"
 private const val FETCH_PROFILES_SEPARATOR = "\n"
 
 private const val SKIPPED_PROFILES_CACHE_KEY = "skipped_measured_cache"
+private const val MEASURED_PROFILES_CACHE_KEY = "measured_profiles_measured_cache"
+
+// Bounds simultaneous ephemeral measurement cores sharing libgojni.so with the running VPN core.
+// Read live from settings (AppConfig.DEFAULT_PARALLEL_PING_COUNT) so it stays configurable.
+private const val VPN_START_TIMEOUT_MS = 30_000L
 private val LOG_TAG = AppConfig.TAG
 
 private fun parseAndDeduplicate(

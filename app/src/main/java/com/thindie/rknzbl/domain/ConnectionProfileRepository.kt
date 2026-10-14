@@ -26,19 +26,16 @@ interface ConnectionProfileRepository {
 
   suspend fun fetch(force: Boolean)
 
-  fun takeConnectIntent(): Boolean
-
-  /** Mark a profile as used for next-best selection (survives route recreation). */
-  fun markProfileUsed(profile: ConnectionProfile)
-
-  suspend fun measureStaged(): ConnectionProfile?
-
   val received: Flow<List<ConnectionProfile>?>
   val stored: Flow<List<ConnectionProfile>?>
 
-  val lastMeasured: Flow<ConnectionProfile?>
-
   val connected: Flow<ConnectionProfile?>
 
+  val measured: Flow<List<ConnectionProfile>?>
+
+  suspend fun ping()
+
   fun isLocalStorage(): Boolean
+
+  suspend fun asapProfile()
 }

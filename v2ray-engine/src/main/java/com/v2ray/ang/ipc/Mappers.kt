@@ -3,6 +3,8 @@ package com.v2ray.ang.ipc
 import android.content.Intent
 import com.thindie.engine.core.Log
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.ConnectionProfile
+import com.v2ray.ang.util.JsonUtil
 
 fun handleDaemonEvent(event: DaemonToMain): Intent? {
   val code =
@@ -12,11 +14,8 @@ fun handleDaemonEvent(event: DaemonToMain): Intent? {
       is DaemonToMain.StartSuccess -> AppConfig.MSG_STATE_START_SUCCESS
       is DaemonToMain.StartFailure -> AppConfig.MSG_STATE_START_FAILURE
       is DaemonToMain.StopSuccess -> AppConfig.MSG_STATE_STOP_SUCCESS
-      is DaemonToMain.DelayMeasured -> AppConfig.MSG_MEASURE_DELAY_SUCCESS
-      is DaemonToMain.ConfigTestResult -> AppConfig.MSG_MEASURE_CONFIG_SUCCESS
-      is DaemonToMain.ConfigTestProgress -> AppConfig.MSG_MEASURE_CONFIG_NOTIFY
-      is DaemonToMain.ConfigTestFinished -> AppConfig.MSG_MEASURE_CONFIG_FINISH
       is DaemonToMain.SaveProfile -> AppConfig.MSG_STATE_SAVE_PROFILE
+      is DaemonToMain.ProfileMeasured -> AppConfig.MSG_MEASURE_PROFILE_DONE
     }
 
   return try {
@@ -26,25 +25,16 @@ fun handleDaemonEvent(event: DaemonToMain): Intent? {
       putExtra(EXTRA_KEY, code)
 
       when (event) {
-        is DaemonToMain.StartSuccess -> event.guid?.let { putExtra(EXTRA_GUID, it) }
+        is DaemonToMain.StartSuccess -> putProfile(event.profile)
         is DaemonToMain.StartFailure -> putExtra(EXTRA_CONTENT, event.message)
-        is DaemonToMain.DelayMeasured -> {
-          event.guid?.let { putExtra(EXTRA_GUID, it) }
-          event.delayMs?.let { putExtra(EXTRA_DELAY_MS, it) }
-        }
-        is DaemonToMain.ConfigTestResult -> {
-          putExtra(EXTRA_GUID, event.guid)
-          putExtra(EXTRA_RESULT, event.result ?: 0L)
-        }
-        is DaemonToMain.ConfigTestProgress -> {
-          putExtra(EXTRA_REMAINING, event.remaining)
-          putExtra(EXTRA_TOTAL, event.total)
-        }
-        is DaemonToMain.ConfigTestFinished -> Unit
         is DaemonToMain.NotRunning -> Unit
         is DaemonToMain.Running -> Unit
         is DaemonToMain.SaveProfile -> Unit
         is DaemonToMain.StopSuccess -> Unit
+        is DaemonToMain.ProfileMeasured -> {
+          putProfile(event.profile)
+          putExtra(EXTRA_REQUEST_ID, event.requestId)
+        }
       }
     }
   } catch (e: Exception) {
@@ -53,30 +43,31 @@ fun handleDaemonEvent(event: DaemonToMain): Intent? {
   }
 }
 
-internal fun handleIntent(intent: Intent): FromMainToDaemon? {
-  if (intent.action != AppConfig.BROADCAST_ACTION_SERVICE) return null
+internal fun Intent.getMainExtra(): FromMainToDaemon? {
+  if (action != AppConfig.BROADCAST_ACTION_SERVICE) return null
 
-  if (intent.`package` != AppConfig.ANG_PACKAGE) return null
+  if (`package` != AppConfig.ANG_PACKAGE) return null
 
-  val code = intent.getIntExtra(EXTRA_KEY, 0)
+  val code = getIntExtra(EXTRA_KEY, 0)
   Log.i({ "DaemonServer received code=\$code" }, AppConfig.TAG_KERNEL)
 
   return when (code) {
     AppConfig.MSG_REGISTER_CLIENT -> FromMainToDaemon.RegisterClient
     AppConfig.MSG_UNREGISTER_CLIENT -> FromMainToDaemon.UnregisterClient
-    AppConfig.MSG_STATE_START -> FromMainToDaemon.Start(guidFrom(intent))
+    // Missing/malformed profile extra: drop the command instead of crashing on a foreign intent.
+    AppConfig.MSG_STATE_START -> getProfile()?.let { FromMainToDaemon.Start(it) }
     AppConfig.MSG_STATE_STOP -> FromMainToDaemon.Stop
     AppConfig.MSG_STATE_RESTART -> FromMainToDaemon.Restart
-    AppConfig.MSG_MEASURE_DELAY -> FromMainToDaemon.MeasureDelay(guidFrom(intent))
     AppConfig.MSG_STATE_SAVE_PROFILE -> FromMainToDaemon.SaveProfile
+    AppConfig.MSG_MEASURE_PROFILE ->
+      getProfile()?.let { profile ->
+        getStringExtra(EXTRA_REQUEST_ID)
+          ?.takeIf { it.isNotBlank() }
+          ?.let { requestId -> FromMainToDaemon.MeasureProfile(profile, requestId) }
+      }
     else -> null
   }
 }
-
-private fun guidFrom(intent: Intent): String? =
-  intent
-    .getStringExtra(EXTRA_GUID)
-    ?.ifBlank { null }
 
 private fun commandToCode(command: FromMainToDaemon): Int =
   when (command) {
@@ -85,16 +76,19 @@ private fun commandToCode(command: FromMainToDaemon): Int =
     is FromMainToDaemon.Start -> AppConfig.MSG_STATE_START
     is FromMainToDaemon.Stop -> AppConfig.MSG_STATE_STOP
     is FromMainToDaemon.Restart -> AppConfig.MSG_STATE_RESTART
-    is FromMainToDaemon.MeasureDelay -> AppConfig.MSG_MEASURE_DELAY
     is FromMainToDaemon.SaveProfile -> AppConfig.MSG_STATE_SAVE_PROFILE
+    is FromMainToDaemon.MeasureProfile -> AppConfig.MSG_MEASURE_PROFILE
   }
 
 internal fun Intent.putCoreExtra(command: FromMainToDaemon) {
   putExtra(EXTRA_KEY, commandToCode(command))
   `package` = AppConfig.ANG_PACKAGE
   when (command) {
-    is FromMainToDaemon.Start -> command.guid?.let { putExtra(EXTRA_GUID, it) }
-    is FromMainToDaemon.MeasureDelay -> command.guid?.let { putExtra(EXTRA_GUID, it) }
+    is FromMainToDaemon.Start -> putProfile(command.profile)
+    is FromMainToDaemon.MeasureProfile -> {
+      putProfile(command.profile)
+      putExtra(EXTRA_REQUEST_ID, command.requestId)
+    }
     else -> Unit
   }
 }
@@ -106,39 +100,35 @@ internal fun Intent.getCoreExtra(): DaemonToMain? {
   return when (code) {
     AppConfig.MSG_STATE_RUNNING -> DaemonToMain.Running
     AppConfig.MSG_STATE_NOT_RUNNING -> DaemonToMain.NotRunning
-    AppConfig.MSG_STATE_START_SUCCESS -> DaemonToMain.StartSuccess(guidFrom(this))
+    // Missing/malformed profile extra: drop the event instead of crashing on a foreign intent.
+    AppConfig.MSG_STATE_START_SUCCESS -> getProfile()?.let { DaemonToMain.StartSuccess(it) }
     AppConfig.MSG_STATE_START_FAILURE ->
       DaemonToMain.StartFailure(getStringExtra(EXTRA_CONTENT) ?: "Unknown error")
 
     AppConfig.MSG_STATE_STOP_SUCCESS -> DaemonToMain.StopSuccess
-    AppConfig.MSG_MEASURE_DELAY_SUCCESS -> {
-      val guid = guidFrom(this)
-      val delayMs = getLongExtra(EXTRA_DELAY_MS, -1L).takeIf { it >= 0 }
-      DaemonToMain.DelayMeasured(guid, delayMs)
-    }
+    AppConfig.MSG_MEASURE_PROFILE_DONE ->
+      getProfile()?.let { profile ->
+        getStringExtra(EXTRA_REQUEST_ID)
+          ?.takeIf { it.isNotBlank() }
+          ?.let { requestId -> DaemonToMain.ProfileMeasured(profile, requestId) }
+      }
 
-    AppConfig.MSG_MEASURE_CONFIG_SUCCESS -> {
-      val guid = getStringExtra(EXTRA_GUID) ?: return null
-      val result = getLongExtra(EXTRA_RESULT, -1L)
-      DaemonToMain.ConfigTestResult(guid, result)
-    }
-
-    AppConfig.MSG_MEASURE_CONFIG_NOTIFY -> {
-      val remaining = getIntExtra(EXTRA_REMAINING, 0)
-      val total = getIntExtra(EXTRA_TOTAL, 0)
-      DaemonToMain.ConfigTestProgress(remaining, total)
-    }
-
-    AppConfig.MSG_MEASURE_CONFIG_FINISH -> DaemonToMain.ConfigTestFinished
     AppConfig.MSG_STATE_SAVE_PROFILE -> DaemonToMain.SaveProfile
     else -> null
   }
 }
 
+internal fun Intent.putProfile(connectionProfile: ConnectionProfile) {
+  val json = JsonUtil.toJson(connectionProfile)
+  putExtra(EXTRA_PROFILE, json)
+}
+
+internal fun Intent.getProfile(): ConnectionProfile? =
+  getStringExtra(EXTRA_PROFILE)
+    ?.ifBlank { null }
+    ?.let { JsonUtil.fromJsonOrNull(it, ConnectionProfile::class.java) }
+
 private const val EXTRA_KEY = "key"
-private const val EXTRA_GUID = "guid"
+private const val EXTRA_PROFILE = "profileJson"
+private const val EXTRA_REQUEST_ID = "profilePingRequestId"
 private const val EXTRA_CONTENT = "content"
-private const val EXTRA_DELAY_MS = "delayMs"
-private const val EXTRA_RESULT = "result"
-private const val EXTRA_REMAINING = "remaining"
-private const val EXTRA_TOTAL = "total"

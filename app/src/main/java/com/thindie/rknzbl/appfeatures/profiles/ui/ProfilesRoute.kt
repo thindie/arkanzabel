@@ -11,6 +11,7 @@ import com.thindie.rknzbl.appfeatures.profiles.ProfilesFlow
 import com.thindie.rknzbl.appfeatures.profiles.deletesaved.deleteSavedProfiles
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.CONNECT_KEY
 import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.FETCH_KEY
+import com.thindie.rknzbl.application.work.GlobalJobManager.Companion.PING_KEY
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -41,6 +42,7 @@ internal suspend fun ProfilesFlow.exec(
     }
 
     ScreenCommand.RefreshProfiles -> {
+      if (s.pingInProgress) return null
       globalJobManager.launchGlobal(FETCH_KEY) { repository.fetch(true) }
       null
     }
@@ -70,6 +72,16 @@ internal suspend fun ProfilesFlow.exec(
       go(deleteSavedProfiles())
       null
     }
+
+    ScreenCommand.PingAllProfiles -> {
+      globalJobManager.launchGlobal(PING_KEY) { repository.ping() }
+      null
+    }
+
+    ScreenCommand.CancelPingProfiles -> {
+      globalJobManager.cancel(PING_KEY)
+      null
+    }
   }
 }
 
@@ -77,22 +89,24 @@ internal fun ProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, Screen
   val repository = flowModule.connectionProfileRepository
   val globalJobManager = flowModule.globalJobManager
 
-  // All profiles after fetch + ping
   screenScope.sub(repository.received.filterNotNull()).transition { state, allProfiles ->
-    state.copy(profiles = allProfiles)
+    if (!state.profiles.isEmpty()) return@transition state
+    state.copy(
+      profiles = allProfiles,
+    )
+  }
+
+  screenScope.sub(
+    repository.measured
+      .filterNotNull(),
+  ).transition { state, allProfiles ->
+    state.copy(
+      profiles = allProfiles,
+    )
   }
 
   screenScope.sub(repository.stored.filterNotNull()).transition { state, saved ->
     state.copy(savedProfiles = saved)
-  }
-
-  // Best measured profile — connect target shown while not connected
-  screenScope.sub(repository.lastMeasured).transition { state, bestProfile ->
-    if (bestProfile != null && state.connectedProfile == null) {
-      state.copy(connectedProfile = bestProfile)
-    } else {
-      state
-    }
   }
 
   // Service running state
@@ -102,6 +116,10 @@ internal fun ProfilesFlow.stateSink(screenScope: ScreenScope<ScreenState, Screen
 
   screenScope.sub(globalJobManager.isRunning(FETCH_KEY)).transition { state, running ->
     state.copy(profilesLoading = running)
+  }
+
+  screenScope.sub(globalJobManager.isRunning(PING_KEY)).transition { state, running ->
+    state.copy(pingInProgress = running)
   }
 
   screenScope.sub(globalJobManager.isRunning(CONNECT_KEY)).transition { state, running ->

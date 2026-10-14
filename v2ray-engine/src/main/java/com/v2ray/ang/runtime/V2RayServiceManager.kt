@@ -19,6 +19,8 @@ import com.v2ray.ang.error.AppError
 import com.v2ray.ang.ipc.BroadcastersHolder
 import com.v2ray.ang.ipc.DaemonToMain
 import com.v2ray.ang.ipc.FromMainToDaemon
+import com.v2ray.ang.ipc.putProfile
+import com.v2ray.ang.util.JsonUtil
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.v2raydaemon.V2RayProxyOnlyService
 import com.v2ray.ang.v2raydaemon.V2RayVpnService
@@ -26,12 +28,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import java.lang.ref.SoftReference
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -41,7 +47,7 @@ object V2RayServiceManager {
   private val coreController: CoreController =
     V2RayNativeManager.newCoreController(CoreCallback())
   private var screenReceiver: BroadcastReceiver? = null
-  private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   private val stopLoopExecutor =
     Executors.newSingleThreadExecutor { r -> Thread(r, "V2RayStopLoop") }
 
@@ -59,8 +65,13 @@ object V2RayServiceManager {
     broadcastersHolderInternal = holder
   }
 
-  @Volatile
-  private var currentConfigInternal: ConnectionProfile? = null
+  private val currentConfigState: MutableStateFlow<ConnectionProfile?> = MutableStateFlow(null)
+  var currentConfigInternal get() = currentConfigState.value
+    set(value) {
+      currentConfigState.update { value }
+    }
+
+  val requireCurrentProfile get() = requireNotNull(currentConfigState.value)
 
   var serviceControl: SoftReference<ServiceControl>? = null
     set(value) {
@@ -70,21 +81,13 @@ object V2RayServiceManager {
 
   fun startVService(
     context: Context,
-    guid: String? = null,
+    connectionProfile: ConnectionProfile,
   ) {
-    if (guid != null) {
-      if (isRunningInternal && KeyValueStorage.getSelectServer() == guid) {
-        return
-      }
-      KeyValueStorage.setSelectServer(guid)
-    }
     if (isRunningInternal) {
       Log.i({ "startVService: core running -> restart for new profile" }, AppConfig.TAG)
       stopCoreLoop()
-      startContextService(context)
-      return
     }
-    startContextService(context)
+    startContextService(context, connectionProfile)
   }
 
   /**
@@ -119,7 +122,9 @@ object V2RayServiceManager {
 
       is FromMainToDaemon.UnregisterClient -> Unit // nothing to do
 
-      is FromMainToDaemon.Start -> Unit // handled by onStartCommand
+      is FromMainToDaemon.Start -> {
+        startVService(context, command.profile)
+      }
 
       is FromMainToDaemon.Stop -> {
         Log.i({ "Daemon command: Stop" }, AppConfig.TAG)
@@ -128,30 +133,108 @@ object V2RayServiceManager {
 
       is FromMainToDaemon.Restart -> {
         Log.i({ "Daemon command: Restart" }, AppConfig.TAG)
+        val profile = currentConfigInternal ?: KeyValueStorage.getLastConnectionProfile()
+        if (profile == null) {
+          Log.w({ "Cannot restart service: no previous profile" }, AppConfig.TAG)
+          return
+        }
         if (control == null) {
-          startContextService(context)
+          startContextService(context, profile)
         } else {
           control.stopService()
           val ctx = control.getService()
           Handler(Looper.getMainLooper()).postDelayed(
-            { startVService(ctx) },
+            { startVService(ctx, profile) },
             500L,
           )
         }
-      }
-
-      is FromMainToDaemon.MeasureDelay -> {
-        measureV2rayDelay()
       }
 
       is FromMainToDaemon.SaveProfile -> {
         Log.i({ "Daemon command: Save Profile" }, AppConfig.TAG)
         broadcastersHolder.daemonBroadcastReceiver.sendEvent(DaemonToMain.SaveProfile)
       }
+
+      is FromMainToDaemon.MeasureProfile -> {
+        Log.i({ "Daemon command: Measure Profile" }, AppConfig.TAG)
+        managerScope.launch {
+          val delay = measureProfileDelay(context, command.profile).getOrDefault(-1L)
+          if (delay < 0) {
+            Log.e({ "Failed to measure profile ${command.profile}" }, AppConfig.TAG)
+          } else {
+            Log.i({ "Daemon command: Measure Profile, measured: $delay" }, AppConfig.TAG)
+          }
+          broadcastersHolder.daemonBroadcastReceiver.sendEvent(
+            DaemonToMain.ProfileMeasured(command.profile.copy(delay = delay), command.requestId),
+          )
+        }
+      }
     }
   }
 
-  private fun startContextService(context: Context) {
+  /** Starts a temporary core for [profile] and measures outbound delay through it. */
+  private fun measureProfileDelay(
+    context: Context,
+    profile: ConnectionProfile,
+  ): Result<Long> =
+    runCatching {
+      val v2ray = V2rayConfigManager.getV2rayConfig4Speedtest(context, profile)
+      val compactConfig = JsonUtil.parseString(v2ray.json)?.let { JsonUtil.toJson(it) } ?: v2ray.json
+      val coreStarted = CountDownLatch(1)
+      val ephemeral =
+        V2RayNativeManager.newCoreController(
+          object : CoreCallbackHandler {
+            override fun onEmitStatus(
+              status: Long,
+              message: String?,
+            ) = 0L
+
+            override fun shutdown(): Long = 0L
+
+            override fun startup(): Long {
+              coreStarted.countDown()
+              return 0L
+            }
+          },
+        )
+      val coreThread = Thread({ ephemeral.startLoop(compactConfig, 0) }, "V2RayProfilePing").apply { start() }
+
+      try {
+        check(coreStarted.await(PROFILE_PING_CORE_START_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+          "Timed out waiting for profile ping core startup"
+        }
+        val measurement =
+          FutureTask {
+            V2RayNativeManager.measureOutboundDelay(compactConfig, SettingsManager.getDelayTestUrl())
+          }
+        Thread(measurement, "V2RayProfilePingMeasure").start()
+        try {
+          measurement.get(PROFILE_PING_MEASURE_TIMEOUT_SEC, TimeUnit.SECONDS)
+        } finally {
+          measurement.cancel(true)
+        }
+      } finally {
+        stopEphemeral(ephemeral)
+        try {
+          coreThread.join(PROFILE_PING_CORE_STOP_TIMEOUT_MS)
+        } catch (interrupted: InterruptedException) {
+          Thread.currentThread().interrupt()
+        }
+      }
+    }
+
+  private fun stopEphemeral(controller: CoreController) {
+    try {
+      controller.stopLoop()
+    } catch (runtime: RuntimeException) {
+      Log.e({ "Failed to stop ephemeral core loop" }, AppConfig.TAG, runtime)
+    }
+  }
+
+  private fun startContextService(
+    context: Context,
+    connectionProfile: ConnectionProfile,
+  ) {
     if (isRunningInternal) {
       Log.w(
         { "startContextService skipped: core still reports running (wait for stop to finish)" },
@@ -159,12 +242,11 @@ object V2RayServiceManager {
       )
       return
     }
-    val guid = KeyValueStorage.getSelectServer() ?: return
-    val config = KeyValueStorage.decodeServerConfig(guid) ?: return
-    if (config.protocol != Protocol.Custom &&
-      config.protocol != Protocol.PolicyGroup &&
-      !Utils.isValidUrl(config.server) &&
-      !Utils.isPureIpAddress(config.server.orEmpty())
+
+    if (connectionProfile.protocol != Protocol.Custom &&
+      connectionProfile.protocol != Protocol.PolicyGroup &&
+      !Utils.isValidUrl(connectionProfile.server) &&
+      !Utils.isPureIpAddress(connectionProfile.server.orEmpty())
     ) {
       return
     }
@@ -182,7 +264,11 @@ object V2RayServiceManager {
         Intent(context.applicationContext, V2RayVpnService::class.java)
       } else {
         Intent(context.applicationContext, V2RayProxyOnlyService::class.java)
+      }.apply {
+        putProfile(connectionProfile)
       }
+    currentConfigInternal = connectionProfile
+    KeyValueStorage.setLastConnectionProfile(connectionProfile)
     ContextCompat.startForegroundService(context, intent)
   }
 
@@ -191,15 +277,14 @@ object V2RayServiceManager {
    * `registerReceiver(Context, BroadcastReceiver, IntentFilter, int)`.
    * Starts the V2Ray core service.
    */
-  fun startCoreLoop(vpnInterface: ParcelFileDescriptor?): Boolean {
+  fun startCoreLoop(
+    vpnInterface: ParcelFileDescriptor?,
+    config: ConnectionProfile,
+  ): Boolean {
     if (isRunningInternal) {
       return false
     }
-
     val service = getService() ?: return false
-    val guid = KeyValueStorage.getSelectServer() ?: return false
-    val config = KeyValueStorage.decodeServerConfig(guid) ?: return false
-
     try {
       screenReceiver =
         object : BroadcastReceiver() {
@@ -239,7 +324,7 @@ object V2RayServiceManager {
 
     val result =
       try {
-        V2rayConfigManager.getV2rayConfig(service, guid)
+        V2rayConfigManager.getV2rayConfig(service, config)
       } catch (cancel: CancellationException) {
         throw cancel
       } catch (appError: AppError) {
@@ -292,11 +377,8 @@ object V2RayServiceManager {
     }
 
     try {
-      broadcastersHolder.daemonBroadcastReceiver.sendEvent(DaemonToMain.StartSuccess(guid))
+      broadcastersHolder.daemonBroadcastReceiver.sendEvent(DaemonToMain.StartSuccess(requireCurrentProfile))
       NotificationManager.startSpeedNotification(currentConfigInternal)
-      KeyValueStorage.setVpnSessionActive(true)
-      KeyValueStorage.setVpnSessionStartEpochMs(System.currentTimeMillis())
-      KeyValueStorage.setVpnSessionGuid(guid)
     } catch (runtime: RuntimeException) {
       Log.e({ "Failed to startup service" }, AppConfig.TAG, runtime)
       val detail = runtime.message?.trim()
@@ -408,42 +490,6 @@ object V2RayServiceManager {
   }
 
   /**
-   * Measures the connection delay for the current V2Ray configuration.
-   * Tests with primary URL first, then falls back to alternative URL if needed.
-   * Also fetches remote IP information if the delay test was successful.
-   */
-  fun measureV2rayDelay() {
-    if (!isRunningInternal) {
-      return
-    }
-
-    managerScope.launch {
-      var time = -1L
-      try {
-        time = coreController.measureDelay(SettingsManager.getDelayTestUrl())
-      } catch (runtime: RuntimeException) {
-        Log.e({ "Failed to measure delay with primary URL" }, AppConfig.TAG, runtime)
-      }
-      if (time == -1L) {
-        try {
-          time = coreController.measureDelay(SettingsManager.getDelayTestUrl(true))
-        } catch (runtime: RuntimeException) {
-          Log.e(
-            { "Failed to measure delay with alternative URL" },
-            AppConfig.TAG,
-            runtime,
-          )
-        }
-      }
-
-      val guid = KeyValueStorage.getSelectServer()
-      broadcastersHolder.daemonBroadcastReceiver.sendEvent(
-        DaemonToMain.DelayMeasured(guid, time.takeIf { it >= 0 }),
-      )
-    }
-  }
-
-  /**
    * Gets the current service instance.
    * @return The current service instance, or null if not available.
    */
@@ -498,3 +544,6 @@ object V2RayServiceManager {
 
 private const val SUCCESS = 0L
 private const val FAILURE = -1L
+private const val PROFILE_PING_CORE_START_TIMEOUT_SEC = 15L
+private const val PROFILE_PING_CORE_STOP_TIMEOUT_MS = 15_000L
+private const val PROFILE_PING_MEASURE_TIMEOUT_SEC = 15L

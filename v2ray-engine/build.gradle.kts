@@ -22,6 +22,7 @@ android {
   defaultConfig {
     minSdk = 24
     consumerProguardFiles("consumer-rules.pro")
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   sourceSets {
@@ -72,4 +73,8 @@ dependencies {
   testImplementation("junit:junit:4.13.2")
   testImplementation("io.mockk:mockk:1.13.10")
   testImplementation("org.jetbrains.kotlin:kotlin-test")
+
+  androidTestImplementation("junit:junit:4.13.2")
+  androidTestImplementation("androidx.test.ext:junit:1.2.1")
+  androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
