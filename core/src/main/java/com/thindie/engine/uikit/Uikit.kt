@@ -302,12 +302,19 @@ fun SentenceRowIcon(
   painter: Painter?,
   tint: Boolean = true,
   enabled: Boolean = true,
+  tintColor: Color? = null,
 ) {
   val backgroundSecondary =
     if (enabled) {
       AppTheme.colors.backgroundSecondary
     } else {
       AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.DISABLED)
+    }
+  val iconTint =
+    when {
+      !tint -> Color.Unspecified
+      tintColor != null -> tintColor
+      else -> AppTheme.colors.accentPrimary
     }
   if (painter == null) {
     HSpacer(40.dp)
@@ -320,7 +327,7 @@ fun SentenceRowIcon(
           .background(color = backgroundSecondary, shape = RoundedCornerShape(20.dp))
           .padding(8.dp)
           .size(32.dp),
-      tint = if (tint) AppTheme.colors.accentPrimary else Color.Unspecified,
+      tint = iconTint,
     )
   }
 }
