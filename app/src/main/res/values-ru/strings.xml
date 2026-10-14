@@ -135,6 +135,13 @@
     <string name="mux_faq_body">Мультиплексирование (Mux) позволяет нескольким TCP-соединениям использовать один базовый транспортный канал. Это снижает задержку и улучшает производительность, особенно на сетях с высокой задержкой, таких как спутниковые или мобильные.</string>
     <string name="mux_faq_ok">Понятно</string>
 
+    <!-- Performance settings -->
+    <string name="settings_section_performance">Производительность</string>
+    <string name="settings_parallel_ping_title">Число параллельных запросов</string>
+    <string name="settings_parallel_ping_subtitle">Профили проверяются одновременно в ходе измерения</string>
+    <string name="settings_asap_series_title">Размер серии ASAP</string>
+    <string name="settings_asap_series_subtitle">Доступные профили проверяются за цикл</string>
+
     <!-- Fragment settings -->
     <string name="settings_fragment_title">Фрагментация</string>
     <string name="settings_fragment_subtitle">Разделение пакетов для обхода DPI</string>

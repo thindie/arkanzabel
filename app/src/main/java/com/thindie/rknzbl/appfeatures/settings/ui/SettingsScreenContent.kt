@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +30,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.ScreenScope
@@ -42,6 +47,7 @@ import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
 import com.thindie.rknzbl.appfeatures.settings.data.theme.toStorageString
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.WebDavConfig
 import com.v2ray.ang.runtime.KeyValueStorage
 
@@ -234,6 +240,31 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
 
       MuxFaqRow { sendMuxFaq(scope) }
 
+      // === Performance ===
+      VSpacer(24.dp)
+      Divider()
+      VSpacer(16.dp)
+      SectionTitle(stringResource(R.string.settings_section_performance))
+      VSpacer(16.dp)
+
+      StepperRow(
+        label = stringResource(R.string.settings_parallel_ping_title),
+        subtitle = stringResource(R.string.settings_parallel_ping_subtitle),
+        value = state.parallelPingCount,
+        onDecrement = { scope.send(ScreenCommand.DecrementParallelPing) },
+        onIncrement = { scope.send(ScreenCommand.IncrementParallelPing) },
+        max = AppConfig.MAX_PARALLEL_PING_COUNT,
+      )
+
+      StepperRow(
+        label = stringResource(R.string.settings_asap_series_title),
+        subtitle = stringResource(R.string.settings_asap_series_subtitle),
+        value = state.asapSeriesSize,
+        onDecrement = { scope.send(ScreenCommand.DecrementAsapSeriesSize) },
+        onIncrement = { scope.send(ScreenCommand.IncrementAsapSeriesSize) },
+        max = AppConfig.MAX_ASAP_SERIES_SIZE,
+      )
+
       // === Help ===
       VSpacer(24.dp)
       Divider()
@@ -247,6 +278,94 @@ internal fun SettingsScreenContent(scope: ScreenScope<ScreenState, ScreenCommand
         onClick = { scope.send(ScreenCommand.OpenHelp) },
       )
     }
+  }
+}
+
+/**
+ * A label + value row with decrement/increment buttons, matching the app's icon-button aesthetic.
+ * `max` mirrors the repository bounds (AppConfig.MAX_PARALLEL_PING_COUNT / MAX_ASAP_SERIES_SIZE) so
+ * the increment button disables exactly where storage would clamp, keeping UI and data in agreement.
+ */
+@Composable
+private fun StepperRow(
+  label: String,
+  subtitle: String,
+  value: Int,
+  onDecrement: () -> Unit,
+  onIncrement: () -> Unit,
+  max: Int = Int.MAX_VALUE,
+) {
+  Row(
+    modifier = Modifier.fillMaxWidth().padding(12.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(text = label, style = AppTheme.typography.titleMedium, color = AppTheme.colors.contentPrimary)
+      VSpacer(2.dp)
+      Text(text = subtitle, style = AppTheme.typography.bodySmall, color = AppTheme.colors.contentSecondary)
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      IconButton(
+        onClick = onDecrement,
+        enabled = value > 1,
+        modifier = Modifier.size(40.dp),
+      ) {
+        Icon(
+          painter = painterResource(R.drawable.ic_minus_24),
+          contentDescription = "Decrease",
+          tint = if (value > 1) AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary.copy(alpha = 0.4f),
+        )
+      }
+
+      HSpacer(12.dp)
+
+      Text(
+        text = value.toString(),
+        style = AppTheme.typography.titleMedium,
+        color = AppTheme.colors.contentPrimary,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.widthIn(min = 32.dp),
+      )
+
+      HSpacer(12.dp)
+
+      IconButton(
+        onClick = onIncrement,
+        enabled = value < max,
+        modifier = Modifier.size(40.dp),
+      ) {
+        Icon(
+          painter = painterResource(R.drawable.ic_add_24),
+          contentDescription = "Increase",
+          tint = if (value < max) AppTheme.colors.contentPrimary else AppTheme.colors.contentSecondary.copy(alpha = 0.4f),
+        )
+      }
+    }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun StepperRowPreview() {
+  Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+    StepperRow(
+      label = stringResource(R.string.settings_parallel_ping_title),
+      subtitle = stringResource(R.string.settings_parallel_ping_subtitle),
+      value = 3,
+      onDecrement = {},
+      onIncrement = {},
+      max = AppConfig.MAX_PARALLEL_PING_COUNT,
+    )
+    StepperRow(
+      label = stringResource(R.string.settings_asap_series_title),
+      subtitle = stringResource(R.string.settings_asap_series_subtitle),
+      value = 1,
+      onDecrement = {},
+      onIncrement = {},
+      max = AppConfig.MAX_ASAP_SERIES_SIZE,
+    )
   }
 }
 

@@ -50,4 +50,14 @@ internal fun settingsStateSink(
     .transition { state, useDefaults ->
       state.copy(webDavUseDefaults = useDefaults)
     }
+
+  screenScope.sub(repository.parallelPingCount)
+    .transition { state, count ->
+      state.copy(parallelPingCount = count)
+    }
+
+  screenScope.sub(repository.asapSeriesSize)
+    .transition { state, size ->
+      state.copy(asapSeriesSize = size)
+    }
 }

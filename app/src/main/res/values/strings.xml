@@ -144,6 +144,13 @@
     <string name="mux_faq_body">Multiplexing (Mux) allows multiple TCP connections to share a single underlying transport connection. This reduces latency and improves performance, especially on high-latency networks like satellite or mobile data.</string>
     <string name="mux_faq_ok">Got it</string>
 
+    <!-- Performance settings -->
+    <string name="settings_section_performance">Performance</string>
+    <string name="settings_parallel_ping_title">Parallel ping count</string>
+    <string name="settings_parallel_ping_subtitle">Profiles measured at once during measurement</string>
+    <string name="settings_asap_series_title">ASAP series size</string>
+    <string name="settings_asap_series_subtitle">Reachable profiles measured per cycle</string>
+
     <!-- Fragment settings -->
     <string name="settings_fragment_title">Fragmentation</string>
     <string name="settings_fragment_subtitle">Split packets to bypass DPI inspection</string>
