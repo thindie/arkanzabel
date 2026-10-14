@@ -108,28 +108,33 @@ class ConnectionProfileRepositoryImpl(
       }?.let { (_, cache) ->
         val profiles = cache.value.value ?: return@let null
         if (!ensureVpnRunning(profiles)) return@let null
-        measureProfilesConcurrently(profiles, cap)
+        measureProfilesConcurrently(
+          profiles = profiles,
+          cap = cap,
+          parallelCount = storage.decodeSettingsInt(AppConfig.PREF_PARALLEL_PING_COUNT, AppConfig.DEFAULT_PARALLEL_PING_COUNT),
+        )
       }
     return measured.orEmpty()
   }
 
   /**
    * Measures outbound delay for [profiles] concurrently, capping simultaneous ephemeral cores at
-   * [PING_CORE_CONCURRENCY] because one running VPN core plus several ephemeral cores share
-   * `libgojni.so`. Each result is written back at its index and the measured cache refreshes after
-   * every completion so the UI updates progressively. Stops pulling new profiles once [cap]
-   * reachable ones are found, matching the previous sequential early-stop.
+   * [parallelCount] because one running VPN core plus several ephemeral cores share `libgojni.so`.
+   * Each result is written back at its index and the measured cache refreshes after every
+   * completion so the UI updates progressively. Stops pulling new profiles once [cap] reachable ones
+   * are found, matching the previous sequential early-stop.
    */
   private suspend fun measureProfilesConcurrently(
     profiles: List<ConnectionProfile>,
     cap: Int?,
+    parallelCount: Int,
   ): List<ConnectionProfile> {
     val results = Array(profiles.size) { profiles[it] }
     val nextIndex = AtomicInteger(0)
     val reachable = AtomicInteger(0)
     val limit = cap ?: Int.MAX_VALUE
     coroutineScope {
-      repeat(minOf(PING_CORE_CONCURRENCY, profiles.size)) {
+      repeat(minOf(parallelCount, profiles.size)) {
         launch {
           while (true) {
             val index = nextIndex.getAndIncrement()
@@ -179,7 +184,9 @@ class ConnectionProfileRepositoryImpl(
       val url = storage.getCustomSourceUrl() ?: return
       val profiles = fetchFromSource(url)
       if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
-      val measured = pingInternal(NEXT_BEST_PING_CAP)
+      val seriesSize =
+        storage.decodeSettingsInt(AppConfig.PREF_ASAP_SERIES_SIZE, AppConfig.DEFAULT_ASAP_SERIES_SIZE)
+      val measured = pingInternal(seriesSize)
       val best =
         measured.filter { it.delay?.let { d -> d > 0 } == true }
           .minByOrNull { it.delay ?: Long.MAX_VALUE }
@@ -392,10 +399,8 @@ private const val FETCH_PROFILES_SEPARATOR = "\n"
 private const val SKIPPED_PROFILES_CACHE_KEY = "skipped_measured_cache"
 private const val MEASURED_PROFILES_CACHE_KEY = "measured_profiles_measured_cache"
 
-private const val NEXT_BEST_PING_CAP = 5
-
 // Bounds simultaneous ephemeral measurement cores sharing libgojni.so with the running VPN core.
-private const val PING_CORE_CONCURRENCY = 4
+// Read live from settings (AppConfig.DEFAULT_PARALLEL_PING_COUNT) so it stays configurable.
 private const val VPN_START_TIMEOUT_MS = 30_000L
 private val LOG_TAG = AppConfig.TAG
 
