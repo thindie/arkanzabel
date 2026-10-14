@@ -77,6 +77,11 @@ internal suspend fun ProfilesFlow.exec(
       globalJobManager.launchGlobal(PING_KEY) { repository.ping() }
       null
     }
+
+    ScreenCommand.CancelPingProfiles -> {
+      globalJobManager.cancel(PING_KEY)
+      null
+    }
   }
 }
 

@@ -2,8 +2,13 @@ package com.thindie.rknzbl.appfeatures.profiles.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -20,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -72,6 +79,10 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 style = AppTheme.typography.bodySmall,
                 color = AppTheme.colors.contentSecondary,
               )
+            }
+            AnimatedVisibility(visible = st.pingInProgress) {
+              VSpacer(16.dp)
+              PingCancelCard(onClick = { scope.send(ScreenCommand.CancelPingProfiles) })
             }
             VSpacer(24.dp)
             TabRow(
@@ -214,6 +225,39 @@ private fun profileIconTint(delay: Long?): Color {
 }
 
 @Composable
+private fun PingCancelCard(onClick: () -> Unit) {
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
+        .background(color = AppTheme.colors.cardPrimary, shape = RoundedCornerShape(20.dp))
+        .padding(16.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    Column(modifier = Modifier.weight(1f)) {
+      Text(
+        text = stringResource(R.string.profiles_ping_in_progress),
+        style = AppTheme.typography.titleMedium,
+        color = AppTheme.colors.contentPrimary,
+      )
+      VSpacer(2.dp)
+      Text(
+        text = stringResource(R.string.profiles_ping_cancel_hint),
+        style = AppTheme.typography.bodySmall,
+        color = AppTheme.colors.contentSecondary,
+      )
+    }
+    Image(
+      painter = painterResource(R.drawable.ic_chevron_right_24),
+      contentDescription = null,
+      colorFilter = ColorFilter.tint(AppTheme.colors.contentSecondary),
+    )
+  }
+}
+
+@Composable
 private fun ProfilesFab(
   modifier: Modifier = Modifier,
   onClick: () -> Unit,
@@ -257,6 +301,16 @@ private fun ProfilesFabPreview() {
         onClick = {},
         loading = false,
       )
+    }
+  }
+}
+
+@Preview
+@Composable
+private fun PingCancelCardPreview() {
+  AppTheme {
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+      PingCancelCard(onClick = {})
     }
   }
 }

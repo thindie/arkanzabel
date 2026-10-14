@@ -15,4 +15,6 @@ sealed interface ScreenCommand : Command {
   data object OpenDeleteSavedProfiles : ScreenCommand
 
   data object PingAllProfiles : ScreenCommand
+
+  data object CancelPingProfiles : ScreenCommand
 }

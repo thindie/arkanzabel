@@ -333,6 +333,8 @@
         <string name="logs_scroll_up">Scroll up</string>
         <string name="profiles_delete_title">Delete saved profiles</string>
         <string name="profiles_open_delete">Delete saved</string>
+        <string name="profiles_ping_in_progress">Ping in progress</string>
+        <string name="profiles_ping_cancel_hint">Tap to cancel</string>
 
         <string name="app_version_update_snack">Update available</string>
 </resources>
