@@ -13,8 +13,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -233,7 +233,7 @@ fun SentenceRow(
   enabled: Boolean = true,
   loading: Boolean? = null,
   leading: @Composable () -> Unit = { },
-  content: @Composable RowScope.() -> Unit,
+  content: @Composable ColumnScope.() -> Unit,
   onClick: (() -> Unit)? = null,
   onLongClick: (() -> Unit)? = null,
 ) {
@@ -293,7 +293,7 @@ fun SentenceRow(
       }
     }
     HSpacer(12.dp)
-    content()
+    Column { content() }
   }
 }
 

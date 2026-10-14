@@ -334,7 +334,7 @@
         <string name="logs_scroll_up">Прокрутить вверх</string>
         <string name="profiles_delete_title">Удалить сохранённые профили</string>
         <string name="profiles_open_delete">Удалить сохранённые</string>
-        <string name="profiles_ping_in_progress">Пинг выполняется</string>
+        <string name="profiles_ping_in_progress">Проверяем доступность профилей</string>
         <string name="profiles_ping_cancel_hint">Нажмите, чтобы отменить</string>
 
         <string name="app_version_update_snack">Доступно обновление</string>

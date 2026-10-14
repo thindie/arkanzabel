@@ -80,8 +80,10 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
                 color = AppTheme.colors.contentSecondary,
               )
             }
-            AnimatedVisibility(visible = st.pingInProgress) {
-              VSpacer(16.dp)
+            AnimatedVisibility(
+              modifier = Modifier.padding(vertical = 16.dp),
+              visible = st.pingInProgress,
+            ) {
               PingCancelCard(onClick = { scope.send(ScreenCommand.CancelPingProfiles) })
             }
             VSpacer(24.dp)
@@ -120,8 +122,12 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
                     },
                 )
               } else {
-                VSpacer(16.dp)
-                LazyColumn(modifier = Modifier.fillMaxHeight()) {
+                LazyColumn(
+                  modifier =
+                    Modifier
+                      .padding(top = 16.dp)
+                      .fillMaxHeight(),
+                ) {
                   items(profilesToShow) { profile ->
                     val borderState =
                       when {
