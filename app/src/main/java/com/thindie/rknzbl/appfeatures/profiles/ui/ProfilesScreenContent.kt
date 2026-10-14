@@ -30,6 +30,7 @@ import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.CircularProgress
 import com.thindie.engine.uikit.ProfileBorderState
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
 import com.thindie.engine.uikit.TabItem
 import com.thindie.engine.uikit.TabRow
 import com.thindie.engine.uikit.VSpacer
@@ -118,9 +119,22 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
 
                     SentenceRow(
                       modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
-                      painter = painterResource(R.drawable.ic_internet_24),
-                      title = profile.remarks,
-                      subtitle = profileSubtitle(profile),
+                      leading = {
+                        SentenceRowIcon(painter = painterResource(R.drawable.ic_internet_24))
+                      },
+                      content = {
+                        Text(
+                          text = profile.remarks,
+                          style = AppTheme.typography.titleMedium,
+                          color = AppTheme.colors.contentPrimary,
+                        )
+                        VSpacer(2.dp)
+                        Text(
+                          text = profileSubtitle(profile),
+                          style = AppTheme.typography.bodyMedium,
+                          color = AppTheme.colors.contentSecondary,
+                        )
+                      },
                       loading = false,
                       enabled = profile.delay != -1L,
                       onClick = { scope.send(ScreenCommand.ConnectProfile(profile)) },

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,6 +50,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.thindie.engine.core.Command
 import com.thindie.engine.core.ScreenScope
@@ -228,12 +230,10 @@ fun <S : ViewState, C : Command> ScreenScope<S, C>.ErrorMessage() {
 @Composable
 fun SentenceRow(
   modifier: Modifier = Modifier,
-  painter: Painter?,
-  title: String,
-  subtitle: String?,
   enabled: Boolean = true,
-  loading: Boolean?,
-  tintIcon: Boolean = true,
+  loading: Boolean? = null,
+  leading: @Composable () -> Unit = { },
+  content: @Composable RowScope.() -> Unit,
   onClick: (() -> Unit)? = null,
   onLongClick: (() -> Unit)? = null,
 ) {
@@ -244,20 +244,6 @@ fun SentenceRow(
       AppTheme.colors.backgroundPrimary.copy(alpha = ContentAlpha.DISABLED)
     }
 
-  val tint =
-    if (enabled) {
-      AppTheme.colors.accentPrimary
-    } else {
-      AppTheme.colors.accentPrimary.copy(alpha = ContentAlpha.DISABLED)
-    }
-  val iconTint = if (tintIcon) tint else Color.Unspecified
-
-  val colorsSecondary =
-    if (enabled) {
-      AppTheme.colors.backgroundSecondary
-    } else {
-      AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.DISABLED)
-    }
   val interactionModifier =
     when {
       !enabled -> Modifier
@@ -290,8 +276,8 @@ fun SentenceRow(
         Crossfade(
           modifier = Modifier.size(40.dp),
           targetState = loading,
-        ) { loading ->
-          if (loading) {
+        ) { isLoading ->
+          if (isLoading) {
             CircularProgress(
               modifier =
                 Modifier
@@ -299,59 +285,91 @@ fun SentenceRow(
                   .size(32.dp),
             )
           } else {
-            if (painter == null) {
-              HSpacer(40.dp)
-            } else {
-              Icon(
-                painter = painter,
-                contentDescription = null,
-                modifier =
-                  Modifier
-                    .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-                    .padding(8.dp)
-                    .size(32.dp),
-                tint = iconTint,
-              )
-            }
+            leading()
           }
         }
       } else {
-        if (painter == null) {
-          HSpacer(40.dp)
-        } else {
-          Icon(
-            painter = painter,
-            contentDescription = null,
-            modifier =
-              Modifier
-                .background(color = colorsSecondary, shape = RoundedCornerShape(20.dp))
-                .padding(8.dp)
-                .size(32.dp),
-            tint = iconTint,
-          )
-        }
+        leading()
       }
     }
     HSpacer(12.dp)
-    if (subtitle != null) {
-      Column {
-        Text(
-          text = title,
-          style = AppTheme.typography.titleMedium,
-          color = AppTheme.colors.contentPrimary,
-        )
-        VSpacer(2.dp)
-        Text(
-          text = subtitle,
-          style = AppTheme.typography.bodyMedium,
-          color = AppTheme.colors.contentSecondary,
-        )
-      }
+    content()
+  }
+}
+
+@Composable
+fun SentenceRowIcon(
+  painter: Painter?,
+  tint: Boolean = true,
+  enabled: Boolean = true,
+) {
+  val backgroundSecondary =
+    if (enabled) {
+      AppTheme.colors.backgroundSecondary
     } else {
-      Text(
-        text = title,
-        style = AppTheme.typography.titleMedium,
-        color = AppTheme.colors.contentPrimary,
+      AppTheme.colors.backgroundSecondary.copy(alpha = ContentAlpha.DISABLED)
+    }
+  if (painter == null) {
+    HSpacer(40.dp)
+  } else {
+    Icon(
+      painter = painter,
+      contentDescription = null,
+      modifier =
+        Modifier
+          .background(color = backgroundSecondary, shape = RoundedCornerShape(20.dp))
+          .padding(8.dp)
+          .size(32.dp),
+      tint = if (tint) AppTheme.colors.accentPrimary else Color.Unspecified,
+    )
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SentenceRowIconPreview() {
+  AppTheme {
+    Box(modifier = Modifier.border(1.2.dp, AppTheme.colors.backgroundSecondary)) {
+      SentenceRowIcon(painter = null)
+    }
+  }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SentenceRowPreview() {
+  AppTheme {
+    Column {
+      SentenceRow(
+        leading = {
+          Box(
+            modifier =
+              Modifier
+                .background(AppTheme.colors.accentPrimary, RoundedCornerShape(20.dp))
+                .padding(8.dp)
+                .size(32.dp),
+            contentAlignment = Alignment.Center,
+          ) {
+            Text(
+              text = "A",
+              style = AppTheme.typography.titleSmall,
+              color = AppTheme.colors.onAccentPrimary,
+            )
+          }
+        },
+        content = {
+          Text(
+            text = "Title",
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = "Subtitle",
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
       )
     }
   }

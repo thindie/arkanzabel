@@ -28,6 +28,7 @@ import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
 import com.thindie.engine.uikit.TextField
 import com.thindie.engine.uikit.TopAppBar
 import com.thindie.engine.uikit.VSpacer
@@ -88,9 +89,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
 
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = titleBlackSs,
-        subtitle = subtitleAll,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = titleBlackSs,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleAll,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -105,9 +117,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
       VSpacer(8.dp)
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = sectionBlack,
-        subtitle = subtitleAll,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = sectionBlack,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleAll,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -122,9 +145,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
       VSpacer(8.dp)
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = sectionBlack,
-        subtitle = subtitleTop150,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = sectionBlack,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleTop150,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -145,9 +179,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
 
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = titleWhiteCidr,
-        subtitle = subtitleAll,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = titleWhiteCidr,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleAll,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -162,9 +207,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
       VSpacer(8.dp)
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = titleWhiteCidr,
-        subtitle = subtitleTop1501,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = titleWhiteCidr,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleTop1501,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -179,9 +235,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
       VSpacer(8.dp)
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = titleWhiteCidr,
-        subtitle = subtitleTop1502,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = titleWhiteCidr,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleTop1502,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(
@@ -196,9 +263,20 @@ internal fun SourceScreenContent(scope: ScreenScope<SourceState, SourceCommand>)
       VSpacer(8.dp)
       SentenceRow(
         modifier = Modifier.fillMaxWidth(),
-        painter = null,
-        title = titleWhiteCidr,
-        subtitle = subtitleRuServices,
+        leading = { SentenceRowIcon(painter = null) },
+        content = {
+          Text(
+            text = titleWhiteCidr,
+            style = AppTheme.typography.titleMedium,
+            color = AppTheme.colors.contentPrimary,
+          )
+          VSpacer(2.dp)
+          Text(
+            text = subtitleRuServices,
+            style = AppTheme.typography.bodyMedium,
+            color = AppTheme.colors.contentSecondary,
+          )
+        },
         loading = false,
         onClick = {
           scope.send(

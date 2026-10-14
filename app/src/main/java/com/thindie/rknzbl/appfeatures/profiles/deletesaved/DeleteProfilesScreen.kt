@@ -21,6 +21,7 @@ import com.thindie.engine.uikit.AppScreen
 import com.thindie.engine.uikit.AppTheme
 import com.thindie.engine.uikit.Button
 import com.thindie.engine.uikit.SentenceRow
+import com.thindie.engine.uikit.SentenceRowIcon
 import com.thindie.engine.uikit.VSpacer
 import com.thindie.rknzbl.R
 
@@ -68,14 +69,29 @@ internal fun DeleteProfilesScreen(scope: ScreenScope<DeleteSavedProfilesState, D
             val selected = profile in st.selectedProfiles
             SentenceRow(
               modifier = Modifier.fillMaxWidth(),
-              painter =
-                if (selected) {
-                  painterResource(R.drawable.ic_done_square_24)
-                } else {
-                  painterResource(R.drawable.ic_internet_24)
-                },
-              title = profile.remarks,
-              subtitle = profile.flow ?: profile.server.orEmpty(),
+              leading = {
+                SentenceRowIcon(
+                  painter =
+                    if (selected) {
+                      painterResource(R.drawable.ic_done_square_24)
+                    } else {
+                      painterResource(R.drawable.ic_internet_24)
+                    },
+                )
+              },
+              content = {
+                Text(
+                  text = profile.remarks,
+                  style = AppTheme.typography.titleMedium,
+                  color = AppTheme.colors.contentPrimary,
+                )
+                VSpacer(2.dp)
+                Text(
+                  text = profile.flow ?: profile.server.orEmpty(),
+                  style = AppTheme.typography.bodyMedium,
+                  color = AppTheme.colors.contentSecondary,
+                )
+              },
               loading = false,
               onClick = { scope.send(DeleteSavedProfilesCommand.ToggleSelect(profile)) },
             )
