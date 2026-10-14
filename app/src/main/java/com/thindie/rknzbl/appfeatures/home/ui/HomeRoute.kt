@@ -63,10 +63,6 @@ internal fun HomeRoute(
       }
 
       ScreenCommand.NextBestProfile -> {
-        val currentConnected = s.connectedProfile
-        if (currentConnected != null) {
-          repository.markProfileUsed(currentConnected)
-        }
         globalJobManager.launchGlobal(NEXT_BEST_KEY) {
           repository.asapProfile()
         }

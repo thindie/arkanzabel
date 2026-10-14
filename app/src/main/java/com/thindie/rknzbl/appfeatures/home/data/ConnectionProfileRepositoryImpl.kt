@@ -25,8 +25,6 @@ class ConnectionProfileRepositoryImpl(
   private val vpnGateway: VpnServiceGateway,
 ) : ConnectionProfileRepository {
   private val isLocalSave get() = storage.isLocalSaveEnabled()
-
-  // Getter, not a constructor-time val: the mode can be switched at runtime and the cache key must follow.
   private val localStorageKey get() = if (isLocalSave) "prefs_stored" else "webdav_stored"
   private val cacheLock: Any = Any()
   private val profilesInMemoryCache = mutableMapOf<String, Cache<List<ConnectionProfile>?>>()
@@ -35,7 +33,6 @@ class ConnectionProfileRepositoryImpl(
   private val cacheVersion = MutableStateFlow(0)
 
   private fun cacheValueSyncInternal(k: String): List<ConnectionProfile>? {
-    // Read under the same lock as mutations to avoid racing a structural map update.
     return synchronized(cacheLock) { profilesInMemoryCache[k]?.value?.value }
   }
 
@@ -82,7 +79,6 @@ class ConnectionProfileRepositoryImpl(
       onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-  // Reactive view of the currently selected profile; updated on connect and cleared on disconnect.
   private val activeProfileCache = Cache<ConnectionProfile?>(null)
 
   // Emits null while the VPN service reports an error, so a failed start does not look connected.
@@ -100,39 +96,63 @@ class ConnectionProfileRepositoryImpl(
     pingInternal()
   }
 
-  private suspend fun pingInternal(cap: Int? = null) {
+  private suspend fun pingInternal(cap: Int? = null): List<ConnectionProfile> {
+    var measured = emptyList<ConnectionProfile>()
     profilesInMemoryCache
       .filter { it.key != MEASURED_PROFILES_CACHE_KEY && it.key != SKIPPED_PROFILES_CACHE_KEY }
       .filter { it.key == storage.getCustomSourceUrl() }
       .forEach { (_, cache) ->
-        val profiles = cache.value.value
-        val resultProfiles = profiles?.toMutableList() ?: return
-        if (!ensureVpnRunning(profiles)) return
+        val profiles = cache.value.value ?: return@forEach
+        if (!ensureVpnRunning(profiles)) return@forEach
+        val resultProfiles = profiles.toMutableList()
         var capInternal = 0
         profiles.forEachIndexed { index, profile ->
           if (capInternal == cap) {
-            return
+            return@forEachIndexed
           }
-          val measured = httpGateway.ping(profile)
-          if (measured.delay != null && measured.delay!! > 0) {
+          val measuredProfile = httpGateway.ping(profile)
+          if (measuredProfile.delay != null && measuredProfile.delay!! > 0) {
             capInternal += 1
           }
-          resultProfiles[index] = measured
-          setCacheInternal(MEASURED_PROFILES_CACHE_KEY, resultProfiles)
+          resultProfiles[index] = measuredProfile
+          setCacheInternal(MEASURED_PROFILES_CACHE_KEY, resultProfiles.toList())
         }
+        measured = resultProfiles
       }
+    return measured
   }
 
   override suspend fun asapProfile() {
-    val url = storage.getCustomSourceUrl() ?: return
-    val profiles = fetchFromSource(url)
-    if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
-    pingInternal(5)
-    val profile =
-      cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)
-        ?.filter { profile -> profile.delay?.let { it > 0 } == true }
-        ?.minByOrNull { it.delay ?: Long.MAX_VALUE }
-    profile?.let { connect(it) }
+    val cachedMeasured = cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)?.ifEmpty { null }
+    if (cachedMeasured != null) {
+      val active = activeProfileCache.value.value
+      val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY)
+      val updatedSkipped = (skipped.orEmpty() + active).filterNotNull()
+      val skippedIds =
+        updatedSkipped
+          .map { it.subscriptionId }
+      val candidates =
+        cachedMeasured
+          .filterNot { it.subscriptionId in skippedIds || it.subscriptionId == active?.subscriptionId }
+      if (candidates.isEmpty()) {
+        invalidateCacheInternal()
+        asapProfile()
+      } else {
+        val best = candidates.minByOrNull { it.delay ?: Long.MAX_VALUE }
+        setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, updatedSkipped)
+        best?.let { connect(it) }
+      }
+    } else {
+      val url = storage.getCustomSourceUrl() ?: return
+      val profiles = fetchFromSource(url)
+      if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
+      val measured = pingInternal(NEXT_BEST_PING_CAP)
+      val best =
+        measured.filter { it.delay?.let { d -> d > 0 } == true }
+          .minByOrNull { it.delay ?: Long.MAX_VALUE }
+      setCacheInternal(MEASURED_PROFILES_CACHE_KEY, measured)
+      best?.let { connect(it) }
+    }
   }
 
   private suspend fun ensureVpnRunning(profiles: List<ConnectionProfile>): Boolean {
@@ -154,11 +174,6 @@ class ConnectionProfileRepositoryImpl(
         activeProfileCache.set(restored)
       }
     }
-  }
-
-  override fun markProfileUsed(profile: ConnectionProfile) {
-    val skipped = cacheValueSyncInternal(SKIPPED_PROFILES_CACHE_KEY).orEmpty() + profile
-    setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, skipped)
   }
 
   // Profiles received from remote sources: view of the active source URL's cache entry.
@@ -343,6 +358,8 @@ private const val FETCH_PROFILES_SEPARATOR = "\n"
 
 private const val SKIPPED_PROFILES_CACHE_KEY = "skipped_measured_cache"
 private const val MEASURED_PROFILES_CACHE_KEY = "measured_profiles_measured_cache"
+
+private const val NEXT_BEST_PING_CAP = 5
 private const val VPN_START_TIMEOUT_MS = 30_000L
 private val LOG_TAG = AppConfig.TAG
 
