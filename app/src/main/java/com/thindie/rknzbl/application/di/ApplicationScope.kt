@@ -19,7 +19,6 @@ import com.thindie.rknzbl.appfeatures.settings.data.SettingsRepositoryImpl
 import com.thindie.rknzbl.appfeatures.settings.di.SettingsFlowModule
 import com.thindie.rknzbl.appfeatures.settings.domain.PerAppProxyRepository
 import com.thindie.rknzbl.application.Application
-import com.thindie.rknzbl.application.LogSinkProvider
 import com.thindie.rknzbl.application.work.GlobalJobManager
 import com.thindie.rknzbl.appversion.AppVersion
 import com.thindie.rknzbl.appversion.AppVersionResolver
@@ -149,7 +148,6 @@ class ApplicationScope private constructor(application: Application) {
     private val WEBDAV_DEFAULT_PASSWORD: String? = BuildConfig.WEBDAV_DEFAULT_PASSWORD.takeIf { it.isNotBlank() }
 
     fun configure(application: Application): ApplicationScope {
-      LogSinkProvider.init()
       return ApplicationScope(application)
     }
   }
