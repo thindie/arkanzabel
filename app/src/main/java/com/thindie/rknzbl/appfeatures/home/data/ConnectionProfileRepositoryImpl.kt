@@ -129,7 +129,7 @@ class ConnectionProfileRepositoryImpl(
     if (profiles.isEmpty() || !ensureVpnRunning(profiles)) return
     pingInternal(5)
     val profile =
-      cacheValueSyncInternal(url)
+      cacheValueSyncInternal(MEASURED_PROFILES_CACHE_KEY)
         ?.filter { profile -> profile.delay?.let { it > 0 } == true }
         ?.minByOrNull { it.delay ?: Long.MAX_VALUE }
     profile?.let { connect(it) }
@@ -138,7 +138,7 @@ class ConnectionProfileRepositoryImpl(
   private suspend fun ensureVpnRunning(profiles: List<ConnectionProfile>): Boolean {
     if (vpnGateway.isRunning()) return true
     val bootstrapProfile = profiles.firstOrNull() ?: return false
-    connect(bootstrapProfile)
+    warmupWithAnyProfile(bootstrapProfile)
     return withTimeoutOrNull(VPN_START_TIMEOUT_MS) {
       vpnGateway.serviceState.first { it is WorkState.Running }
     } != null
@@ -250,6 +250,10 @@ class ConnectionProfileRepositoryImpl(
   // VPN service operations
   override suspend fun connect(profile: ConnectionProfile) {
     activeProfileCache.set(profile)
+    vpnGateway.startVService(profile)
+  }
+
+  private fun warmupWithAnyProfile(profile: ConnectionProfile) {
     vpnGateway.startVService(profile)
   }
 
