@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -120,19 +121,23 @@ fun ProfilesScreenContent(scope: ScreenScope<ScreenState, ScreenCommand>) {
                     SentenceRow(
                       modifier = Modifier.profileBorder(borderState).fillMaxWidth(),
                       leading = {
-                        SentenceRowIcon(painter = painterResource(R.drawable.ic_internet_24))
+                        SentenceRowIcon(
+                          painter = painterResource(R.drawable.ic_internet_24),
+                          enabled = profile.delay != -1L,
+                          tintColor = profileIconTint(profile.delay),
+                        )
                       },
                       content = {
                         Text(
                           text = profile.remarks,
                           style = AppTheme.typography.titleMedium,
-                          color = AppTheme.colors.contentPrimary,
+                          color = profileTitleColor(profile.delay),
                         )
                         VSpacer(2.dp)
                         Text(
                           text = profileSubtitle(profile),
                           style = AppTheme.typography.bodyMedium,
-                          color = AppTheme.colors.contentSecondary,
+                          color = profileSubtitleColor(profile.delay),
                         )
                       },
                       loading = false,
@@ -176,6 +181,35 @@ private fun profileSubtitle(item: ConnectionProfile): String {
     ping == null -> item.flow ?: item.server ?: item.serviceName ?: ""
     ping < 0 -> unreachable
     else -> stringResource(R.string.home_profile_ping_ms, ping.toString())
+  }
+}
+
+private const val CONTENT_ALPHA_DISABLED = 0.3f
+
+@Composable
+private fun profileTitleColor(delay: Long?): Color {
+  return when {
+    delay == null -> AppTheme.colors.contentPrimary
+    delay < 0 -> AppTheme.colors.contentPrimary.copy(alpha = CONTENT_ALPHA_DISABLED)
+    else -> AppTheme.colors.successPrimary
+  }
+}
+
+@Composable
+private fun profileSubtitleColor(delay: Long?): Color {
+  return if (delay != null && delay < 0) {
+    AppTheme.colors.contentSecondary.copy(alpha = CONTENT_ALPHA_DISABLED)
+  } else {
+    AppTheme.colors.contentSecondary
+  }
+}
+
+@Composable
+private fun profileIconTint(delay: Long?): Color {
+  return when {
+    delay == null -> AppTheme.colors.accentPrimary
+    delay < 0 -> AppTheme.colors.contentSecondary
+    else -> AppTheme.colors.successPrimary
   }
 }
 
