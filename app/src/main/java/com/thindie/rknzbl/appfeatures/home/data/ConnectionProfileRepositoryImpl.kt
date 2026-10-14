@@ -134,13 +134,16 @@ class ConnectionProfileRepositoryImpl(
       val candidates =
         cachedMeasured
           .filterNot { it.subscriptionId in skippedIds || it.subscriptionId == active?.subscriptionId }
-      if (candidates.isEmpty()) {
+      // Only reachable profiles (delay > 0) are eligible; minByOrNull would otherwise
+      // prefer an unreachable one (-1) over a working server with positive latency.
+      val reachable = candidates.filter { it.delay?.let { d -> d > 0 } == true }
+      if (reachable.isEmpty()) {
         invalidateCacheInternal()
         asapProfile()
       } else {
-        val best = candidates.minByOrNull { it.delay ?: Long.MAX_VALUE }
+        val best = reachable.minByOrNull { it.delay ?: Long.MAX_VALUE }
         setCacheInternal(SKIPPED_PROFILES_CACHE_KEY, updatedSkipped)
-        best?.let { connect(it) }
+        connect(requireNotNull(best))
       }
     } else {
       val url = storage.getCustomSourceUrl() ?: return
